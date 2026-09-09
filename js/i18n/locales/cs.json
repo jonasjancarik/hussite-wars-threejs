@@ -32,6 +32,13 @@
     "selectHint": "Klepněte na vlastní oddíl. Jeho rozkazy najdete pod mapou."
   },
   "menu": {
+    "titleFirst": "Husitské",
+    "titleSecond": "války",
+    "edition": "Historická tahová strategie",
+    "colophon": "Čechy v neklidu · kronika vašich rozhodnutí",
+    "playTitle": "Do pole",
+    "libraryTitle": "Mezi bitvami",
+    "noManualSave": "Zatím neuloženo",
     "newGame": "Vybrat bitvu",
     "continue": "Pokračovat",
     "encyclopedia": "Encyklopedie",
@@ -40,8 +47,8 @@
     "quickBattle": "Rychlá bitva",
     "about": "O hře",
     "settings": "Nastavení",
-    "music": "🎵 Hudba",
-    "musicPlaying": "🎵 Hudba ▶",
+    "music": "♫ Hudba",
+    "musicPlaying": "♫ Hudba hraje",
     "support": "Podpořit vývoj",
     "version": "Alpha 0.2 | 03.09.2026"
   },

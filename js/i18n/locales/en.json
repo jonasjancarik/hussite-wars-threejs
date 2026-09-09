@@ -32,6 +32,13 @@
     "selectHint": "Tap one of your units. Its orders are below the map."
   },
   "menu": {
+    "titleFirst": "Hussite",
+    "titleSecond": "wars",
+    "edition": "Historical turn-based strategy",
+    "colophon": "Bohemia in turmoil · a chronicle of your choices",
+    "playTitle": "To the field",
+    "libraryTitle": "Between battles",
+    "noManualSave": "No save yet",
     "newGame": "Choose a Battle",
     "continue": "Continue",
     "encyclopedia": "Encyclopedia",
@@ -40,8 +47,8 @@
     "quickBattle": "Quick Battle",
     "about": "About",
     "settings": "Settings",
-    "music": "🎵 Music",
-    "musicPlaying": "🎵 Music ▶",
+    "music": "♫ Music",
+    "musicPlaying": "♫ Music playing",
     "support": "Support Development",
     "version": "Alpha 0.2 | 03.09.2026"
   },

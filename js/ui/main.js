@@ -230,25 +230,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Tlačítko Hudba v hlavním menu
     const menuMusicBtn = document.getElementById('btn-menu-music');
+    function updateMenuMusicButton(isPlaying = Boolean(Music.isPlaying)) {
+        menuMusicBtn.textContent = i18n.t(isPlaying ? 'menu.musicPlaying' : 'menu.music');
+        menuMusicBtn.classList.toggle('playing', isPlaying);
+        menuMusicBtn.setAttribute('aria-pressed', String(isPlaying));
+    }
     menuMusicBtn.addEventListener('click', () => {
-        const isPlaying = Music.toggle();
-        if (isPlaying) {
-            menuMusicBtn.innerHTML = `<span>${i18n.t('menu.musicPlaying')}</span>`;
-            menuMusicBtn.classList.add('playing');
-        } else {
-            menuMusicBtn.innerHTML = `<span>${i18n.t('menu.music')}</span>`;
-            menuMusicBtn.classList.remove('playing');
-        }
+        updateMenuMusicButton(Music.toggle());
     });
+    updateMenuMusicButton();
 
     // Tlačítko přepínání jazyka v hlavním menu
     const languageToggleBtn = document.getElementById('btn-language-toggle');
     const currentLangFlag = document.getElementById('current-lang-flag');
 
-    // Aktualizuj vlajku podle aktuálního jazyka
+    // Textová značka jazyka zůstává čitelná i bez barevných emoji fontů.
     function updateLanguageFlag() {
         const currentLang = i18n.getCurrentLanguage();
-        currentLangFlag.textContent = currentLang === 'cs' ? '🇨🇿' : '🇬🇧';
+        currentLangFlag.textContent = currentLang.toUpperCase();
     }
 
     languageToggleBtn.addEventListener('click', async () => {
@@ -258,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateLanguageFlag();
     });
 
-    // Nastav správnou vlajku při načtení
+    // Nastav správnou značku jazyka při načtení.
     updateLanguageFlag();
 
     // =============================================
@@ -277,7 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateCampaignProgressUI();
         updateSoundButton();
 
-        menuMusicBtn.innerHTML = `<span>${i18n.t(Music.isPlaying ? 'menu.musicPlaying' : 'menu.music')}</span>`;
+        updateMenuMusicButton();
 
         const settingsLanguage = document.getElementById('language-select');
         if (settingsLanguage) settingsLanguage.value = i18n.getCurrentLanguage();
@@ -632,8 +631,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function startMission(scenario) {
         // Zastavení hudby z hlavního menu
         Music.stop();
-        menuMusicBtn.innerHTML = `<span>${i18n.t('menu.music')}</span>`;
-        menuMusicBtn.classList.remove('playing');
+        updateMenuMusicButton();
 
         // Skrytí modalu
         missionModal.classList.add('hidden');
@@ -686,8 +684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function startQuickBattle() {
         // Zastavení hudby z hlavního menu
         Music.stop();
-        menuMusicBtn.innerHTML = `<span>${i18n.t('menu.music')}</span>`;
-        menuMusicBtn.classList.remove('playing');
+        updateMenuMusicButton();
 
         mainMenu.classList.add('hidden');
         gameContainer.classList.remove('hidden');
@@ -1225,6 +1222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         const autoButton = document.getElementById('btn-resume-auto');
         autoButton.classList.add('hidden');
+        mainMenu.classList.remove('has-autosave');
         try {
             const prepared = SaveGameSystem.read({ automatic: true });
             if (prepared.data.gameState !== 'playing') return;
@@ -1232,6 +1230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 battle: prepared.scenario?.name || i18n.t('quickBattle.name'), turn: prepared.data.turnNumber
             });
             autoButton.classList.remove('hidden');
+            mainMenu.classList.add('has-autosave');
         } catch (_) { /* Nečitelný checkpoint neblokuje menu a sám se nepřepisuje. */ }
     }
 

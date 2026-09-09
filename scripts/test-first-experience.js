@@ -176,6 +176,97 @@ test('výsledkové hodnocení zahrne posily i uprchlé a nevydává dílčí ús
     })), { player: { lost: 1, total: 2 }, enemy: { lost: 2, total: 3 } });
 });
 
+async function menuHarness(language = 'cs', prepare = () => {}) {
+    const h = await createLocalizedHarness(language);
+    h.context.CustomEvent = class extends Event {
+        constructor(type, options) { super(type); this.detail = options?.detail; }
+    };
+    h.context.window = Object.assign(new EventTarget(), { innerWidth: 1280 });
+    h.context.Music = {
+        isPlaying: false, setVolume() {},
+        stop() { this.isPlaying = false; },
+        toggle() { this.isPlaying = !this.isPlaying; return this.isPlaying; }
+    };
+    await prepare(h);
+    let initialize;
+    const listen = h.document.addEventListener.bind(h.document);
+    h.document.addEventListener = (type, handler, options) => {
+        if (type === 'DOMContentLoaded') initialize = handler;
+        else listen(type, handler, options);
+    };
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/ui/main.js'), 'utf8'), h.context);
+    await initialize();
+    return h;
+}
+
+test('titulní menu zachovává všechny akce, pořadí pokračování a dekorativní ilustraci', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    const menu = html.slice(html.indexOf('<div id="main-menu"'), html.indexOf('<div id="game-container"'));
+    for (const id of ['btn-resume-auto', 'btn-first-battle', 'btn-new-campaign', 'btn-quick-battle',
+        'btn-continue', 'btn-chronicle', 'btn-encyclopedia', 'btn-settings', 'btn-about', 'btn-menu-music', 'btn-language-toggle']) {
+        assert.equal([...menu.matchAll(new RegExp(`id="${id}"`, 'g'))].length, 1, id);
+    }
+    assert.ok(menu.indexOf('id="btn-resume-auto"') < menu.indexOf('id="btn-first-battle"'));
+    assert.match(menu, /<h1 id="menu-title"/);
+    assert.match(menu, /<nav[^>]*aria-labelledby="menu-play-title"/);
+    assert.match(menu, /<img[^>]*menu-woodcut\.svg[^>]*alt=""[^>]*aria-hidden="true"/);
+});
+
+test('nový hráč nedostane neexistující pokračování ani ruční save', async () => {
+    const h = await menuHarness(), el = id => h.document.getElementById(id);
+    assert.equal(el('btn-resume-auto').classList.contains('hidden'), true);
+    assert.equal(el('main-menu').classList.contains('has-autosave'), false);
+    assert.equal(el('btn-continue').disabled, true);
+    assert.equal(h.storage.has(h.SaveGameSystem.AUTO_KEY), false);
+});
+
+for (const language of ['cs', 'en']) {
+    test(`${language}: pokračování má prioritu jen s platným rozehraným checkpointem`, async () => {
+        const h = await menuHarness(language, h => {
+            const game = h.newGame('zivohost_1419');
+            game.turnNumber = 3;
+            assert.equal(game.saveGame({ automatic: true }), true);
+            assert.equal(game.saveGame(), true);
+            game.destroy();
+        });
+        const el = id => h.document.getElementById(id);
+        const raw = h.storage.get(h.SaveGameSystem.AUTO_KEY);
+        assert.equal(el('main-menu').classList.contains('has-autosave'), true);
+        assert.equal(el('btn-resume-auto').classList.contains('hidden'), false);
+        assert.match(el('autosave-summary').textContent, /Živoho|Zivoho/);
+        assert.match(el('autosave-summary').textContent, /3/);
+        assert.equal(el('btn-continue').disabled, false);
+        assert.equal(h.storage.get(h.SaveGameSystem.AUTO_KEY), raw);
+        for (const invalid of ['{', JSON.stringify({ ...JSON.parse(raw), gameState: 'victory' })]) {
+            h.storage.set(h.SaveGameSystem.AUTO_KEY, invalid);
+            h.document.dispatchEvent(new Event('languageChanged'));
+            assert.equal(el('main-menu').classList.contains('has-autosave'), false);
+            assert.equal(el('btn-resume-auto').classList.contains('hidden'), true);
+            assert.equal(el('btn-continue').disabled, false, 'ruční save zůstává nezávislý');
+            assert.equal(h.storage.get(h.SaveGameSystem.AUTO_KEY), invalid, 'menu nesmí přepisovat checkpoint');
+        }
+        for (const key of ['titleFirst', 'titleSecond', 'edition', 'colophon', 'playTitle', 'libraryTitle', 'noManualSave']) {
+            assert.ok(h.i18n.hasTranslation(`menu.${key}`), key);
+            assert.ok(h.i18n.t(`menu.${key}`).trim());
+        }
+    });
+}
+
+test('hudba v menu má lokalizovaný text a pravdivý přístupný stav i po změně jazyka', async () => {
+    const h = await menuHarness(), button = h.document.getElementById('btn-menu-music');
+    assert.equal(button.getAttribute('aria-pressed'), 'false');
+    button.dispatchEvent(new Event('click'));
+    assert.equal(button.getAttribute('aria-pressed'), 'true');
+    assert.equal(button.classList.contains('playing'), true);
+    await h.i18n.setLanguage('en');
+    assert.equal(button.textContent, h.i18n.t('menu.musicPlaying'));
+    assert.equal(h.document.getElementById('current-lang-flag').textContent, 'EN');
+    button.dispatchEvent(new Event('click'));
+    assert.equal(button.getAttribute('aria-pressed'), 'false');
+    assert.equal(button.classList.contains('playing'), false);
+    assert.equal(button.textContent, h.i18n.t('menu.music'));
+});
+
 test('ovládání panelů po startu i resize drží rozbalený a sbalený stav odděleně', async () => {
     const h = await createLocalizedHarness();
     const browserWindow = new EventTarget(); browserWindow.innerWidth = 753;
