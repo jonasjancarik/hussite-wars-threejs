@@ -23,6 +23,6 @@ console.log('✓ Syntaxe JavaScriptu');
 for (const script of [
     'scripts/test-core.js', 'scripts/test-battle.js', 'scripts/test-scenario-events.js',
     'scripts/test-save.js', 'scripts/test-presentation.js', 'scripts/test-narrative.js', 'scripts/test-chronicle.js',
-    'scripts/test-first-experience.js', 'scripts/test-entrypoint.js',
+    'scripts/test-first-experience.js', 'scripts/test-touch.js', 'scripts/test-storage.js', 'scripts/test-entrypoint.js', 'scripts/test-woodcut.js',
     'scripts/validate-entrypoint.js', 'scripts/validate-styles.js', 'scripts/validate-locales.js', 'validate_scenarios.js'
 ]) run([script]);

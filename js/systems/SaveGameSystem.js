@@ -2,6 +2,7 @@
 // Nejprve ověří celý snapshot, teprve pak přepíše save nebo zruší původní instanci.
 const SaveGameSystem = {
     STORAGE_KEY: 'husitskeValky_save',
+    AUTO_KEY: 'husitskeValky_autosave',
     VERSION: 4,
 
     prepare(data) {
@@ -65,16 +66,26 @@ const SaveGameSystem = {
         return { data, scenario, units, width, height };
     },
 
-    write(data) {
+    write(data, { automatic = false } = {}) {
         const raw = JSON.stringify(data);
         // Ověřit přesně to, co se bude později načítat, včetně účinků serializace.
         // Při chybě se k setItem vůbec nedostaneme a poslední dobrý save zůstane.
         this.prepare(JSON.parse(raw));
-        localStorage.setItem(this.STORAGE_KEY, raw);
+        GameStorage.setItem(automatic ? this.AUTO_KEY : this.STORAGE_KEY, raw);
+        return raw;
     },
 
-    read() {
-        const raw = localStorage.getItem(this.STORAGE_KEY);
+    // Dokončená bitva může odstranit jen svůj poslední checkpoint. Jiná karta
+    // prohlížeče ani ruční save se nesmějí ztratit; selhání úložiště neblokuje konec.
+    finishAutomatic(expectedRaw) {
+        if (!expectedRaw) return;
+        try {
+            if (GameStorage.getItem(this.AUTO_KEY) === expectedRaw) GameStorage.removeItem(this.AUTO_KEY);
+        } catch (_) { /* Výsledky bitvy jsou důležitější než úklid checkpointu. */ }
+    },
+
+    read({ automatic = false } = {}) {
+        const raw = GameStorage.getItem(automatic ? this.AUTO_KEY : this.STORAGE_KEY);
         if (!raw) throw new Error('gameLog.noSaveFound');
         let data;
         try { data = JSON.parse(raw); }
@@ -82,8 +93,8 @@ const SaveGameSystem = {
         return this.prepare(data);
     },
 
-    load(canvas, currentGame = null, { viewFactory = currentGame?.viewFactory } = {}) {
-        const prepared = this.read();
+    load(canvas, currentGame = null, { viewFactory = currentGame?.viewFactory, automatic = false } = {}) {
+        const prepared = this.read({ automatic });
         if (currentGame) currentGame.destroy();
         const grid = new HexGrid(canvas, prepared.width, prepared.height, 40);
         const game = new Game(grid, { viewFactory });

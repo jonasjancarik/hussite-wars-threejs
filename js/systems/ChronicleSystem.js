@@ -38,7 +38,7 @@ const ChronicleSystem = {
     },
 
     _readStoredEntries() {
-        const raw = localStorage.getItem(this.STORAGE_KEY);
+        const raw = GameStorage.getItem(this.STORAGE_KEY);
         if (raw === null) return [];
         const entries = JSON.parse(raw);
         if (!Array.isArray(entries)) throw new Error('Chronicle: neplatný formát archivu');
@@ -63,7 +63,7 @@ const ChronicleSystem = {
             // Nečitelný celý archiv odmítneme přepsat, stejně jako vadný save.
             const entries = this._readStoredEntries();
             entries.push(normalized);
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
+            GameStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
             return true;
         } catch (e) {
             console.warn('Chronicle: nelze uložit', e);
@@ -78,14 +78,14 @@ const ChronicleSystem = {
             const entries = this._readStoredEntries();
             if (entries.some(entry => entry?.type === 'actSummary' && Number(entry.actId) === Number(actId))) return;
             entries.push({ type: 'actSummary', actId: Number(actId), ts: Date.now() });
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
+            GameStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
         } catch (e) {
             console.warn('Chronicle: nelze uložit shrnutí aktu', e);
         }
     },
 
     clear() {
-        localStorage.removeItem(this.STORAGE_KEY);
+        GameStorage.removeItem(this.STORAGE_KEY);
     },
 
     // Kampaňové pořadí, v jedné bitvě pořadí odehraných pokusů. Nemutuje vstup.

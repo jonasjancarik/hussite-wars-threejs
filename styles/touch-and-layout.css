@@ -1,0 +1,222 @@
+/* Dotykový režim a kamera. Tato vrstva vlastní kompaktní rozložení bitvy;
+   nepřepisuje barvy polního rukopisu ani pravidla ostatních obrazovek. */
+.test-build-notice { display: none; }
+.test-build .test-build-notice {
+    display: block;
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border: 1px dashed #c79a59;
+    border-radius: 4px;
+    background: #2d241b;
+    color: #f4dfb6;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    text-align: center;
+}
+#game-container {
+    height: 100dvh;
+    min-height: 0;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#game-main { min-height: 0; }
+#map-container { display: block; position: relative; overscroll-behavior: contain; }
+#map-surface { position: relative; flex: none; }
+#game-canvas {
+    display: block;
+    border: 0;
+    max-width: none;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    cursor: grab;
+}
+#game-canvas.panning { cursor: grabbing; }
+#map-tools {
+    position: absolute;
+    top: 14px;
+    right: 254px;
+    z-index: 105;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px;
+    border: 1px solid var(--field-rule);
+    border-radius: 0;
+    background: var(--field-page-light);
+    color: var(--field-ink);
+    box-shadow: 0 2px 8px #0005;
+}
+#map-tools button, #compact-orders button, .order-buttons button {
+    min-height: 44px;
+    padding: 7px 10px;
+    border: 1px solid var(--field-rule);
+    border-radius: 0;
+    background: var(--field-page-light);
+    color: var(--field-ink);
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+#map-tools button:disabled, #compact-orders button:disabled { opacity: 0.45; cursor: default; }
+#map-zoom-in, #map-zoom-out { min-width: 44px; }
+#map-zoom-value { min-width: 44px; text-align: center; font-size: 0.75rem; }
+#minimap { display: none; }
+#minimap.map-open { display: block; }
+#compact-orders { display: none; }
+#autosave-status { margin: 0; padding: 6px 9px; background: #ffedc2; color: #822b21; font-size: 0.8rem; flex-shrink: 0; }
+#order-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border: 4px dashed #fff4be;
+    box-shadow: 0 0 0 2px var(--field-ink);
+    border-radius: 50%;
+    pointer-events: none;
+}
+#battle-order {
+    position: absolute;
+    z-index: 140;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(420px, calc(100% - 100px));
+    max-height: calc(100% - 85px);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 12px;
+    border: 2px solid var(--field-rule);
+    border-radius: 0;
+    background: var(--field-page-light);
+    color: var(--field-ink);
+    box-shadow: 0 6px 24px #0008;
+    font-size: 0.9rem;
+}
+#battle-order.hidden { display: none; }
+#order-title { font-size: 1rem; }
+#order-hint, #order-outcome { margin: 0; font-size: 0.82rem; line-height: 1.4; }
+#order-outcome:empty { display: none; }
+#order-details { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#order-details summary { min-height: 44px; padding: 10px 0; cursor: pointer; }
+#order-content { padding: 4px 0 10px; font-size: 0.9rem; }
+#order-content .tooltip-title { font-weight: bold; font-size: 1rem; }
+#order-content .tooltip-faction, #order-content .label { color: #59462c; }
+#order-content .tooltip-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 12px; }
+#order-content .tooltip-terrain { border-top: 1px solid #9e8056; padding-top: 8px; margin-top: 8px; }
+#order-content .tooltip-bonus { color: #345126 !important; }
+#order-content .tooltip-special { color: #704b12 !important; }
+#order-content .tooltip-debuff, #order-content .damage-range { color: #872825 !important; }
+#order-content .tooltip-morale span:last-child { color: #3b4221 !important; }
+.compact-interface .event-notification {
+    top: 150px;
+    width: min(420px, calc(100vw - 24px));
+    max-height: calc(100dvh - 180px);
+    overflow-y: auto;
+    background: var(--field-page);
+}
+.compact-interface .event-notification button { min-height: 44px; }
+.compact-interface .confirm-dialog {
+    width: min(460px, calc(100vw - 24px));
+    min-width: 0;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    padding: 20px;
+}
+.order-buttons { display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+#order-confirm { background: #30432a; color: #fff0ce; border-color: #23351f; min-width: 140px; }
+.touch-help { padding: 12px; border-left: 3px solid #796334; background: #e8d9b6; color: #3b3020; line-height: 1.55; }
+
+/* Stejné rozložení pro úzké okno i skutečný dotykový tablet. */
+.compact-battle #game-header { flex-shrink: 0; padding: 5px 9px; min-height: 48px; }
+.compact-battle .header-left, .compact-battle #battle-date, .compact-battle #phase-panel { display: none; }
+.compact-battle .header-center { text-align: left; min-width: 0; }
+.compact-battle #battle-name { font-size: 1rem; }
+.compact-battle #objective-hud { font-size: 0.78rem; margin-top: 2px; }
+.compact-battle #turn-info { flex-shrink: 0; font-size: 0.74rem; gap: 3px; }
+.compact-battle #current-player, .compact-battle #turn-number { padding: 3px 5px; min-height: 24px; }
+.compact-battle #game-main { padding: 0; gap: 0; }
+.compact-battle #map-container { padding: 8px; }
+.compact-battle #map-tools { top: 8px; right: 8px; }
+.compact-battle #minimap { right: 12px; bottom: 12px; }
+.compact-battle #unit-panel, .compact-battle #info-panel {
+    position: absolute;
+    z-index: 150;
+    bottom: 8px;
+    top: 66px;
+    width: min(340px, calc(100% - 16px));
+    min-width: 0;
+    max-height: none;
+    padding: 14px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-shadow: 0 4px 24px #0009;
+}
+.compact-battle #unit-panel { left: 8px; }
+.compact-battle #info-panel { right: 8px; }
+.compact-battle #unit-panel:not(.expanded), .compact-battle #info-panel:not(.expanded) { display: none; }
+.compact-battle #unit-panel.expanded, .compact-battle #info-panel.expanded { display: flex; }
+.compact-battle #unit-panel.expanded h2, .compact-battle #unit-panel.expanded #unit-info,
+.compact-battle #info-panel.expanded h2, .compact-battle #info-panel.expanded #army-overview { display: block; }
+.compact-battle #unit-panel.expanded #unit-actions:not(.hidden) { display: flex; }
+.compact-battle .panel-toggle { width: 44px; height: 44px; top: 5px; }
+.compact-battle #unit-panel h2 { min-height: 40px; padding-right: 42px; }
+.compact-battle #info-panel h2 { min-height: 40px; padding-left: 42px; }
+.compact-battle #unit-info { overflow: visible; flex: none; }
+.compact-battle #unit-actions { flex: none; }
+.compact-battle #unit-actions button { min-height: 44px; font-size: 0.85rem; }
+.compact-battle .army-section li { min-height: 44px; padding: 8px; }
+.compact-battle .unit-name { font-size: 0.86rem; }
+.compact-battle #compact-orders {
+    display: flex;
+    flex-shrink: 0;
+    align-items: stretch;
+    gap: 5px;
+    padding: 5px 7px;
+    background: var(--field-page);
+    border-top: 1px solid var(--field-rule);
+}
+#btn-unit-sheet { display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: flex-start; }
+#compact-unit-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
+#btn-unit-sheet > span:last-child { font-size: 0.72rem; }
+.compact-battle #turn-guidance { margin: 0; padding: 4px 9px; font-size: 0.8rem; line-height: 1.35; flex-shrink: 0; }
+.compact-battle #game-footer { min-height: 54px; flex-wrap: nowrap; flex-shrink: 0; gap: 6px; }
+.compact-battle #game-footer .footer-log { display: none; }
+.compact-battle .footer-main-actions { display: flex; flex: 1; flex-wrap: nowrap; gap: 5px; }
+.compact-battle #btn-end-turn { margin-right: auto; }
+.compact-battle #btn-end-turn, .compact-battle #btn-choral,
+.compact-battle #btn-objectives, .compact-battle .footer-btn { min-height: 44px; padding: 7px 9px; font-size: 0.8rem; }
+.compact-battle #battle-order { width: min(420px, calc(100% - 16px)); bottom: 8px; }
+.compact-battle #objectives-panel { position: fixed; inset: 70px 12px auto; width: auto; max-height: calc(100dvh - 160px); overflow: auto; z-index: 180; }
+.compact-battle #tooltip { display: none; }
+
+@media (max-width: 600px) {
+    .compact-battle #game-header { flex-wrap: nowrap; align-items: flex-start; }
+    .compact-battle #turn-info { flex-direction: column; }
+    .compact-battle #objective-hud { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .compact-battle #compact-orders { gap: 3px; padding: 4px; }
+    .compact-battle #compact-orders button { padding: 6px; font-size: 0.75rem; }
+    .compact-battle #game-footer { padding: 4px; gap: 4px; }
+    .compact-battle #btn-end-turn, .compact-battle #btn-choral,
+    .compact-battle #btn-objectives, .compact-battle .footer-btn { padding: 6px; font-size: 0.74rem; }
+    .compact-battle #battle-order { padding: 10px; }
+    .compact-battle #unit-panel, .compact-battle #info-panel { top: auto; max-height: calc(100% - 66px); }
+    .compact-battle #unit-info .stat { padding: 3px 0; }
+}
+@media (max-height: 500px) and (min-width: 601px) {
+    .compact-battle #game-header { min-height: 42px; }
+    .compact-battle .header-center { display: flex; align-items: center; gap: 10px; }
+    .compact-battle #battle-name { font-size: 0.9rem; white-space: nowrap; }
+    .compact-battle #objective-hud { display: block; max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .compact-battle #turn-guidance { display: none; }
+    .compact-battle #compact-orders { padding: 3px 6px; }
+    .compact-battle #btn-unit-sheet { flex-direction: row; align-items: center; gap: 8px; }
+    .compact-battle #battle-order { left: auto; right: 8px; transform: none; width: 360px; top: 8px; bottom: 8px; max-height: none; }
+    .compact-battle #order-details { flex: 1; }
+    .compact-battle #unit-panel, .compact-battle #info-panel { top: 8px; }
+}
+@media (pointer: coarse) {
+    .modal button, .modal summary { min-height: 44px; }
+    .modal input, .modal select { font-size: 16px; }
+}

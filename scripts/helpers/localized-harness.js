@@ -4,8 +4,8 @@ const vm = require('node:vm');
 const { createHarness } = require('./game-harness');
 
 // Skutečné locale, překladač, overlay i Kronika. Sdílené narativními a UI testy.
-async function createLocalizedHarness(language = 'cs') {
-    const h = createHarness();
+async function createLocalizedHarness(language = 'cs', options = {}) {
+    const h = createHarness(options);
     h.document.documentElement = { lang: 'cs' };
     for (const file of ['i18n/i18n.js', 'i18n/i18nHelpers.js', 'data/battleLore.js', 'systems/ChronicleSystem.js', 'ui/ChronicleView.js']) {
         const filename = path.join(__dirname, '../../js', file);

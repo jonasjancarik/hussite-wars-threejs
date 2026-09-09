@@ -1,7 +1,7 @@
 // Hlavní vstupní bod - inicializace hry
 
 function readLocalPreference(key) {
-    try { return localStorage.getItem(key); }
+    try { return GameStorage.getItem(key); }
     catch (error) { console.warn('Preference nelze načíst', error); return null; }
 }
 
@@ -48,32 +48,42 @@ function showConfirmDialog(message, title = null) {
         const messageEl = document.getElementById('confirm-message');
         const okBtn = document.getElementById('confirm-ok');
         const cancelBtn = document.getElementById('confirm-cancel');
+        if (!modal.classList.contains('hidden')) { resolve(false); return; }
+        const previousFocus = document.activeElement;
 
         // Použij i18n pro výchozí titulek
         titleEl.textContent = title || (typeof i18n !== 'undefined' ? i18n.t('confirm.title') : 'Potvrzení');
         messageEl.textContent = message;
         modal.classList.remove('hidden');
 
-        const handleOk = () => {
+        const finish = confirmed => {
             modal.classList.add('hidden');
             okBtn.removeEventListener('click', handleOk);
             cancelBtn.removeEventListener('click', handleCancel);
-            resolve(true);
+            document.removeEventListener('keydown', handleKey, true);
+            previousFocus?.focus?.();
+            resolve(confirmed);
         };
-
-        const handleCancel = () => {
-            modal.classList.add('hidden');
-            okBtn.removeEventListener('click', handleOk);
-            cancelBtn.removeEventListener('click', handleCancel);
-            resolve(false);
+        const handleOk = () => finish(true);
+        const handleCancel = () => finish(false);
+        const handleKey = event => {
+            if (event.key === 'Escape') {
+                event.preventDefault(); event.stopImmediatePropagation(); handleCancel();
+            } else if (event.key === 'Tab') {
+                event.preventDefault(); event.stopImmediatePropagation();
+                (document.activeElement === cancelBtn ? okBtn : cancelBtn).focus?.();
+            }
         };
 
         okBtn.addEventListener('click', handleOk);
         cancelBtn.addEventListener('click', handleCancel);
+        document.addEventListener('keydown', handleKey, true);
+        cancelBtn.focus?.();
     });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    document.body.classList.toggle('test-build', GameStorage.isTest);
     // Veškeré dynamické UI se staví až po načtení locale. Tím odpadá závod,
     // kdy se menu a první seznam misí vykreslily dřív než překlady.
     document.getElementById('btn-startup-retry').addEventListener('click', () => window.location.reload());
@@ -113,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // zůstávají aktivní a každý klik na tlačítka se zpracuje vícekrát
     function destroyCurrentGame() {
         if (game && typeof game.destroy === 'function') {
+            game.saveGame({ automatic: true });
             game.destroy();
         }
         game = null;
@@ -167,6 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             startGameFromSave();
         }
     });
+    document.getElementById('btn-resume-auto').addEventListener('click', () => startGameFromSave(true));
 
     // Kontrola zda existuje uložená hra
     checkSavedGame();
@@ -218,25 +230,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Tlačítko Hudba v hlavním menu
     const menuMusicBtn = document.getElementById('btn-menu-music');
+    function updateMenuMusicButton(isPlaying = Boolean(Music.isPlaying)) {
+        menuMusicBtn.textContent = i18n.t(isPlaying ? 'menu.musicPlaying' : 'menu.music');
+        menuMusicBtn.classList.toggle('playing', isPlaying);
+        menuMusicBtn.setAttribute('aria-pressed', String(isPlaying));
+    }
     menuMusicBtn.addEventListener('click', () => {
-        const isPlaying = Music.toggle();
-        if (isPlaying) {
-            menuMusicBtn.innerHTML = `<span>${i18n.t('menu.musicPlaying')}</span>`;
-            menuMusicBtn.classList.add('playing');
-        } else {
-            menuMusicBtn.innerHTML = `<span>${i18n.t('menu.music')}</span>`;
-            menuMusicBtn.classList.remove('playing');
-        }
+        updateMenuMusicButton(Music.toggle());
     });
+    updateMenuMusicButton();
 
     // Tlačítko přepínání jazyka v hlavním menu
     const languageToggleBtn = document.getElementById('btn-language-toggle');
     const currentLangFlag = document.getElementById('current-lang-flag');
 
-    // Aktualizuj vlajku podle aktuálního jazyka
+    // Textová značka jazyka zůstává čitelná i bez barevných emoji fontů.
     function updateLanguageFlag() {
         const currentLang = i18n.getCurrentLanguage();
-        currentLangFlag.textContent = currentLang === 'cs' ? '🇨🇿' : '🇬🇧';
+        currentLangFlag.textContent = currentLang.toUpperCase();
     }
 
     languageToggleBtn.addEventListener('click', async () => {
@@ -246,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateLanguageFlag();
     });
 
-    // Nastav správnou vlajku při načtení
+    // Nastav správnou značku jazyka při načtení.
     updateLanguageFlag();
 
     // =============================================
@@ -258,11 +269,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Statické data-i18n uzly řeší i18n samo. Tady obnovujeme obsah, který
     // vzniká až za běhu (karty misí, detail, cíle a hlavička rychlé bitvy).
     document.addEventListener('languageChanged', () => {
+        game?.view.orders.cancel();
+        game?.view.orders.refresh();
+        checkSavedGame();
         updateLanguageFlag();
         updateCampaignProgressUI();
         updateSoundButton();
 
-        menuMusicBtn.innerHTML = `<span>${i18n.t(Music.isPlaying ? 'menu.musicPlaying' : 'menu.music')}</span>`;
+        updateMenuMusicButton();
 
         const settingsLanguage = document.getElementById('language-select');
         if (settingsLanguage) settingsLanguage.value = i18n.getCurrentLanguage();
@@ -617,8 +631,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function startMission(scenario) {
         // Zastavení hudby z hlavního menu
         Music.stop();
-        menuMusicBtn.innerHTML = `<span>${i18n.t('menu.music')}</span>`;
-        menuMusicBtn.classList.remove('playing');
+        updateMenuMusicButton();
 
         // Skrytí modalu
         missionModal.classList.add('hidden');
@@ -645,6 +658,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Inicializace hry se scénářem
         game.initGameWithScenario(scenario);
+        game.saveGame({ automatic: true });
 
         // Aktualizace cílů mise v panelu
         updateObjectivesPanel(scenario);
@@ -670,8 +684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function startQuickBattle() {
         // Zastavení hudby z hlavního menu
         Music.stop();
-        menuMusicBtn.innerHTML = `<span>${i18n.t('menu.music')}</span>`;
-        menuMusicBtn.classList.remove('playing');
+        updateMenuMusicButton();
 
         mainMenu.classList.add('hidden');
         gameContainer.classList.remove('hidden');
@@ -693,6 +706,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Inicializace bez scénáře (výchozí armády)
         game.initGame();
+        game.saveGame({ automatic: true });
         updateObjectivesPanel(null);
 
         // Export pro debugging
@@ -700,11 +714,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.hexGrid = hexGrid;
     }
 
-    function startGameFromSave() {
+    function startGameFromSave(automatic = false) {
         try {
-            const restored = SaveGameSystem.load(canvas, game);
+            const restored = SaveGameSystem.load(canvas, game, { automatic });
             game = restored;
             hexGrid = restored.hexGrid;
+            game.saveGame({ automatic: true });
         } catch (e) {
             const key = ['gameLog.noSaveFound', 'gameLog.saveIncompatible'].includes(e.message)
                 ? e.message : 'gameLog.loadError';
@@ -806,54 +821,79 @@ document.addEventListener('DOMContentLoaded', async () => {
     const infoPanel = document.getElementById('info-panel');
     const toggleLeft = document.getElementById('toggle-left');
     const toggleRight = document.getElementById('toggle-right');
+    const unitSheetButton = document.getElementById('btn-unit-sheet');
+    const armySheetButton = document.getElementById('btn-army-sheet');
 
-    // Toggle levého panelu.
-    // Na šířkách <=1200px (vč. mobilních lišt "polního rukopisu" <=900px) media
-    // query obsah panelu skrývá a zpět ho umí přivést jen třída .expanded -
-    // tu ale tenhle handler nikdy nenastavoval (přepínal jen .collapsed),
-    // takže se panely na malých obrazovkách nedaly rozbalit vůbec.
+    function closeCompactPanels() {
+        BattlePanels.closeCompactPanels();
+    }
+    function syncPanelButtons() {
+        BattlePanels.syncCompactButtons();
+    }
+    function openCompactPanel(panel) {
+        const wasOpen = panel.classList.contains('expanded');
+        closeCompactPanels();
+        game?.view.orders.cancel();
+        if (!wasOpen) {
+            panel.classList.add('expanded'); panel.classList.remove('collapsed');
+        }
+        syncPanelButtons();
+    }
+    unitSheetButton.addEventListener('click', () => openCompactPanel(unitPanel));
+    armySheetButton.addEventListener('click', () => openCompactPanel(infoPanel));
+    const minimapButton = document.getElementById('btn-minimap');
+    minimapButton.addEventListener('click', () => {
+        const open = document.getElementById('minimap').classList.toggle('map-open');
+        minimapButton.setAttribute('aria-expanded', String(open));
+    });
+
+    // Na dotyku panel překrývá mapu; na desktopu si ponechává boční sloupec.
     if (toggleLeft && unitPanel) {
         toggleLeft.addEventListener('click', () => {
-            if (window.innerWidth <= 1200) {
-                const expanded = unitPanel.classList.toggle('expanded');
-                unitPanel.classList.toggle('collapsed', !expanded);
-                toggleLeft.textContent = expanded ? '◀' : '▶';
+            if (gameContainer.classList.contains('compact-battle')) {
+                openCompactPanel(unitPanel);
             } else {
                 unitPanel.classList.toggle('collapsed');
                 toggleLeft.textContent = unitPanel.classList.contains('collapsed') ? '▶' : '◀';
             }
+            syncPanelButtons();
         });
     }
 
     // Toggle pravého panelu (zrcadlově k levému)
     if (toggleRight && infoPanel) {
         toggleRight.addEventListener('click', () => {
-            if (window.innerWidth <= 1200) {
-                const expanded = infoPanel.classList.toggle('expanded');
-                infoPanel.classList.toggle('collapsed', !expanded);
-                toggleRight.textContent = expanded ? '▶' : '◀';
+            if (gameContainer.classList.contains('compact-battle')) {
+                openCompactPanel(infoPanel);
             } else {
                 infoPanel.classList.toggle('collapsed');
                 toggleRight.textContent = infoPanel.classList.contains('collapsed') ? '◀' : '▶';
             }
+            syncPanelButtons();
         });
     }
 
     // Responzivita - automatické sbíhání/rozbalení na menších obrazovkách
+    const touchQuery = window.matchMedia?.('(any-pointer: coarse)');
+    let layoutWidth = null;
     function handleResize() {
         if (!unitPanel || !infoPanel || !toggleLeft || !toggleRight) return;
 
         const width = window.innerWidth;
-        if (width <= 1200) {
-            // Malé a střední obrazovky - obsah panelů skrývá media query,
-            // rozbaluje se kliknutím na šipku (třída .expanded). Šipky ukažme
-            // směrem "rozbalit", dokud rozbaleno není.
+        const compact = width <= 1200 || Boolean(touchQuery?.matches);
+        const reframe = width !== layoutWidth || compact !== gameContainer.classList.contains('compact-battle');
+        layoutWidth = width;
+        gameContainer.classList.toggle('compact-battle', compact);
+        document.body.classList.toggle('compact-interface', compact);
+        if (reframe) {
+            game?.view.mapInput.cancel(); game?.view.orders.cancel();
+        }
+        if (compact) {
+            // Při změně výšky lišty prohlížeče neměnit otevřenou kartu ani kameru.
             const leftExpanded = unitPanel.classList.contains('expanded');
             const rightExpanded = infoPanel.classList.contains('expanded');
             unitPanel.classList.toggle('collapsed', !leftExpanded);
             infoPanel.classList.toggle('collapsed', !rightExpanded);
-            toggleLeft.textContent = leftExpanded ? '◀' : '▶';
-            toggleRight.textContent = rightExpanded ? '▶' : '◀';
         } else {
             // Na velkých obrazovkách - normální stav (expanded už není potřeba)
             unitPanel.classList.remove('collapsed', 'expanded');
@@ -861,9 +901,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleLeft.textContent = '◀';
             toggleRight.textContent = '▶';
         }
+        syncPanelButtons();
+        if (reframe && game?.selectedUnit) game.centerOnUnit(game.selectedUnit);
     }
 
     window.addEventListener('resize', handleResize);
+    touchQuery?.addEventListener('change', handleResize);
     handleResize();
 
     // =============================================
@@ -1160,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function saveSettings() {
-        try { localStorage.setItem('husitskeValky_settings', JSON.stringify(gameSettings)); }
+        try { GameStorage.setItem('husitskeValky_settings', JSON.stringify(gameSettings)); }
         catch (error) { console.warn('Nastavení se nepodařilo uložit', error); }
     }
 
@@ -1177,6 +1220,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             continueBtn.disabled = true;
         }
+        const autoButton = document.getElementById('btn-resume-auto');
+        autoButton.classList.add('hidden');
+        mainMenu.classList.remove('has-autosave');
+        try {
+            const prepared = SaveGameSystem.read({ automatic: true });
+            if (prepared.data.gameState !== 'playing') return;
+            document.getElementById('autosave-summary').textContent = i18n.t('touch.savedSummary', {
+                battle: prepared.scenario?.name || i18n.t('quickBattle.name'), turn: prepared.data.turnNumber
+            });
+            autoButton.classList.remove('hidden');
+            mainMenu.classList.add('has-autosave');
+        } catch (_) { /* Nečitelný checkpoint neblokuje menu a sám se nepřepisuje. */ }
     }
 
     // =============================================
@@ -1534,7 +1589,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.key !== 'Escape' && e.target.closest?.('button, input, select, textarea, summary, a, [role="button"]')) return;
         // Escape - zavření modalů nebo pause menu
         if (e.key === 'Escape') {
-            if (helpModal && !helpModal.classList.contains('hidden')) {
+            if (game?.view.orders.inspectedHex) {
+                game.view.orders.cancel();
+            } else if (gameContainer.classList.contains('compact-battle') &&
+                (unitPanel.classList.contains('expanded') || infoPanel.classList.contains('expanded'))) {
+                closeCompactPanels();
+            } else if (helpModal && !helpModal.classList.contains('hidden')) {
                 helpModal.classList.add('hidden');
             } else if (settingsModal && !settingsModal.classList.contains('hidden')) {
                 settingsModal.classList.add('hidden');

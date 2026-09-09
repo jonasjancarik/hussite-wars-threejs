@@ -7,18 +7,31 @@ systémy. `CombatSystem` provádí souboje; `ScenarioEventSystem` spravuje průb
 scénářových událostí. Žádná z těchto tříd přímo nepracuje s DOM nebo s animační
 smyčkou prohlížeče.
 
-Prezentace bitvy je rozdělena do tří tříd:
+Prezentace bitvy je rozdělena podle odpovědností:
 
 - `BattleView` překládá vstupy prohlížeče na příkazy hry, vykresluje mapu a minimapu,
   ovládá kameru, notifikace a efekty. Vlastní listenery a animační smyčku.
+- `WoodcutRenderer` vlastní kreslení terénu, žetonů a zvýraznění. `HexGrid.render()`
+  mu deleguje prezentaci, zatímco souřadnice, sousedé a obsazení zůstávají v mřížce.
+  Sdílené kódové vektorové značky slouží i přehledu armády; žádné další assety ani
+  závislosti se nestahují. Kreslení nespotřebovává náhodná čísla herních pravidel.
 - `BattlePanels` sestavuje HTML jednotek, přehledu armád, tlačítek a fázového banneru.
   Situační pokyn pod mapou pouze odvozuje ze stavu tahu a vybrané jednotky;
   neprohledává pozice protivníka ani nemění herní pravidla.
 - `BattleTooltip` vlastní tooltip, jeho obsah a cache pro hover.
+- `BattleMapInput` vlastní gesta a kameru: posun, zoom, převody souřadnic a
+  potlačení kompatibilního clicku po dotyku/tažení. Zvětšuje prezentační velikost
+  Canvasu, ne logickou mřížku nebo pohybové dosahy.
+- `BattleOrders` provádí přesun a pochod přímo, drží pouze dočasný náhled útoku
+  a inspekci hexu. Obsah sdílí
+  s `BattleTooltip.contentForHex()`, včetně mlhy a odhadu protiútoku. Potvrzení
+  znovu zkontroluje jednotku, kolo, výchozí pozici, cíl a platnost akce.
 
 Pohled čte stav a dotazuje se pravidel. Změny herního stavu provádí příkazy `Game`
 nebo příslušného systému, nikoli přímým přepisováním jeho polí. Například klik na
-Canvas převede `BattleView.handleClick()` na hex a předá `Game.handleHexClick()`.
+Canvas převede `BattleView.handleClick()` přes kameru na hex. Myš na desktopu jej
+předá `Game.handleHexClick()` přímo. Dotyk/kompaktní režim předá přesun a pochod
+také přímo, ale útok až po potvrzení náhledu. Filtr gest zůstává v `BattleMapInput`.
 Přepnutí rychlosti AI jde přes `Game.skipAIAnimations()`.
 
 Dosavadní metody `Game.updateUI()`, `Game.updateUnitPanel()` a další veřejné vstupy
@@ -167,6 +180,14 @@ data ověří přes `prepare()`, které používá i načítání. Teprve potom 
 hráči se nehlásí úspěch. Validace nemění aktivní jednotky ani factory ID.
 Formát zůstává v4; kompatibilita načítání v1–v3 se nemění.
 
+`saveGame({ automatic: true })` používá samostatný klíč AUTO_KEY. Bezpečný
+checkpoint spouští dokončení `BattleActionSystem.run()`, nikoli render nebo
+časový interval. Vyvolaná výjimka checkpoint nevytvoří. Ruční uložení se
+nepřepisuje. Dokončení bitvy smaže automatickou pozici jen při přesné shodě
+s posledním zápisem dané instance. `visibilitychange` vlastní pohled a jeho
+AbortController; při skrytí stránky zachová ruční pauzu, pozastaví čekání,
+zastaví render a zruší gesta/náhled. Podrobnosti: [MOBILE_PLAYTEST.md](MOBILE_PLAYTEST.md).
+
 ## CSS: zachované pořadí kaskády
 
 `style.css` je pouze vstupní seznam importů. Jeho pořadí odpovídá původnímu souboru:
@@ -179,7 +200,8 @@ Formát zůstává v4; kompatibilita načítání v1–v3 se nemění.
 | `campaign.css` | Kampaň, mise, fáze a události |
 | `menu-and-results.css` | Hlavní menu, nastavení, výsledky a tutorial |
 | `feedback.css` | Animace, indikátory, přístupnost a kronika |
-| `field-theme.css` | Výsledné rukopisné téma a jeho přepsání základních stylů |
+| `field-theme.css` | Výsledné dřevořezové téma a jeho přepsání základních stylů |
+| `touch-and-layout.css` | Kamera, náhled rozkazu, dotykové panely a kompaktní rozložení |
 
 Rozdělení zachovalo relativní pořadí selektorů i media queries. Pozdější téma stále
 přepisuje základní rozložení; soubory se nesmí prostě abecedně seřadit. Validátor
@@ -191,6 +213,23 @@ a vztah zkrácených a dílčích vlastností. Duplicitní selektor sám o sobě
 Po změně stylů obnovte příslušné `?v=` v importu a verzi `style.css` v `index.html`.
 
 ## Ověření změn
+
+### Úložiště a testovací nasazení
+
+`GameStorage` se načítá jako první, před lokalizací i herními systémy. Je jediným
+místem přístupu k `localStorage`; poskytuje `getItem`, `setItem`, `removeItem`
+a mapování `keyFor`. Nikdy nemaže celý origin a chyby předává existujícím
+volajícím, aby zůstala viditelná varování a ochrana posledního dobrého savu.
+
+Na `/husitske-valky-test/` má každý klíč prefix `husitskeValky_test:`; jinde zůstává
+původní klíč. Žádná migrace ani fallback k produkčním datům se v testu neprovádí.
+Tak lze publikovat stejný commit do testovacího repozitáře a později sloučit větev
+do produkce bez přepínání konfiguračních souborů. URL testu je explicitní kontrakt,
+ne odhad podle názvu Git větve; samotná lokální větev nemění režim prohlížeče.
+`test-storage.js` ověřuje oba weby nad společným úložištěm a zakazuje přímé
+přístupy ostatních runtime souborů k `localStorage`.
+
+### Spuštění kontrol
 
 ```bash
 node scripts/check.js

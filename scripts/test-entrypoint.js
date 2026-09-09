@@ -11,7 +11,7 @@ const test = (name, run) => tests.push({ name, run });
 const scriptTag = file => html.match(new RegExp(`<script src="${file.replaceAll('.', '\\.')}\\?v=[\\d.]+"></script>`))[0];
 
 test('skutečný HTML vstup zahrnuje všechny skripty, hudbu, logo i překlady', () => {
-    assert.deepEqual(validateEntrypoint(), { scripts: 29, assets: 34, languages: 2 });
+    assert.deepEqual(validateEntrypoint(), { scripts: 33, assets: 39, languages: 2 });
 });
 
 test('chybějící skript nepřekryje ani jeho kopie v komentáři', () => {
@@ -46,7 +46,7 @@ test('relativní URL mohou mít cache verzi, fragment a nezávislé vnější od
     const changed = html.replace('imgs/novelogo.png', './imgs/novelogo.png?v=999#logo') +
         '<a href="https://example.com/missing">externí</a><a href="mailto:test@example.com">mail</a>' +
         '<a href="#menu">kotva</a><img src="data:image/png;base64,AAAA">';
-    assert.equal(validateEntrypoint({ html: changed }).assets, 34);
+    assert.equal(validateEntrypoint({ html: changed }).assets, 39);
 });
 
 test('velikost písmen se kontroluje i na case-insensitive disku', () => {
@@ -61,7 +61,7 @@ test('absolutní cesty a únik z projektu jsou odmítnuty', () => {
     }
 });
 
-for (const file of ['style.css', 'imgs/novelogo.png', 'audio/ktoz-jsu-bozi-bojovnici-dobrevyzvaneni.mobi.mp3', 'js/i18n/locales/cs.json', 'js/i18n/locales/en.json']) {
+for (const file of ['style.css', 'imgs/novelogo.png', 'imgs/menu-woodcut.svg', 'audio/ktoz-jsu-bozi-bojovnici-dobrevyzvaneni.mobi.mp3', 'js/i18n/locales/cs.json', 'js/i18n/locales/en.json']) {
     test(`chybějící asset ${file} zastaví kontrolu`, () => {
         assert.throws(() => validateEntrypoint({ exists: value => value !== file && exactFileExists(value) }), /chybí soubor/);
     });

@@ -69,6 +69,10 @@ závěry Živohoště, Prokopův osud u Lipan, přepnutí jazyka i save/load.
 oddělení zničených a uprchlých jednotek i bezpečný offline export.
 `node scripts/test-first-experience.js` ověřuje situační pokyny, jejich obnovu po
 save/load, chyby překladů a nastavení i jednotný účet výsledků včetně posil.
+`node scripts/test-touch.js` ověřuje přímý přesun, náhledy útoku a potvrzení, gesta, kameru,
+samostatné automatické ukládání a přerušení hry přepnutím aplikace.
+`node scripts/test-storage.js` ověřuje oddělení savů, postupu a preferencí
+testovacího webu od stabilní hry, včetně mazání a opětovného načtení.
 `node scripts/validate-entrypoint.js` hlídá pořadí všech klasických skriptů a lokální
 cesty v HTML, hudbě i načítání překladů, včetně velikosti písmen a relativních URL.
 Samotnou kontrolu vstupu testuje `node scripts/test-entrypoint.js`.
@@ -99,6 +103,9 @@ externích souborů. Lze jej sdílet a vytisknout (včetně tisku do PDF přes p
 Jde o čtenářský archiv, **nikoli zálohu savu**: nelze z něj obnovit rozehranou hru.
 
 První řízený playtest je popsaný v [docs/ACT_I_PLAYTEST.md](docs/ACT_I_PLAYTEST.md).
+Lokální dotykové ovládání a kontrola na telefonu/tabletu jsou popsány v
+[docs/MOBILE_PLAYTEST.md](docs/MOBILE_PLAYTEST.md). Nejde o potvrzení podpory fyzických
+zařízení; ta je nutné otestovat před publikací.
 
 ## 📁 Struktura projektu
 
@@ -107,7 +114,7 @@ strategie/
 ├── .github/workflows/ci.yml # Automatické kontroly při pushi a pull requestu
 ├── index.html              # Hlavní HTML soubor
 ├── style.css               # Vstupní manifest: pevné pořadí CSS importů
-├── styles/                 # Sedm částí stylů, od základů po výsledné téma
+├── styles/                 # Osm částí stylů včetně kompaktního dotykového rozložení
 ├── js/
 │   ├── core/              # Základní herní logika
 │   │   ├── game.js        # Hlavní herní třída
@@ -132,7 +139,10 @@ strategie/
 │   │   ├── campaign.js    # Struktura kampaně
 │   │   └── battleLore.js  # Historické texty
 │   ├── ui/                # UI komponenty
+│   │   ├── WoodcutRenderer.js # Dřevořezová mapa a společné vektorové značky oddílů
 │   │   ├── BattleView.js  # Vstupy bitvy, kamera, vykreslování a UI lifecycle
+│   │   ├── BattleMapInput.js # Posun, zoom, gesta a souřadnice
+│   │   ├── BattleOrders.js # Přímý přesun a potvrzení útoku na dotyku
 │   │   ├── BattlePanels.js # Panely jednotek, armád a fází
 │   │   ├── BattleTooltip.js # Obsah a stav tooltipu
 │   │   ├── ChronicleView.js # Kronika, pramenná kritika a offline export
@@ -187,10 +197,14 @@ Viz: [docs/VICTORY_CONDITIONS.md](docs/VICTORY_CONDITIONS.md)
 
 ## 🎨 Grafický styl
 
-- **Středověký manuscript look** - Inspirováno iluminovanými rukopisy
-- **Parchment textures** - Nostalgický pocit historického dokumentu
-- **Hex-based battlefield** - Taktický hexagonal grid
-- **Period-appropriate UI** - Gotické fonty, zlaté ornamenty
+Testovací větev používá **dřevořez**: teplý papír, tmavou rytinu krajiny a střídmou
+červenou/modrou pro strany. Vlastní oddíly mají kruhové žetony, protivník štíty;
+značky zbraní jsou společné pro mapu a přehled armády. Pohyb má přerušovaný obrys
+s tečkou, útok červený obrys s křížky a výběr dvojitou linku.
+
+Vykreslení je oddělené v `WoodcutRenderer`; nemění scénáře, pravidla ani formát
+savu. `node scripts/test-woodcut.js` hlídá terény, značky, mlhu, geometrii a kreslení
+všech 18 scénářů. Podrobnosti a ruční kontrola: [WOODCUT_PLAYTEST.md](docs/WOODCUT_PLAYTEST.md).
 
 ## 🏛️ Historická autenticita
 

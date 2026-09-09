@@ -22,7 +22,7 @@ const CampaignProgressSystem = {
     },
 
     _storage() {
-        return typeof localStorage !== 'undefined' ? localStorage : null;
+        return GameStorage;
     },
 
     _acts() {

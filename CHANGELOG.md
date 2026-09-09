@@ -1,5 +1,15 @@
 # 📜 Changelog
 
+## Dřevořez — testovací výtvarný směr (8. září 2026)
+
+- Ryté lesy, stavby, vodní šrafy a papírová mapa místo sytých plošek a zářících žetonů.
+- Kruhové vlastní oddíly a nepřátelské štíty, společné vektorové značky v mapě i přehledu armády.
+- Výběr, přesun, útok, únik a stavy jednotek mají rozlišitelné tvary; zdraví je čitelné i po vyčerpání oddílu.
+- Geometrie kreslených hran odpovídá stávajícím sousedům; souřadnice a dosahy se nemění.
+- Kreslení přesunuto z `HexGrid` do `WoodcutRenderer`, bez změny bojových pravidel, scénářů a formátu savu.
+- Deset nových regresí pokrývá všech 13 terénů, typy jednotek, 18 scénářů, mlhu i stabilitu kreslení.
+- Výtvarná změna patří pouze do testovací větve; ostré vydání vyžaduje samostatné schválení.
+
 ## Automatické kontroly a scénářové události (6. září 2026)
 
 - Přidán GitHub Actions workflow pro push, pull request i ruční spuštění; běží stejná kontrola projektu na Node.js 24.

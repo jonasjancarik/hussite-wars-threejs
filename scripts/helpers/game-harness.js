@@ -4,9 +4,9 @@ const vm = require('node:vm');
 const { TestBattleView } = require('./test-battle-view');
 
 // Skutečné herní třídy a data; nahrazujeme jen prohlížeč, zvuk a čas.
-function createHarness({ browserView = false } = {}) {
+function createHarness({ browserView = false, pathname = '/', storage = new Map() } = {}) {
     let now = 0, nextTimer = 1;
-    const timers = new Map(), storage = new Map(), elements = new Map();
+    const timers = new Map(), elements = new Map();
     const noop = () => {};
     class Element extends EventTarget {
         constructor() {
@@ -24,8 +24,13 @@ function createHarness({ browserView = false } = {}) {
             this.style = {}; this.dataset = {}; this.children = [];
             this.textContent = ''; this.innerHTML = ''; this.disabled = false;
             this.clientWidth = 800; this.clientHeight = 600;
+            this.scrollLeft = 0; this.scrollTop = 0;
+            this.attributes = new Map();
         }
         getContext() { return {}; }
+        focus() { document.activeElement = this; }
+        setAttribute(key, value) { this.attributes.set(key, String(value)); }
+        getAttribute(key) { return this.attributes.get(key) ?? null; }
         getBoundingClientRect() { return { left: 0, top: 0, width: 800, height: 600 }; }
         querySelector() { return null; }
         querySelectorAll() { return []; }
@@ -50,7 +55,7 @@ function createHarness({ browserView = false } = {}) {
             constructor(...args) { super(...(args.length ? args : [now])); }
             static now() { return now; }
         },
-        document, window: {},
+        document, window: {}, location: { pathname },
         localStorage: {
             getItem: key => storage.get(key) ?? null,
             setItem: (key, value) => storage.set(key, String(value)),
@@ -63,17 +68,18 @@ function createHarness({ browserView = false } = {}) {
         requestAnimationFrame: noop, cancelAnimationFrame: noop
     });
     for (const file of [
-        'data/unitTypes.js', 'entities/Unit.js', 'entities/UnitFactory.js', 'core/hex.js',
+        'core/GameStorage.js',
+        'data/unitTypes.js', 'entities/Unit.js', 'entities/UnitFactory.js', 'ui/WoodcutRenderer.js', 'core/hex.js',
         'data/scenarios.js', 'data/campaign.js', 'systems/CampaignProgressSystem.js',
         'systems/CombatSystem.js', 'systems/FogOfWarSystem.js', 'systems/MoraleSystem.js',
         'systems/VictoryConditionsSystem.js', 'systems/TutorialSystem.js',
         'systems/BattleActionSystem.js', 'systems/SaveGameSystem.js', 'systems/ScenarioEventSystem.js',
-        'ui/BattlePanels.js', 'ui/BattleTooltip.js', 'ui/BattleView.js', 'core/game.js', 'ai.js'
+        'ui/BattlePanels.js', 'ui/BattleTooltip.js', 'ui/BattleMapInput.js', 'ui/BattleOrders.js', 'ui/BattleView.js', 'core/game.js', 'ai.js'
     ]) {
         const filename = path.join(__dirname, '../../js', file);
         vm.runInContext(fs.readFileSync(filename, 'utf8'), context, { filename });
     }
-    const api = vm.runInContext('({ Game, HexGrid, Unit, UnitFactory, Scenarios, ScenarioManager, SaveGameSystem, ScenarioEventSystem, AI, BattleView, BattlePanels, BattleTooltip })', context);
+    const api = vm.runInContext('({ Game, GameStorage, CampaignProgressSystem, HexGrid, Unit, UnitFactory, Scenarios, ScenarioManager, SaveGameSystem, ScenarioEventSystem, AI, BattleView, BattlePanels, BattleTooltip, BattleMapInput, BattleOrders })', context);
     const viewFactory = game => {
         if (!browserView) return new TestBattleView(game);
         // UI testy používají skutečný adaptér a DOM double; Canvas drawing není jejich předmět.

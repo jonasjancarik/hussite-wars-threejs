@@ -8,9 +8,8 @@ class BattleTooltip {
     }
 
     handleMouseMove(event) {
-        const rect = this.game.hexGrid.canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        if (this.game.view.mapInput?.pointers.size || this.game.view.orders?.isCompact()) return;
+        const { x, y } = this.game.view.mapInput.screenToWorld(event.clientX, event.clientY);
 
         const hex = this.game.hexGrid.pixelToHex(x, y);
 
@@ -32,10 +31,20 @@ class BattleTooltip {
     }
 
     showTooltip(hex, mouseX, mouseY) {
+        const html = this.contentForHex(hex);
+        if (!html) { this.hideTooltip(); return; }
+        if (html !== this.lastTooltipContent) {
+            this.tooltip.innerHTML = html;
+            this.lastTooltipContent = html;
+        }
+        this.tooltip.classList.remove('hidden');
+        this.positionTooltip(mouseX, mouseY);
+    }
+
+    contentForHex(hex) {
         // Mlha války: neprozkoumaný hex neprozrazuje vůbec nic
         if (this.game.fogOfWar && !this.game.fogOfWarSystem.isHexExplored(hex.col, hex.row)) {
-            this.hideTooltip();
-            return;
+            return '';
         }
 
         let unit = this.game.getUnitAt(hex.col, hex.row);
@@ -210,14 +219,7 @@ class BattleTooltip {
             </div>
         `;
 
-        // Aktualizovat tooltip jen pokud se obsah změnil (optimalizace pro animationLoop)
-        if (html !== this.lastTooltipContent) {
-            this.tooltip.innerHTML = html;
-            this.lastTooltipContent = html;
-        }
-
-        this.tooltip.classList.remove('hidden');
-        this.positionTooltip(mouseX, mouseY);
+        return html;
     }
 
     positionTooltip(mouseX, mouseY) {

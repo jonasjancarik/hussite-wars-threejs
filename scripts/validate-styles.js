@@ -7,7 +7,7 @@ const manifest = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const importPattern = /@import\s+url\("(styles\/[\w-]+\.css)\?v=([\d.]+)"\);/g;
 const imports = [...manifest.matchAll(importPattern)];
 // Pořadí je součástí vzhledu. Změna vyžaduje vědomou úpravu tohoto kontraktu.
-const cascade = ['base', 'battle', 'dialogs-and-help', 'campaign', 'menu-and-results', 'feedback', 'field-theme'];
+const cascade = ['base', 'battle', 'dialogs-and-help', 'campaign', 'menu-and-results', 'feedback', 'field-theme', 'touch-and-layout'];
 assert.deepEqual(imports.map(match => match[1]), cascade.map(name => `styles/${name}.css`), 'Změněné pořadí, chybějící nebo duplicitní CSS import');
 assert.equal(manifest.replace(/\/\*[\s\S]*?\*\//g, '').replace(importPattern, '').trim(), '', 'Manifest smí obsahovat jen deklarované importy');
 

@@ -2,6 +2,26 @@
 class BattlePanels {
     constructor(game) { this.game = game; }
 
+    static syncCompactButtons() {
+        const compact = document.getElementById('game-container').classList.contains('compact-battle');
+        for (const [panelId, buttonId, toggleId] of [
+            ['unit-panel', 'btn-unit-sheet', 'toggle-left'], ['info-panel', 'btn-army-sheet', 'toggle-right']
+        ]) {
+            const panel = document.getElementById(panelId), toggle = document.getElementById(toggleId);
+            document.getElementById(buttonId).setAttribute('aria-expanded', String(panel.classList.contains('expanded')));
+            toggle.setAttribute('aria-expanded', String(!panel.classList.contains('collapsed')));
+            if (compact) toggle.textContent = '×';
+        }
+    }
+
+    static closeCompactPanels() {
+        for (const id of ['unit-panel', 'info-panel']) {
+            const panel = document.getElementById(id);
+            panel.classList.remove('expanded'); panel.classList.add('collapsed');
+        }
+        this.syncCompactButtons();
+    }
+
     factionLabel(faction) {
         const id = this.game.currentScenario && this.game.currentScenario.id;
         if (id && typeof i18n !== 'undefined') {
@@ -39,6 +59,9 @@ class BattlePanels {
 
     updateEndTurnButton() {
         this.updateGuidance();
+        const saveStatus = document.getElementById('autosave-status');
+        saveStatus.classList.toggle('hidden', !this.game.autosaveFailed);
+        saveStatus.textContent = this.game.autosaveFailed ? i18n.t('touch.autosaveError') : '';
         const endTurnBtn = document.getElementById('btn-end-turn');
         if (!endTurnBtn) return;
         endTurnBtn.disabled = this.game.currentFaction !== 'hussites' || !this.game.canStartAction();
@@ -78,7 +101,11 @@ class BattlePanels {
         if (!element) return;
         const guidance = this.getGuidance();
         element.classList.toggle('hidden', !guidance);
-        const text = guidance ? i18n.t(`onboarding.hints.${guidance.key}`, { unit: guidance.unit }) : '';
+        const compact = document.getElementById('game-container').classList.contains('compact-battle');
+        let key = guidance ? `onboarding.hints.${guidance.key}` : '';
+        if (compact && guidance?.key === 'select') key = 'touch.selectHint';
+        if (compact && ['move', 'attack'].includes(guidance?.key)) key = 'touch.chooseTarget';
+        const text = key ? i18n.t(key, { unit: guidance.unit }) : '';
         if (element.textContent !== text) element.textContent = text;
     }
 
@@ -100,8 +127,7 @@ class BattlePanels {
             li.className = 'unit-list-item';
 
             // Získání symbolu jednotky
-            const unitType = UnitTypes[unit.type];
-            const symbol = unitType?.symbol || '?';
+            const symbol = WoodcutRenderer.icon(unit);
 
             // Výpočet procenta zdraví pro barvu
             const healthPercent = (unit.health / unit.maxHealth) * 100;

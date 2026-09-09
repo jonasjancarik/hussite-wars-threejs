@@ -21,7 +21,47 @@ Repozitář, jeho historie a web jsou veřejné. Do commitu nepatří přístupo
 osobní poznámky testerů ani knihy/PDF ze složky `zdroje/`. Gitignore není ochranou
 již commitnutých souborů. Ani soukromé repo samo o sobě neznamená neveřejný Pages web.
 
-## Další vydání
+## Oddělená testovací verze
+
+Mobilní UI se vyvíjí v lokální větvi `codex/mobile-ui`. Stabilní `main` a Pages
+repozitáře `husitske-valky` zůstávají nedotčené. Testovací kopie patří do veřejného
+repozitáře [husitske-valky-test](https://github.com/josefslerka/husitske-valky-test),
+jeho Pages používají vlastní `main` / `/(root)`:
+[testovací hra](https://josefslerka.github.io/husitske-valky-test/).
+
+Remote `origin` nadále znamená **stabilní** repozitář; remote `test` znamená
+`https://github.com/josefslerka/husitske-valky-test.git`. Testovací repo je jen
+publikační kopie se společnou historií, ne další nezávislý vývoj.
+Aktualizace testovací verze z větve `codex/mobile-ui`:
+
+```bash
+git branch --show-current
+git remote get-url test
+node scripts/check.js
+git diff --check
+git status
+# Po commitu zkontrolovaných změn:
+git push test HEAD:main
+```
+
+Nikdy pro tento test nepoužívejte `git push origin main` ani nepřepínejte zdroj
+Pages stabilního repozitáře. Publikování je veřejné, bez hesla. CI a Pages build
+ověřujte v **testovacím** repozitáři; původní web tím nedostává nový obsah.
+
+Obě projektové adresy mají stejný origin. `GameStorage` proto pro přesnou cestu
+`/husitske-valky-test/` (také `index.html`) přidává všem klíčům prefix
+`husitskeValky_test:`. Savy, autosavy, kampaň, kronika, nastavení i jazyk se nikdy
+nepřebírají ze stabilních klíčů. Menu, pauza a titulek karty označují testovací
+verzi. Na stabilní adrese zůstanou původní klíče i po budoucím merge beze změny.
+Při přejmenování testovacího repozitáře nebo změně jeho URL je nutné upravit
+rozpoznání v `js/core/GameStorage.js` a jeho testy **před** publikováním.
+Jde o ochranu před nechtěným smícháním dat, nikoli bezpečnostní hranici mezi
+nedůvěryhodnými weby. Vymazání všech dat domény v prohlížeči odstraní obě verze.
+
+Po playtestu se mobilní větev může sloučit do stabilní `main`, ale až po samostatném
+schválení produkčního vydání. Testovací postup se do produkce automaticky nemigruje.
+
+## Další stabilní vydání
 
 V kořeni projektu:
 

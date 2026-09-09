@@ -1223,6 +1223,7 @@ class Game {
             });
         }
 
+        SaveGameSystem.finishAutomatic(this.lastAutosaveRaw);
         this.view.showGameOver(isVictory, message, stats);
     }
 
@@ -1319,10 +1320,10 @@ class Game {
     }
 
     // Uložení hry do localStorage
-    saveGame() {
+    saveGame({ automatic = false } = {}) {
         // Save nesmí zachytit půl nájezdu ani půl tahu AI.
         if (this.gameState !== 'playing' || this.actions.busy || this.currentFaction !== 'hussites') {
-            this.addLog(i18n.t('gameLog.saveUnavailable'), 'turn');
+            if (!automatic) this.addLog(i18n.t('gameLog.saveUnavailable'), 'turn');
             return false;
         }
         try {
@@ -1370,13 +1371,26 @@ class Game {
                 exploredHexes: [...this.exploredHexes],
                 savedAt: new Date().toISOString()
             };
-            SaveGameSystem.write(saveData);
-            this.addLog(i18n.t('gameLog.gameSaved'), 'turn');
-            Sound.playSelect();
+            const raw = SaveGameSystem.write(saveData, { automatic });
+            if (automatic) {
+                const wasFailed = this.autosaveFailed;
+                this.autosaveFailed = false; this.lastAutosaveRaw = raw;
+                if (wasFailed) this.updateEndTurnButton();
+            }
+            else {
+                this.addLog(i18n.t('gameLog.gameSaved'), 'turn');
+                Sound.playSelect();
+            }
             return true;
         } catch (e) {
-            console.error('Chyba při ukládání:', e);
-            this.addLog(i18n.t('gameLog.saveError'), 'combat');
+            if (!automatic || !this.autosaveFailed) {
+                console.error('Chyba při ukládání:', e);
+                this.addLog(i18n.t(automatic ? 'touch.autosaveError' : 'gameLog.saveError'), 'combat');
+            }
+            if (automatic && !this.autosaveFailed) {
+                this.autosaveFailed = true;
+                this.updateEndTurnButton();
+            }
             return false;
         }
     }
@@ -1480,12 +1494,12 @@ class Game {
 
     // Kontrola, zda existuje uložená hra
     hasSavedGame() {
-        return localStorage.getItem('husitskeValky_save') !== null;
+        return GameStorage.getItem(SaveGameSystem.STORAGE_KEY) !== null;
     }
 
     // Smazání uložené hry
     deleteSave() {
-        localStorage.removeItem('husitskeValky_save');
+        GameStorage.removeItem(SaveGameSystem.STORAGE_KEY);
     }
 
     // ==========================================

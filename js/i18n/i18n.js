@@ -20,7 +20,7 @@ class I18n {
         }
 
         try {
-            const response = await fetch(`js/i18n/locales/${lang}.json?v=8.7`);
+            const response = await fetch(`js/i18n/locales/${lang}.json?v=8.13`);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -59,7 +59,7 @@ class I18n {
         this.currentLanguage = lang;
 
         // Ulož do localStorage
-        try { localStorage.setItem('gameLanguage', lang); }
+        try { GameStorage.setItem('gameLanguage', lang); }
         catch (error) { console.warn('Language preference could not be saved', error); }
 
         // Aktualizuj UI
@@ -176,6 +176,9 @@ class I18n {
             const key = element.getAttribute('data-i18n-title');
             element.title = this.t(key);
         });
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(element => {
+            element.setAttribute('aria-label', this.t(element.getAttribute('data-i18n-aria-label')));
+        });
 
         // Aktualizuj HTML lang atribut
         document.documentElement.lang = this.currentLanguage;
@@ -213,7 +216,7 @@ class I18n {
         const data = metaData[this.currentLanguage] || metaData.cs;
 
         // Aktualizuj page title
-        document.title = data.title;
+        document.title = (GameStorage.isTest ? '[TEST] ' : '') + data.title;
 
         // Aktualizuj meta description
         const metaDesc = document.querySelector('meta[name="description"]');
@@ -278,7 +281,7 @@ class I18n {
     async init() {
         // Načti uložený jazyk z localStorage
         let savedLanguage = null;
-        try { savedLanguage = localStorage.getItem('gameLanguage'); }
+        try { savedLanguage = GameStorage.getItem('gameLanguage'); }
         catch (error) { console.warn('Language preference unavailable', error); }
         if (!['cs', 'en'].includes(savedLanguage)) savedLanguage = null;
 

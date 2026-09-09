@@ -11,10 +11,15 @@ class BattleView {
         this.minimap = new Minimap(document.getElementById('minimap'), game.hexGrid);
         this.panels = new BattlePanels(game);
         this.tooltip = new BattleTooltip(game);
+        this.orders = new BattleOrders(this);
+        this.mapInput = new BattleMapInput(this);
+        this.backgroundPaused = false;
         this.setupEventListeners();
     }
 
     destroy() {
+        this.mapInput.cancel();
+        this.orders.cancel();
         this.stopAnimationLoop();
         this.eventAbortController.abort();
         this.minimap.destroy();
@@ -24,11 +29,11 @@ class BattleView {
     }
 
     factionLabel(faction) { return this.panels.factionLabel(faction); }
-    updateUI() { return this.panels.updateUI(); }
-    updateEndTurnButton() { return this.panels.updateEndTurnButton(); }
+    updateUI() { this.panels.updateUI(); this.orders.refresh(); }
+    updateEndTurnButton() { this.panels.updateEndTurnButton(); this.orders.refresh(); }
     updateArmyOverview() { return this.panels.updateArmyOverview(); }
     renderMoraleBar(prefix, faction, aliveCount) { return this.panels.renderMoraleBar(prefix, faction, aliveCount); }
-    updateUnitPanel(unit) { return this.panels.updateUnitPanel(unit); }
+    updateUnitPanel(unit) { this.panels.updateUnitPanel(unit); this.orders.refresh(); }
     updateChoralButton() { return this.panels.updateChoralButton(); }
 
     showPhase(phase) { this.panels.showPhase(phase); }
@@ -38,9 +43,16 @@ class BattleView {
     hideTooltip() { this.tooltip.hideTooltip(); }
 
     handleClick(event) {
+        if (this.mapInput.ignoreClick) { this.mapInput.ignoreClick = false; return; }
+        this.handleMapTap(event, this.orders.isCompact());
+    }
+
+    handleMapTap(event, preview = false) {
         const grid = this.game.hexGrid;
-        const rect = grid.canvas.getBoundingClientRect();
-        this.game.handleHexClick(grid.pixelToHex(event.clientX - rect.left, event.clientY - rect.top));
+        const pos = this.mapInput.screenToWorld(event.clientX, event.clientY);
+        const hex = grid.pixelToHex(pos.x, pos.y);
+        if (preview) this.orders.tap(hex);
+        else { this.orders.cancel(); this.game.handleHexClick(hex); }
     }
 
     configureScenario(scenario) {
@@ -68,6 +80,7 @@ class BattleView {
     }
 
     showSelection(unit, { moves = true, attacks = true } = {}) {
+        this.orders.cancel();
         const grid = this.game.hexGrid;
         grid.setSelected(unit.col, unit.row);
         if (!moves) grid.setHighlighted([]);
@@ -76,6 +89,7 @@ class BattleView {
     }
 
     clearSelection() {
+        this.orders.cancel();
         this.game.hexGrid.setSelected(null, null);
         this.game.hexGrid.clearHighlights();
     }
@@ -100,6 +114,7 @@ class BattleView {
     }
 
     showGameOver(isVictory, message, stats) {
+        this.orders.cancel();
         // Použít nový gameover modal pokud existuje
         if (typeof window.showGameOver === 'function') {
             window.showGameOver(isVictory, message, stats);
@@ -125,20 +140,21 @@ class BattleView {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         for (const unit of framedUnits) {
             const pos = this.game.hexGrid.hexToPixel(unit.col, unit.row);
+            pos.x *= this.mapInput.scale; pos.y *= this.mapInput.scale;
             minX = Math.min(minX, pos.x);
             minY = Math.min(minY, pos.y);
             maxX = Math.max(maxX, pos.x);
             maxY = Math.max(maxY, pos.y);
         }
 
-        const padding = this.game.hexGrid.hexSize * 2.2;
+        const padding = this.game.hexGrid.hexSize * 2.2 * this.mapInput.scale;
 
         const applyScroll = () => {
             if (this.game.gameState === 'destroyed') return;
             const containerWidth = mapContainer.clientWidth;
             const containerHeight = mapContainer.clientHeight;
-            const maxLeft = Math.max(0, this.game.hexGrid.canvas.width - containerWidth);
-            const maxTop = Math.max(0, this.game.hexGrid.canvas.height - containerHeight);
+            const maxLeft = Math.max(0, this.game.hexGrid.canvas.width * this.mapInput.scale - containerWidth);
+            const maxTop = Math.max(0, this.game.hexGrid.canvas.height * this.mapInput.scale - containerHeight);
 
             const focusX = (minX + maxX) / 2;
             const focusY = (minY + maxY) / 2;
@@ -242,6 +258,27 @@ class BattleView {
     setupEventListeners() {
         // Všechny listenery sdílí abort signál - destroy() je odebere najednou
         const signal = this.eventAbortController.signal;
+        const issue = action => {
+            this.orders.cancel();
+            action();
+            // Synchronní postoje/undo mají checkpoint ihned; asynchronní
+            // rozkazy zde save odmítnou a uloží se až v BattleActionSystem.
+            this.game.saveGame({ automatic: true });
+            if (this.orders.isCompact()) BattlePanels.closeCompactPanels();
+        };
+        document.addEventListener('visibilitychange', () => {
+            this.mapInput.cancel(); this.orders.cancel();
+            if (document.hidden) {
+                this.game.saveGame({ automatic: true });
+                this.backgroundPaused = !this.game.isPaused && this.game.gameState === 'playing';
+                if (this.backgroundPaused) this.game.setPaused(true);
+                this.stopAnimationLoop();
+            } else {
+                if (this.backgroundPaused) this.game.setPaused(false);
+                this.backgroundPaused = false;
+                this.startAnimationLoop();
+            }
+        }, { signal });
 
         // Klik na canvas
         this.game.hexGrid.canvas.addEventListener('click', (e) => this.handleClick(e), { signal });
@@ -253,7 +290,9 @@ class BattleView {
         // Tlačítko konce tahu (s volitelným potvrzením z nastavení)
         document.getElementById('btn-end-turn').addEventListener('click', async () => {
             if (this.game.currentFaction !== 'hussites' || !this.game.canStartAction()) return;
-            if (window.gameSettings && window.gameSettings.confirmEndTurn &&
+            this.orders.cancel();
+            if (((window.gameSettings && window.gameSettings.confirmEndTurn) ||
+                 (this.orders.isCompact() && !this.game.allPlayerUnitsActed())) &&
                 this.game.currentFaction === 'hussites' && this.game.gameState === 'playing' &&
                 typeof showConfirmDialog === 'function') {
                 const confirmed = await showConfirmDialog(
@@ -281,6 +320,8 @@ class BattleView {
         if (attackBtn) {
             attackBtn.addEventListener('click', () => {
                 if (!this.game.selectedUnit || !this.game.selectedUnit.canAttack()) return;
+                this.orders.cancel();
+                if (this.orders.isCompact()) BattlePanels.closeCompactPanels();
                 const targets = this.game.combatSystem.getValidAttackTargets(this.game.selectedUnit);
                 this.game.hexGrid.setAttackable(targets);
                 this.render();
@@ -289,36 +330,36 @@ class BattleView {
         }
 
         // Tlačítko obrany
-        document.getElementById('btn-defend').addEventListener('click', () => this.game.combatSystem.defendSelectedUnit(), { signal });
+        document.getElementById('btn-defend').addEventListener('click', () => issue(() => this.game.combatSystem.defendSelectedUnit()), { signal });
 
         // WP1: tlačítka vozové hradby - sepnout/rozevřít jeden vůz nebo celou linii
         const formationBtn = document.getElementById('btn-formation');
         if (formationBtn) {
             formationBtn.addEventListener('click', () => {
-                if (this.game.selectedUnit) this.game.toggleWagonFormation(this.game.selectedUnit);
+                issue(() => { if (this.game.selectedUnit) this.game.toggleWagonFormation(this.game.selectedUnit); });
             }, { signal });
         }
         const formationLineBtn = document.getElementById('btn-formation-line');
         if (formationLineBtn) {
             formationLineBtn.addEventListener('click', () => {
-                if (this.game.selectedUnit) this.game.toggleWagonFormationLine(this.game.selectedUnit);
+                issue(() => { if (this.game.selectedUnit) this.game.toggleWagonFormationLine(this.game.selectedUnit); });
             }, { signal });
         }
         // P4: pochod hradby (přepnout linii mezi pevnou zdí a pochodovým šikem)
         const formationMarchBtn = document.getElementById('btn-formation-march');
         if (formationMarchBtn) {
             formationMarchBtn.addEventListener('click', () => {
-                if (this.game.selectedUnit) this.game.toggleWagonMarch(this.game.selectedUnit);
+                issue(() => { if (this.game.selectedUnit) this.game.toggleWagonMarch(this.game.selectedUnit); });
             }, { signal });
         }
 
         // Tlačítko undo (vrátit pohyb)
-        document.getElementById('btn-undo').addEventListener('click', () => this.game.undoLastMove(), { signal });
+        document.getElementById('btn-undo').addEventListener('click', () => issue(() => this.game.undoLastMove()), { signal });
 
         // Tlačítko chorálu
         const choralBtn = document.getElementById('btn-choral');
         if (choralBtn) {
-            choralBtn.addEventListener('click', () => this.game.activateChoral(), { signal });
+            choralBtn.addEventListener('click', () => issue(() => this.game.activateChoral()), { signal });
         }
 
         // Tlačítko nové hry ze starého victory modalu (pro zpětnou kompatibilitu)
@@ -342,14 +383,7 @@ class BattleView {
 
         requestAnimationFrame(() => {
             if (this.game.gameState === 'destroyed') return;
-            const pos = this.game.hexGrid.hexToPixel(unit.col, unit.row);
-            const containerWidth = mapContainer.clientWidth;
-            const containerHeight = mapContainer.clientHeight;
-            const maxLeft = Math.max(0, this.game.hexGrid.canvas.width - containerWidth);
-            const maxTop = Math.max(0, this.game.hexGrid.canvas.height - containerHeight);
-
-            mapContainer.scrollLeft = Math.max(0, Math.min(maxLeft, pos.x - containerWidth / 2));
-            mapContainer.scrollTop = Math.max(0, Math.min(maxTop, pos.y - containerHeight / 2));
+            this.mapInput.centerOnUnit(unit);
         });
     }
 
@@ -375,11 +409,10 @@ class BattleView {
         const canvas = document.getElementById('game-canvas');
         if (!canvas) return;
 
-        const canvasRect = canvas.getBoundingClientRect();
         const hexCenter = this.game.hexGrid.hexToPixel(col, row);
-
-        const x = canvasRect.left + hexCenter.x;
-        const y = canvasRect.top + hexCenter.y - 20;
+        const position = this.mapInput.worldToScreen(hexCenter.x, hexCenter.y);
+        const x = position.x;
+        const y = position.y - 20;
 
         const damageEl = document.createElement('div');
         damageEl.className = 'damage-number' + (isHeal ? ' heal' : '');

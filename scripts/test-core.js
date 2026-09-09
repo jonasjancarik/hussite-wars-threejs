@@ -17,6 +17,7 @@ global.localStorage = {
     removeItem: key => storageValues.delete(key)
 };
 global.Campaign = require('../js/data/campaign.js');
+global.GameStorage = require('../js/core/GameStorage.js');
 global.CampaignProgressSystem = require('../js/systems/CampaignProgressSystem.js');
 
 const AI = require('../js/ai.js');

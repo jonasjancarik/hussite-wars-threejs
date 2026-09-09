@@ -13,11 +13,18 @@ class BattleActionSystem {
         if (this.destroyed || this.paused || this.busy || this.game.gameState !== 'playing') return false;
         this.busy = true;
         this.game.updateEndTurnButton();
+        let completed = false;
         try {
-            return await action();
+            const result = await action();
+            completed = true;
+            return result;
         } finally {
             this.busy = false;
-            if (!this.destroyed) this.game.updateEndTurnButton();
+            if (!this.destroyed) {
+                this.game.updateEndTurnButton();
+                // Až po celé akci včetně reakcí; nikdy nepřepsat ruční save.
+                if (completed) this.game.saveGame({ automatic: true });
+            }
         }
     }
 

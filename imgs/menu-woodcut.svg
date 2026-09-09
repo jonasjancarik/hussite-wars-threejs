@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="330" viewBox="0 0 480 330" fill="none">
+  <!-- Original title-page ornament, not a depiction of a particular battlefield. -->
+  <defs>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">
+      <path d="M0 0v7" stroke="#28302b" stroke-width="1"/>
+    </pattern>
+    <pattern id="fine" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+      <path d="M0 0v5" stroke="#28302b" stroke-width=".75"/>
+    </pattern>
+    <g id="fir" fill="#28302b" stroke="#28302b" stroke-linejoin="round">
+      <path d="M0-55-12-33h6l-15 21h10L-27 9H27L11-12h10L6-33h6ZM-2 9h4v14h-4Z"/>
+      <path d="M0-45v52M0-28l-6 6m6 7-12 11M0 0l-15 6m15-26 8 7m-8 5L16 5" stroke="#f2e8d3" stroke-width="1.1"/>
+    </g>
+    <g id="wheel" stroke="#28302b">
+      <circle r="18" fill="#f2e8d3" stroke-width="4"/>
+      <circle r="13.5" stroke-width="1"/>
+      <path d="M-14 0h28M0-14v28M-10-10l20 20M10-10-10 10" stroke-width="2"/>
+      <circle r="3.5" fill="#28302b"/>
+    </g>
+    <g id="wagon" stroke="#28302b" stroke-linejoin="round">
+      <path d="m-67-16 9-62 123 5-4 55Z" fill="#28302b" stroke-width="2"/>
+      <path d="m-60-23 8-49 110 5-4 43Z" fill="#f2e8d3" stroke-width="1.5"/>
+      <path d="m-60-23 8-49 110 5-4 43Z" fill="url(#hatch)"/>
+      <path d="m-52-72-8 49m35-48-5 48m32-47-2 47m29-46 1 46m27-44-3 44" stroke-width="3"/>
+      <path d="m-55-61 111 5m-113 7 112 5m-113 7 112 5" stroke="#f2e8d3" stroke-width="2"/>
+      <path d="m-66-20 128 2-1 8-127-1ZM-76-81l152 5M-67-83v64M67-78v61" stroke-width="3"/>
+      <path d="M-65-12h-24m146 0 31 6" stroke-width="4"/>
+      <use href="#wheel" x="-40"/>
+      <use href="#wheel" x="39"/>
+    </g>
+  </defs>
+  <g stroke="#28302b" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Low hills, a river and the small silhouettes of a Bohemian town. -->
+    <path d="M17 180c39-43 69-40 96-28s43 22 74 7 56-49 100-38 70 30 97 18 54-22 79-12" stroke-width="1.5"/>
+    <path d="M20 185c47-38 67-28 93-18m4-7c28 17 42 20 63 11m10-4c53-21 67-43 92-37m12 5c40 7 54 25 79 18m10-6c34-14 57-23 77-13" stroke-width=".8"/>
+    <path d="M296 154c-12 12-10 22 12 29 29 10 26 16 0 25-38 12-27 28 22 39s57 22 18 39" stroke-width="2"/>
+    <path d="M308 154c-10 12-4 17 16 24 36 13 23 29 1 35-23 7-25 14 16 24 58 15 68 34 34 50m-68-116 14 5m7 4 6 3m-32 38 13 7m28 23 15 5m7 3 10 6" stroke-width="1"/>
+    <path d="M28 201c60-24 134-20 213-4M251 195l19 2m79-18 14-3m-23 28c38-17 77-16 113-5M27 303c61-12 121-10 167-6m41 2c67 6 154 1 218-12" stroke-width="1"/>
+    <path d="m29 308 48-4m13-1 30 1m210 1 58-4m12-2 39-6M28 194l12-7m2 8 10-6m8 1 10-6m91 0 8-5m11 4 10-6m150-19 12 4m4-6 14 3m44-5 13-5" stroke-width=".8"/>
+    <g transform="translate(332 137)" stroke-width="1.4">
+      <path d="M-15 9v-30L-4-34 8-21V9m0-26 20-1V9m0-35 11-15 11 15V9M-21 9h78" fill="#f2e8d3"/>
+      <path d="m-18-21 14-20 15 20Zm44-5 13-24 13 24Z" fill="#28302b"/>
+      <path d="M-4-41v-7m43-2v-10M35-54h8M-10-15h5v8h-5Zm43-5h4v8h-4Zm10 0h4v8h-4ZM13-11h5v7h-5Zm-16 20V0q4-6 8 0v9" fill="#28302b"/>
+      <path d="M-12 5v-4m5-27 3-6m36 0 6-12M21 0v6m23-4v6"/>
+    </g>
+    <g fill="#f2e8d3" stroke-width="1.3">
+      <path d="M287 153v-18l11-9 15 11v17m-27-19 12-15 16 17-27-2Z"/>
+      <path d="M390 148v-20l11-9 17 12v16m-30-19 13-16 19 19-30-3Z"/>
+      <path d="M369 152v-15l9-9 12 9v13m-21-13 9-14 12 14Z"/>
+      <path d="M302 151v-7h4v7m-14-12h3v4h-3m108-10h4v5h-4m-29 4h4"/>
+    </g>
+    <use href="#fir" transform="translate(70 173) scale(.48)"/>
+    <use href="#fir" transform="translate(43 184) scale(.7)"/>
+    <use href="#fir" transform="translate(93 182) scale(.66)"/>
+    <use href="#fir" transform="translate(438 192) scale(.85)"/>
+    <use href="#fir" transform="translate(406 191) scale(.55)"/>
+    <use href="#fir" transform="translate(463 200) scale(.51)"/>
+    <!-- Distant hatching and the long grass around the wagon line. -->
+    <path d="m376 206 21-6m-14 11 29-8m-20 12 31-8m-21 13 23-7m-72 18 39-9m-32 13 44-11m-33 14 51-14m-39 17 45-12M30 224l19-8m-17 14 26-11m-22 15 32-13m-31 18 38-13m-36 17 41-14" stroke-width=".9"/>
+    <!-- A red chalice standard: the only second printing colour. -->
+    <path d="M185 218 180 45" stroke-width="3.5"/>
+    <path d="m180 47 15 3c22 2 34-10 61-5l-13 28 17 27c-31-4-42 10-63 6l-13-4Z" fill="#80352d" stroke="#80352d" stroke-width="2"/>
+    <path d="m184 51 12 3c21 3 39-8 51-5m-61 49 12 4c15 2 37-9 51-6" stroke="#f2e8d3" stroke-width=".8"/>
+    <path d="M208 65h25c-1 11-5 16-12 17v10m-8 0h16m-17 3h19" stroke="#f2e8d3" stroke-width="3"/>
+    <path d="m213 69 3 6m-36-35 3 5-3 5-3-5Z" fill="#28302b"/>
+    <!-- Helmets and polearms behind the timber parapet. -->
+    <path d="m118 226-9-87m-3 2 2-11 5 10m35 77 10-75m-3 0 5-15 1 16m77 63 12-78m-4 4 6-15 3 13-5 4m-46 69 8-64" stroke-width="2.4"/>
+    <path d="m204 139 13-4-1 12-6 1m5-11 13-14m-1-2 5 3" stroke-width="2"/>
+    <g fill="#28302b" stroke-width="1.5">
+      <path d="M126 194c-2-10-2-19 6-20 9-2 12 8 11 17l5 4h-23Zm-2 28 2-21 17-2 6 20Z"/>
+      <path d="M185 184c-1-10 2-16 8-16 7 1 9 9 8 17l4 4h-24Zm-7 24 5-13h18l6 14Z"/>
+      <path d="M253 205c-1-9 2-15 9-15 7 0 9 8 9 14l4 4h-25Zm-4 19 4-10 19-1 5 12Z"/>
+    </g>
+    <path d="m129 188 11-1m-8-9-2 5m55-2 15 1m-8-11-2 6m68 24 11 1m-7-9-2 4" stroke="#f2e8d3" stroke-width="1.3"/>
+    <path d="m61 274 33-21 184-10 49 32-67 19-163-4Z" fill="url(#fine)" stroke="none"/>
+    <use href="#wagon" transform="translate(235 246) rotate(8) scale(.78)"/>
+    <use href="#wagon" transform="translate(123 272) rotate(-5)"/>
+    <path d="m181 260 7-3 6 2 6-4 7 1" stroke-width="2"/>
+    <path d="m25 283-5-8m6 7 1-13m-1 14 7-7m178 25-3-11m4 10 5-8m82-9-2-13m3 13 7-9m42 11-3-10m5 10 5-14m50-12-3-12m4 12 6-8" stroke-width="1.3"/>
+    <path d="M80 103c10-3 17-2 24 0m-11-8 31 1m194-28 32 1m-17 7 25 1M50 112h23m282-24 20 1" stroke-width=".7"/>
+    <path d="m285 82 6-3 5 3m-17 7 5-2 4 3" stroke-width="1.2"/>
+  </g>
+</svg>
