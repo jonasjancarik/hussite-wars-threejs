@@ -1,8 +1,9 @@
 # 📜 Changelog
 
-## Připravovaná Alpha 0.3 (12. září 2026)
+## Alpha 0.3 (12. září 2026)
 
-Zatím lokální vývojová verze, bez nového nasazení.
+Vydání pro GitHub Pages s vlastní doménou `hussitewars.com`.
+Přechod na novou adresu nepřenáší staré savy ani kroniky; původní data se nemažou.
 
 - Sjednocený dřevořez titulního menu, dialogů a kroniky; čitelnější velitelé a ovládání na dotyku.
 - Síla útoku zohledňuje oslabení oddílu; opraven postup útočící AI na Vítkově.

@@ -224,7 +224,8 @@ Nejde o úplný rozbor kritických edic ani odborné potvrzení každého detail
 
 ## 📝 Stav vývoje
 
-**Verze:** Alpha 0.3 (vývojová, 12. září 2026; zatím nenasazená)
+**Verze:** Alpha 0.3 (12. září 2026)
+**Produkční adresa:** [hussitewars.com](https://hussitewars.com/)
 **Stav:** připraveno k playtestu Aktu I
 
 ### Dokončeno

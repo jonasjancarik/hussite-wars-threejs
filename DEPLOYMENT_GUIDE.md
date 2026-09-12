@@ -2,8 +2,9 @@
 
 Projekt používá veřejný repozitář
 [josefslerka/husitske-valky](https://github.com/josefslerka/husitske-valky).
-Cílová adresa hry je
-[Husitské války](https://josefslerka.github.io/husitske-valky/).
+Produkční adresa hry je [Husitské války](https://hussitewars.com/).
+Původní adresa [GitHub Pages](https://josefslerka.github.io/husitske-valky/)
+se po připojení vlastní domény přesměruje na novou adresu.
 
 ## Nastavení hostingu
 
@@ -12,10 +13,32 @@ V repozitáři otevřete **Settings → Pages**:
 - Source: **Deploy from a branch**
 - Branch: **main**
 - Folder: **/(root)**
+- Custom domain: **hussitewars.com** (také soubor `CNAME` v kořeni)
+- Po vystavení certifikátu zapnout **Enforce HTTPS**.
 
 Hra nevyžaduje build, databázi ani serverovou aplikaci. Soubor `.nojekyll` v kořeni
 vypíná zpracování Jekyllem; HTML, JavaScript, CSS, překlady a hudba se publikují jako
 statické soubory. Relativní cesty fungují i pod prefixem `/husitske-valky/`.
+
+### DNS vlastní domény
+
+Doména `hussitewars.com` používá DNS od FORPSI. Kořen domény má čtyři A záznamy
+`185.199.108.153`, `185.199.109.153`, `185.199.110.153` a `185.199.111.153`;
+`www` je CNAME na `josefslerka.github.io` (bez názvu repozitáře).
+Ověřovací TXT `_github-pages-challenge-josefslerka` se po ověření na GitHubu
+ponechává. Nenastavovat wildcard `*` směrem ke GitHub Pages.
+
+`husitskevalky.cz` je určena k přesměrování na `https://hussitewars.com/`.
+Samotný DNS CNAME mezi těmito dvěma doménami HTTP přesměrování nezajistí;
+přesměrování i certifikát české domény se nastavují samostatně.
+
+Změna adresy znamená nový origin pro úložiště prohlížeče. Pro toto vydání byl
+záměrně vynechán přenos starých savů, postupu a kronik: na nové adrese začíná
+hráč od začátku. Původní data na localhostu a `josefslerka.github.io` nemažeme.
+
+Postup a aktuální DNS hodnoty:
+[GitHub: vlastní doména](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site),
+[GitHub: ověření vlastnictví](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages).
 
 Repozitář, jeho historie a web jsou veřejné. Do commitu nepatří přístupové údaje,
 osobní poznámky testerů ani knihy/PDF ze složky `zdroje/`. Gitignore není ochranou
@@ -32,6 +55,9 @@ jeho Pages používají vlastní `main` / `/(root)`:
 Remote `origin` nadále znamená **stabilní** repozitář; remote `test` znamená
 `https://github.com/josefslerka/husitske-valky-test.git`. Testovací repo je jen
 publikační kopie se společnou historií, ne další nezávislý vývoj.
+**Od Alpha 0.3 neposílat produkční `CNAME` do testovacího repozitáře.** Následující
+původní postup platí jen pro větev bez `CNAME`; novější testovací vydání musí mít
+samostatnou publikační konfiguraci, aby se nepokusilo převzít hlavní doménu.
 Aktualizace testovací verze z větve `codex/mobile-ui`:
 
 ```bash
