@@ -297,6 +297,30 @@ const UnitTypes = {
         }
     },
 
+    // Pevné opevnění s posádkou. Není vůz: nelze je rozpojit ani přesouvat.
+    POLNI_OPEVNENI: {
+        id: 'polni_opevneni',
+        name: 'Posádka srubu',
+        faction: 'hussites',
+        symbol: '▥',
+        maxHealth: 100,
+        attack: 25,
+        defense: 40,
+        range: 2,
+        movement: 0,
+        cost: 120,
+        description: 'Obránci pevného srubu a zídky. Střílejí z krytu, ale nemohou se přesouvat.',
+        special: 'fieldwork',
+        unitClass: 'fortification',
+        lore: {
+            description: 'Na Vítkově bránili husité pevná opevnění, nikoli pojízdnou vozovou hradbu. Herní oddíl představuje jejich posádku a kryt společně.',
+            equipment: 'Dřevěný srub, zídka, kuše a tyčové zbraně obránců',
+            origin: 'Obrana Vítkova, 1420',
+            historicalNote: 'Rozmístění posádek je herní rekonstrukce. Historický rámec a odkazy uvádí poznámka ke scénáři.'
+        },
+        tactics: { terrain: {}, weaknesses: ['artillery'], zoc: true, canRetreat: false }
+    },
+
     // Speciální jednotky
     VOZOVA_HRADBA: {
         id: 'vozova_hradba',
@@ -1136,7 +1160,7 @@ const UnitTypes = {
             description: 'Jan Roháč z Dubé (asi 1400-1437) byl věrný Žižkův pobočník a jeden z nejschopnějších husitských hejtmanů. Po Lipanech odmítl přijmout kompaktáta a pokračoval v odporu z hradu Sion u Kutné Hory.',
             equipment: 'Plná zbroj, meč, štít s erbem rodu z Dubé.',
             origin: 'Rod pánů z Dubé, východní Čechy',
-            historicalNote: 'Roháč byl poslední ozbrojený odpůrce krále Zikmunda. Po dobytí Sionu byl 9. září 1437 s 52 druhy popraven v Praze na Staroměstském náměstí. Byl poslední obětí husitských válek.'
+            historicalNote: 'Po pádu Sionu 6. září 1437 byl zajatý Roháč se svými druhy 9. září popraven v Praze. Počty popravených se v podáních liší; nelze jej označit za poslední oběť všech husitských bojů.'
         },
         commanderAbilities: {
             auraRange: 3,

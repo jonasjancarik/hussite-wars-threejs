@@ -236,18 +236,12 @@
 /* ===============================================
    UX VYLEPŠENÍ - Kontrast a čitelnost
    =============================================== */
-
 /* Lepší kontrast pro parchment shadow text */
-.history-strength,
-.history-reliability,
-.mission-card-date,
-.act-years,
 .commander-card .commander-years {
     color: var(--parchment-dark);
 }
 
 /* Lepší kontrast pro sekundární text */
-.mission-card-desc,
 .terrain-info p,
 .rules-section p,
 .help-unit-description {
@@ -370,30 +364,6 @@
         grid-template-columns: 1fr;
     }
 
-    /* Mission modal na malých obrazovkách */
-    .mission-modal-content {
-        width: 95%;
-        padding: 20px;
-    }
-
-    .campaign-tabs {
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-
-    .act-tab {
-        flex: 1 1 45%;
-        padding: 6px 8px;
-    }
-
-    .act-name {
-        font-size: var(--font-size-sm);
-    }
-
-    .act-years {
-        font-size: 0.65rem;
-    }
-
     /* Game over modal */
     .gameover-modal-content {
         min-width: 300px;
@@ -493,17 +463,9 @@
 #startup-error { max-width: 660px; }
 .startup-status.hidden { display: none; }
 
-.mission-controls { margin: 16px 0; padding: 12px 16px; background: #e4ead8; border: 1px solid #98a181; border-radius: 4px; }
-.mission-controls summary { color: #304329; font-weight: bold; line-height: 1.5; cursor: pointer; }
-.mission-controls ol { padding-left: 16px; }
-.mission-controls li { margin: 8px 0; }
-.mission-controls .controls-note { font-size: 0.875rem; }
-
 /* Nadpisy přijímají fokus pro čtečku; indikátor interaktivních prvků zůstává. */
-#mission-title:focus,
 #gameover-title:focus { outline: none; }
-.mission-card[role="button"]:focus-visible,
-.mission-controls summary:focus-visible,
+
 #gameover-modal button:focus-visible { outline: 3px solid #70481f; outline-offset: 3px; }
 
 #turn-guidance {

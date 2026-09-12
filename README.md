@@ -4,7 +4,7 @@ Historická tahová strategická hra zasazená do období husitských válek (14
 
 ## 🎮 O hře
 
-Taktická tahovka na hexagonálním poli, která přináší historicky autentický pohled na husitské války. Využijte revoluční wagenburgovou taktiku, palné zbraně a důmyslné taktické manévry k porazení numericky i vojensky převažujících křižáckých armád.
+Taktická tahovka na hexagonálním poli inspirovaná husitskými válkami. Vozová taktika, palné zbraně a terén tvoří základ hry; historický rámec je oddělený od herní rekonstrukce a legend.
 
 ### Hlavní funkce
 
@@ -148,7 +148,7 @@ strategie/
 │   │   ├── ChronicleView.js # Kronika, pramenná kritika a offline export
 │   │   ├── main.js        # UI logika
 │   │   ├── sound.js       # Zvukové efekty
-│   │   └── music.js       # Hudba
+│   │   └── music.js       # Hudba — instrumentální chorál, menu a jednorázové přehrání
 │   └── ai.js              # AI protivníka
 ├── docs/                  # Dokumentace
 │   ├── CODE_STRUCTURE.md       # Hranice odpovědností, CSS a testování
@@ -161,6 +161,10 @@ strategie/
 ```
 
 ## 🎯 Herní mechaniky
+
+Hudební motiv má vlastní instrumentální aranžmá pro flétnu, fagot, violoncella
+a harfu. [Původ, licence samplů a postup nového renderu](audio/README.md).
+Při hraní se přehrává hotové lokální MP3, bez externí hudební služby.
 
 ### Bojový systém
 - **Damage calculation** - Komplexní pipeline s 13 kroky výpočtu
@@ -208,15 +212,19 @@ všech 18 scénářů. Podrobnosti a ruční kontrola: [WOODCUT_PLAYTEST.md](doc
 
 ## 🏛️ Historická autenticita
 
-Hra vychází z historických pramenů a odborné literatury:
-- Skutečné bitvy a jejich průběh
-- Autentické jednotky a jejich taktika
-- Historické osobnosti s reálnými charakteristikami
-- Wagenburgová taktika a palné zbraně (husitská revoluce ve vojenství)
+Všech 18 scénářů má v briefingu, výsledcích i osobní kronice rozbalovací oddíl
+**Historie a prameny**: doložený rámec, herní rekonstrukce, tradice a nejistoty.
+Odkazy rozlišují odborné studie, institucionální přehledy a sekundární popularizaci.
+Shrnutí nejsou vydávána za doslovné citace kronik. Jednotky, tahy a souřadnice hexů
+nepředstavují historická měřítka; alternativní vítězství mění příběh partie, nikoli dějiny.
+
+Rozhodnutí, rozsah a omezení revize: [HISTORICAL_AUDIT.md](docs/HISTORICAL_AUDIT.md).
+Seznam použité četby: [historicalSources.js](js/data/historicalSources.js).
+Nejde o úplný rozbor kritických edic ani odborné potvrzení každého detailu map.
 
 ## 📝 Stav vývoje
 
-**Verze:** Alpha 0.2 (vývojová)
+**Verze:** Alpha 0.3 (vývojová, 12. září 2026; zatím nenasazená)
 **Stav:** připraveno k playtestu Aktu I
 
 ### Dokončeno

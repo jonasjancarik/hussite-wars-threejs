@@ -1330,6 +1330,7 @@ class Game {
             const saveData = {
                 version: SaveGameSystem.VERSION,
                 scenarioId: this.currentScenario ? this.currentScenario.id : null,
+                mapRevision: this.currentScenario?.mapRevision ?? 1,
                 turnNumber: this.turnNumber,
                 currentFaction: this.currentFaction,
                 gameState: this.gameState,

@@ -1,0 +1,354 @@
+/* Sources are a quiet marginal note, shared by briefing, result and chronicle. */
+.historical-notes {
+    margin: 20px 0;
+    border-top: 3px double var(--field-rule);
+    border-bottom: 1px solid var(--field-rule);
+    color: var(--field-ink);
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+.historical-notes > summary {
+    min-height: 44px;
+    padding: 12px 0;
+    cursor: pointer;
+    color: var(--field-red-dark);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .035em;
+}
+.historical-notes[open] { padding-bottom: 14px; }
+.historical-notes h4 { margin: 18px 0 6px; font-size: 1rem; color: var(--field-ink); }
+.historical-notes p { margin: 6px 0 12px; line-height: 1.55; font-size: 1rem; }
+.historical-notes .historical-notice { font-size: .9rem; color: var(--field-ink-soft); }
+.historical-note { border-left: 2px solid var(--field-rule); padding-left: 14px; }
+.historical-bibliography { padding-left: 22px; margin: 8px 0 16px; }
+.historical-bibliography li { margin: 10px 0; line-height: 1.5; }
+.historical-bibliography a { color: var(--field-red-dark); text-decoration: underline; text-underline-offset: 3px; }
+.historical-source-kind { display: block; color: var(--field-ink-soft); font-size: .825rem; }
+.historical-notes summary:focus-visible,
+.historical-notes a:focus-visible { outline: 2px solid var(--field-ink); outline-offset: 3px; }
+
+/* Printed leaves of the same woodcut book as the battlefield.
+   Presentation only; result counts and encyclopedia content stay unchanged. */
+#help-modal .help-modal-content,
+#gameover-modal .gameover-modal-content {
+    background: var(--field-page-light);
+    border: 1px solid var(--field-ink);
+    border-top: 5px solid var(--field-ink);
+    border-bottom: 5px double var(--field-ink);
+    border-radius: 0;
+    box-shadow: 0 18px 70px #0006;
+    color: var(--field-ink);
+}
+
+#gameover-modal .gameover-modal-content {
+    width: min(960px, calc(100vw - 24px));
+    max-width: 960px;
+    padding: 24px clamp(16px, 3vw, 36px) 18px;
+}
+
+.gameover-heading {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-items: center;
+    gap: 24px;
+    padding-bottom: 22px;
+    border-bottom: 3px double var(--field-ink);
+    text-align: left;
+}
+
+#gameover-modal #gameover-banner {
+    width: 76px;
+    height: 88px;
+    margin: 0;
+    padding: 10px;
+    background: var(--field-ink);
+    color: var(--field-page-light);
+    border: 1px solid var(--field-ink);
+    outline: 1px solid var(--field-rule);
+    outline-offset: 4px;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#gameover-modal #gameover-banner.defeat { background: var(--field-red-dark); }
+#gameover-modal #gameover-title {
+    margin: 3px 0 6px;
+    font-size: clamp(1.7rem, 3.3vw, 2.7rem);
+    line-height: 1.12;
+    letter-spacing: .045em;
+    font-weight: 700;
+    text-align: left;
+    text-shadow: none;
+    overflow-wrap: anywhere;
+}
+#gameover-modal #gameover-title.victory { color: var(--field-ink); }
+#gameover-modal #gameover-title.defeat { color: var(--field-red-dark); }
+#gameover-modal .gameover-kicker {
+    margin: 0;
+    color: var(--field-ink-soft);
+    font-size: .875rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+}
+#gameover-modal #gameover-battle { margin: 0; font-size: 1rem; color: var(--field-ink-soft); }
+#gameover-reason-heading { margin-top: 22px; font-size: .875rem; letter-spacing: .06em; text-transform: uppercase; }
+#gameover-modal .gameover-reason {
+    border-left: 3px solid var(--field-ink);
+    border-radius: 0;
+    background: #28302b09;
+    padding: 12px 16px;
+}
+#gameover-modal #gameover-message { margin: 20px 0; text-align: left; font-size: 1.0625rem; }
+#gameover-modal .gameover-act-summary {
+    background: transparent;
+    padding: 8px 0 8px 14px;
+    border-left: 3px solid var(--field-gold);
+    color: var(--field-ink-soft);
+}
+#gameover-modal #gameover-rating {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin: 18px 0;
+    padding: 16px 0;
+    border-top: 1px solid var(--field-rule);
+    border-bottom: 3px double var(--field-ink);
+    border-radius: 0;
+    background: transparent;
+}
+#gameover-modal .rating-item + .rating-item { border-left: 1px solid var(--field-rule); }
+#gameover-modal .rating-label { font-size: .875rem; letter-spacing: .05em; color: var(--field-ink-soft); }
+#gameover-modal .rating-value { font-size: clamp(1.8rem, 3vw, 2.5rem); line-height: 1.3; color: var(--field-ink); font-variant-numeric: tabular-nums; }
+#gameover-modal .rating-value.good { color: #365846; }
+#gameover-modal .rating-value.bad { color: var(--field-red); }
+#gameover-modal .gameover-chronicle {
+    margin: 0 0 22px;
+    padding: 16px 20px;
+    background: var(--field-page);
+    border: 0;
+    border-left: 3px solid var(--field-ink);
+    border-radius: 0;
+    text-align: left;
+}
+#gameover-modal .gameover-chronicle .chronicle-line { font-size: 1rem; line-height: 1.55; }
+#gameover-modal .gameover-chronicle .chronicle-says { color: var(--field-red-dark); }
+#gameover-modal .gameover-chronicle .chronicle-note { margin-top: 8px; font-size: .875rem; color: var(--field-ink-soft); }
+#gameover-modal .gameover-columns { gap: 24px; }
+#gameover-modal .gameover-col { gap: 20px; }
+#gameover-modal .gameover-stats,
+#gameover-modal #gameover-secondary-objectives,
+#gameover-modal .gameover-trivia {
+    background: transparent;
+    border: 0;
+    border-top: 2px solid var(--field-ink);
+    border-radius: 0;
+    padding: 12px 0;
+    box-shadow: none;
+}
+#gameover-modal .gameover-stats h3,
+#gameover-modal .gameover-stats h4,
+#gameover-modal .gameover-trivia h4,
+#gameover-modal .secondary-objectives-header {
+    margin: 0 0 10px;
+    color: var(--field-ink);
+    font-size: .875rem;
+    text-align: left;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+#gameover-modal .secondary-objectives-header { border-bottom: 0; padding: 0; }
+#gameover-modal .stats-section { padding: 0; margin: 0; border: 0; }
+#gameover-modal .stat-row { font-size: .9375rem; gap: 16px; padding: 7px 0; border-color: var(--field-rule); }
+#gameover-modal .stat-row span:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+#gameover-modal .gameover-trivia p { font-size: 1rem; color: var(--field-ink); }
+#gameover-modal .stats-mvp { margin-top: 18px; background: var(--field-page); border-radius: 0; border-color: var(--field-rule) !important; }
+#gameover-modal .mvp-icon { background: var(--field-red); color: var(--field-page-light); border: 1px solid var(--field-ink); box-shadow: none; }
+#gameover-modal .gameover-buttons { border-top: 3px double var(--field-ink); padding-top: 16px; }
+#gameover-modal .gameover-buttons .menu-btn {
+    font-size: .875rem;
+    letter-spacing: .02em;
+    border-radius: 0;
+    border-color: var(--field-rule);
+    box-shadow: none;
+    background: transparent;
+    color: var(--field-ink);
+}
+#gameover-modal .gameover-buttons .menu-btn.primary { background: var(--field-ink); color: var(--field-page-light); border-color: var(--field-ink); }
+#gameover-modal .gameover-buttons .menu-btn:hover { background: var(--field-page); transform: none; }
+#gameover-modal .gameover-buttons .menu-btn.primary:hover { background: #3d493f; }
+
+/* Encyclopedia: inked chapter tabs and comfortable, unboxed reading columns. */
+#help-modal .help-modal-content {
+    width: min(1040px, calc(100vw - 24px));
+    max-width: 1040px;
+    height: min(840px, calc(100dvh - 24px));
+    padding: 26px clamp(16px, 3vw, 36px);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+#help-modal #help-title {
+    text-align: left;
+    margin: 0 52px 20px 0;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    letter-spacing: .07em;
+    font-weight: 700;
+    color: var(--field-ink);
+}
+#help-modal .help-close-btn {
+    top: 18px;
+    right: 18px;
+    width: 44px;
+    height: 44px;
+    color: var(--field-ink);
+    font-size: 1.8rem;
+    border: 1px solid var(--field-rule);
+    border-radius: 0;
+    background: transparent;
+}
+#help-modal .help-tabs {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding-bottom: 8px;
+    margin-bottom: 22px;
+    border-bottom: 3px double var(--field-ink);
+    scrollbar-width: thin;
+}
+#help-modal .help-tab {
+    min-width: max-content;
+    min-height: 44px;
+    padding: 10px 14px;
+    background: transparent;
+    color: var(--field-ink);
+    border: 1px solid transparent;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+    font-size: .875rem;
+    letter-spacing: .02em;
+}
+#help-modal .help-tab:hover { border-color: var(--field-rule); background: var(--field-page); }
+#help-modal .help-tab.active { background: var(--field-ink); color: var(--field-page-light); border-color: var(--field-ink); }
+#help-modal button:focus-visible,
+#gameover-modal button:focus-visible { outline: 2px solid var(--field-ink); outline-offset: 2px; }
+#help-modal .help-content { overscroll-behavior: contain; padding: 0 12px 16px 0; }
+#help-modal .help-tab-content h3 {
+    font-size: 1.125rem;
+    letter-spacing: .06em;
+    color: var(--field-red-dark);
+    border-bottom: 1px solid var(--field-rule);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+}
+#help-modal .history-section,
+#help-modal .tactics-section,
+#help-modal .rules-section,
+#help-modal .about-section,
+#help-modal .commander-card {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0;
+}
+#help-modal .history-section { max-width: 72ch; margin: 0 auto; }
+#help-modal .history-section p { font-size: 1.0625rem; line-height: 1.75; margin-bottom: 22px; }
+#help-modal .history-section h4 { font-size: 1.125rem; padding: 0; border: 0; margin: 24px 0 8px; }
+#help-modal .history-section h4:first-child { margin-top: 0; }
+#help-modal .history-section > p:first-of-type::first-letter {
+    float: left;
+    font-size: 3.3rem;
+    line-height: .9;
+    padding: 6px 7px 0 0;
+    color: var(--field-red);
+}
+#help-modal #help-units-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; }
+#help-modal .help-faction-header,
+#help-modal .faction-header { grid-column: 1 / -1; margin: 10px 0 0; padding: 0 0 8px; color: var(--field-ink); border-bottom: 1px solid var(--field-rule); font-size: 1rem; }
+#help-modal .help-unit-card {
+    min-width: 0;
+    padding: 20px;
+    gap: 16px;
+    background: var(--field-page-light) !important;
+    border: 1px solid var(--field-rule) !important;
+    border-top: 3px solid var(--field-red) !important;
+    border-radius: 0 !important;
+}
+#help-modal .help-unit-card.crusaders { border-top-color: var(--field-blue) !important; }
+#help-modal .help-unit-icon {
+    width: 50px;
+    height: 50px;
+    padding: 3px;
+    color: var(--field-page-light);
+    background: var(--field-red);
+    border: 1px solid var(--field-ink);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--field-page-light), 0 0 0 3px var(--field-rule);
+}
+#help-modal .help-unit-icon.crusaders { background: var(--field-blue); border-radius: 0 0 45% 45%; }
+#help-modal .help-unit-name { margin-bottom: 4px; font-size: 1.125rem; }
+#help-modal .help-unit-class { font-size: .875rem; }
+#help-modal .help-unit-stats-grid { border: 0; border-top: 1px solid var(--field-rule); border-bottom: 1px solid var(--field-rule); border-radius: 0; background: transparent; padding: 12px 0; gap: 4px; }
+#help-modal .stat-item { min-width: 0; }
+#help-modal .stat-value { font-size: 1.3rem; color: var(--field-ink); font-variant-numeric: tabular-nums; }
+#help-modal .stat-label { font-size: .875rem; text-transform: none; text-align: center; overflow-wrap: anywhere; }
+#help-modal .help-unit-special,
+#help-modal .lore-quote { background: #28302b08 !important; border-left: 2px solid var(--field-ink) !important; padding: 10px 12px; color: var(--field-ink); font-size: .9375rem; }
+#help-modal .help-unit-description { font-size: 1rem; line-height: 1.6; }
+#help-modal .help-unit-lore { margin-top: 0; padding-top: 16px; border-color: var(--field-rule); }
+#help-modal .lore-description,
+#help-modal .lore-item { font-size: 1rem; line-height: 1.65; }
+#help-modal .commander-card { padding: 16px 0; border-top: 2px solid var(--field-ink) !important; }
+#help-modal .commanders-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; }
+#help-modal .commander-card h4 { color: var(--field-red-dark); }
+#help-modal .commander-card:hover { transform: none; }
+
+/* Explicit rank in all HTML unit keys; standard shapes also work without color. */
+.unit-list-item.commander-unit { border-top: 1px solid var(--field-rule); margin-top: 5px; }
+.unit-list-item.commander-unit .unit-name { font-weight: 700; }
+.unit-role { display: block; color: var(--field-ink-soft); font-size: .75rem; font-weight: 400; letter-spacing: .05em; }
+.army-section .unit-icon.commander-mark:not(.destroyed),
+#help-modal .help-unit-icon.commander-mark {
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    color: var(--field-red);
+    padding: 0;
+}
+.army-section.crusaders .unit-icon.commander-mark:not(.destroyed),
+#help-modal .help-unit-icon.crusaders.commander-mark { color: var(--field-blue); }
+#unit-info .commander-info { border: 0; border-top: 2px solid var(--field-ink); border-bottom: 1px solid var(--field-rule); border-radius: 0; background: transparent; padding: 10px 0; margin: 12px 0; }
+.commander-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.commander-insignia { display: block; width: 34px; height: 40px; flex-shrink: 0; }
+.commander-heading strong { font-size: .9375rem; text-transform: uppercase; letter-spacing: .06em; }
+
+@media (max-width: 600px) {
+    #help-modal .help-modal-content,
+    #gameover-modal .gameover-modal-content { width: calc(100vw - 12px); height: calc(100dvh - 12px); padding: 18px 14px 12px; }
+    #help-modal #help-title { margin-bottom: 16px; }
+    #help-modal .help-close-btn { top: 10px; right: 10px; }
+    #help-modal .help-tabs { margin-bottom: 16px; }
+    #help-modal .help-content { padding-right: 8px; }
+    #help-modal .help-unit-card { padding: 16px 12px; }
+    .gameover-heading { grid-template-columns: 46px minmax(0, 1fr); gap: 16px; padding-bottom: 16px; }
+    #gameover-modal #gameover-banner { width: 46px; height: 60px; padding: 6px; }
+    #gameover-modal .gameover-chronicle { padding: 12px; }
+    #gameover-modal .gameover-columns { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    #gameover-modal .gameover-buttons { margin-top: 8px; padding-top: 10px; gap: 6px; }
+}
+
+@media (max-height: 480px) {
+    #help-modal .help-modal-content { padding-top: 12px; padding-bottom: 12px; }
+    #help-modal #help-title { margin-bottom: 8px; font-size: 1.5rem; }
+    #help-modal .help-tabs { margin-bottom: 10px; }
+}
+
+@media (max-width: 360px) {
+    #help-modal .help-unit-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 10px; }
+    #help-modal #help-title { font-size: 1.35rem; letter-spacing: .03em; }
+}

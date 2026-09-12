@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const { createHarness } = require('./helpers/game-harness');
-const { HexGrid } = createHarness();
+const { HexGrid, Unit } = createHarness();
 
 global.UnitTypes = { TEST: {} };
 global.i18n = { t: key => key };
@@ -68,6 +68,7 @@ function unit(overrides = {}) {
         canMove: () => true,
         canAttack: () => true,
         canAct: () => true,
+        getAttackStrength: Unit.prototype.getAttackStrength,
         ...overrides
     };
 }

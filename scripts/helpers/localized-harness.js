@@ -7,7 +7,7 @@ const { createHarness } = require('./game-harness');
 async function createLocalizedHarness(language = 'cs', options = {}) {
     const h = createHarness(options);
     h.document.documentElement = { lang: 'cs' };
-    for (const file of ['i18n/i18n.js', 'i18n/i18nHelpers.js', 'data/battleLore.js', 'systems/ChronicleSystem.js', 'ui/ChronicleView.js']) {
+    for (const file of ['i18n/i18n.js', 'i18n/i18nHelpers.js', 'data/battleLore.js', 'data/historicalSources.js', 'systems/ChronicleSystem.js', 'ui/HistoricalNotesView.js', 'ui/ChronicleView.js']) {
         const filename = path.join(__dirname, '../../js', file);
         vm.runInContext(fs.readFileSync(filename, 'utf8'), h.context, { filename });
     }

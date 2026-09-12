@@ -127,6 +127,40 @@ test('blokované úložiště jazyka nebrání načtení ani přepnutí hry', as
     assert.equal(await h.i18n.setLanguage('cs'), true); assert.equal(h.i18n.getCurrentLanguage(), 'cs');
 });
 
+for (const [label, browser, saved, expected] of [
+    ['český prohlížeč', { language: 'cs-CZ' }, null, 'cs'],
+    ['anglický prohlížeč', { language: 'en-GB' }, null, 'en'],
+    ['angličtina jako druhá preference', { languages: ['de-DE', 'en-US', 'cs-CZ'], language: 'de-DE' }, null, 'en'],
+    ['čeština jako první preference', { languages: ['cs-CZ', 'en-US'], language: 'cs-CZ' }, null, 'cs'],
+    ['nepodporované jazyky', { languages: ['de-DE', 'fr-FR'], language: 'de-DE' }, null, 'cs'],
+    ['chybějící jazyky', {}, null, 'cs'],
+    ['prázdné preference', { languages: [], language: 'en-US' }, null, 'en'],
+    ['uložená čeština před anglickým prohlížečem', { language: 'en-US' }, 'cs', 'cs'],
+    ['uložená angličtina před českým prohlížečem', { language: 'cs-CZ' }, 'en', 'en'],
+    ['neplatná uložená volba', { language: 'en-GB' }, 'de', 'en']
+]) {
+    test(`jazyk při startu: ${label}`, async () => {
+        const h = await createLocalizedHarness();
+        h.storage.delete('gameLanguage');
+        if (saved !== null) h.storage.set('gameLanguage', saved);
+        h.context.navigator = browser;
+        await h.i18n.init();
+        assert.equal(h.i18n.getCurrentLanguage(), expected);
+        assert.equal(h.document.documentElement.lang, expected);
+    });
+}
+
+test('ruční volba jazyka se uchová i při dalším startu s jiným jazykem prohlížeče', async () => {
+    const h = await createLocalizedHarness();
+    for (const language of ['en', 'cs']) {
+        await h.i18n.setLanguage(language);
+        h.context.navigator = { language: language === 'cs' ? 'en-GB' : 'cs-CZ' };
+        await h.i18n.init();
+        assert.equal(h.i18n.getCurrentLanguage(), language);
+        assert.equal(h.storage.get('gameLanguage'), language);
+    }
+});
+
 test('poškozené nastavení neblokuje start a nikdy se automaticky nepřepisuje', async () => {
     const h = await createLocalizedHarness(); quiet(h);
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/ui/main.js'), 'utf8'), h.context);
@@ -183,7 +217,7 @@ async function menuHarness(language = 'cs', prepare = () => {}) {
     };
     h.context.window = Object.assign(new EventTarget(), { innerWidth: 1280 });
     h.context.Music = {
-        isPlaying: false, setVolume() {},
+        isPlaying: false, setVolume() {}, setEnabled() {},
         stop() { this.isPlaying = false; },
         toggle() { this.isPlaying = !this.isPlaying; return this.isPlaying; }
     };
@@ -212,13 +246,141 @@ test('titulní menu zachovává všechny akce, pořadí pokračování a dekorat
     assert.match(menu, /<img[^>]*menu-woodcut\.svg[^>]*alt=""[^>]*aria-hidden="true"/);
 });
 
+test('přepínač jazyka ukazuje a přístupně pojmenovává cíl v obou směrech', async () => {
+    const h = await menuHarness();
+    const button = h.document.getElementById('btn-language-toggle');
+    const target = h.document.getElementById('language-target');
+    for (const [language, next, label] of [
+        ['cs', 'EN', 'Přepnout do angličtiny'],
+        ['en', 'CS', 'Switch to Czech'],
+        ['cs', 'EN', 'Přepnout do angličtiny']
+    ]) {
+        assert.equal(h.i18n.getCurrentLanguage(), language);
+        assert.equal(target.textContent, next);
+        assert.equal(button.getAttribute('aria-label'), label);
+        assert.equal(button.getAttribute('title'), label);
+        button.dispatchEvent(new Event('click'));
+        await new Promise(setImmediate);
+    }
+});
+
+test('neúspěšné načtení angličtiny nezmění jazyk, cíl tlačítka ani uloženou volbu', async () => {
+    const h = await menuHarness(); quiet(h);
+    h.i18n.loadedLanguages.delete('en'); delete h.i18n.translations.en;
+    h.context.fetch = async () => { throw new Error('offline'); };
+    h.document.getElementById('btn-language-toggle').dispatchEvent(new Event('click'));
+    await new Promise(setImmediate);
+    assert.equal(h.i18n.getCurrentLanguage(), 'cs');
+    assert.equal(h.document.getElementById('language-target').textContent, 'EN');
+    assert.equal(h.document.getElementById('btn-language-toggle').getAttribute('aria-label'), 'Přepnout do angličtiny');
+    assert.equal(h.storage.get('gameLanguage'), 'cs');
+});
+
+test('menu i obě obrazovky O hře sdílejí verzi; podpora zachovává bezpečný coffee odkaz', async () => {
+    const h = await createLocalizedHarness();
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    const version = h.i18n.t('menu.version');
+    const copies = [...html.matchAll(/data-i18n="menu.version">([^<]+)</g)].map(match => match[1]);
+    assert.deepEqual(copies, [version, version, version], 'tři statické fallbacky mají stejný údaj jako locale');
+    assert.equal(h.i18n.translations.en.menu.version, version);
+    assert.ok(fs.readFileSync(path.join(__dirname, '../README.md'), 'utf8').includes(`**Verze:** ${version.split(' · ')[0]}`));
+    assert.doesNotMatch(html, /Alpha 0\.[12]\b/);
+    const menu = html.slice(html.indexOf('<div id="main-menu"'), html.indexOf('<div id="game-container"'));
+    assert.match(menu, /<a href="https:\/\/buymeacoffee.com\/josefslerka" target="_blank" rel="noopener noreferrer" class="coffee-button">\s*<span aria-hidden="true">☕<\/span>\s*<span data-i18n="menu.support">Buy Me a Coffee<\/span>\s*<\/a>/);
+    assert.doesNotMatch(menu, /class="support-link"/);
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/i18n/encyclopediaRenderer.js'), 'utf8'), h.context);
+    for (const language of ['cs', 'en']) {
+        await h.i18n.setLanguage(language);
+        h.context.renderAboutTab();
+        assert.ok(h.document.getElementById('tab-about').innerHTML.includes(`data-i18n="menu.version">${version}</p>`));
+        assert.equal(h.i18n.t('menu.support'), 'Buy Me a Coffee');
+    }
+});
+
+test('terén v obou jazycích propojí každý dekorativní náhled se správným mapovým motivem', async () => {
+    const h = await createLocalizedHarness();
+    const terrain = ['plains', 'forest', 'hills', 'water', 'town', 'road', 'dam', 'mud', 'slope'];
+    const previews = html => [...html.matchAll(/<canvas class="terrain-icon" data-terrain="([a-z]+)" width="144" height="128" aria-hidden="true"><\/canvas>/g)].map(match => match[1]);
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.deepEqual(previews(html), terrain, 'statické HTML nesmí vrátit staré barevné bloky');
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/i18n/encyclopediaRenderer.js'), 'utf8'), h.context);
+    const renderer = vm.runInContext('WoodcutRenderer', h.context), calls = [];
+    renderer.drawTerrainPreview = (canvas, type) => {
+        assert.equal(canvas.dataset.terrain, type);
+        calls.push(type);
+    };
+    const container = h.document.getElementById('tab-terrain');
+    container.querySelectorAll = selector => {
+        assert.equal(selector, 'canvas[data-terrain]');
+        return previews(container.innerHTML).map(type => ({ dataset: { terrain: type } }));
+    };
+    for (const language of ['cs', 'en', 'cs']) {
+        await h.i18n.setLanguage(language);
+        calls.length = 0;
+        h.context.renderTerrainTab();
+        assert.deepEqual(previews(container.innerHTML), terrain);
+        assert.deepEqual(calls, terrain);
+        assert.ok(container.innerHTML.includes(language === 'cs' ? 'Typy terénu' : 'Terrain Types'));
+        assert.doesNotMatch(container.innerHTML, /<div class="terrain-icon/);
+    }
+});
+
+test('encyklopedie z menu, z bitvy i z pauzy inicializuje stejné aktuální náhledy', async () => {
+    let rendered = 0;
+    const h = await menuHarness('cs', h => {
+        h.context.initEncyclopediaContent = () => { rendered++; };
+    });
+    for (const [index, id] of ['btn-encyclopedia', 'btn-help', 'btn-pause-help'].entries()) {
+        h.document.getElementById(id).dispatchEvent(new Event('click'));
+        assert.equal(rendered, index + 1, id);
+        assert.equal(h.document.getElementById('help-modal').classList.contains('hidden'), false);
+    }
+});
+
 test('nový hráč nedostane neexistující pokračování ani ruční save', async () => {
     const h = await menuHarness(), el = id => h.document.getElementById(id);
     assert.equal(el('btn-resume-auto').classList.contains('hidden'), true);
     assert.equal(el('main-menu').classList.contains('has-autosave'), false);
     assert.equal(el('btn-continue').disabled, true);
+    assert.equal(el('btn-continue').classList.contains('hidden'), true);
+    assert.equal(el('btn-first-battle').classList.contains('hidden'), false);
+    assert.equal(el('btn-new-campaign').classList.contains('menu-featured'), false);
     assert.equal(h.storage.has(h.SaveGameSystem.AUTO_KEY), false);
 });
+
+test('briefing má pojmenovaný dialog a akce mimo posouvaný text', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    const modal = html.slice(html.indexOf('<div id="mission-modal"'), html.indexOf('<div id="help-modal"'));
+    assert.match(modal, /id="mission-modal"[^>]*role="dialog"[^>]*aria-modal="true"[^>]*aria-labelledby="mission-modal-title"/);
+    assert.match(modal, /<h2 id="mission-modal-title"/);
+    assert.match(modal, /id="mission-close"[^>]*data-i18n-aria-label="chronicle.close"/);
+    assert.match(modal, /id="mission-detail-body" class="mission-info"/);
+    assert.match(modal, /id="mission-sources"><\/div>\s*<\/div>\s*<\/div>\s*<div class="mission-actions">/);
+    for (const id of ['mission-detail-body', 'mission-controls', 'mission-sources', 'btn-back-to-list', 'btn-start-mission']) {
+        assert.equal([...modal.matchAll(new RegExp(`id="${id}"`, 'g'))].length, 1, id);
+    }
+});
+
+for (const language of ['cs', 'en']) {
+    test(`${language}: otevření briefingu resetuje jeho vlastní posuvník a nemění uložený postup`, async () => {
+        const h = await menuHarness(language), el = id => h.document.getElementById(id);
+        const before = JSON.stringify([...h.storage]);
+        el('mission-detail-body').scrollTop = 480;
+        el('btn-first-battle').dispatchEvent(new Event('click'));
+        assert.equal(el('mission-detail-body').scrollTop, 0);
+        assert.equal(el('mission-controls').open, true);
+        assert.equal(el('mission-details').classList.contains('hidden'), false);
+        assert.equal(el('mission-list').classList.contains('hidden'), true);
+        assert.match(el('mission-title').textContent, /Živoho|Zivoho/);
+        el('btn-back-to-list').dispatchEvent(new Event('click'));
+        assert.equal(el('mission-list').classList.contains('hidden'), false);
+        assert.equal(el('mission-details').classList.contains('hidden'), true);
+        el('mission-detail-body').scrollTop = 900;
+        el('btn-first-battle').dispatchEvent(new Event('click'));
+        assert.equal(el('mission-detail-body').scrollTop, 0);
+        assert.equal(JSON.stringify([...h.storage]), before);
+    });
+}
 
 for (const language of ['cs', 'en']) {
     test(`${language}: pokračování má prioritu jen s platným rozehraným checkpointem`, async () => {
@@ -236,6 +398,9 @@ for (const language of ['cs', 'en']) {
         assert.match(el('autosave-summary').textContent, /Živoho|Zivoho/);
         assert.match(el('autosave-summary').textContent, /3/);
         assert.equal(el('btn-continue').disabled, false);
+        assert.equal(el('btn-continue').classList.contains('hidden'), false);
+        assert.equal(el('btn-first-battle').classList.contains('hidden'), true);
+        assert.equal(el('btn-new-campaign').classList.contains('menu-featured'), false);
         assert.equal(h.storage.get(h.SaveGameSystem.AUTO_KEY), raw);
         for (const invalid of ['{', JSON.stringify({ ...JSON.parse(raw), gameState: 'victory' })]) {
             h.storage.set(h.SaveGameSystem.AUTO_KEY, invalid);
@@ -245,12 +410,99 @@ for (const language of ['cs', 'en']) {
             assert.equal(el('btn-continue').disabled, false, 'ruční save zůstává nezávislý');
             assert.equal(h.storage.get(h.SaveGameSystem.AUTO_KEY), invalid, 'menu nesmí přepisovat checkpoint');
         }
-        for (const key of ['titleFirst', 'titleSecond', 'edition', 'colophon', 'playTitle', 'libraryTitle', 'noManualSave']) {
+        for (const key of ['titleFirst', 'titleSecond', 'edition', 'colophon', 'playTitle', 'libraryTitle']) {
             assert.ok(h.i18n.hasTranslation(`menu.${key}`), key);
             assert.ok(h.i18n.t(`menu.${key}`).trim());
         }
     });
 }
+
+for (const language of ['cs', 'en']) {
+    test(`${language}: doporučení menu podle automatického, ručního a dokončeného savu`, async () => {
+        for (const kind of ['automatic', 'manual', 'finished']) {
+            let before;
+            const h = await menuHarness(language, h => {
+                const game = h.newGame('vitkov_1420');
+                game.turnNumber = 5;
+                assert.equal(game.saveGame({ automatic: kind === 'automatic' }), true);
+                // A valid legacy completed snapshot must not count as a resumable autosave.
+                if (kind === 'finished') {
+                    const snapshot = JSON.parse(h.storage.get(h.SaveGameSystem.STORAGE_KEY));
+                    snapshot.gameState = 'victory';
+                    h.SaveGameSystem.write(snapshot, { automatic: true });
+                    h.storage.delete(h.SaveGameSystem.STORAGE_KEY);
+                }
+                game.destroy();
+                before = JSON.stringify([...h.storage]);
+            });
+            const el = id => h.document.getElementById(id);
+            assert.equal(el('btn-first-battle').classList.contains('hidden'), true, kind);
+            assert.equal(el('btn-resume-auto').classList.contains('hidden'), kind !== 'automatic', kind);
+            assert.equal(el('btn-continue').classList.contains('hidden'), kind !== 'manual', kind);
+            assert.equal(el('btn-new-campaign').classList.contains('menu-featured'), kind !== 'automatic', kind);
+            assert.equal(el('btn-new-campaign').classList.contains('primary'), kind !== 'automatic', kind);
+            assert.equal(JSON.stringify([...h.storage]), before, 'menu pouze čte existující data');
+        }
+    });
+
+    test(`${language}: dohraná bitva zůstává zkušeností i bez checkpointu`, async () => {
+        for (const kind of ['victory', 'defeat', 'chronicle']) {
+            let before;
+            const h = await menuHarness(language, h => {
+                if (kind === 'chronicle') {
+                    h.ChronicleSystem.record({ scenarioId: 'zivohost_1419', result: 'defeat', turns: 3 });
+                } else {
+                    h.CampaignProgressSystem.recordBattle({ scenarioId: 'zivohost_1419', result: kind, turns: 3 });
+                }
+                before = JSON.stringify([...h.storage]);
+            });
+            const el = id => h.document.getElementById(id);
+            assert.equal(el('btn-first-battle').classList.contains('hidden'), true, kind);
+            assert.equal(el('btn-continue').classList.contains('hidden'), true);
+            assert.equal(el('btn-resume-auto').classList.contains('hidden'), true);
+            assert.equal(el('btn-new-campaign').classList.contains('menu-featured'), true);
+            assert.equal(JSON.stringify([...h.storage]), before);
+        }
+    });
+}
+
+test('nastavení ani poškozená historie nováčkovi neschovají první bitvu a data se nemažou', async () => {
+    const h = await menuHarness('cs', h => {
+        quiet(h);
+        h.storage.set('husitskeValky_settings', '{"soundEnabled":false}');
+        h.storage.set(h.SaveGameSystem.STORAGE_KEY, '{');
+        h.storage.set(h.SaveGameSystem.AUTO_KEY, '[]');
+        h.storage.set(h.CampaignProgressSystem.STORAGE_KEY, '{"version":1,"battles":{"unknown":{"result":"victory"},"vitkov_1420":{}}}');
+        h.storage.set(h.ChronicleSystem.STORAGE_KEY, '[{"result":"victory"}]');
+    });
+    const before = JSON.stringify([...h.storage]);
+    assert.equal(h.document.getElementById('btn-first-battle').classList.contains('hidden'), false);
+    assert.equal(h.document.getElementById('btn-resume-auto').classList.contains('hidden'), true);
+    assert.equal(h.document.getElementById('btn-continue').classList.contains('hidden'), false, 'existující vadný ruční soubor má dál dostupné vysvětlení při načtení');
+    h.document.dispatchEvent(new Event('languageChanged'));
+    assert.equal(JSON.stringify([...h.storage]), before);
+});
+
+test('obnovení menu přepíná doporučení i ruční řádek oběma směry a snese blokované úložiště', async () => {
+    const h = await menuHarness(), el = id => h.document.getElementById(id);
+    const game = h.newGame('vitkov_1420');
+    game.saveGame(); game.destroy();
+    h.document.dispatchEvent(new Event('languageChanged'));
+    assert.equal(el('btn-continue').classList.contains('hidden'), false);
+    assert.equal(el('btn-first-battle').classList.contains('hidden'), true);
+    assert.equal(el('btn-new-campaign').classList.contains('menu-featured'), true);
+    h.storage.delete(h.SaveGameSystem.STORAGE_KEY);
+    h.document.dispatchEvent(new Event('languageChanged'));
+    assert.equal(el('btn-continue').classList.contains('hidden'), true);
+    assert.equal(el('btn-continue').disabled, true);
+    assert.equal(el('btn-first-battle').classList.contains('hidden'), false);
+    assert.equal(el('btn-new-campaign').classList.contains('menu-featured'), false);
+    assert.equal(el('btn-new-campaign').classList.contains('primary'), false);
+    quiet(h);
+    h.context.localStorage.getItem = () => { throw new Error('SecurityError'); };
+    h.document.dispatchEvent(new Event('languageChanged'));
+    assert.equal(el('btn-first-battle').classList.contains('hidden'), false);
+});
 
 test('hudba v menu má lokalizovaný text a pravdivý přístupný stav i po změně jazyka', async () => {
     const h = await menuHarness(), button = h.document.getElementById('btn-menu-music');
@@ -260,18 +512,44 @@ test('hudba v menu má lokalizovaný text a pravdivý přístupný stav i po zm�
     assert.equal(button.classList.contains('playing'), true);
     await h.i18n.setLanguage('en');
     assert.equal(button.textContent, h.i18n.t('menu.musicPlaying'));
-    assert.equal(h.document.getElementById('current-lang-flag').textContent, 'EN');
+    assert.equal(h.document.getElementById('language-target').textContent, 'CS');
     button.dispatchEvent(new Event('click'));
     assert.equal(button.getAttribute('aria-pressed'), 'false');
     assert.equal(button.classList.contains('playing'), false);
     assert.equal(button.textContent, h.i18n.t('menu.music'));
 });
 
+test('asynchronní zastavení nebo chyba hudby aktualizuje skutečné tlačítko menu', async () => {
+    const h = await menuHarness(), button = h.document.getElementById('btn-menu-music');
+    button.dispatchEvent(new Event('click'));
+    h.context.Music.isPlaying = false;
+    h.context.window.dispatchEvent(new Event('musicstatechange'));
+    assert.equal(button.getAttribute('aria-pressed'), 'false');
+    assert.equal(button.classList.contains('playing'), false);
+    assert.equal(button.textContent, h.i18n.t('menu.music'));
+});
+
+for (const language of ['cs', 'en']) {
+    test(`${language}: vypnutý zvuk v nastavení vysvětluje neaktivní hudbu v menu`, async () => {
+        const h = await menuHarness(language, async h => {
+            h.storage.set('husitskeValky_settings', JSON.stringify({ soundEnabled: false, soundVolume: 23 }));
+        });
+        const button = h.document.getElementById('btn-menu-music');
+        assert.equal(button.disabled, true);
+        assert.equal(button.textContent, h.i18n.t('menu.musicMuted'));
+        assert.equal(button.getAttribute('aria-pressed'), 'false');
+        h.context.window.gameSettings.soundEnabled = true;
+        h.context.window.dispatchEvent(new Event('musicstatechange'));
+        assert.equal(button.disabled, false);
+        assert.equal(button.textContent, h.i18n.t('menu.music'));
+    });
+}
+
 test('ovládání panelů po startu i resize drží rozbalený a sbalený stav odděleně', async () => {
     const h = await createLocalizedHarness();
     const browserWindow = new EventTarget(); browserWindow.innerWidth = 753;
     h.context.window = browserWindow;
-    h.context.Music = { setVolume() {}, stop() {} };
+    h.context.Music = { setVolume() {}, setEnabled() {}, stop() {} };
     let initialize;
     const listen = h.document.addEventListener.bind(h.document);
     h.document.addEventListener = (type, handler, options) => {

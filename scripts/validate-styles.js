@@ -7,7 +7,7 @@ const manifest = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const importPattern = /@import\s+url\("(styles\/[\w-]+\.css)\?v=([\d.]+)"\);/g;
 const imports = [...manifest.matchAll(importPattern)];
 // Pořadí je součástí vzhledu. Změna vyžaduje vědomou úpravu tohoto kontraktu.
-const cascade = ['base', 'battle', 'dialogs-and-help', 'campaign', 'menu-and-results', 'feedback', 'field-theme', 'touch-and-layout'];
+const cascade = ['base', 'battle', 'dialogs-and-help', 'campaign', 'menu-and-results', 'feedback', 'field-theme', 'chronicle-pages', 'touch-and-layout'];
 assert.deepEqual(imports.map(match => match[1]), cascade.map(name => `styles/${name}.css`), 'Změněné pořadí, chybějící nebo duplicitní CSS import');
 assert.equal(manifest.replace(/\/\*[\s\S]*?\*\//g, '').replace(importPattern, '').trim(), '', 'Manifest smí obsahovat jen deklarované importy');
 
@@ -30,6 +30,16 @@ function checkStructure(css, file) {
 for (const [, file] of imports) {
     const css = fs.readFileSync(path.join(root, file), 'utf8');
     checkStructure(css, file);
+    // Briefing used to be restyled in three files, including !important patches.
+    // Keep this component's selectors in one owner; shared modal rules remain free.
+    if (file !== 'styles/campaign.css') {
+        const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+        for (const [, selectors] of withoutComments.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
+            assert.doesNotMatch(selectors,
+                /[.#](?:mission(?:-[\w-]+)?|campaign(?:-[\w-]+)?|act-(?:tab|name|years|description)|history-(?:column|quote|commanders|strength|reliability))\b/,
+                `${file}: styl kampaně patří do styles/campaign.css`);
+        }
+    }
     assert.doesNotMatch(css, /@import\b/, `${file}: další import by skryl pořadí kaskády`);
     assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\{\s*\}/, `${file}: prázdné pravidlo`);
     for (const [, url] of css.matchAll(/url\(["']?([^\s"')]+)["']?\)/g)) {

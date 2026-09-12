@@ -1,0 +1,53 @@
+{
+  "title": "Ktož jsú boží bojovníci — U ohně",
+  "source": "https://zpevnik.beil.cz/kdoz_jsou_bozi_bojovnici.html",
+  "description": "Traditional melody, modern instrumental game arrangement; not a historical performance reconstruction.",
+  "tempo": 80,
+  "seed": 1420,
+  "phrases": [
+    [["C5",1],["C5",1],["C5",2],["C5",2],["D5",1],["Bb4",1],["Bb4",2],["D5",2]],
+    [["D5",1],["Bb4",2],["Bb4",1],["Bb4",1],["A4",2],["A4",4]],
+    [["G4",1],["Bb4",1],["Bb4",2],["G4",2],["G4",1],["Eb4",1],["Eb4",2],["G4",2]],
+    [["G4",1],["C4",2],["C4",1],["C4",1],["C4",2],["Bb3",2]],
+    [["Eb4",2],["G4",1],["A4",1],["Bb4",2],["G4",2],["Eb4",1],["Eb4",1],["Eb4",1],["F4",1],["D4",2],["D4",4]]
+  ],
+  "harmony": [
+    [0,6,"C3","G3"], [6,6,"Bb2","F3"],
+    [12,5,"Bb2","F3"], [17,6,"D3","A3"],
+    [23,6,"G2","D3"], [29,6,"Eb3","Bb3"],
+    [35,7,"C3","G3"], [42,2,"Bb2","F3"],
+    [44,8,"Eb3","Bb3"], [52,4,"Eb3","Bb3"], [56,6,"D3","A3"]
+  ],
+  "samples": {
+    "repository": "https://github.com/sgossner/VSCO-2-CE",
+    "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+    "license": "CC0-1.0",
+    "credit": "Versilian Studios / Sam Gossner; Ivy Audio / Simon Dalzell; sample cutting: Elan Hickler / Soundemote",
+    "instruments": {
+      "flute": [
+        [60,"Woodwinds/Flute/susNV/LDFlute_susNV_C3_v1_1.wav","4f221909317e257e4d0bc49f10479643c80cb213a0486455c1bdc1d6ed13a450"],
+        [64,"Woodwinds/Flute/susNV/LDFlute_susNV_E3_v1_1.wav","87c667c2af888ed86dff87f2452248de3e3d958fc93848a4426b7c16f85f09da"],
+        [69,"Woodwinds/Flute/susNV/LDFlute_susNV_A3_v1_1.wav","6fc8d707afddfaaf3003551b95a83b52f514adbe488bfea1c8c5250080a07278"],
+        [72,"Woodwinds/Flute/susNV/LDFlute_susNV_C4_v1_1.wav","105a6dbced98de7ae04a317bdd3ba1a5c6b90dc94034439b68cce6635e2781df"]
+      ],
+      "bassoon": [
+        [48,"Woodwinds/Bassoon/sus/PSBassoon_C2_v1_1.wav","709401175aa7010b579e3bd1b5b9709797e489cbfdb9b5c4a8ab504098a61239"],
+        [55,"Woodwinds/Bassoon/sus/PSBassoon_G2_v1_1.wav","ab779b251e22d0e39dfacd9b760d032ab9c3381eda89c86236c28ae14cfbfcf4"],
+        [60,"Woodwinds/Bassoon/sus/PSBassoon_C3_v1_1.wav","facb567a76b81e7859253f0bf2dc750e05d4c4170f70824ce48887547ca9aaf3"]
+      ],
+      "cello": [
+        [36,"Strings/Cello Section/susvib/susvib_C1_v1_1.wav","abdcea431f384e135c469b0f3e4ac2a437f282f521dc5bcbe22abc221536e8de"],
+        [43,"Strings/Cello Section/susvib/susvib_G1_v1_1.wav","9e5d24e8e28d6c7f650f9bb2b33d43c13e341a8bd33124c64e23881378b181ba"],
+        [50,"Strings/Cello Section/susvib/susvib_D2_v1_1.wav","e8640dec9febc6e39fcf06b19d2c95a85d5ff8c38f13c9879e69f551eaf38ab8"],
+        [53,"Strings/Cello Section/susvib/susvib_F2_v1_1.wav","162054eab4ba118924f8f8986cf1b17ccfd65211d1945743ffbae30b4953f901"],
+        [57,"Strings/Cello Section/susvib/susvib_A2_v1_1.wav","c97a003184fdcb153d6b6c0bae8d82a90592a1b04b06bd7caaeda8b9776d5284"]
+      ],
+      "harp": [
+        [38,"Strings/Harp/KSHarp_D2_mf.wav","b9cbdc08e43fc0b28ac70246df991cb390f5cbd7f31519b3cc7f70d283b70566"],
+        [45,"Strings/Harp/KSHarp_A2_mf.wav","1df9f4d138ca3931fcb458bcdf01304cadf2e5f4eef67bbc17b0e42c0e60fce6"],
+        [48,"Strings/Harp/KSHarp_C3_mf.wav","e5d232771704e140959819de8cf2a3e0ba49d021ca77354c42664ce4fce6d9f3"],
+        [55,"Strings/Harp/KSHarp_G3_mf.wav","62600eb1b37bc2829ca65351f7ca7e506c9ae472abd5bea0765a8b8fa7df2772"]
+      ]
+    }
+  }
+}

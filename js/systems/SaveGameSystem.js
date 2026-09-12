@@ -16,6 +16,11 @@ const SaveGameSystem = {
         if (!Array.isArray(data.units)) invalid();
         const scenario = data.scenarioId ? ScenarioManager.getScenario(data.scenarioId) : null;
         if (data.scenarioId && !scenario) invalid();
+        // Starou mapu nesmíme propojit s novými cíli a rozmístěním scénáře.
+        // Chyba nastane před zrušením rozehrané hry; původní save zůstane uložený.
+        const mapRevision = data.mapRevision ?? 1;
+        if (!Number.isInteger(mapRevision) || mapRevision < 1) invalid();
+        if (mapRevision !== (scenario?.mapRevision ?? 1)) throw new Error('gameLog.scenarioUpdated');
         const { width, height } = scenario?.mapSize || { width: 16, height: 10 };
         const position = (col, row) => Number.isInteger(col) && Number.isInteger(row) && col >= 0 && row >= 0 && col < width && row < height;
         const ids = new Set(), occupied = new Set();

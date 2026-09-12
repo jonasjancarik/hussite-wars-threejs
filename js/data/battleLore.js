@@ -1,599 +1,589 @@
 // Historická data pro bitvy husitských válek
-// Zdroj: detaily-bitev.md - kompilace z primárních pramenů
+// Kritická redakce: historicalSources.js. Texty quotes jsou označené parafráze, ne edičně ověřené citace.
 
 const BattleLore = {
     // Bitva u Živohoště
     'zivohost': {
-        name: 'Bitva u Živohoště',
-        date: '4. listopadu 1419',
-        location: 'Oblast mezi Živohoští a Novým Knínem',
+        name: "Bitva u Živohoště",
+        date: "4. nebo 6. listopadu 1419",
+        location: "Oblast mezi Živohoští a Novým Knínem",
         hussiteSide: {
-            commanders: ['Břeněk Švihovský z Rýzmburka', 'Václav Koranda', 'Chval a Kuneš z Machovic'],
-            strength: '~4 300 poutníků',
-            composition: 'Polovojensky organizovaní poutníci, venkované, měšťané'
+            commanders: ["Břeněk Švihovský z Rýzmburka","Václav Koranda","Chval a Kuneš z Machovic"],
+            strength: "~4 300 poutníků",
+            composition: "Polovojensky organizovaní poutníci, venkované, měšťané"
         },
         enemySide: {
-            commanders: ['Petr Konopišťský ze Šternberka', 'Jan Ptáček z Pirkštejna'],
-            strength: '~1 300 jezdců',
-            composition: 'Těžká jízda české katolické šlechty'
+            commanders: ["Petr Konopišťský ze Šternberka","Jan Ptáček z Pirkštejna"],
+            strength: "~1 300 jezdců",
+            composition: "Těžká jízda české katolické šlechty"
         },
-        terrain: 'Vyvýšenina poblíž přechodu přes Vltavu. Vozová hradba NEBYLA použita.',
+        terrain: "Vyvýšenina poblíž přechodu přes Vltavu. Vozová hradba NEBYLA použita.",
         quotes: [
-            { text: 'Pan Petr vyjel se svými šikem proti Ústeckým, rozrazil je a celý jeho houf jezdců skrz ně projel.', source: 'Staré letopisy české' }
+            {
+                text: "Střet poutníků s královskými oddíly u Vltavy patří k počátkům husitských válek. Západočeské posily umožnily části husitů pokračovat do Prahy.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Historicky PRVNÍ větší střet husitských válek',
-            'Vozová hradba nebyla použita - vznikla až později',
-            'Petr ze Šternberka padl o rok později v bitvě pod Vyšehradem',
-            'Zajatí husité byli vhozeni do kutnohorských šachet'
+            "Ochrana tří skupin poutníků, poloha brodu a příchod posil v konkrétním kole jsou herní rekonstrukce. Koranda zastupuje duchovní vedení výpravy; jeho přítomnost zde nepokládáme za prokázanou.",
+            "Tradiční datum je 4. listopadu 1419; zpráva o svátku sv. Linharta vede také k 6. listopadu. Přesné počty a rozdělení velitelů mezi houfy nejsou jisté."
         ],
-        casualties: { hussites: '~100+ mrtvých/zajatých', enemy: 'Neznámé' },
-        aftermath: 'Nerozhodná bitva. Ukázala nutnost organizované obrany.',
-        reliability: 'Středně spolehlivé - dva hlavní prameny'
+        casualties: {"hussites":"~100+ mrtvých/zajatých","enemy":"Neznámé"},
+        aftermath: "Nerozhodná bitva. Ukázala nutnost organizované obrany.",
+        reliability: "Tradiční datum je 4. listopadu 1419; zpráva o svátku sv. Linharta vede také k 6. listopadu. Přesné počty a rozdělení velitelů mezi houfy nejsou jisté."
     },
 
     // Bitva u Nekmíře
     'nekmir': {
-        name: 'Bitva u Nekmíře',
-        date: 'Prosinec 1419 nebo leden 1420',
-        location: 'Poblíž tvrze Nekmíř, 17 km SZ od Plzně',
+        name: "Bitva u Nekmíře",
+        date: "prosinec 1419 / leden 1420",
+        location: "Poblíž tvrze Nekmíř, 17 km SZ od Plzně",
         hussiteSide: {
-            commanders: ['Jan Žižka z Trocnova'],
-            strength: '~300 pěších, 7 vozů',
-            composition: 'Pěchota z Plzně, vozy s děly a beranidly'
+            commanders: ["Jan Žižka z Trocnova"],
+            strength: "~300 pěších, 7 vozů",
+            composition: "Pěchota z Plzně, vozy s děly a beranidly"
         },
         enemySide: {
-            commanders: ['Bohuslav ze Švamberka'],
-            strength: 'Přes 2 000 jízdních i pěších',
-            composition: 'Těžká jízda plzeňského landfrýdu'
+            commanders: ["Bohuslav ze Švamberka"],
+            strength: "Přes 2 000 jízdních i pěších",
+            composition: "Těžká jízda plzeňského landfrýdu"
         },
-        terrain: 'Pole poblíž tvrze Nekmíř. PRVNÍ POUŽITÍ VOZOVÉ HRADBY v husitských válkách.',
+        terrain: "Okolí Nekmíře. Přesné místo a podoba vozového postavení nejsou bezpečně známy.",
         quotes: [
-            { text: 'Žižka ho odrazil od vozů a zabil Hynka z Nekmíře. Pak táhl dál svou cestou a tu noc pobořil tři opevněné tvrze.', source: 'Staré letopisy české' }
+            {
+                text: "U Nekmíře se Žižkův oddíl střetl s plzeňským landfrýdem. Tradované podání uvádí sedm vozů; jde o rané husitské využití vozů v boji.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'PRVNÍ doložené použití vozové hradby v historii',
-            'Pouze 7 vozů - formace půlkruhu',
-            'Bohuslav ze Švamberka se později PŘIDAL k husitům!',
-            'Památník první vozové hradby u Nekmíře postaven až v roce 2017 - 598 let po bitvě!',
-            'Žižkových 7 vozů byl demoliční konvoj (beranidla, děla, prak) - vozová hradba vznikla IMPROVIZACÍ, když ho cestou přepadli',
-            'Místu na polích k Všerubům, kde Žižka srazil vozy k sobě, se prý dodnes říká "Na smrtelnici"',
-            'Panské jezdectvo útočilo na vozovou hradbu poprvé - netušilo, že ji nelze jen tak smést'
+            "Půlkruh vozů, jejich vlastnosti a rozmístění obou stran slouží hře. Není to dochovaný plán sestavy.",
+            "Bitva se datuje do prosince 1419 nebo ledna 1420. Neoznačujeme ji za první použití vozů ve světových dějinách. Počty bojovníků jsou odhady."
         ],
-        casualties: { hussites: 'Nízké', enemy: 'Značné, včetně Hynka z Nekmíře' },
-        aftermath: 'Husitské vítězství. Zrodila se vozová taktika.',
-        reliability: 'Nízká - pouze jeden pramen (Staré letopisy české)'
+        casualties: {"hussites":"Nízké","enemy":"Značné, včetně Hynka z Nekmíře"},
+        aftermath: "Husitské vítězství. Zrodila se vozová taktika.",
+        reliability: "Bitva se datuje do prosince 1419 nebo ledna 1420. Neoznačujeme ji za první použití vozů ve světových dějinách. Počty bojovníků jsou odhady."
     },
 
     // Bitva u Sudoměře
     'sudomer': {
-        name: 'Bitva u Sudoměře',
-        date: '25. března 1420',
-        location: 'Mezi rybníky Markovec a Škaredý, 14 km od Strakonic',
+        name: "Bitva u Sudoměře",
+        date: "25. března 1420",
+        location: "Mezi rybníky Markovec a Škaredý, 14 km od Strakonic",
         hussiteSide: {
-            commanders: ['Břeněk Švihovský z Rýzmburka (padl)', 'Jan Žižka z Trocnova', 'Valkoun z Adlaru'],
-            strength: '400 pěších, 12 vozů, 9 jezdců',
-            composition: 'Rolníci, měšťané, ženy, děti, kněží'
+            commanders: ["Břeněk Švihovský z Rýzmburka (padl)","Jan Žižka z Trocnova","Valkoun z Adlaru"],
+            strength: "400 pěších, 12 vozů, 9 jezdců",
+            composition: "Rolníci, měšťané, ženy, děti, kněží"
         },
         enemySide: {
-            commanders: ['Jindřich z Hradce (smrtelně zraněn)', 'Bohuslav ze Švamberka', 'Petr ze Šternberka'],
-            strength: '700-2 000 těžkých jezdců',
-            composition: 'Těžká jízda, johanité, zbrojnoši landfrýdu'
+            commanders: ["Bohuslav ze Švamberka","Jindřich z Hradce"],
+            strength: "700-2 000 těžkých jezdců",
+            composition: "Těžká jízda, johanité, zbrojnoši landfrýdu"
         },
-        terrain: 'Úzká hráz mezi rybníky - Markovec napuštěný, Škaredý bahnitý. KLÍČOVÝ FAKTOR - bahno uvěznilo sesedlé rytíře.',
+        terrain: "Úzká hráz mezi rybníky - Markovec napuštěný, Škaredý bahnitý. KLÍČOVÝ FAKTOR - bahno uvěznilo sesedlé rytíře.",
         quotes: [
-            { text: '...v den zvěstování Panny Marie pan Břeněk ze Švihova, Valkoun z Adlaru a Jan Žižka s jinými bratřími...', source: 'Vavřinec z Březové' }
+            {
+                text: "Dne 25. března 1420 se ustupující husité bránili mezi rybníky Markovec a Škaredý. Terén a vozy omezovaly rozvinutí útočníků.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Žižka byl jednooký a přibližně 60 let starý',
-            'LEGENDA o závojích husitských žen oslňujících rytíře je výmysl Piccolominiho',
-            'Jindřich z Hradce smrtelně zraněn šipkou DO PALCE',
-            'Základ Žižkovy pověsti neporazitelného vojevůdce'
+            "Mapa zdůrazňuje hráz, vodu a bahno vypuštěného rybníka. Počet figur, čas útoků a délka obrany jsou nastaveny pro hratelnost.",
+            "O poměru velitelské role Žižky a Břeňka Švihovského se zprávy rozcházejí. Počet padlých nelze zaměňovat s počtem zajatců; přesný účet ztrát není znám."
         ],
-        casualties: { hussites: '~30-40 padlých včetně Břeňka', enemy: 'Větší než husitské' },
-        aftermath: 'Husitské vítězství. První velká demonstrace vozové taktiky.',
-        reliability: 'Vysoká - nejlépe zdokumentovaná raná bitva'
+        casualties: {"hussites":"Počet nejistý; padl Břeněk Švihovský","enemy":"Počet nejistý"},
+        aftermath: "Husitský houf se ubránil a mohl pokračovat v cestě.",
+        reliability: "O poměru velitelské role Žižky a Břeňka Švihovského se zprávy rozcházejí. Počet padlých nelze zaměňovat s počtem zajatců; přesný účet ztrát není znám."
     },
 
     // Bitva na Vítkově
     'vitkov': {
-        name: 'Bitva na Vítkově',
-        date: '14. července 1420, kolem 16:00',
-        location: 'Vrch Vítkov, Praha 3 - Žižkov',
+        name: "Bitva na Vítkově",
+        date: "14. července 1420",
+        location: "Vrch Vítkov, Praha 3 - Žižkov",
         hussiteSide: {
-            commanders: ['Jan Žižka z Trocnova'],
-            strength: '26 mužů, 2 ženy a panna v srubech; pražská pomoc s cepy',
-            composition: 'Cepníci a sudličníci, jen pár kuší (málo prachu), 3 ženy'
+            commanders: ["Jan Žižka z Trocnova"],
+            strength: "26 mužů, 2 ženy a panna v srubech; pražská pomoc s cepy",
+            composition: "Cepníci a sudličníci, jen pár kuší (málo prachu), 3 ženy"
         },
         enemySide: {
-            commanders: ['Zikmund Lucemburský', 'Fridrich IV. Bojovný', 'Heinrich z Isenburgu (velel útoku)', 'Pippo Spano'],
-            strength: '~30 000 celkem; 7-8 000 v sektoru, ale do hrdla se vešlo jen ~300 jezdců',
-            composition: 'Mezinárodní křižácká armáda'
+            commanders: ["Zikmund Lucemburský","Fridrich IV. Bojovný","Heinrich z Isenburgu (velel útoku)","Pippo Spano"],
+            strength: "~30 000 celkem; 7-8 000 v sektoru, ale do hrdla se vešlo jen ~300 jezdců",
+            composition: "Mezinárodní křižácká armáda"
         },
-        terrain: 'Protáhlý hřeben se strmými svahy, dřevěné sruby. Úzká přístupová cesta neumožnila využít převahu.',
+        terrain: "Úzký hřeben se strmými svahy. Pevné sruby a zídka omezovaly přístup útočníků.",
         quotes: [
-            { text: 'I Žižka přišed tam byl by zabit, kdyby ho jeho lidé nebyli cepy vyrvali z rukou nepřátel.', source: 'Vavřinec z Březové' },
-            { text: 'A nepřátelé uviděvše svátost a uslyševše zvonění zvonku a silný křik lidu, zachváceni náramným strachem se dali na útěk...', source: 'Vavřinec z Březové' }
+            {
+                text: "Vítkov bránil 14. července 1420 Jan Žižka. Obranu tvořila pevná zídka a sruby; pomoc z Prahy zasáhla do boku útočníků.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            '3 ŽENY bránily Vítkov',
-            'Pokřik "Hrrr na ně!" se stal heslem husitů',
-            'Jezdecká socha Žižky na Vítkově - třetí největší na světě',
-            'Den před bitvou jízda rozprášila Pražany, kteří proti rozkazu vyrazili z brány',
-            'Křižáci si zapomněli žebříky — proto marně uvázli v příkopech pod srubem'
+            "Posádka srubu je samostatná nepohyblivá herní jednotka, nikoli vůz. Počty oddílů a čas příchodu pomoci jsou zjednodušené.",
+            "Přesné ztráty a totožnost kněze vedoucího pomoc nejsou bezpečně určeny. Želivský v herní sestavě je dramatické obsazení této role, ne doložená identifikace."
         ],
-        casualties: { hussites: 'Jednotky až desítky', enemy: '100-300 padlých' },
-        aftermath: 'Rozhodné vítězství. 30. července rozpuštění křížové výpravy.',
-        reliability: 'Vysoká - Vavřinec z Březové byl současník a kronikář'
+        casualties: {"hussites":"Jednotky až desítky","enemy":"100-300 padlých"},
+        aftermath: "Rozhodné vítězství. 30. července rozpuštění křížové výpravy.",
+        reliability: "Přesné ztráty a totožnost kněze vedoucího pomoc nejsou bezpečně určeny. Želivský v herní sestavě je dramatické obsazení této role, ne doložená identifikace."
     },
 
     // Bitva pod Vyšehradem
     'vysehrad': {
-        name: 'Bitva pod Vyšehradem',
-        date: '1. listopadu 1420, po 8:00 ráno',
-        location: 'Pankrácká pláň, okolí kostela sv. Pankráce',
+        name: "Bitva pod Vyšehradem",
+        date: "1. listopadu 1420",
+        location: "Pankrácká pláň, okolí kostela sv. Pankráce",
         hussiteSide: {
-            commanders: ['Hynek Krušina z Lichtenburka (25 let)', 'Jan Žižka', 'Diviš Bořek z Miletínka'],
-            strength: '15-20 000 mužů',
-            composition: 'Pražané, orebité, táboři, žatečtí, lounští'
+            commanders: ["Hynek Krušina z Lichtenburka","Hejtmani pražských a spojeneckých oddílů"],
+            strength: "15-20 000 mužů",
+            composition: "Pražané, orebité, táboři, žatečtí, lounští"
         },
         enemySide: {
-            commanders: ['Zikmund Lucemburský', 'Jindřich z Kravař (padl)', 'Mikšík Divůček (první na útěku)'],
-            strength: '15-20 000 mužů',
-            composition: 'Uhři, Němci, Slezané, česká katolická šlechta'
+            commanders: ["Zikmund Lucemburský","Jindřich z Plumlova","Mikšík Divůček"],
+            strength: "15-20 000 mužů",
+            composition: "Uhři, Němci, Slezané, česká katolická šlechta"
         },
-        terrain: 'Rovinatá pláň s bočním úvozem k Podolí. Boční úvoz se stal pastí pro šlechtu.',
+        terrain: "Rovinatá pláň s bočním úvozem k Podolí. Boční úvoz se stal pastí pro šlechtu.",
         quotes: [
-            { text: '[Panstvo] hrdě dalo králi na vědomí, že půjde do ohně i tam, kde on sám jistě nebude.', source: 'Jindřich Plumlovský k Zikmundovi' }
+            {
+                text: "Královská posádka Vyšehradu dodržela dohodu a 1. listopadu 1420 do bitvy nezasáhla. Husitskému vojsku velel Hynek Krušina z Lichtenburka.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Padlo 25 KOROUHEVNÍCH PÁNŮ české šlechty',
-            'Posádka Vyšehradu dodržela čestnou dohodu o kapitulaci',
-            'Mrtví leželi 3 DNY NAZÍ na bojišti',
-            'Zikmund přišel POZDĚ - po 8:00, kdy měla posádka kapitulovat',
-            'Po bitvě se prý v noci nad bojištěm zjevil sloup zbarvený jako duha — vyloženo jako znamení'
+            "Mapa zachovává vztah pevnosti, Vltavy, Botiče, pankráckých pozic a podolského svahu. Rozestupy, příkopy a rozdělení útočných skupin nejsou zaměřeným plánem bitvy.",
+            "Rozhovory Zikmunda s pány jsou scénáristickou zkratkou, nikoli přepisem jejich slov."
         ],
-        casualties: { hussites: '~30 mužů', enemy: '400-500 včetně 25 pánů' },
-        aftermath: 'Rozhodné vítězství - "podstatně větší než na Vítkově". Rozpad královské strany.',
-        reliability: 'Vysoká - více pramenů včetně Eberarda Windeckeho'
+        casualties: {"hussites":"~30 mužů","enemy":"400-500 včetně 25 pánů"},
+        aftermath: "Porážka královského vojska a kapitulace Vyšehradu. Neznamenala ještě úplné ovládnutí Prahy.",
+        reliability: "Starý způsob počítání hodin nelze mechanicky přepsat jako 15:00. Ve scénáři používáme vypršení dohodnuté lhůty, ne zdánlivě přesný čas. Přesné počty ztrát jsou nejisté."
     },
 
     // Bitva u Kutné Hory
     'kutna_hora': {
-        name: 'Bitva u Kutné Hory',
-        date: '21.-22. prosince 1421 + 6. ledna 1422',
-        location: 'Kutná Hora, vrch Kaňk, Nebovidy',
+        name: "Bitva u Kutné Hory",
+        date: "21.–22. prosince 1421",
+        location: "Kutná Hora – Kaňk – cesta ke Kolínu",
         hussiteSide: {
-            commanders: ['Jan Žižka (ZCELA SLEPÝ)', 'Viktorin Boček z Kunštátu', 'Hašek z Valdštejna'],
-            strength: '~12 000 mužů',
-            composition: 'Táborité + pražané + moravští páni'
+            commanders: ["Jan Žižka (ZCELA SLEPÝ)","Viktorin Boček z Kunštátu","Hašek z Valdštejna"],
+            strength: "~12 000 mužů",
+            composition: "Táborité + pražané + moravští páni"
         },
         enemySide: {
-            commanders: ['Zikmund Lucemburský', 'Pippo Spano'],
-            strength: '30-50 000 mužů',
-            composition: 'Uherská jízda, německé a rakouské oddíly'
+            commanders: ["Zikmund Lucemburský","Pippo Spano"],
+            strength: "30-50 000 mužů",
+            composition: "Uherská jízda, německé a rakouské oddíly"
         },
-        terrain: 'Kopcovitá krajina, strategický vrch Kaňk. Terén umožnil noční únik.',
+        terrain: "Kopcovitá krajina, strategický vrch Kaňk. Terén umožnil noční únik.",
         quotes: [
-            { text: '...cestou vypalovali vesnice a znásilňujíce panny a ženy až do vydechnutí duše, potom je usmrcovali...', source: 'Vavřinec z Březové o křižácích' }
+            {
+                text: "Po obsazení Kutné Hory královskými oddíly se husité ocitli v obklíčení. Nad ránem 22. prosince 1421 prorazili s vozy ke Kaňku a následně pokračovali ke Kolínu.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Žižka byl ZCELA SLEPÝ - druhé oko ztratil při obléhání Rabí',
-            'Kutnohorští tajně spolupracovali se Zikmundem a otevřeli mu brány',
-            'Zikmund strávil Vánoce v domnění, že vyhrál',
-            'PRVNÍ mobilní dělostřelecký manévr v historii - noční průlom',
-            'Kutnohorští horníci házeli zajaté husity do dolových šachet - odtud ta zrada',
-            'Zikmund hnal na husity stáda volů a krav („Nepřítel rohatý"), aby je zastrašil - husité je zprvu vzali za ďábly, pak si je prohnali do vozové hradby jako zásobu',
-            'Zikmund ztratil u Kutné Hory přes 5 000 mužů takřka bez boje - sedminásobek ztrát z Vítkova',
-            'Slepý Žižka byl 11. ledna 1422 pasován na rytíře - „vítězil pro kalich i bez zraku"',
-            'Kořist: devět kop vozů plných zboží, klenotů a knih („jedna kniha znamenala celé jmění")'
+            "Úniková zóna představuje pokračování cesty za Kaňk. Mapa zhušťuje více etap přesunu; požadavek zachránit pět oddílů je herní cíl.",
+            "Vyprávění o dobytku hnaném proti hradbě a o pozdějším Žižkově pasování patří do tradice, ne mezi podmínky vítězství."
         ],
-        casualties: { hussites: '300-500', enemy: '2-12 000' },
-        aftermath: 'Husitské vítězství. Geniální noční průlom vozovou hradbou.',
-        reliability: 'Vysoká - více pramenů'
+        casualties: {"hussites":"Pro samotný průlom neznámé","enemy":"Pro samotný průlom neznámé"},
+        aftermath: "Husitské vítězství. Geniální noční průlom vozovou hradbou.",
+        reliability: "Přesnou hodinu průlomu, počty ztrát ani světové prvenství palby za pohybu zde netvrdíme. Dobové zprávy nedávají plán každého vozu."
     },
 
     // Bitva u Německého Brodu
     'nemecky_brod': {
-        name: 'Bitva u Německého Brodu',
-        date: '8.-10. ledna 1422',
-        location: 'Habry a Německý Brod (Havlíčkův Brod)',
+        name: "Bitva u Německého Brodu",
+        date: "8.–10. ledna 1422",
+        location: "Německý Brod a přechod Sázavy; Habry jsou předchozí střet",
         hussiteSide: {
-            commanders: ['Jan Žižka', 'Jan Hvězda z Vícemilic (Bzdinka)'],
-            strength: 'Posílené síly po Kutné Hoře',
-            composition: 'Táborité + pražané'
+            commanders: ["Jan Žižka","Jan Hvězda z Vícemilic (Bzdinka)"],
+            strength: "Posílené síly po Kutné Hoře",
+            composition: "Táborité + pražané"
         },
         enemySide: {
-            commanders: ['Pippo Spano'],
-            strength: 'Zbytky křižáckého vojska',
-            composition: 'Prchající uherské a rakouské oddíly'
+            commanders: ["Pippo Spano"],
+            strength: "Zbytky křižáckého vojska",
+            composition: "Prchající uherské a rakouské oddíly"
         },
-        terrain: 'Výšina Táborec u Habrů a zamrzlá Sázava, krutý mráz. Hlavní boj u hradeb Brodu (Vojtěšské předměstí).',
+        terrain: "Město na severním břehu Sázavy, na přístupové straně od Habrů. Ústup pokračuje přes řeku k Jihlavě.",
         quotes: [
-            { text: 'Město Německý Brod padá a hynou všichni... nejméně tisíc a pět set lidí.', source: 'Kronika starého pražského kolegiáta' },
-            { text: '[Masakr byl] velký hřích na duších všech zúčastněných husitů.', source: 'List Jana Žižky, 1423' }
+            {
+                text: "Královské vojsko po porážkách u Kutné Hory a Habrů ustupovalo k Německému Brodu. Historické jádro města leží na pravém břehu Sázavy, před přechodem ve směru ústupu.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Žižka byl u Německého Brodu ÚDAJNĚ pasován na rytíře (kolem 10. ledna)',
-            'Pod ledem Sázavy se prý utopilo 548 jezdců - Dolejší led NEvyvrací, počítá je mezi ~12 000 ztrátami tažení; jeho skepse míří na „sedm let pusté město"',
-            'Město bylo NĚKOLIK LET PUSTÉ - vlci běhali ulicemi',
-            'Masakr byl odvetou za vraždění husitů v Kutné Hoře',
-            'Skutečnou hrůzou ústupu byl mráz - prchající ženy a děti umrzaly cestou (Dolejší)',
-            'Křižáci se bránili zády ke hradbám u kostelíka sv. Vojtěcha, kryla je i komenda německých rytířů',
-            'Mezi zajatci byl Záviš Černý z Garbova - v závěru bojů nejspíš velel královské posádce ve městě',
-            'Návrší Táborec u Habrů, kde Pipo Scolari sešikoval vojsko k boji, se dnes jmenuje „Peklo"',
-            'Při dobytí 9. ledna byly ženy a panny z města vyvedeny bez úhony - teprve pak bylo vydáno plamenům'
+            "Hraje se závěr pronásledování u města, nikoli bitva u Habrů na stejném místě. Most, městská pozice a přechod přes led zhušťují události z 8.–10. ledna 1422.",
+            "Propadání ledu je zachováno jako tradovaný motiv a herní riziko, ne jako přesně spočítaný účet utonulých."
         ],
-        casualties: { hussites: 'Nízké', enemy: 'Tisíce mrtvých v poli + ve městě' },
-        aftermath: 'Drtivá výhra. 2. křížová výprava končí naprostým debaklem.',
-        reliability: 'Vysoká'
+        casualties: {"hussites":"Nízké","enemy":"Tisíce mrtvých v poli + ve městě"},
+        aftermath: "Porážka ustupujícího vojska, dobytí a zpustošení Brodu. Údaje o ztrátách celého tažení nelze přenášet na tuto jedinou mapu.",
+        reliability: "Počty kořistních vozů i obětí se liší. Figurky představují oddíly; jejich počet není počet lidí uvedený v kronice."
     },
 
     // Bitva u Mostu
     'most': {
-        name: 'Bitva u Mostu',
-        date: '5. srpna 1421',
-        location: 'Okolí vrchu Hněvín, Most',
+        name: "Bitva u Mostu",
+        date: "5. srpna 1421",
+        location: "Okolí vrchu Hněvín, Most",
         hussiteSide: {
-            commanders: ['Jan Želivský (radikální kazatel)'],
-            strength: 'Pražský husitský svaz + Žatečtí',
-            composition: 'Městské hotovosti, 2 pušky, 2 praky'
+            commanders: ["Jan Želivský (radikální kazatel)"],
+            strength: "Pražský husitský svaz + Žatečtí",
+            composition: "Městské hotovosti, 2 pušky, 2 praky"
         },
         enemySide: {
-            commanders: ['Fridrich IV. Bojovný', 'Hynek Hlaváč z Dubé', 'Zikmund z Vartenberka'],
-            strength: 'Saské vojsko + mostecká hotovost + katolická šlechta',
-            composition: 'Profesionální míšeňská armáda'
+            commanders: ["Fridrich IV. Bojovný","Hynek Hlaváč z Dubé","Zikmund z Vartenberka"],
+            strength: "Saské vojsko + mostecká hotovost + katolická šlechta",
+            composition: "Profesionální míšeňská armáda"
         },
-        terrain: 'Svah vrchu Hněvín s hradem. Husité útočili DO SVAHU bez vozové hradby - CHYBA.',
+        terrain: "Okolí Mostu a Hněvína; mapa je zjednodušené taktické uspořádání, nikoli doložený plán útoku.",
         quotes: [
-            { text: '[Vavřinec z Březové podává popis, ale nebyl příznivcem Želivského - možná zveličil porážku]', source: 'Poznámka historiků' }
+            {
+                text: "Husitské obléhání Mostu a Hněvína skončilo 5. srpna 1421 porážkou po zásahu protivníkových posil.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'PRVNÍ velká husitská porážka',
-            'Vymazána z učebnic - nehodila se do obrazu neporazitelných husitů',
-            'Panna Marie se stala ochránkyní Mostu',
-            'Žižka NEBYL PŘÍTOMEN - zotavoval se z oslepení',
-            'Husité si před bitvou dělili kořist a podcenili německou jízdu - porážka přišla ve zmatku a nočním útěku'
+            "Záchrana situace a dobytí hradu jsou hráčovy alternativní možnosti. Rozmístění posil a jejich příchod v jednotlivých kolech jsou rekonstrukce.",
+            "Z této porážky nelze odvodit, že husité bez Žižky nebo bez vozů nemohli vyhrávat. Přesná sestava, velikost vojsk a ztráty nejsou bezpečně známy."
         ],
-        casualties: { hussites: '~500+', enemy: 'Neznámé' },
-        aftermath: 'HUSITSKÁ PORÁŽKA. Oslabení pozice Jana Želivského.',
-        reliability: 'Střední - pramen zaujatý proti Želivskému'
+        casualties: {"hussites":"~500+","enemy":"Neznámé"},
+        aftermath: "HUSITSKÁ PORÁŽKA. Oslabení pozice Jana Želivského.",
+        reliability: "Z této porážky nelze odvodit, že husité bez Žižky nebo bez vozů nemohli vyhrávat. Přesná sestava, velikost vojsk a ztráty nejsou bezpečně známy."
     },
 
     // Bitva u Ústí nad Labem
     'usti': {
-        name: 'Bitva u Ústí nad Labem',
-        date: '16. června 1426',
-        location: 'Vyvýšenina "Na Běhání", 5 km od Ústí',
+        name: "Bitva u Ústí nad Labem",
+        date: "16. června 1426",
+        location: "Vyvýšenina \"Na Běhání\", 5 km od Ústí",
         hussiteSide: {
-            commanders: ['Zikmund Korybutovič (formálně)', 'Prokop Holý (fakticky)', 'Jan Roháč', 'Jakoubek z Vřesovic'],
-            strength: '24-25 000 mužů, 500+ vozů',
-            composition: 'Táboři, sirotci, pražané, šlechta'
+            commanders: ["Zikmund Korybutovič (formálně)","Prokop Holý (fakticky)","Jan Roháč","Jakoubek z Vřesovic"],
+            strength: "24-25 000 mužů, 500+ vozů",
+            composition: "Táboři, sirotci, pražané, šlechta"
         },
         enemySide: {
-            commanders: ['Boso z Vitzthumu (padl)'],
-            strength: '25-30 000 mužů',
-            composition: 'Vojska ze Saska, Míšně, Durynska'
+            commanders: ["Boso z Vitzthumu (padl)"],
+            strength: "25-30 000 mužů",
+            composition: "Vojska ze Saska, Míšně, Durynska"
         },
-        terrain: 'Mírné návrší s planinou. Dvojitá linie vozové hradby.',
+        terrain: "Mírné návrší s planinou. Dvojitá linie vozové hradby.",
         quotes: [
-            { text: 'A ten potok, kterýž skrze Ústie teče, veškeren hustě od velikého zmordování lidí i koní krvavý bieše.', source: 'Křížovnický rukopis' },
-            { text: 'Sluší Čechům vzpomínati, že jim dal Pán Bůh u Oustí vítězství...', source: 'Píseň o vítězství u Ústí' }
+            {
+                text: "Dne 16. června 1426 porazila spojená husitská vojska protivníka u Ústí nad Labem, v prostoru označovaném Na Běhání.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Piccolomini MYLNĚ připsal vítězství mrtvému Žižkovi',
-            'PRVNÍ velká bitva Prokopa Holého jako velitele',
-            'Padlo 7 říšských hrabat a 23 korouhevních pánů',
-            'Smírný list odmítnut → obě strany si slíbily nikoho nešetřit; 24 klečících pánů pobito',
-            'POSLEDNÍ BITVA kde jízda čelně napadla vozovou hradbu',
-            'V husitském vojsku bojoval i ruský kníže Fedor z Ostrogu - Ústí přitáhlo i cizí šlechtu'
+            "Dvě řady vozů, přístup útočníků a blízkost města jsou herní zhuštění rekonstrukce. Nejde o změřené rozestavení historické armády.",
+            "Údaj o pouhých devatenácti husitských padlých uvádíme jako kronikářské tvrzení, nikoli ověřenou bilanci."
         ],
-        casualties: { hussites: 'Údajně jen 19 mužů (Starý letopisec)', enemy: '~4 000 (kroniky až 15 000)' },
-        aftermath: 'Drtivé vítězství. Saské vévodství zdecimováno.',
-        reliability: 'Vysoká'
+        casualties: {"hussites":"Údajně jen 19 mužů (Starý letopisec)","enemy":"~4 000 (kroniky až 15 000)"},
+        aftermath: "Drtivé vítězství. Saské vévodství zdecimováno.",
+        reliability: "Počty obou vojsk i obětí se v podáních výrazně liší. Uvedené odhady nevyjadřují přesnost, kterou by bylo možné přenést do počtu figurek."
     },
 
     // Bitva u Tachova
     'tachov': {
-        name: 'Bitva u Tachova',
-        date: '3.-4. srpna 1427',
-        location: 'Severně od Tachova',
+        name: "Bitva u Tachova",
+        date: "3.–4. srpna 1427",
+        location: "Severně od Tachova",
         hussiteSide: {
-            commanders: ['Prokop Holý'],
-            strength: 'Spojené svazy',
-            composition: 'Táboři, sirotci, pražané'
+            commanders: ["Prokop Holý"],
+            strength: "Spojené svazy",
+            composition: "Táboři, sirotci, pražané"
         },
         enemySide: {
-            commanders: ['Arcibiskup Ota ze Ziegenheimu', 'Fridrich Hohenzollern', 'Kardinál Jindřich Beaufort'],
-            strength: '~25 000 mužů',
-            composition: 'PRVNÍ použití vlastní vozové hradby křižáky'
+            commanders: ["Arcibiskup Ota ze Ziegenheimu","Fridrich Hohenzollern","Kardinál Jindřich Beaufort"],
+            strength: "~25 000 mužů",
+            composition: "Křižácké oddíly s vozovým postavením"
         },
-        terrain: 'Okolí Stříbra a Tachova. Nerozhodující - křižáci uprchli.',
+        terrain: "Okolí Stříbra a Tachova. Nerozhodující - křižáci uprchli.",
         quotes: [
-            { text: 'A když se táboři přiblížili na tři míle, řečená knížata prchla do Bavor...', source: 'Bartošek z Drahonic' },
-            { text: 'Kardinál strhl korouhve, hodil je před Němce na zem a prudce jim lál.', source: 'Bartošek z Drahonic' },
-            { text: 'Nevidím, před kým utíkat, žádného nepřítele nevidím!', source: 'Rytíř Kamrovec' }
+            {
+                text: "Po ústupu od Stříbra se křižácké vojsko u Tachova 3.–4. srpna 1427 rozpadlo. Následovalo obléhání: město padlo 11. srpna a hrad kapituloval 14. srpna.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Křižáci použili vlastní vozovou hradbu - neúčinná',
-            'Anglické lučištníky najal kardinál Beaufort až roku 1429 - do Čech nedorazili, regent je odklonil do Francie',
-            '"Nevidím, před kým utíkat, žádného nepřítele nevidím!" - sarkastický výrok rytíře Kamrovce',
-            'Na 4 roky zastaveny křížové výpravy',
-            'Rytíř Kamrovec, autor sarkasmu „nevidím nepřítele“, padl při dobývání Tachova v průlomu hradby - místu se dodnes říká „Krvavá ulička“'
+            "Herní pronásledování končí před následným obléháním. Závěrečný text tuto další etapu popisuje odděleně.",
+            "Přesné místo polního střetu a počty nejsou jisté. Číslování křížových výprav závisí na započtení neúspěšných podniků; zde používáme rok, ne pořadové číslo."
         ],
-        casualties: { hussites: 'Zanedbatelné', enemy: 'Stovky' },
-        aftermath: 'Bez boje - křižáci prchli! 4. křížová výprava končí debaklem.',
-        reliability: 'Vysoká'
+        casualties: {"hussites":"Zanedbatelné","enemy":"Stovky"},
+        aftermath: "Rozpad polního vojska začátkem srpna. Město bylo dobyto 11. srpna a hrad 14. srpna 1427.",
+        reliability: "Přesné místo polního střetu a počty nejsou jisté. Číslování křížových výprav závisí na započtení neúspěšných podniků; zde používáme rok, ne pořadové číslo."
     },
 
     // Bitva u Nisy
     'nisa': {
-        name: 'Bitva u Nisy (Slezsko)',
-        date: '18. března 1428',
-        location: 'Před hradbami města Nisa (Nysa/Neisse)',
+        name: "Bitva u Nisy (Slezsko)",
+        date: "březen 1428",
+        location: "Před hradbami města Nisa (Nysa/Neisse)",
         hussiteSide: {
-            commanders: ['Prokop Holý', 'Velek z Březnice', 'kněz Prokůpek', 'Jan z Bukoviny'],
-            strength: 'Spojené síly',
-            composition: 'Táboři, sirotci, pražané, moravští kališníci'
+            commanders: ["Prokop Holý","Velek z Březnice","kněz Prokůpek","Jan z Bukoviny"],
+            strength: "Spojené síly",
+            composition: "Táboři, sirotci, pražané, moravští kališníci"
         },
         enemySide: {
-            commanders: ['Biskup Konrád', 'Půta z Častolovic'],
-            strength: 'Neznámá',
-            composition: 'Narychlo vyzbrojení sedláci, místní hotovost'
+            commanders: ["Biskup Konrád","Půta z Častolovic"],
+            strength: "Neznámá",
+            composition: "Narychlo vyzbrojení sedláci, místní hotovost"
         },
-        terrain: 'Před městskými hradbami. Překvapení a rychlý manévr.',
+        terrain: "Před městskými hradbami. Překvapení a rychlý manévr.",
         quotes: [
-            { text: 'Ke dvěma tisícům Slezáků pobito aneb v řece utopeno; Čechové vtrhli do předměstí a popálili je i s vozy nepřátelskými.', source: 'Staré letopisy české' }
+            {
+                text: "Tažení roku 1428 zasáhlo slezskou Nisu. Je třeba rozlišovat boj v okolí a předměstí od dobytí opevněného města.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Součást první "SPANILÉ JÍZDY" do Slezska',
-            'Ke dvěma tisícům Slezáků pobito nebo utopeno v řece Nise',
-            'Vévoda z Lehnice-Břehu zbaběle uprchl',
-            'Jediná větší bitva slezské rejsy - města se pak vzdávala bez boje',
-            'Systém výpalného začal smlouvou hejtmanů s radou Minstrberku; kdo neplatil, lehl popelem (Falkenberk, Břeh)'
+            "Mapa představuje útok na předměstí a protivníkovo polní vojsko. Obsazení celého opevněného města není historicky doloženým cílem této epizody.",
+            "Podrobné rozestavení, síly a přesná datace v rámci března nejsou v použitých podkladech jednotné. Mapu považujeme za volnou rekonstrukci, nikoli potvrzený plán bojiště."
         ],
-        casualties: { hussites: 'Nezaznamenány', enemy: '~2 000' },
-        aftermath: 'Drtivé vítězství. Města se vzdávají nebo platí výpalné.',
-        reliability: 'Nízká - méně zdokumentovaná, většina detailů rekonstruována'
+        casualties: {"hussites":"Nezaznamenány","enemy":"~2 000"},
+        aftermath: "Tažení do Slezska pokračovalo. Výsledek polní srážky nelze zaměňovat s dobytím opevněné Nisy.",
+        reliability: "Podrobné rozestavení, síly a přesná datace v rámci března nejsou v použitých podkladech jednotné. Mapu považujeme za volnou rekonstrukci, nikoli potvrzený plán bojiště."
     },
 
     // Bitva u Domažlic
     'domazlice': {
-        name: 'Bitva u Domažlic',
-        date: '14. srpna 1431',
-        location: 'Mezi Domažlicemi a Kdyní, u vrchu Baldov',
+        name: "Bitva u Domažlic",
+        date: "14. srpna 1431",
+        location: "Mezi Domažlicemi a Kdyní, u vrchu Baldov",
         hussiteSide: {
-            commanders: ['Prokop Holý'],
-            strength: '40-50 000 bojovníků',
-            composition: 'Spojené svazy táborů, sirotků a pražanů'
+            commanders: ["Prokop Holý"],
+            strength: "40-50 000 bojovníků",
+            composition: "Spojené svazy táborů, sirotků a pražanů"
         },
         enemySide: {
-            commanders: ['Fridrich Hohenzollern', 'Kardinál Giuliano Cesarini', 'Zikmund ODMÍTL účast'],
-            strength: '100 000+ - NEJVĚTŠÍ křížová výprava',
-            composition: 'Několik tisíc vozů po husitském vzoru (plán 9 000), stovky děl'
+            commanders: ["Fridrich Hohenzollern","Kardinál Giuliano Cesarini","Zikmund ODMÍTL účast"],
+            strength: "100 000+ - NEJVĚTŠÍ křížová výprava",
+            composition: "Několik tisíc vozů po husitském vzoru (plán 9 000), stovky děl"
         },
-        terrain: 'Cesta k Domažlicím, Všerubský průsmyk. Průsmyk - úzké hrdlo pro prchající.',
+        terrain: "Cesta k Domažlicím, Všerubský průsmyk. Průsmyk - úzké hrdlo pro prchající.",
         quotes: [
-            { text: 'Když nám se přiblížil ten zhoubný národ... takovou hrůzou sevřeni jsme všichni v náhlém zděšení; tu naše síly mizejí a prchá rada s nadějí...', source: 'Píseň o vítězství u Domažlic' },
-            { text: '...již rozléhal se rachot pochodu vozového a zpěv celého táboru hlučný Kdož jste boží bojovníci...', source: 'František Palacký' }
+            {
+                text: "Husité přicházeli 14. srpna 1431 na pomoc obleženým Domažlicím. Křižáckou armádu zachvátila panika a následoval útěk; část vojska se přesto střetla s husity.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'KARDINÁLŮV KLOBOUK ztracen na útěku - symbol vítězství',
-            'Chorál "Ktož jsú boží bojovníci" zněl před bitvou',
-            'Cesarini později prosadil diplomatické vyjednávání',
-            'Křižáci prchli, aniž by se odvážili bojovat',
-            'Chorál „Ktož sú boží bojovníci“ zaslechli křižáci na SEDM KILOMETRŮ - husité ještě nebyli ani vidět',
-            'Po kardinálu Cesarinim zůstala kořist: papežská bula, zlatý pektorál, klobouk i roucho - dvě století chované v Domažlicích'
+            "Chorál ve hře zesiluje strach již nejistého vojska. Rozpad velení a chybný výklad přesunu tvoří kontext paniky; nejde o jediný zázračný spouštěč.",
+            "Představa, že celou bitvu vyhrála samotná píseň a vůbec se nebojovalo, patří k legendě."
         ],
-        casualties: { hussites: 'Minimální', enemy: 'Stovky; ukořistěno ~2 000 vozů a ~300 děl' },
-        aftermath: 'Legendární vítězství. Konec vojenského řešení, jednání na Basilejském koncilu.',
-        reliability: 'Vysoká'
+        casualties: {"hussites":"Minimální","enemy":"Stovky; ukořistěno ~2 000 vozů a ~300 děl"},
+        aftermath: "Rozpad křižácké výpravy urychlil přechod k jednání. Panika nevylučuje, že části vojska kladly odpor.",
+        reliability: "Přesný poměr vlivu zpráv, přesunů a zvuků nelze změřit. Početnost výpravy ani ztráty nepodáváme jako jistý součet."
     },
 
     // Bitva u Lipan
     'lipany': {
-        name: 'Bitva u Lipan',
-        date: '30. května 1434, ~16:00',
-        location: 'Mezi Hřiby a Lipskou horou, 40 km V od Prahy',
+        name: "Bitva u Lipan",
+        date: "30. května 1434",
+        location: "Mezi Hřiby a Lipskou horou, 40 km V od Prahy",
         hussiteSide: {
-            faction: 'RADIKÁLOVÉ (poražení)',
-            commanders: ['Prokop Holý (padl)', 'Prokop Malý (padl)', 'Jan Čapek ze Sán (uprchl)', 'Ondřej Keřský'],
-            strength: '6-10 000 pěších, 700 jezdců, 480 vozů',
-            composition: 'Táboři + sirotci'
+            faction: "RADIKÁLOVÉ (poražení)",
+            commanders: ["Prokop Holý (padl)","Prokop Malý (padl)","Jan Čapek ze Sán (uprchl)","Ondřej Keřský"],
+            strength: "6-10 000 pěších, 700 jezdců, 480 vozů",
+            composition: "Táboři + sirotci"
         },
         enemySide: {
-            faction: 'UMÍRNĚNÍ (vítězové)',
-            commanders: ['Diviš Bořek z Miletínka', 'Aleš Vřešťovský z Rýzmburka', 'Jiří z Poděbrad (14 let!)'],
-            strength: '12-13 000 pěších, 1 200-1 500 jezdců, 720+ vozů',
-            composition: 'Panská jednota + pražané + plzeňské kontingenty'
+            faction: "UMÍRNĚNÍ (vítězové)",
+            commanders: ["Diviš Bořek z Miletínka","Aleš Vřešťovský z Rýzmburka","Jiří z Poděbrad (14 let!)"],
+            strength: "12-13 000 pěších, 1 200-1 500 jezdců, 720+ vozů",
+            composition: "Panská jednota + pražané + plzeňské kontingenty"
         },
-        terrain: 'Lipská hora (výhodnější pro radikály), pláň u Hřib. DVĚ ARMÁDY VE VOZOVÝCH HRADBÁCH proti sobě.',
+        terrain: "Lipská hora (výhodnější pro radikály), pláň u Hřib. DVĚ ARMÁDY VE VOZOVÝCH HRADBÁCH proti sobě.",
         quotes: [
-            { text: 'Vzhůru, vzhůru, na ně, prchají již!', source: 'Volání radikálů - Bartošek z Drahonic' },
-            { text: 'A tu je řečení páni pronásledovali tak rychle stále je bijíce, že vběhli mezi jejich vozy a přímo tam na vozech zabili oba kněze Prokopy...', source: 'Bartošek z Drahonic' },
-            { text: 'Čechy mohou být poraženy jedině Čechy.', source: 'Císař Zikmund Lucemburský' },
-            { text: 'Kdož zastavíš se zde, zamysli se, kam vede nesvornost národa.', source: 'Nápis na mohyle' }
+            {
+                text: "Dne 30. května 1434 se střetli husitští radikálové s koalicí katolíků a umírněných kališníků. Porážka znamenala zásadní oslabení polních vojsk, ne okamžitý konec všech bojů.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Jiří z Poděbrad (budoucí král) byl účastníkem ve 14 letech',
-            '~700 zajatců; dle kronikářské tradice část upálena ve stodolách (Toulky uvádějí jen zajetí)',
-            'Tělo Prokopa Holého NIKDY NENALEZENO',
-            'Jan Roháč z Dubé vzdoroval až do 1437 - pak byl popraven'
+            "Léčka a rozhodnutí opustit vozové postavení jsou převedeny do několika tahů. Vítězství radikálů je přiznaná alternativní historie.",
+            "Vyprávění o upalování zajatců ve stodolách nelze bez dalšího převést na přesný dodatečný počet mrtvých."
         ],
-        casualties: { hussites: '~1 300 padlých + 700-900 upálených', enemy: '~200' },
-        aftermath: 'Drtivá porážka radikálů. Konec polních vojsk. Kompaktáta v Jihlavě 1436.',
-        reliability: 'Vysoká - mnoho pramenů včetně Bartoška z Drahonic'
+        casualties: {"hussites":"Vysoké, součty a počty popravených zajatců sporné","enemy":"Nižší; přesný počet nejistý"},
+        aftermath: "Drtivá porážka radikálů. Konec polních vojsk. Kompaktáta v Jihlavě 1436.",
+        reliability: "Přesná poloha jednotlivých sestav je předmětem archeologického výzkumu. Číselné odhady ztrát a zajatců nejsou jednotným a ověřeným účtem."
     },
 
     // Bitva u Hořic
     'horice': {
-        name: 'Bitva u Hořic',
-        date: 'Kolem 20. dubna 1423',
-        location: 'Vrch Gothard (357 m), JV od Hořic na Jičínsku',
+        name: "Bitva u Hořic",
+        date: "duben 1423",
+        location: "Vrch Gothard (357 m), JV od Hořic na Jičínsku",
         hussiteSide: {
-            commanders: ['Jan Žižka (slepý)', 'Diviš Bořek z Miletínka'],
-            strength: '~3 000 mužů, 120 vozů',
-            composition: 'Orebité (východočeští husité), 10% jízdní'
+            commanders: ["Jan Žižka (slepý)","Diviš Bořek z Miletínka"],
+            strength: "~3 000 mužů, 120 vozů",
+            composition: "Orebité (východočeští husité), 10% jízdní"
         },
         enemySide: {
-            commanders: ['Čeněk z Vartenberka (4x přeběhlík!)', 'Jindřich Berka z Dubé', 'Arnošt Flaška z Pardubic'],
-            strength: 'Neznámá',
-            composition: 'Jízdní sbory katolické české šlechty'
+            commanders: ["Čeněk z Vartenberka (4x přeběhlík!)","Jindřich Berka z Dubé","Arnošt Flaška z Pardubic"],
+            strength: "Neznámá",
+            composition: "Jízdní sbory katolické české šlechty"
         },
-        terrain: 'Vrch Gothard. Vozová hradba na temeni kopce.',
+        terrain: "Vrch Gothard. Vozová hradba na temeni kopce.",
         quotes: [
-            { text: 'Když dojel na ně Žižka blízko k Hořicím, obořil se na ně... že jich kolik set zjímal.', source: 'Staré letopisy české' },
-            { text: 'Pan Čeněk s některými pány sebral se na Žižku a měli bitvu spolu a tu Žižka porazil ty pány, zjímal i zbil mnoho z nich.', source: 'Rukopis Sa' }
+            {
+                text: "Žižkovo vojsko se v dubnu 1423 střetlo s vojskem Čeňka z Vartenberka u Hořic; zásadní roli v rekonstrukci boje má vrch Gothard.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Čeněk z Vartenberka - notorický PŘEBĚHLÍK (4-5x změnil stranu)',
-            'Diviš Bořek z Miletínka - později vítěz u Lipan',
-            'PRVNÍ VNITŘNÍ KONFLIKT HUSITŮ',
-            'Východní Čechy = kolébka husitských hejtmanů',
-            'Po vítězství Žižka dobyl tvrz Kozojedy a nechal tam upálit šedesát lidí',
-            'Žižka před tažením burcoval: „Pomněte na náš první boj - malí proti velikým, neodění proti oděným jste statečně bojovali!“'
+            "Scénář představuje obranu výšiny s vozy a střelci. Časování sesednutí a protiútoku i obsazení velitelských rolí slouží herní rekonstrukci.",
+            "Přesný dubnový den se v literatuře liší. Podrobný plán nasazení a přesné počty nemáme; označení prvního vnitřního husitského konfliktu by bylo zavádějící."
         ],
-        casualties: { hussites: 'Neznámé', enemy: 'Stovky zabitých a zajatých' },
-        aftermath: 'Drtivé orebské vítězství. Ukázalo sílu východočeských husitů.',
-        reliability: 'Střední - stručnější záznamy'
+        casualties: {"hussites":"Neznámé","enemy":"Stovky zabitých a zajatých"},
+        aftermath: "Drtivé orebské vítězství. Ukázalo sílu východočeských husitů.",
+        reliability: "Přesný dubnový den se v literatuře liší. Podrobný plán nasazení a přesné počty nemáme; označení prvního vnitřního husitského konfliktu by bylo zavádějící."
     },
 
     // Bitva u Malešova
     'malesov': {
-        name: 'Bitva u Malešova',
-        date: '7. června 1424',
-        location: 'U tvrze Malešov, 6 km J od Kutné Hory, údolí potoka Bohynka',
+        name: "Bitva u Malešova",
+        date: "7. června 1424",
+        location: "U tvrze Malešov, 6 km J od Kutné Hory, údolí potoka Bohynka",
         hussiteSide: {
-            commanders: ['Jan Žižka (zcela slepý)', 'Jan Hvězda z Vícemilic (Bzdinka)', 'Jan Roháč z Dubé'],
-            strength: 'Východočeský husitský svaz + táboři',
-            composition: 'Orebité + malý oddíl táborů'
+            commanders: ["Jan Žižka (zcela slepý)","Jan Hvězda z Vícemilic (Bzdinka)","Jan Roháč z Dubé"],
+            strength: "Východočeský husitský svaz + táboři",
+            composition: "Orebité + malý oddíl táborů"
         },
         enemySide: {
-            commanders: ['Svatohavelská koalice', 'Diviš Bořek z Miletínka'],
-            strength: 'Větší než Žižkova',
-            composition: 'Pražský svaz + plzeňský landfrýd + umírnění kališníci'
+            commanders: ["Svatohavelská koalice","Diviš Bořek z Miletínka"],
+            strength: "Větší než Žižkova",
+            composition: "Pražský svaz + plzeňský landfrýd + umírnění kališníci"
         },
-        terrain: 'Údolí u Malešova - úzký průchod. Žižka přehradil průchod vozovou hradbou.',
+        terrain: "Možná rekonstrukce svahu a údolí u Malešova s vozovým postavením; přesné bojiště není určeno.",
         quotes: [
-            { text: 'Item zesrali se pražané u Malešova žitem, neb všichni pražané biechu na znamenie žitem opásáni.', source: 'Staré letopisy české (posměšné přísloví)' },
-            { text: '...Žižka vtáhl do údolí, protože o něm věděl, že jest soutěskou, v níž nepřátelé naprosto nemohou rozvinout své šiky... pobil 3000 Pražanů...', source: 'Enea Silvio Piccolomini' },
-            { text: 'Léta Páně 1424 porazil v boji Žižka se svými lidmi pražany a odňal jim mnoho vozů s děly; padlo tři sta pražských hospodářů.', source: 'Bartošek z Drahonic' }
+            {
+                text: "Žižka 7. června 1424 porazil koalici Pražanů a katolíků u Malešova. Odborný výklad připouští přehrazení údolí vozy a následný protiútok.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'VOZY S KAMENÍM - legenda nebo skutečnost? Předchůdce tankové taktiky',
-            'Vrchol Žižkovy kariéry - slepý porazil přesilu',
-            'Koalice se pokusila o ATENTÁT na Žižku',
-            'Žižka zemřel 4 měsíce poté (11. října 1424)',
-            'Praporečník Turkovec padl s pražskou korouhví v ruce; mezi padlými byl i Žižkův zeť'
+            "Bohynka, svah i rozmístění vojska představují jednu možnou rekonstrukci. Podmíněná panika ve hře vyjadřuje rozvrácení čela kolony, ne zásah kamennými vozy.",
+            "Vozy spuštěné s kamením uvádí pozdější letopisecká tradice. Jan Biederman jejich použití hodnotí jako silně nepravděpodobné."
         ],
-        casualties: { hussites: '~200', enemy: '~1 400 padlých z obou stran (z toho 326 pražských hospodářů)' },
-        aftermath: 'Geniální vítězství slepého vojevůdce. NEJKRVAVĚJŠÍ bitva husitských válek.',
-        reliability: 'Střední - přesná lokalizace bojiště není určena'
+        casualties: {"hussites":"Nejisté","enemy":"Kronikářské odhady; nelze přesně rozdělit mezi obě strany"},
+        aftermath: "Výrazné Žižkovo vítězství nad protižižkovskou koalicí. Přesnou polohu bojiště neznáme.",
+        reliability: "Přesné bojiště ani velitel protivníka nejsou spolehlivě určeni. Diviš Bořek je herní obsazení; konkrétní poměr 1200 ku 200 padlým není ověřený účet."
     },
 
     'zatec': {
-        name: 'Obrana Žatce',
-        date: '10. září - 2. října 1421',
-        location: 'Žatec - ostrožna nad řekou Ohří, severozápadní Čechy',
+        name: "Obrana Žatce",
+        date: "září – 2. října 1421",
+        location: "Žatec - ostrožna nad řekou Ohří, severozápadní Čechy",
         hussiteSide: {
-            commanders: ['Žatecký hejtman (jméno nedoloženo)'],
-            strength: 'Posádka 5 400 pěších a 400 jezdců + množství lidu z okolí',
-            composition: 'Městská posádka, sudličníci, cepníci, kuše i hákovnice'
+            commanders: ["Žatecký hejtman (jméno nedoloženo)"],
+            strength: "Posádka 5 400 pěších a 400 jezdců + množství lidu z okolí",
+            composition: "Městská posádka, sudličníci, cepníci, kuše i hákovnice"
         },
         enemySide: {
-            commanders: ['Ludvík III. Falcký', 'arcibiskupové z Mohuče, Kolína a Trevíru', 'Erkinger ze Seinsheim (vedl útoky)'],
-            strength: '~20-30 000 křižáků',
-            composition: 'Druhá křížová výprava - říšská knížata, jízda, obléhací děla'
+            commanders: ["Ludvík III. Falcký","arcibiskupové z Mohuče, Kolína a Trevíru","Erkinger ze Seinsheim (vedl útoky)"],
+            strength: "~20-30 000 křižáků",
+            composition: "Druhá křížová výprava - říšská knížata, jízda, obléhací děla"
         },
-        terrain: 'Mohutná pevnost na ostrožně obtékané ze tří stran Ohří. Útok byl možný jen z jedné strany.',
+        terrain: "Mohutná pevnost na ostrožně obtékané ze tří stran Ohří. Útok byl možný jen z jedné strany.",
         quotes: [
-            { text: 'Erkinger ze Seinsheimu podnikl proti Žatci celkem šest útoků za použití děl a hákovnic, ale nepodařilo se mu proniknout ani na předměstí.', source: 'J. Dolejší: Husité' },
-            { text: 'Při útoku proti městu Žatci, které se mu zdálo lehkým soustem, byl napaden silným oddílem obránců.', source: 'J. Dolejší: Husité (o Erkingerovi r. 1420)' }
+            {
+                text: "Žatec odolal obléhání druhé křížové výpravy v září a na počátku října 1421. Obranu zajišťovala městská obec a posádka.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Žatec = "pevnost Slunce" (Tábor, Žatec-Slunce, Louny-Luna, Slaný-Hvězda)',
-            'ŠEST frontálních útoků od 19. září 1421 odraženo',
-            'Bránila celá obec: 5 400 pěších, 400 jezdců a lid z okolí',
-            'Odvážný výpad z bran 30. září - obránci pobili spoustu nepřátel a stáhli se za hradby',
-            'Žádný velitel obrany se nedochoval - ubránila celá obec',
-            'Obléhání zlomila falešná zpráva, že táhnou pražané - křižáci 2. října prchli a byli pronásledováni',
-            'Nad hořícím ležením prý stál "modrý sloup" - vyloženo jako boží znamení',
-            'Erkinger si rok předtím Žatec "zdál lehkým soustem" - obránci ho tehdy zmasakrovali'
+            "Jediný útočný sektor a pevně stanovený počet kol zhušťují celé obléhání. Nejde o úplný plán městského opevnění.",
+            "Erkingerovo spojení s boji o Žatec roku 1420 neprokazuje jeho konkrétní roli v roce 1421. Ve hře je zvoleným představitelem obléhatelů. Počty a jednotlivé útoky jsou rekonstruované."
         ],
-        casualties: { hussites: 'Nízké - město bylo dobře předzásobené', enemy: 'Značné; navíc hlad v táboře' },
-        aftermath: 'Druhá křížová výprava se rozpadla, aniž se střetla se Žižkou v poli.',
-        reliability: 'Vysoká - dobře doložené obléhání'
+        casualties: {"hussites":"Nízké - město bylo dobře předzásobené","enemy":"Značné; navíc hlad v táboře"},
+        aftermath: "Druhá křížová výprava se rozpadla, aniž se střetla se Žižkou v poli.",
+        reliability: "Erkingerovo spojení s boji o Žatec roku 1420 neprokazuje jeho konkrétní roli v roce 1421. Ve hře je zvoleným představitelem obléhatelů. Počty a jednotlivé útoky jsou rekonstruované."
     },
 
     // Obléhání Plzně
     'plzen': {
-        name: 'Obléhání Plzně',
-        date: '14. července 1433 - 9. května 1434 (10 měsíců)',
-        location: 'Plzeň, západní Čechy',
+        name: "Obléhání Plzně",
+        date: "14. července 1433 – 9. května 1434",
+        location: "Plzeň, západní Čechy",
         hussiteSide: {
-            commanders: ['Prokop Holý', 'Jan Pardus z Horky', 'Jan Čapek ze Sán'],
-            strength: 'Spojená polní vojska táborů a sirotků',
-            composition: 'Táboři, sirotci; posily z Polska (Čapek ze Sán)'
+            commanders: ["Prokop Holý","Jan Pardus z Horky","Jan Čapek ze Sán"],
+            strength: "Spojená polní vojska táborů a sirotků",
+            composition: "Táboři, sirotci; posily z Polska (Čapek ze Sán)"
         },
         enemySide: {
-            commanders: ['Vilém Švihovský z Rýzmberka', 'plzeňský landfrýd'],
-            strength: 'Městská posádka a landfrýd',
-            composition: 'Katoličtí Plzeňané, západočeská katolická šlechta'
+            commanders: ["Vilém Švihovský z Rýzmberka","plzeňský landfrýd"],
+            strength: "Městská posádka a landfrýd",
+            composition: "Katoličtí Plzeňané, západočeská katolická šlechta"
         },
-        terrain: 'Město obklíčeno příkopy a roubenou hradbou s devíti věžemi; husité měli na 40 těžkých bombard.',
+        terrain: "Opevněné město a obléhací práce. Počty věží a děl se v rekonstrukcích liší.",
         quotes: [
-            { text: 'Plzeňští napotom ve znaku svém nosili velblouda.', source: 'J. Dolejší: Husité (o původu městského znaku)' }
+            {
+                text: "Obléhání Plzně trvalo od 14. července 1433 do 9. května 1434 a město odolalo.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Plzeň odolala husitům opakovaně (1421, 1427, 1431) a nakonec 10 měsíců 1433-34 za Prokopa Holého',
-            'Jan Čapek ze Sán přivezl z polského tažení velblouda a přivedl ho 11. října 1433 před obléhanou Plzeň',
-            'Plzeňané velblouda při výpadu ukořistili - dali si ho do znaku; po obléhání ho darovali Norimberským',
-            'Husité obklíčili město příkopy a roubenou hradbou s devíti věžemi a 40 bombardami',
-            'Obléhání zlomil hlad, únava a ZRADA - Přibík z Klenové útok inicioval a pak ho sabotoval',
-            'Legát Palomar úmyslně protahoval basilejská jednání, aby husity vnitřně rozložil',
-            'Neúspěch u Plzně rozložil polní vojska a otevřel cestu k bratrovražedným Lipanům'
+            "Hrajete zhuštěný, časově neurčený útočný úsek obléhání. Jedna partie není devět měsíců v přesném sledu a vítězství husitů je alternativní výsledek.",
+            "Ukořistěný velbloud se stal městským symbolem. Neuvádíme, že jej do znaku udělil Zikmund; město symbol přijalo samo a později byl potvrzen."
         ],
-        casualties: { hussites: 'Vysoké ztráty a dezerce', enemy: 'Město uhájeno' },
-        aftermath: 'Největší neúspěch husitů. Krize a rozpad jednoty polních vojsk - přímá cesta k Lipanům.',
-        reliability: 'Vysoká'
+        casualties: {"hussites":"Vysoké ztráty a dezerce","enemy":"Město uhájeno"},
+        aftermath: "Největší neúspěch husitů. Krize a rozpad jednoty polních vojsk - přímá cesta k Lipanům.",
+        reliability: "Počty děl, průběh jednotlivých výpadů a sestava útočníků vyžadují opatrnost. Prokop v herní sestavě reprezentuje širší obléhání, nikoli potvrzenou účast v konkrétním útoku."
     },
 
     // Obléhání hradu Sion (poslední odpor Jana Roháče)
     'sion': {
-        name: 'Obléhání hradu Sion',
-        date: 'květen - 6. září 1437',
-        location: 'Hrádek Sion u Kutné Hory (~1 ha, bez studny)',
+        name: "Obléhání hradu Sion",
+        date: "6. září 1437",
+        location: "Sion u Chlístovic, nad údolím Vrchlice",
         hussiteSide: {
-            commanders: ['Jan Roháč z Dubé'],
-            strength: 'Malá posádka (~50-60 mužů)',
-            composition: 'Poslední táborsko-sirotčí odbojníci'
+            commanders: ["Jan Roháč z Dubé"],
+            strength: "Malá posádka (~50-60 mužů)",
+            composition: "Poslední táborsko-sirotčí odbojníci"
         },
         enemySide: {
-            commanders: ['Hynce Ptáček z Pirkštejna (Roháčův synovec)', 'Michal Országh (uherské posily)'],
-            strength: 'Zemská hotovost a uherské oddíly',
-            composition: 'Vojsko Zikmunda Lucemburského, pražští měšťané'
+            commanders: ["Hynce Ptáček z Pirkštejna","Michal Országh"],
+            strength: "Zemská hotovost a uherské oddíly",
+            composition: "Vojsko Zikmunda Lucemburského, pražští měšťané"
         },
-        terrain: 'Malý nový hrádek, který Roháč sám pojmenoval "Sión". Neměl studnu - obránci trpěli žízní.',
+        terrain: "Skalnaté hradní jádro nad Vrchlicí, rozsáhlejší předhradí se třemi valy; severní a jižní obléhací postavení.",
         quotes: [
-            { text: 'Jako příkladný válečník svůj boj nevzdal a nepokořil se.', source: 'J. Dolejší: Husité (o Janu Roháčovi)' }
+            {
+                text: "Hrad byl obléhán od května a dobyt 6. září 1437. Novější archeologické výzkumy dokládají palebná postavení obléhatelů a intenzivní boj.",
+                source: "Autorské shrnutí · odkazy v části Historie a prameny",
+                kind: "paraphrase"
+            }
         ],
         trivia: [
-            'Roháč nový hrad sám pojmenoval "Sión" - po biblické svaté hoře',
-            'Hrádek měl jen asi 1 hektar a NEMĚL studnu - obránci trpěli nedostatkem vody',
-            'Velitel obléhání Hynce Ptáček byl Roháčův synovec - proto zprvu s útokem váhal',
-            'Zikmund poslal koncem srpna uherské posily (Michal Országh), což útok urychlilo',
-            'V Praze byli všichni oběšeni podle stavu: Roháč na nejvyšší šibenici, kněz na prostřední, lapkové na nejnižší',
-            'Archeologie zpochybňuje hrdinskou verzi: na místě 4měsíčního obléhání jen 3-4 % válečných nálezů - snad "divadelní" obležení, kde příbuzný Ptáček předstíral boj'
+            "Mapa zachycuje vztah skalního jádra, předhradí, trojitého valu a Vrchlice. Rozsah opevnění je zmenšen; rozmístění oddílů, příchod posil a alternativní výsledek jsou herní rekonstrukce.",
+            "Starší představa pouhého předstíraného obléhání není současným archeologickým závěrem. Může být uvedena jako dějina výkladů, nikoli jako důkaz, že se nebojovalo."
         ],
-        casualties: { hussites: '52 obránců popraveno v Praze', enemy: 'Nízké (dle archeologie)' },
-        aftermath: 'Poslední husitský odpor zlomen. Zikmund pomstychtivě popravil obránce - a prý pozdě litoval.',
-        reliability: 'Střední - archeologie relativizuje kronikářský obraz hrdinné řeže'
-    }
+        casualties: {
+            hussites: "Zajetí a poprava Roháče s druhy; součty se liší",
+            enemy: "Neznámé; malé ztráty nelze odvodit z podílu nálezů"
+        },
+        aftermath: "Sion padl 6. září 1437. Jan Roháč a jeho druhové byli 9. září popraveni v Praze.",
+        reliability: "Zůstává otázka, do jaké části obléhání byly tvrdé boje soustředěny. Nepřítomnost studny sama nedokazuje nepřetržitou žízeň: plán dokládá chráněný přístup k vodě."
+    },
 };
 
-// P8: Kronika protistrany. Nejde o doslovné citace, ale o krátké
-// kontrafaktuální zápisy stylizované podle pramenů uvedených u bitvy.
-// Při hráčově porážce se tato verze stane kanonickým zápisem Kroniky.
+// Autorská stylizace protistrany, nikoli doslovné citace kronik.
 const EnemyChronicles = {
     zivohost: {
         text: 'Páni dostihli houf poutníků u Vltavy a rozehnali jej dříve, než mohl proměnit kopec v pevnost. Zemský řád byl na cestě k Novému Knínu obnoven.',
@@ -624,7 +614,7 @@ const EnemyChronicles = {
         source: 'Stylizováno jako kutnohorský královský zápis'
     },
     nemecky_brod: {
-        text: 'Scolari zastavil pronásledovatele u Habrů a převedl královské vojsko přes Sázavu. Německý Brod odolal a druhá výprava si uchovala čest.',
+        text: 'Královský zadní voj zadržel pronásledovatele před Brodem a umožnil ústup přes Sázavu. Město se tentokrát vyhnulo zpustošení.',
         source: 'Stylizováno jako královský protizápis k pražské kronice'
     },
     most: {
@@ -656,7 +646,7 @@ const EnemyChronicles = {
         source: 'Stylizováno jako zpráva papežského legáta Juliána Cesariniho'
     },
     plzen: {
-        text: 'Plzeňská obec přečkala hlad i devět měsíců obležení a odrazila generální útok. Uloupený velbloud zůstal znamením města, které polní vojska nedobyla.',
+        text: 'Plzeňská obec přečkala dlouhé obléhání a uchránila své město. Ukořistěný velbloud zůstal znamením jejího odporu.',
         source: 'Stylizováno podle plzeňské městské tradice'
     },
     lipany: {
@@ -665,9 +655,9 @@ const EnemyChronicles = {
     },
     sion: {
         text: 'Královské vojsko po dlouhém obležení dobylo Sion útokem a zajalo Jana Roháče i jeho věrné. Poslední ozbrojený vzdor proti králi byl zlomen.',
-        source: 'Kronikářská verze — Staré letopisy české',
-        counterText: 'Archeologické nálezy tvoří jen malý zlomek toho, co by po čtyřměsíčním boji zůstalo. Obléhání mohlo být zčásti divadlem, v němž příbuzný Hynce Ptáček boj spíš předstíral.',
-        counterSource: 'Archeologický výzkum hradu Sion'
+        source: 'Autorská stylizace kronikářského podání',
+        counterText: 'Novější archeologické výzkumy dokládají rozsáhlejší opevnění i střelivo. Starší výklad o pouhém předstírání boje nelze považovat za závěr dnešního poznání.',
+        counterSource: 'Archeologický atlas ČR a novější výzkum Sionu'
     }
 };
 

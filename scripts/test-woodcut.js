@@ -49,6 +49,43 @@ test('všech 13 terénů se kreslí stabilně v různých měřítkách bez náh
     }
 });
 
+test('náhledy všech terénů přesně odpovídají kreslení izolovaného hexu na mapě', () => {
+    const h = drawingHarness(34, 1, 1);
+    h.grid.paddingLeft = 36; h.grid.paddingTop = 32;
+    const canvas = { getContext: () => h.ctx };
+    for (const terrain of Object.keys(h.WoodcutRenderer.terrainColors)) {
+        h.grid.setTerrain(0, 0, terrain);
+        const before = JSON.stringify([...h.grid.hexes]);
+        h.calls.length = 0;
+        h.WoodcutRenderer.drawTerrainPreview(canvas, terrain);
+        const preview = JSON.stringify(h.calls);
+        assert.equal(canvas.width, 144); assert.equal(canvas.height, 128);
+        assert.equal(JSON.stringify([...h.grid.hexes]), before, 'náhled nesmí měnit herní mapu');
+        assert.equal(h.stack.length, 0);
+        h.calls.length = 0;
+        h.ctx.save(); h.ctx.scale(2, 2);
+        h.grid.renderer.drawTerrain();
+        h.ctx.restore();
+        assert.equal(JSON.stringify(h.calls), preview, terrain);
+        h.calls.length = 0;
+        h.WoodcutRenderer.drawTerrainPreview(canvas, terrain);
+        assert.equal(JSON.stringify(h.calls), preview, 'opakované kreslení nesmí posouvat či zvětšovat motiv');
+        assert.equal(h.stack.length, 0);
+    }
+});
+
+test('náhled bez Canvasu nespadne a neznámý typ používá výchozí pláň', () => {
+    const h = drawingHarness();
+    h.WoodcutRenderer.drawTerrainPreview({ getContext: () => null }, 'forest');
+    assert.equal(h.calls.length, 0);
+    const canvas = { getContext: () => h.ctx };
+    h.WoodcutRenderer.drawTerrainPreview(canvas, 'plains');
+    const plain = JSON.stringify(h.calls);
+    h.calls.length = 0;
+    h.WoodcutRenderer.drawTerrainPreview(canvas, 'unknown');
+    assert.equal(JSON.stringify(h.calls), plain);
+});
+
 test('všechny jednotky mají sdílený vektorový znak v mapě a v panelu', () => {
     const h = drawingHarness();
     for (const [i, type] of Object.keys(h.UnitTypes).entries()) {
@@ -69,6 +106,42 @@ test('pražské vozy, cepníci, kuše a děla neztrácejí vlastní značku', ()
     const h = drawingHarness();
     for (const [type, kind] of Object.entries({ VOZOVA_HRADBA_PRASKY: 'wagon', CEPNICI_PRASKY: 'flail', KUSINICI_PRASKY: 'crossbow', HOUFNICE_PRASKY: 'cannon', JIZDA_PRASKY: 'horse' })) {
         assert.equal(h.WoodcutRenderer.glyphKind(new h.Unit(type, 0, 0, 1)), kind);
+    }
+});
+
+test('velitelé obou stran mají jinou siluetu než pěchota, i bez barvy a po vyčerpání', () => {
+    for (const size of [16, 24, 40, 64]) {
+        const h = drawingHarness(size), silhouettes = [];
+        for (const faction of ['hussites', 'crusaders']) {
+            for (const commander of [false, true]) {
+                h.calls.length = 0;
+                h.grid.renderer.tokenPath(faction !== 'hussites', size * .61, commander);
+                silhouettes.push(JSON.stringify(h.calls));
+            }
+            const unit = new h.Unit('JAN_ZIZKA', 1, 1, 1);
+            unit.faction = faction;
+            unit.hasMoved = unit.hasAttacked = unit.isDefending = true;
+            unit.isTerrified = true;
+            const before = JSON.stringify(unit.serialize());
+            h.calls.length = 0; h.grid.renderer.unit(unit);
+            assert.ok(h.calls.some(call => call[0] === 'fillText' && call[1] === '✓'));
+            assert.ok(h.calls.some(call => call[0] === 'fillText' && call[1] === '!'));
+            assert.equal(h.calls.at(-2)[0], 'fillRect', 'HP zůstává nad stavy');
+            assert.equal(JSON.stringify(unit.serialize()), before);
+            assert.equal(h.stack.length, 0);
+        }
+        assert.equal(new Set(silhouettes).size, 4);
+    }
+});
+
+test('HTML korouhev sdílí obrys s mapou a velitele rozpozná podle třídy i schopnosti', () => {
+    const h = drawingHarness();
+    for (const faction of ['hussites', 'crusaders']) {
+        const byClass = { faction, unitClass: 'commander' }, bySpecial = { faction, special: 'commander' };
+        assert.equal(h.WoodcutRenderer.icon(byClass), h.WoodcutRenderer.icon(bySpecial));
+        const points = h.WoodcutRenderer.commanderOutline(faction !== 'hussites');
+        assert.ok(h.WoodcutRenderer.icon(byClass).includes(`M${points.map(p => p.join(',')).join('L')}Z`));
+        assert.equal(h.WoodcutRenderer.isCommander({ unitClass: 'infantry' }), false);
     }
 });
 

@@ -196,63 +196,63 @@ function renderTerrainTab() {
         <h3>${isEnglish ? 'Terrain Types' : 'Typy terénu'}</h3>
         <div class="terrain-list">
             <div class="terrain-item">
-                <div class="terrain-icon plains"></div>
+                <canvas class="terrain-icon" data-terrain="plains" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Plains' : 'Pláně'}</strong>
                     <p>${isEnglish ? 'Basic terrain with no bonuses. Easy movement.' : 'Základní terén bez bonusů. Snadný pohyb.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon forest"></div>
+                <canvas class="terrain-icon" data-terrain="forest" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Forest' : 'Les'}</strong>
                     <p>${isEnglish ? '+2 defense. Slows movement.' : '+2 obrana. Zpomaluje pohyb.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon hills"></div>
+                <canvas class="terrain-icon" data-terrain="hills" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Hills' : 'Kopce'}</strong>
                     <p>${isEnglish ? '+3 defense. Slows movement.' : '+3 obrana. Zpomaluje pohyb.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon water"></div>
+                <canvas class="terrain-icon" data-terrain="water" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Water' : 'Voda'}</strong>
                     <p>${isEnglish ? 'Impassable. Forms natural obstacles.' : 'Neprůchodná. Tvoří přirozené překážky.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon town"></div>
+                <canvas class="terrain-icon" data-terrain="town" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Town' : 'Město'}</strong>
                     <p>${isEnglish ? '+4 defense. Strategic position.' : '+4 obrana. Strategická pozice.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon road"></div>
+                <canvas class="terrain-icon" data-terrain="road" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Road' : 'Cesta'}</strong>
                     <p>${isEnglish ? 'Faster movement. No defensive bonuses.' : 'Rychlejší pohyb. Bez obranných bonusů.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon dam"></div>
+                <canvas class="terrain-icon" data-terrain="dam" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Dam' : 'Hráz'}</strong>
                     <p>${isEnglish ? '+2 defense. Narrow passage between ponds.' : '+2 obrana. Úzký průchod mezi rybníky.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon mud"></div>
+                <canvas class="terrain-icon" data-terrain="mud" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Mud' : 'Bahno'}</strong>
                     <p>${isEnglish ? 'Slows movement. Difficult terrain for cavalry.' : 'Zpomaluje pohyb. Obtížný terén pro jízdu.'}</p>
                 </div>
             </div>
             <div class="terrain-item">
-                <div class="terrain-icon slope"></div>
+                <canvas class="terrain-icon" data-terrain="slope" width="144" height="128" aria-hidden="true"></canvas>
                 <div class="terrain-info">
                     <strong>${isEnglish ? 'Slope' : 'Svah'}</strong>
                     <p>${isEnglish ? '+1 defense when defending. Bonus for attacker from above.' : '+1 obrana při obraně. Bonus pro útočníka shora.'}</p>
@@ -260,6 +260,9 @@ function renderTerrainTab() {
             </div>
         </div>
     `;
+    container.querySelectorAll('canvas[data-terrain]').forEach(canvas => {
+        WoodcutRenderer.drawTerrainPreview(canvas, canvas.dataset.terrain);
+    });
 }
 
 function renderRulesTab() {
@@ -440,7 +443,7 @@ function renderAboutTab() {
         <h3>${isEnglish ? 'Hussite Wars - Turn-Based Strategy' : 'Husitské války - Tahová strategie'}</h3>
 
         <div class="about-section">
-            <p class="about-version">${isEnglish ? 'Version' : 'Verze'}: <strong>Alpha 0.1</strong> (${isEnglish ? 'February 3, 2026' : '3. února 2026'})</p>
+            <p class="about-version" data-i18n="menu.version">${i18n.t('menu.version')}</p>
             <p>${isEnglish
                 ? 'Historical turn-based strategy game set in the period of the Hussite Wars (1419-1437).'
                 : 'Historická tahová strategická hra zasazená do období husitských válek (1419-1437).'

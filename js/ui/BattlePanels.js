@@ -125,6 +125,9 @@ class BattlePanels {
         for (const unit of this.game.units) {
             const li = document.createElement('li');
             li.className = 'unit-list-item';
+            const commander = WoodcutRenderer.isCommander(unit);
+            if (commander) li.classList.add('commander-unit');
+            const role = commander ? `<small class="unit-role">${i18n.t('tooltip.commander')}</small>` : '';
 
             // Získání symbolu jednotky
             const symbol = WoodcutRenderer.icon(unit);
@@ -142,12 +145,12 @@ class BattlePanels {
                 li.classList.add('destroyed');
                 li.innerHTML = `
                     <span class="unit-icon destroyed">✝</span>
-                    <span class="unit-name">${unit.name}</span>
+                    <span class="unit-name">${unit.name}${role}</span>
                 `;
             } else {
                 li.innerHTML = `
-                    <span class="unit-icon">${symbol}</span>
-                    <span class="unit-name">${unit.name}</span>
+                    <span class="unit-icon${commander ? ' commander-mark' : ''}">${symbol}</span>
+                    <span class="unit-name">${unit.name}${role}</span>
                     <span class="unit-health ${healthClass}">${unit.health}</span>
                 `;
 
@@ -276,9 +279,10 @@ class BattlePanels {
             if (abilities.cavalryBonus) abilitiesText.push(i18n.t('tooltip.cavalryBonus', { value: abilities.cavalryBonus }));
 
             commanderHtml = `
-                <div class="commander-info" style="margin: 10px 0; padding: 10px; background: rgba(139, 69, 19, 0.3); border: 2px solid #8b4513; border-radius: 6px;">
-                    <div style="color: #ffd700; font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">
-                        👑 ${i18n.t('tooltip.commander').toUpperCase()}
+                <div class="commander-info">
+                    <div class="commander-heading">
+                        <span class="commander-insignia" aria-hidden="true">${WoodcutRenderer.icon(unit)}</span>
+                        <strong>${i18n.t('tooltip.commander')}</strong>
                     </div>
                     <div style="color: #d4af37; font-size: 0.85rem; margin-bottom: 5px;">
                         ${i18n.t('tooltip.auraRange', { value: abilities.auraRange })}
@@ -393,6 +397,7 @@ class BattlePanels {
                 <div class="health-bar-fill" style="width: ${(unit.health / unit.maxHealth) * 100}%"></div>
                 <span class="health-bar-text">${unit.health}/${unit.maxHealth}</span>
             </div>
+            <p class="unit-attack-strength">${i18n.t('tooltip.attackStrength', { value: Math.round(unit.getAttackStrength() * 100) })}</p>
 
             <div class="morale-section" style="padding-top: 8px; border-top: 1px solid rgba(201, 162, 39, 0.3);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">

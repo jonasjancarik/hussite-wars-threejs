@@ -232,39 +232,46 @@
         linear-gradient(135deg, var(--ink-medium) 0%, var(--ink-light) 100%);
     border: 2px solid var(--gold);
 
-    padding: 10px 15px;
+    padding: 9px 12px;
     color: var(--parchment);
     font-size: var(--font-size-sm);
+    line-height: 1.35;
     pointer-events: none;
     z-index: 100;
-    max-width: 220px;
+    width: 280px;
+    overflow-wrap: anywhere;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.5),
         inset 0 0 15px rgba(232, 212, 168, 0.03);
 }
 
+#tooltip.tooltip-scrollable { pointer-events: auto; }
+
 #tooltip .tooltip-title {
     font-weight: bold;
     font-size: 1rem;
     color: var(--gold);
-    margin-bottom: 5px;
+    margin-bottom: 2px;
 }
 
 #tooltip .tooltip-faction {
     font-size: var(--font-size-xs);
     color: var(--parchment-shadow);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 #tooltip .tooltip-stats {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px 10px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2px 14px;
 }
 
 #tooltip .tooltip-stat {
     display: flex;
     justify-content: space-between;
+    gap: 6px;
 }
 
 #tooltip .tooltip-stat .label {
@@ -272,8 +279,8 @@
 }
 
 #tooltip .tooltip-terrain {
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 6px;
+    padding-top: 6px;
     border-top: 1px solid var(--gold-dark);
     color: var(--parchment-dark);
 }
@@ -646,12 +653,13 @@
 /* Terrain list */
 .terrain-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 12px;
 }
 
 .terrain-item {
     display: flex;
+    align-items: center;
     gap: 12px;
     background:
         linear-gradient(135deg,
@@ -665,46 +673,14 @@
 }
 
 .terrain-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 5px;
+    display: block;
+    width: 72px;
+    height: 64px;
     flex-shrink: 0;
 }
 
-.terrain-icon.plains {
-    background: linear-gradient(135deg, #7cb342 0%, #558b2f 100%);
-}
-
-.terrain-icon.forest {
-    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-}
-
-.terrain-icon.hills {
-    background: linear-gradient(135deg, #8d6e63 0%, #5d4037 100%);
-}
-
-.terrain-icon.water {
-    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
-}
-
-.terrain-icon.town {
-    background: linear-gradient(135deg, #795548 0%, #4e342e 100%);
-}
-
-.terrain-icon.road {
-    background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%);
-}
-
-.terrain-icon.dam {
-    background: linear-gradient(135deg, #8a7a5a 0%, #5a4a3a 100%);
-}
-
-.terrain-icon.mud {
-    background: linear-gradient(135deg, #5a4a3a 0%, #3a2a1a 100%);
-}
-
-.terrain-icon.slope {
-    background: linear-gradient(180deg, #6a5a4a 0%, #9a8a7a 100%);
+.terrain-info {
+    min-width: 0;
 }
 
 .terrain-info strong {

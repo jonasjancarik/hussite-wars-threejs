@@ -32,6 +32,7 @@ function createHarness({ browserView = false, pathname = '/', storage = new Map(
         setAttribute(key, value) { this.attributes.set(key, String(value)); }
         getAttribute(key) { return this.attributes.get(key) ?? null; }
         getBoundingClientRect() { return { left: 0, top: 0, width: 800, height: 600 }; }
+        getClientRects() { return this.classList.contains('hidden') ? [] : [this.getBoundingClientRect()]; }
         querySelector() { return null; }
         querySelectorAll() { return []; }
         appendChild(child) { this.children.push(child); child.parentNode = this; }

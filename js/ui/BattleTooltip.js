@@ -7,6 +7,18 @@ class BattleTooltip {
         this.lastTooltipContent = null;
     }
 
+    setupEventListeners(signal) {
+        const canvas = this.game.hexGrid.canvas;
+        canvas.addEventListener('mousemove', event => this.handleMouseMove(event), { signal });
+        canvas.addEventListener('mouseleave', event => {
+            // Dlouhý tooltip lze přečíst kolečkem, aniž by při vstupu myši zmizel.
+            if (!event.relatedTarget || !this.tooltip.contains(event.relatedTarget)) this.hideTooltip();
+        }, { signal });
+        this.tooltip.addEventListener('mouseleave', () => this.hideTooltip(), { signal });
+        this.tooltip.addEventListener('wheel', event => event.stopPropagation(), { signal, passive: true });
+        document.getElementById('map-container').addEventListener('scroll', () => this.hideTooltip(), { signal });
+    }
+
     handleMouseMove(event) {
         if (this.game.view.mapInput?.pointers.size || this.game.view.orders?.isCompact()) return;
         const { x, y } = this.game.view.mapInput.screenToWorld(event.clientX, event.clientY);
@@ -35,6 +47,7 @@ class BattleTooltip {
         if (!html) { this.hideTooltip(); return; }
         if (html !== this.lastTooltipContent) {
             this.tooltip.innerHTML = html;
+            this.tooltip.scrollTop = 0;
             this.lastTooltipContent = html;
         }
         this.tooltip.classList.remove('hidden');
@@ -58,8 +71,6 @@ class BattleTooltip {
 
         if (unit) {
             const factionName = i18n.t(`factions.${unit.faction}`);
-            const healthPercent = Math.round((unit.health / unit.maxHealth) * 100);
-
             // Získej viditelnost jednotky
             const visionRange = this.game.fogOfWarSystem.getUnitSightRange(unit);
 
@@ -74,6 +85,7 @@ class BattleTooltip {
                     <div class="tooltip-stat"><span class="label">${i18n.t('help.unitStats.movement')}:</span> ${unit.movement}</div>
                     <div class="tooltip-stat"><span class="label">👁 ${i18n.t('tooltip.visibility')}:</span> ${visionRange}</div>
                 </div>
+                <div class="tooltip-info tooltip-strength">${i18n.t('tooltip.attackStrength', { value: Math.round(unit.getAttackStrength() * 100) })}</div>
             `;
 
             // Speciální schopnost (přeskočíme commander - ten má vlastní sekci)
@@ -225,29 +237,43 @@ class BattleTooltip {
     positionTooltip(mouseX, mouseY) {
         const mapContainer = document.getElementById('map-container');
         const containerRect = mapContainer.getBoundingClientRect();
-
-        // Větší offset od kurzoru pro lepší stabilitu
+        const inset = 8;
         const offset = 20;
+        // Souřadnice viditelného vnitřku mapy (bez rámečku a scrollbarů).
+        const originX = containerRect.left + (mapContainer.clientLeft || 0);
+        const originY = containerRect.top + (mapContainer.clientTop || 0);
+        const leftEdge = originX + inset;
+        const rightEdge = originX + mapContainer.clientWidth - inset;
+        let topEdge = originY + inset;
+        const bottomEdge = originY + mapContainer.clientHeight - inset;
 
-        // Pozice relativní k map-container + scroll offset
-        let left = mouseX - containerRect.left + mapContainer.scrollLeft + offset;
-        let top = mouseY - containerRect.top + mapContainer.scrollTop + offset;
+        // Horní pruh necháváme ovládání kamery; tooltip nesmí skončit pod ním.
+        const tools = document.getElementById('map-tools')?.getBoundingClientRect();
+        if (tools?.width > 0 && tools.height > 0 && tools.right > leftEdge && tools.left < rightEdge &&
+            tools.bottom > topEdge && tools.top < bottomEdge) {
+            topEdge = Math.min(bottomEdge, tools.bottom + inset);
+        }
 
-        // Kontrola přetečení (relativně k viditelné oblasti)
+        this.tooltip.style.maxWidth = `${Math.max(0, rightEdge - leftEdge)}px`;
+        this.tooltip.style.maxHeight = `${Math.max(0, bottomEdge - topEdge)}px`;
+
+        // Šířka je stabilní i u pravého okraje. Měříme až po omezení velikosti.
         const tooltipRect = this.tooltip.getBoundingClientRect();
-        if (mouseX + tooltipRect.width + offset > containerRect.right) {
-            left = mouseX - containerRect.left + mapContainer.scrollLeft - tooltipRect.width - offset;
-        }
-        if (mouseY + tooltipRect.height + offset > containerRect.bottom) {
-            top = mouseY - containerRect.top + mapContainer.scrollTop - tooltipRect.height - offset;
-        }
+        const preferredLeft = mouseX + tooltipRect.width + offset <= rightEdge
+            ? mouseX + offset : mouseX - tooltipRect.width - offset;
+        const preferredTop = mouseY + tooltipRect.height + offset <= bottomEdge
+            ? mouseY + offset : mouseY - tooltipRect.height - offset;
+        const left = Math.max(leftEdge, Math.min(preferredLeft, rightEdge - tooltipRect.width));
+        const top = Math.max(topEdge, Math.min(preferredTop, bottomEdge - tooltipRect.height));
 
-        this.tooltip.style.left = `${left}px`;
-        this.tooltip.style.top = `${top}px`;
+        this.tooltip.style.left = `${left - originX + mapContainer.scrollLeft}px`;
+        this.tooltip.style.top = `${top - originY + mapContainer.scrollTop}px`;
+        this.tooltip.classList.toggle('tooltip-scrollable', this.tooltip.scrollHeight > this.tooltip.clientHeight);
     }
 
     hideTooltip() {
         this.tooltip.classList.add('hidden');
+        this.tooltip.classList.remove('tooltip-scrollable');
         this.lastHoveredHex = null;
         this.lastTooltipContent = null; // Vyčistit cache
     }

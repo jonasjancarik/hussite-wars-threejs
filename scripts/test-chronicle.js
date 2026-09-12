@@ -61,7 +61,10 @@ for (const language of ['cs', 'en']) {
         assert.ok(html.includes(h.i18n.t('chronicle.actSummaries.4')));
         assert.match(html, /<details[^>]+ open>/);
         assert.match(html, /@media print/);
-        assert.doesNotMatch(html, /<script\b|<link\b|<img\b|\bsrc=|\bhref=|http:\/\/|file:\/\//i);
+        assert.doesNotMatch(html, /<script\b|<link\b|<img\b|\bsrc=|http:\/\/|file:\/\//i);
+        const links = [...html.matchAll(/href="([^"]+)"/g)].map(match => match[1]);
+        assert.ok(links.length > 0, 'export obsahuje pramenné odkazy, ne vzdálené závislosti');
+        for (const url of links) assert.match(url, /^https:\/\//);
         assert.equal(h.storage.get(h.ChronicleSystem.STORAGE_KEY), stored);
     });
 }

@@ -24,6 +24,7 @@ class WoodcutRenderer {
         gun: 'M-12 12L9-10 13-6-8 16Z M7-8L10-14 14-10 11-6 M-5 5L-9 0 M-3 4L1 8',
         cannon: 'M-14-3L12-12 15-4-11 5Z M-11 5L10 8 M-10 9A5 5 0 1 0 0 9A5 5 0 1 0-10 9 M7 8L14 14 M-5 9L-5 14',
         wagon: 'M-13-8H13V8H-13Z M-13-3H13 M-13 2H13 M-9-8V-14L0-17 9-14V-8 M-12 12A4 4 0 1 0-4 12A4 4 0 1 0-12 12 M4 12A4 4 0 1 0 12 12A4 4 0 1 0 4 12',
+        fieldwork: 'M-16 15H16 M-12 14V-7L0-17 12-7V14 M-15-7H15 M-12-2H12 M-12 4H12 M-12 10H12 M-6-3V6 M6-3V6',
         horse: 'M-9 13L-3 1-8-4-2-12-1-18 3-13 9-10 14-3 10 1 5-1 6 7 11 13Z M-12 16H13 M5-8H7',
         captain: 'M-6 15V-16 M-5-15L12-12 7-6 12 0-5-3Z M-10 15H-1',
         pilgrim: 'M-7 16L2-16Q9-20 9-12 M-1-7Q12-12 12-3Q12 6 3 3Z M-10 11L-4 13',
@@ -31,9 +32,20 @@ class WoodcutRenderer {
     });
     static paths = new Map();
 
+    static isCommander(unit) {
+        return unit.unitClass === 'commander' || unit.special === 'commander';
+    }
+
+    // A tall standard, with a forked Hussite or pointed opposing tail.
+    // Shared geometry keeps the map and the printed unit key consistent.
+    static commanderOutline(enemy) {
+        return [[-26, -30], [26, -30], [26, 24], [0, enemy ? 28 : 15], [-26, 24]];
+    }
+
     static glyphKind(unit) {
         const type = unit.type || '';
-        if (unit.unitClass === 'commander' || unit.special === 'commander') return 'captain';
+        if (this.isCommander(unit)) return 'captain';
+        if (unit.unitClass === 'fortification') return 'fieldwork';
         if (type.includes('VOZOVA') || unit.unitClass === 'wagon') return 'wagon';
         if (type.includes('CEPNICI')) return 'flail';
         if (type === 'POUTNICI') return 'pilgrim';
@@ -50,12 +62,33 @@ class WoodcutRenderer {
 
     static icon(unit) {
         const d = this.glyphs[this.glyphKind(unit)];
-        return `<svg class="woodcut-icon" viewBox="-23 -23 46 46" aria-hidden="true" focusable="false"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        const commander = this.isCommander(unit);
+        const frame = commander ? `<path d="M${this.commanderOutline(unit.faction !== 'hussites').map(p => p.join(',')).join('L')}Z" fill="none" stroke="currentColor" stroke-width="2"/>` : '';
+        return `<svg class="woodcut-icon" viewBox="${commander ? '-30 -34 60 68' : '-23 -23 46 46'}" aria-hidden="true" focusable="false">${frame}<path d="${d}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     }
 
     constructor(grid) { this.grid = grid; this.ctx = grid.ctx; }
 
     static terrainColor(terrain) { return this.terrainColors[terrain] || this.palette.paper; }
+
+    // Encyclopedia swatches use the actual map renderer on one isolated hex.
+    // Fixed 2x backing resolution stays sharp even while the tab is hidden.
+    static drawTerrainPreview(canvas, terrain) {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        canvas.width = 144;
+        canvas.height = 128;
+        const grid = {
+            ctx, hexSize: 34,
+            hexes: new Map([['0,0', { col: 0, row: 0, terrain }]]),
+            hexToPixel: () => ({ x: 36, y: 32 }),
+            getNeighbors: () => []
+        };
+        ctx.save();
+        ctx.scale(2, 2);
+        new WoodcutRenderer(grid).drawTerrain();
+        ctx.restore();
+    }
 
     static fogState(key, fog) {
         if (!fog?.fogOfWar) return 'visible';
@@ -232,8 +265,12 @@ class WoodcutRenderer {
         ctx.restore();
     }
 
-    tokenPath(enemy, radius) {
+    tokenPath(enemy, radius, commander = false) {
         const ctx = this.ctx, r = Math.max(1, radius);
+        if (commander) {
+            this.path(WoodcutRenderer.commanderOutline(enemy).map(([x, y]) => [x * r / 24, y * r / 24]), true);
+            return;
+        }
         ctx.beginPath();
         if (!enemy) ctx.arc(0, 0, r, 0, Math.PI * 2);
         else {
@@ -254,10 +291,11 @@ class WoodcutRenderer {
         const ctx = this.ctx, p = WoodcutRenderer.palette, grid = this.grid;
         const { x, y } = grid.hexToPixel(unit.col, unit.row), r = grid.hexSize * .61;
         const enemy = unit.faction !== 'hussites', color = enemy ? p.blue : p.red;
+        const commander = WoodcutRenderer.isCommander(unit);
         ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round';
-        this.tokenPath(enemy, r); ctx.fillStyle = p.light; ctx.fill(); ctx.lineWidth = 2.2; ctx.strokeStyle = p.ink; ctx.stroke();
-        this.tokenPath(enemy, r - 3); ctx.fillStyle = color; ctx.fill();
-        ctx.save(); this.tokenPath(enemy, r - 3); ctx.clip(); ctx.strokeStyle = 'rgba(242,232,211,.14)'; ctx.lineWidth = .8;
+        this.tokenPath(enemy, r, commander); ctx.fillStyle = p.light; ctx.fill(); ctx.lineWidth = commander ? 2.8 : 2.2; ctx.strokeStyle = p.ink; ctx.stroke();
+        this.tokenPath(enemy, r - 3, commander); ctx.fillStyle = color; ctx.fill();
+        ctx.save(); this.tokenPath(enemy, r - 3, commander); ctx.clip(); ctx.strokeStyle = 'rgba(242,232,211,.14)'; ctx.lineWidth = .8;
         for (let i = -r; i < r; i += 5) this.line([[-r, i], [r, i + 5]]);
         ctx.restore();
         const kind = WoodcutRenderer.glyphKind(unit);
@@ -267,17 +305,17 @@ class WoodcutRenderer {
 
         // States retain explicit marks, not only a change of color.
         if (unit.hasMoved && unit.hasAttacked) {
-            this.tokenPath(enemy, r - 3); ctx.fillStyle = 'rgba(40,48,43,.42)'; ctx.fill(); this.badge('✓', r - 2, -r + 2, p.ink);
+            this.tokenPath(enemy, r - 3, commander); ctx.fillStyle = 'rgba(40,48,43,.42)'; ctx.fill(); this.badge('✓', r - 2, -r + 2, p.ink);
         } else if (unit.hasMoved) this.badge('↻', r - 2, -r + 2, p.gold);
         else if (unit.hasAttacked) this.badge('×', r - 2, -r + 2, p.red);
         if (unit.isDefending) {
-            this.tokenPath(enemy, r + 4); ctx.lineWidth = 2; ctx.strokeStyle = p.move; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
+            this.tokenPath(enemy, r + 4, commander); ctx.lineWidth = 2; ctx.strokeStyle = p.move; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
         }
         if (unit.isRouting || unit.isTerrified) this.badge('!', -r + 2, -r + 2, p.danger);
         if (unit.special === 'rapidFire' && unit.attackCount === 1) this.badge('1', r, r - 3, p.ink);
         if (unit.chargeBonus) this.badge('➜', -r, r - 3, p.red);
-        if (unit.unitClass === 'commander') {
-            ctx.strokeStyle = p.light; ctx.lineWidth = 1; this.tokenPath(enemy, r - 5); ctx.stroke();
+        if (commander) {
+            ctx.strokeStyle = p.light; ctx.lineWidth = 1; this.tokenPath(enemy, r - 5, true); ctx.stroke();
         }
 
         const hp = Math.max(0, Math.min(1, unit.health / unit.maxHealth || 0)), w = r * 1.65, by = r + 7;

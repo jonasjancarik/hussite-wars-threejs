@@ -95,7 +95,7 @@ class Unit {
 
     // Kontrola, zda je jednotka střelec
     isRanged() {
-        return this.unitClass === 'ranged' || this.unitClass === 'artillery';
+        return this.unitClass === 'ranged' || this.unitClass === 'artillery' || this.unitClass === 'fortification';
     }
 
     // Spočítání sousedních vozů (pro wagenburg bonus)
@@ -194,6 +194,13 @@ class Unit {
         this.hasMoved = true;
     }
 
+    // Ztráty oslabují úder, nikoli obranu: 100 % HP → 100 % síly,
+    // 50 % HP → 70 %, 10 % HP → 46 %. Parametr umožní čistý náhled protiútoku.
+    getAttackStrength(health = this.health) {
+        if (health <= 0 || this.maxHealth <= 0) return 0;
+        return 0.4 + 0.6 * Math.min(1, health / this.maxHealth);
+    }
+
     // Útok na cíl
     // gameContext obsahuje: { getNeighbors, getUnitAt, hexGrid } pro výpočet bonusů z okolí
     attackTarget(target, terrain, attackerTerrain = 'plains', hasMovedThisTurn = false, gameContext = null) {
@@ -284,6 +291,8 @@ class Unit {
     // s Math.random) i náhledu šancí (previewAttackOutcome dosadí meze).
     // Pořadí operací je záměrně shodné s původním kódem attackTarget.
     computeDamage(target, terrain, attackerTerrain, hasMovedThisTurn, gameContext, randomFactor) {
+        const strength = this.getAttackStrength();
+        if (strength === 0) return 0;
         let damage = this.attack;
 
         // RapidFire - snížené poškození za rychlostřelbu (75% za každý útok)
@@ -386,6 +395,9 @@ class Unit {
             damage *= (1 + weaknessBonus);
         }
 
+        // Oslabení platí i pro útočné bonusy; obrana a dosavadní minimum zásahu zůstávají.
+        damage *= strength;
+
         // === OBRANNÉ BONUSY CÍLE ===
         // Bonus za obranný postoj
         if (target.isDefending) {
@@ -472,12 +484,14 @@ class Unit {
 
         // Protiútok nastane jen když obránce přežije a splňuje podmínky
         // (melee vs melee, těžká pěchota s útokem >= 28) - zrcadlí gate v attackTarget.
+        // Síla protiútoku závisí na HP PO zásahu. Při možném zabití je minimum 0:
+        // mrtvý obránce neodpoví a náhled nesmí slibovat jistou smrt útočníka.
         let counter = null;
         const counterEligible = target.range === 1 && this.range === 1 &&
             target.unitClass === 'infantry' && target.attack >= 28;
         if (counterEligible && !killsCertain) {
-            const cMin = this.computeCounterDamage(target, attackerTerrain, gameContext, 0.8);
-            const cMax = this.computeCounterDamage(target, attackerTerrain, gameContext, 1.2);
+            const cMin = this.computeCounterDamage(target, attackerTerrain, gameContext, 0.8, Math.max(0, target.health - dmgMax));
+            const cMax = this.computeCounterDamage(target, attackerTerrain, gameContext, 1.2, target.health - dmgMin);
             counter = {
                 min: cMin,
                 max: cMax,
@@ -491,8 +505,10 @@ class Unit {
 
     // === ČISTÝ VÝPOČET PROTIÚTOKU (25% síly normálního útoku) ===
     // randomFactor parametrizuje náhodu jako u computeDamage.
-    computeCounterDamage(defender, attackerTerrain, gameContext, randomFactor) {
-        let counterDamage = defender.attack * 0.25;
+    computeCounterDamage(defender, attackerTerrain, gameContext, randomFactor, defenderHealth = defender.health) {
+        const strength = defender.getAttackStrength(defenderHealth);
+        if (strength === 0) return 0;
+        let counterDamage = defender.attack * 0.25 * strength;
 
         // Bonus za terén útočníka (nyní obránce protiútokem)
         const terrainBonus = this.getTerrainDefenseBonus(attackerTerrain);
@@ -672,10 +688,12 @@ class Unit {
 
     // Kontrola, zda může jednotka ještě táhnout
     canAct() {
+        if (this.unitClass === 'fortification') return this.canAttack();
         return !this.hasMoved || !this.hasAttacked;
     }
 
     canMove() {
+        if (this.unitClass === 'fortification') return false;
         // WP1: sepnutý vůz (řetězy) se nemůže hýbat - hráč ho musí nejdřív rozevřít.
         // P4: výjimka - pochodová hradba (marching) se hýbe ve skupině (skupinový pochod).
         if (this.isWagon() && this.formationClosed && !this.marching) return false;

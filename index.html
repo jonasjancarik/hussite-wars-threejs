@@ -18,7 +18,7 @@
     <meta property="twitter:title" content="Husitské Války - Tahová Strategie">
     <meta property="twitter:description" content="Historická tahová strategie o husitských válkách. Veďte husitská vojska Jana Žižky v bitvách 15. století.">
 
-    <link rel="stylesheet" href="style.css?v=8.13">
+    <link rel="stylesheet" href="style.css?v=8.24">
 </head>
 <body class="booting">
     <section id="startup-status" class="startup-status">
@@ -72,9 +72,8 @@
                                 <span class="btn-text" data-i18n="menu.quickBattle"></span>
                                 <span class="menu-arrow" aria-hidden="true">→</span>
                             </button>
-                            <button id="btn-continue" class="menu-btn menu-entry menu-manual-save" disabled>
+                            <button id="btn-continue" class="menu-btn menu-entry menu-manual-save hidden" disabled>
                                 <span class="btn-text" data-i18n="touch.manualSave"></span>
-                                <span class="menu-save-note" data-i18n="menu.noManualSave"></span>
                                 <span class="menu-arrow" aria-hidden="true">→</span>
                             </button>
                         </div>
@@ -103,13 +102,16 @@
                         <button id="btn-menu-music" class="music-btn" data-i18n-title="menu.music" aria-pressed="false">
                             <span data-i18n="menu.music"></span>
                         </button>
-                        <button id="btn-language-toggle" class="language-toggle-btn" title="Změnit jazyk / Change Language" aria-label="Změnit jazyk / Change language">
-                            <span id="current-lang-flag">CS</span>
+                        <button id="btn-language-toggle" class="language-toggle-btn" title="Přepnout do angličtiny" aria-label="Přepnout do angličtiny">
+                            <span id="language-target">EN</span>
                         </button>
                     </div>
                     <div class="version-info">
-                        <span data-i18n="menu.version">Alpha 0.2 | 03.09.2026</span>
-                        <a href="https://buymeacoffee.com/josefslerka" target="_blank" rel="noopener noreferrer" class="support-link" data-i18n="menu.support"></a>
+                        <span data-i18n="menu.version">Alpha 0.3 · 12.09.2026</span>
+                        <a href="https://buymeacoffee.com/josefslerka" target="_blank" rel="noopener noreferrer" class="coffee-button">
+                            <span aria-hidden="true">☕</span>
+                            <span data-i18n="menu.support">Buy Me a Coffee</span>
+                        </a>
                     </div>
                 </footer>
                 <p class="test-build-notice" data-i18n="deployment.testNotice"></p>
@@ -285,11 +287,13 @@
         </div>
     </div>
 
-    <div id="mission-modal" class="modal hidden">
+    <div id="mission-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="mission-modal-title">
         <div class="modal-content mission-modal-content">
-            <button id="mission-close" class="close-btn">&times;</button>
-            <h2 data-i18n="campaign.title">Kampaň: Husitské války</h2>
-            <p class="mission-subtitle" data-i18n="campaign.subtitle">1419-1437</p>
+            <button id="mission-close" class="close-btn" data-i18n-title="chronicle.close" data-i18n-aria-label="chronicle.close" title="Zavřít" aria-label="Zavřít">&times;</button>
+            <header class="mission-heading">
+                <h2 id="mission-modal-title" data-i18n="campaign.title">Kampaň: Husitské války</h2>
+                <p class="mission-subtitle" data-i18n="campaign.subtitle">1419-1437</p>
+            </header>
 
             <div id="campaign-reputation" class="campaign-reputation">
                 <div class="reputation-heading">
@@ -331,7 +335,7 @@
             <div id="mission-list"></div>
 
             <div id="mission-details" class="hidden">
-                <div class="mission-info">
+                <div id="mission-detail-body" class="mission-info">
                     <h3 id="mission-title" tabindex="-1"></h3>
                     <p id="mission-date" class="mission-date"></p>
                     <p id="mission-description"></p>
@@ -379,6 +383,7 @@
                             <cite id="history-quote-source"></cite>
                         </div>
                         <p id="history-reliability" class="history-reliability"></p>
+                        <div id="mission-sources"></div>
                     </div>
                 </div>
 
@@ -390,10 +395,10 @@
         </div>
     </div>
 
-    <div id="help-modal" class="modal hidden">
+    <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
         <div class="modal-content help-modal-content">
-            <button id="help-close" class="help-close-btn">&times;</button>
-            <h2 data-i18n="menu.encyclopedia">Encyklopedie</h2>
+            <button id="help-close" class="help-close-btn" data-i18n-title="chronicle.close" title="Zavřít">&times;</button>
+            <h2 id="help-title" data-i18n="menu.encyclopedia">Encyklopedie</h2>
 
             <div class="help-tabs">
                 <button class="help-tab active" data-tab="history" data-i18n="help.tabs.history">Historie</button>
@@ -406,7 +411,7 @@
                 <button class="help-tab" data-tab="about" data-i18n="help.tabs.about">O hře</button>
             </div>
 
-            <div class="help-content">
+            <div class="help-content" tabindex="0" role="region" aria-labelledby="help-title">
                 <!-- Historie -->
                 <div id="tab-history" class="help-tab-content active">
                     <h3>Husitské války (1419-1437)</h3>
@@ -534,63 +539,63 @@
                     <h3>Typy terénu</h3>
                     <div class="terrain-list">
                         <div class="terrain-item">
-                            <div class="terrain-icon plains"></div>
+                            <canvas class="terrain-icon" data-terrain="plains" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Pláně</strong>
                                 <p>Základní terén bez bonusů. Snadný pohyb.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon forest"></div>
+                            <canvas class="terrain-icon" data-terrain="forest" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Les</strong>
                                 <p>+2 obrana. Zpomaluje pohyb.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon hills"></div>
+                            <canvas class="terrain-icon" data-terrain="hills" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Kopce</strong>
                                 <p>+3 obrana. Zpomaluje pohyb.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon water"></div>
+                            <canvas class="terrain-icon" data-terrain="water" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Voda</strong>
                                 <p>Neprůchodná. Tvoří přirozené překážky.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon town"></div>
+                            <canvas class="terrain-icon" data-terrain="town" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Město</strong>
                                 <p>+4 obrana. Strategická pozice.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon road"></div>
+                            <canvas class="terrain-icon" data-terrain="road" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Cesta</strong>
                                 <p>Rychlejší pohyb. Bez obranných bonusů.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon dam"></div>
+                            <canvas class="terrain-icon" data-terrain="dam" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Hráz</strong>
                                 <p>+2 obrana. Úzký průchod mezi rybníky.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon mud"></div>
+                            <canvas class="terrain-icon" data-terrain="mud" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Bahno</strong>
                                 <p>Zpomaluje pohyb. Obtížný terén pro jízdu.</p>
                             </div>
                         </div>
                         <div class="terrain-item">
-                            <div class="terrain-icon slope"></div>
+                            <canvas class="terrain-icon" data-terrain="slope" width="144" height="128" aria-hidden="true"></canvas>
                             <div class="terrain-info">
                                 <strong>Svah</strong>
                                 <p>+1 obrana při obraně. Bonus pro útočníka shora.</p>
@@ -732,7 +737,7 @@
                     <h3>Husitské války - Tahová strategie</h3>
 
                     <div class="about-section">
-                        <p class="about-version">Verze: <strong>Alpha 0.2</strong> (3. září 2026)</p>
+                        <p class="about-version" data-i18n="menu.version">Alpha 0.3 · 12.09.2026</p>
                         <p>Historická tahová strategická hra zasazená do období husitských válek (1419-1437).</p>
                     </div>
 
@@ -831,7 +836,7 @@
             <div class="settings-section">
                 <h3 data-i18n="settings.soundSection">Zvuk</h3>
                 <div class="setting-item">
-                    <label for="sound-enabled" data-i18n="settings.soundEnabled">Zvukové efekty</label>
+                    <label for="sound-enabled" data-i18n="settings.soundEnabled">Zvuk a hudba</label>
                     <input type="checkbox" id="sound-enabled" checked>
                 </div>
                 <div class="setting-item">
@@ -886,8 +891,14 @@
     <div id="gameover-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
         <div class="modal-content gameover-modal-content">
             <div id="gameover-scroll">
-                <div id="gameover-banner"></div>
-                <h2 id="gameover-title" tabindex="-1">Konec bitvy</h2>
+                <header class="gameover-heading">
+                    <div id="gameover-banner" aria-hidden="true"></div>
+                    <div>
+                        <p class="gameover-kicker" data-i18n="gameover.record">Zápis o bitvě</p>
+                        <h2 id="gameover-title" tabindex="-1">Konec bitvy</h2>
+                        <p id="gameover-battle"></p>
+                    </div>
+                </header>
                 <h3 id="gameover-reason-heading" class="hidden" data-i18n="onboarding.resultReason">Proč bitva skončila</h3>
                 <p id="gameover-reason" class="gameover-reason hidden"></p>
                 <p id="gameover-message"></p>
@@ -915,6 +926,7 @@
                     <div class="chronicle-line chronicle-says" id="chronicle-says"></div>
                     <div class="chronicle-note" id="chronicle-note"></div>
                 </div>
+                <div id="gameover-sources"></div>
 
                 <!-- Dvousloupcové tělo: vlevo statistiky, vpravo cíle + trivia -->
                 <div class="gameover-columns">
@@ -925,19 +937,19 @@
                             <!-- Bojové statistiky -->
                             <div class="stats-section">
                                 <div class="stat-row">
-                                    <span data-i18n="gameover.totalDamage">🎯 Způsobené poškození:</span>
+                                    <span data-i18n="gameover.totalDamage">Způsobené poškození:</span>
                                     <span id="stat-total-damage">0</span>
                                 </div>
                                 <div class="stat-row">
-                                    <span data-i18n="gameover.damageTaken">🛡️ Obdržené poškození:</span>
+                                    <span data-i18n="gameover.damageTaken">Obdržené poškození:</span>
                                     <span id="stat-damage-taken">0</span>
                                 </div>
                                 <div class="stat-row">
-                                    <span data-i18n="gameover.avgHealth">❤️ Průměrné zdraví:</span>
+                                    <span data-i18n="gameover.avgHealth">Průměrné zdraví:</span>
                                     <span id="stat-avg-health">0%</span>
                                 </div>
                                 <div class="stat-row">
-                                    <span data-i18n="gameover.durationLabel">⏱️ Doba hry:</span>
+                                    <span data-i18n="gameover.durationLabel">Doba hry:</span>
                                     <span id="stat-duration">0:00</span>
                                 </div>
                             </div>
@@ -970,18 +982,15 @@
             </div>
             <div class="gameover-buttons">
                 <button id="btn-retry" class="menu-btn">
-                    <span class="btn-icon">🔄</span>
                     <span class="btn-text" data-i18n="gameover.retry">Zkusit znovu</span>
                 </button>
                 <button id="btn-next-mission" class="menu-btn primary hidden">
-                    <span class="btn-icon">➡️</span>
                     <span class="btn-text" data-i18n="gameover.nextMission">Další mise</span>
                 </button>
                 <button id="btn-gameover-chronicle" class="menu-btn hidden">
                     <span class="btn-text" data-i18n="onboarding.readChronicle">Vaše kronika</span>
                 </button>
                 <button id="btn-gameover-menu" class="menu-btn">
-                    <span class="btn-icon">🏠</span>
                     <span class="btn-text" data-i18n="gameover.mainMenu">Hlavní menu</span>
                 </button>
             </div>
@@ -1054,7 +1063,7 @@
 
             <div class="about-section">
                 <h3>Husitské války - Tahová strategie</h3>
-                <p class="about-version">Verze: <strong>Alpha 0.2</strong> (3. září 2026)</p>
+                <p class="about-version" data-i18n="menu.version">Alpha 0.3 · 12.09.2026</p>
                 <p>Historická tahová strategická hra zasazená do období husitských válek (1419-1437).</p>
             </div>
 
@@ -1094,38 +1103,40 @@
 
     <!-- i18n - lokalizační systém (načíst jako první) -->
     <script src="js/core/GameStorage.js?v=8.9"></script>
-    <script src="js/i18n/i18n.js?v=8.13"></script>
-    <script src="js/i18n/i18nHelpers.js?v=8.5"></script>
-    <script src="js/i18n/encyclopediaRenderer.js?v=3.9"></script>
+    <script src="js/i18n/i18n.js?v=8.23"></script>
+    <script src="js/i18n/i18nHelpers.js?v=8.17"></script>
+    <script src="js/i18n/encyclopediaRenderer.js?v=8.24"></script>
     <!-- ?v= cache-busting: bumpni číslo při každém vydání, ať hráči nedostanou starý JS -->
     <script src="js/ui/sound.js?v=3.9"></script>
-    <script src="js/ui/music.js?v=3.9"></script>
-    <script src="js/ui/WoodcutRenderer.js?v=8.11"></script>
+    <script src="js/ui/music.js?v=8.20"></script>
+    <script src="js/ui/WoodcutRenderer.js?v=8.24"></script>
     <script src="js/core/hex.js?v=8.11"></script>
-    <script src="js/data/unitTypes.js?v=8.0"></script>
-    <script src="js/entities/Unit.js?v=8.1"></script>
+    <script src="js/data/unitTypes.js?v=8.17"></script>
+    <script src="js/entities/Unit.js?v=8.17"></script>
     <script src="js/entities/UnitFactory.js?v=3.9"></script>
-    <script src="js/data/battleLore.js?v=8.0"></script>
+    <script src="js/data/battleLore.js?v=8.17"></script>
+    <script src="js/data/historicalSources.js?v=8.17"></script>
     <script src="js/data/campaign.js?v=8.0"></script>
     <script src="js/systems/CampaignProgressSystem.js?v=8.9"></script>
-    <script src="js/data/scenarios.js?v=8.5"></script>
+    <script src="js/data/scenarios.js?v=8.19"></script>
     <script src="js/systems/CombatSystem.js?v=8.2"></script>
     <script src="js/systems/BattleActionSystem.js?v=8.8"></script>
-    <script src="js/systems/SaveGameSystem.js?v=8.9"></script>
+    <script src="js/systems/SaveGameSystem.js?v=8.17"></script>
     <script src="js/systems/ScenarioEventSystem.js?v=8.6"></script>
     <script src="js/systems/FogOfWarSystem.js?v=3.9"></script>
     <script src="js/systems/VictoryConditionsSystem.js?v=8.1"></script>
     <script src="js/systems/TutorialSystem.js?v=8.1"></script>
     <script src="js/systems/MoraleSystem.js?v=8.1"></script>
     <script src="js/systems/ChronicleSystem.js?v=8.9"></script>
-    <script src="js/ui/ChronicleView.js?v=8.6"></script>
-    <script src="js/ui/BattlePanels.js?v=8.11"></script>
-    <script src="js/ui/BattleTooltip.js?v=8.8"></script>
+    <script src="js/ui/HistoricalNotesView.js?v=8.17"></script>
+    <script src="js/ui/ChronicleView.js?v=8.17"></script>
+    <script src="js/ui/BattlePanels.js?v=8.16"></script>
+    <script src="js/ui/BattleTooltip.js?v=8.15"></script>
     <script src="js/ui/BattleMapInput.js?v=8.8"></script>
     <script src="js/ui/BattleOrders.js?v=8.10"></script>
-    <script src="js/ui/BattleView.js?v=8.8"></script>
-    <script src="js/core/game.js?v=8.9"></script>
-    <script src="js/ai.js?v=8.1"></script>
-    <script src="js/ui/main.js?v=8.13"></script>
+    <script src="js/ui/BattleView.js?v=8.14"></script>
+    <script src="js/core/game.js?v=8.17"></script>
+    <script src="js/ai.js?v=8.19"></script>
+    <script src="js/ui/main.js?v=8.24"></script>
 </body>
 </html>

@@ -284,8 +284,7 @@ class BattleView {
         this.game.hexGrid.canvas.addEventListener('click', (e) => this.handleClick(e), { signal });
 
         // Hover pro tooltip
-        this.game.hexGrid.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e), { signal });
-        this.game.hexGrid.canvas.addEventListener('mouseleave', () => this.hideTooltip(), { signal });
+        this.tooltip.setupEventListeners(signal);
 
         // Tlačítko konce tahu (s volitelným potvrzením z nastavení)
         document.getElementById('btn-end-turn').addEventListener('click', async () => {

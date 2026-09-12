@@ -299,20 +299,15 @@ function getLocalizedBattleLore(battleId, baseLore) {
     // starší formát byl string oddělený čárkami; podpoř obojí
     const asCommanderList = (val) => Array.isArray(val) ? val : String(val).split(', ');
 
-    if (baseLore.hussiteSide && i18n.hasTranslation(`${loreKey}.hussiteSide.commanders`)) {
-        localizedLore.hussiteSide = {
-            commanders: asCommanderList(i18n.t(`${loreKey}.hussiteSide.commanders`)),
-            strength: i18n.t(`${loreKey}.hussiteSide.strength`),
-            composition: i18n.t(`${loreKey}.hussiteSide.composition`)
-        };
-    }
-
-    if (baseLore.enemySide && i18n.hasTranslation(`${loreKey}.enemySide.commanders`)) {
-        localizedLore.enemySide = {
-            commanders: asCommanderList(i18n.t(`${loreKey}.enemySide.commanders`)),
-            strength: i18n.t(`${loreKey}.enemySide.strength`),
-            composition: i18n.t(`${loreKey}.enemySide.composition`)
-        };
+    for (const side of ['hussiteSide', 'enemySide']) {
+        if (!baseLore[side]) continue;
+        localizedLore[side] = { ...baseLore[side] };
+        for (const field of ['commanders', 'strength', 'composition']) {
+            const key = `${loreKey}.${side}.${field}`;
+            if (!i18n.hasTranslation(key)) continue;
+            const value = i18n.t(key);
+            localizedLore[side][field] = field === 'commanders' ? asCommanderList(value) : value;
+        }
     }
 
     // Casualties
@@ -329,6 +324,7 @@ function getLocalizedBattleLore(battleId, baseLore) {
             const quoteKey = `${loreKey}.quotes.${index}`;
             if (i18n.hasTranslation(`${quoteKey}.text`)) {
                 return {
+                    ...quote,
                     text: i18n.t(`${quoteKey}.text`),
                     source: i18n.t(`${quoteKey}.source`)
                 };

@@ -8,6 +8,7 @@ const AI = {
         fearThreshold: 22,
         feignedRetreat: false,
         holdWagonFort: false,
+        advance: 'tactical',
         avoidFireUnlessOrdered: true
     },
 
@@ -374,6 +375,7 @@ const AI = {
     findChargeOpportunity: function(game, unit, enemies) {
         const validMoves = game.getValidMoves(unit);
         const doctrine = this.getDoctrine(game);
+        const strength = unit.getAttackStrength();
         let bestOpportunity = null;
         let bestScore = -Infinity;
 
@@ -391,13 +393,13 @@ const AI = {
                 if (dist <= unit.range) {
                     // Spočítáme skóre - bonus za charge
                     let score = 100 - enemy.health;
-                    score += unit.attack * 0.5; // Charge bonus poškození
+                    score += unit.attack * strength * 0.5; // Charge bonus poškození
 
                     // Přidáme terrain bonus/malus
                     score += terrainBonus * 0.5;
 
                     // Preferujeme cíle, které můžeme zabít
-                    const estimatedDamage = unit.attack * 1.5 - enemy.defense * 0.5;
+                    const estimatedDamage = unit.attack * 1.5 * strength - enemy.defense * 0.5;
                     if (enemy.health <= estimatedDamage) {
                         score += 80;
                     }
@@ -435,6 +437,7 @@ const AI = {
 
     findBestAttackTarget: function(game, unit, enemies) {
         const doctrine = this.getDoctrine(game);
+        const strength = unit.getAttackStrength();
         let bestTarget = null;
         let bestScore = -Infinity;
 
@@ -486,7 +489,7 @@ const AI = {
                     score += 15;
                 }
 
-                estimatedDamage = Math.max(5, estimatedDamage - enemy.defense * 0.5);
+                estimatedDamage = Math.max(5, estimatedDamage * strength - enemy.defense * 0.5);
 
                 // Bonus za možnost zabití
                 if (enemy.health <= estimatedDamage) {
@@ -583,12 +586,90 @@ const AI = {
         }, 0);
     },
 
+    // Cena zbývající cesty k VOLNÉMU hexu pro boj zblízka. Hledáme zpětně
+    // od všech dosažitelných cílů, ne vzdušnou vzdálenost k jedinému nepříteli.
+    // Spojence lze při plánování obejít/projít, nepřátele ani vodu ne.
+    // Jde o odhad přes více tahů: skutečný krok níže vždy vybírá getValidMoves,
+    // takže rozpočet pohybu, obsazení, ZOC i využitý most dál hlídá engine.
+    getAssaultDistances: function(game, unit, enemies) {
+        const distances = new Map();
+        if (unit.movement <= 0) return distances;
+        const traversable = new Map();
+        const frozenRiver = game.currentScenario?.specialMechanics?.frozenRiver;
+        for (const [key, hex] of game.hexGrid.hexes) {
+            if (hex.terrain === 'water' && !frozenRiver) continue;
+            const occupant = game.getUnitAt(hex.col, hex.row);
+            if (occupant && occupant.faction !== unit.faction) continue;
+            traversable.set(key, { ...hex, occupant });
+        }
+
+        const queue = [];
+        for (const enemy of enemies) {
+            if (enemy.health <= 0) continue;
+            for (const hex of game.hexGrid.getNeighbors(enemy.col, enemy.row)) {
+                const key = `${hex.col},${hex.row}`;
+                const goal = traversable.get(key);
+                // Na spojenci nelze skončit; hledej další volný bok protivníka.
+                if (!goal || (goal.occupant && goal.occupant !== unit) || distances.has(key)) continue;
+                distances.set(key, 0);
+                queue.push({ ...hex, cost: 0 });
+            }
+        }
+
+        while (queue.length) {
+            queue.sort((a, b) => a.cost - b.cost);
+            const current = queue.shift();
+            const currentKey = `${current.col},${current.row}`;
+            if (current.cost !== distances.get(currentKey)) continue;
+            // Zpětná hrana platí vstup DO current, nikoli do předchůdce.
+            // Stejně jako engine počítáme i s garantovaným jedním krokem.
+            const stepCost = Math.min(unit.movement,
+                game.getTerrainMoveCost(traversable.get(currentKey).terrain, unit));
+            for (const previous of game.hexGrid.getNeighbors(current.col, current.row)) {
+                const key = `${previous.col},${previous.row}`;
+                if (!traversable.has(key)) continue;
+                const cost = current.cost + stepCost;
+                if (cost >= (distances.get(key) ?? Infinity)) continue;
+                distances.set(key, cost);
+                queue.push({ ...previous, cost });
+            }
+        }
+        return distances;
+    },
+
+    findAssaultMove: function(game, unit, enemies, validMoves) {
+        const distances = this.getAssaultDistances(game, unit, enemies);
+        const currentDistance = distances.get(`${unit.col},${unit.row}`) ?? Infinity;
+        let bestMove = null, bestDistance = Infinity, bestSafety = -Infinity;
+        for (const move of validMoves) {
+            const distance = distances.get(`${move.col},${move.row}`) ?? Infinity;
+            // Žádná cesta / žádný pokrok: čekej, nepřešlapuj po rovině sem a tam.
+            if (distance >= currentDistance) continue;
+            const safety = this.getUnitTerrainBonus(unit, game.hexGrid.getTerrain(move.col, move.row))
+                - this.getRangedThreat(game, move, enemies) * 35;
+            // Rozkaz k útoku dává postupu prioritu. Terén a palba rozhodují
+            // až mezi stejně dlouhými cestami, nemohou útok trvale zablokovat.
+            if (distance < bestDistance || (distance === bestDistance && safety > bestSafety)) {
+                bestMove = move;
+                bestDistance = distance;
+                bestSafety = safety;
+            }
+        }
+        return bestMove;
+    },
+
     findBestMove: function(game, unit, enemies) {
         const validMoves = game.getValidMoves(unit);
         const doctrine = this.getDoctrine(game);
 
         if (validMoves.length === 0) {
             return null;
+        }
+
+        // Jen výslovně určené útočné scénáře a boj zblízka. Střelci si drží
+        // odstup; velitelé, ústup a skriptované postoje mají vlastní rozhodování.
+        if (doctrine.advance === 'assault' && unit.range === 1 && !unit.isRouting) {
+            return this.findAssaultMove(game, unit, enemies, validMoves);
         }
 
         let bestMove = null;

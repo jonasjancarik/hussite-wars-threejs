@@ -40,6 +40,7 @@ const ChronicleView = {
                         <p class="chronicle-caption">${t('epilogueNotice')}</p>
                         <p class="chronicle-text">${e(ChronicleSystem.getPersonalEpilogue(entry))}</p>
                     </section>
+                    ${HistoricalNotesView.render(entry.scenarioId, { expanded })}
                 </details>
             </article>`;
         }).join('');
@@ -70,7 +71,8 @@ const ChronicleView = {
 
     // Tab nesmí pod modalem vybírat jednotky ani opustit otevřený dialog.
     trapFocus(event) {
-        const controls = Array.from(document.getElementById('chronicle-modal').querySelectorAll('button:not(:disabled), summary'));
+        const controls = Array.from(document.getElementById('chronicle-modal').querySelectorAll('button:not(:disabled), summary, a[href]'))
+            .filter(element => element.getClientRects().length);
         const first = controls[0], last = controls.at(-1);
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
@@ -102,6 +104,11 @@ p { margin: 8px 0 16px; }
 .chronicle-critique { border-top: 1px solid #cdbc9f; margin-top: 20px; padding-top: 16px; }
 summary { cursor: pointer; color: #593e22; font-weight: bold; }
 summary span { display: none; }
+.historical-notes { margin-top: 20px; border-top: 1px solid #cdbc9f; padding-top: 16px; }
+.historical-notice, .historical-source-kind { font: 0.85rem/1.6 system-ui, sans-serif; color: #665743; }
+.historical-source-kind { display: block; }
+.historical-bibliography li { margin: 10px 0; overflow-wrap: anywhere; }
+a { color: #6c332b; }
 .chronicle-facts { padding: 1px 16px; background: #e8eddf; border-radius: 4px; }
 @media (max-width: 480px) { main { padding: 24px 14px; } .chronicle-entry { padding: 16px; } }
 @media print { body { background: white; } main { max-width: none; padding: 0; } .chronicle-entry { background: white; } h3, h4, summary { break-after: avoid; } p { orphans: 3; widows: 3; } }

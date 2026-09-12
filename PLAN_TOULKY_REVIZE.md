@@ -1,5 +1,10 @@
 # Revize scénářů vůči pramenům (Toulky + Dolejší)
 
+> Archiv staršího plánu. Historická revize ze září 2026 jej v několika bodech
+> nahrazuje: zejména kamenné vozy u Malešova, „divadelní“ obléhání Sionu,
+> automatická žízeň bez studny a nekriticky přebírané citace. Aktuální rozhodnutí
+> jsou v [docs/HISTORICAL_AUDIT.md](docs/HISTORICAL_AUDIT.md) a v poznámkách scénářů.
+
 Průběžná konfrontace 10 dosud neprojetých bitev proti Toulkám českou minulostí (kotva) a Dolejšímu (Husité). Cíl: sesbírat návrhy úprav, pak je odbavovat po dávkách podle kategorie.
 
 ## Legenda kategorií

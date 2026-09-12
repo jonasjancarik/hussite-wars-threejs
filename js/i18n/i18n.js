@@ -20,7 +20,7 @@ class I18n {
         }
 
         try {
-            const response = await fetch(`js/i18n/locales/${lang}.json?v=8.13`);
+            const response = await fetch(`js/i18n/locales/${lang}.json?v=8.23`);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -260,15 +260,14 @@ class I18n {
      * @returns {string} Detekovaný jazyk (cs/en) nebo fallback
      */
     detectBrowserLanguage() {
-        const browserLang = navigator.language || navigator.userLanguage;
-        const langCode = browserLang.split('-')[0].toLowerCase();
-
-        // Seznam podporovaných jazyků
-        const supportedLanguages = ['cs', 'en'];
-
-        // Pokud je jazyk podporován, vrať ho
-        if (supportedLanguages.includes(langCode)) {
-            return langCode;
+        // Respektuj pořadí preferencí, například de-DE → en-GB → cs-CZ.
+        const browserLanguages = [
+            ...(Array.isArray(navigator.languages) ? navigator.languages : []),
+            navigator.language || navigator.userLanguage
+        ];
+        for (const language of browserLanguages) {
+            const langCode = typeof language === 'string' ? language.split('-')[0].toLowerCase() : '';
+            if (['cs', 'en'].includes(langCode)) return langCode;
         }
 
         // Jinak vrať fallback

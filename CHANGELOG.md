@@ -1,5 +1,17 @@
 # 📜 Changelog
 
+## Připravovaná Alpha 0.3 (12. září 2026)
+
+Zatím lokální vývojová verze, bez nového nasazení.
+
+- Sjednocený dřevořez titulního menu, dialogů a kroniky; čitelnější velitelé a ovládání na dotyku.
+- Síla útoku zohledňuje oslabení oddílu; opraven postup útočící AI na Vítkově.
+- Revidovaný historický kontext všech 18 scénářů, s rozlišením pramenů a herní rekonstrukce.
+- Nová instrumentální úprava chorálu a spolehlivější ovládání hudby.
+- Menu doporučuje vstup podle rozehraných a odehraných bitev, prázdné ruční uložení nezobrazuje.
+- Přepínač ukazuje cílový jazyk EN/CS. Bez uložené volby se vybírá první podporovaný jazyk v preferencích prohlížeče; jinak čeština.
+- Jednotný údaj o verzi v menu i obou obrazovkách O hře; odkaz podpory přejmenován na Buy me a coffee.
+
 ## Dřevořez — testovací výtvarný směr (8. září 2026)
 
 - Ryté lesy, stavby, vodní šrafy a papírová mapa místo sytých plošek a zářících žetonů.

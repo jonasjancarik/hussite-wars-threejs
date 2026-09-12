@@ -4,6 +4,10 @@
 
 Hra "Husitské Války" používá vlastní lokalizační systém založený na JSON souborech. Systém umožňuje snadné přidávání nových jazyků a přepínání mezi nimi za běhu.
 
+Při startu má přednost platná uložená volba `gameLanguage`. Bez ní hra vezme první podporovaný jazyk (`cs` nebo `en`) z preferencí prohlížeče, včetně regionálních variant. Pokud žádný nenajde, použije češtinu. Přepínač v menu ukazuje **cílový** jazyk: `EN` v češtině a `CS` v angličtině; ruční volba se uloží i pro další návštěvu.
+
+Verzi zobrazovanou v menu i obou obrazovkách O hře určuje společný klíč `menu.version`. Při změně aktualizujte oba locale, český HTML fallback a stav vývoje v README; jejich shodu hlídá regresní test.
+
 ## 🏗️ Struktura
 
 ```

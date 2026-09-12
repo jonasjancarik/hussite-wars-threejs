@@ -2,7 +2,9 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const { createHarness } = require('./helpers/game-harness');
+const { createLocalizedHarness } = require('./helpers/localized-harness');
 const { TestBattleView } = require('./helpers/test-battle-view');
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
@@ -119,6 +121,50 @@ test('chorál a návrat k fázi mají stejné texty po oddělení panelů', () =
     assert.equal(h.document.getElementById('phase-description').textContent, phase.description);
     game.destroy();
 });
+
+for (const language of ['cs', 'en']) {
+    test(`${language}: encyklopedie používá stejné znaky jako mapa a přeloženou velitelskou hodnost`, async () => {
+        const h = await createLocalizedHarness(language);
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/ui/main.js'), 'utf8'), h.context);
+        const { WoodcutRenderer, UnitTypes, populateHelpUnits } = vm.runInContext('({ WoodcutRenderer, UnitTypes, populateHelpUnits })', h.context);
+        const before = JSON.stringify(UnitTypes);
+        populateHelpUnits(null);
+        const cards = h.document.getElementById('help-units-list').children.filter(el => el.className?.startsWith('help-unit-card'));
+        assert.equal(cards.length, Object.keys(UnitTypes).length);
+        for (const type of ['VOZOVA_HRADBA', 'CEPNICI', 'BOMBARDA', 'JAN_ZIZKA', 'ZIKMUND']) {
+            const localized = vm.runInContext(`getLocalizedUnit('${type}', UnitTypes.${type})`, h.context);
+            const card = cards.find(el => el.children[0].children[1].children[0].textContent === localized.name);
+            assert.ok(card, type);
+            assert.equal(card.children[0].children[0].innerHTML, WoodcutRenderer.icon({ ...localized, type }));
+            if (WoodcutRenderer.isCommander(localized)) {
+                assert.match(card.className, /commander-unit/);
+                assert.equal(card.children[0].children[1].children[1].textContent, h.i18n.t('tooltip.commander'));
+                assert.doesNotMatch(card.innerHTML, />commander</);
+            }
+        }
+        assert.equal(JSON.stringify(UnitTypes), before);
+        const game = h.newGame('sudomere_1420'), panels = new h.BattlePanels(game);
+        panels.updateArmyOverview();
+        const commander = game.units.find(u => u.isCommander() && u.faction === 'hussites');
+        const row = h.document.getElementById('hussite-units').children.find(el => el.innerHTML.includes(commander.name));
+        assert.ok(row.classList.contains('commander-unit'));
+        assert.ok(row.innerHTML.includes(h.i18n.t('tooltip.commander')));
+        // The same commander template can fight for either side (e.g. Lipany).
+        // Presentation must use deployment faction, not overwrite the template.
+        const allies = new h.Unit('DIVIS_BOREK', 0, 0, 91);
+        const opponents = new h.Unit('DIVIS_BOREK', 1, 0, 92);
+        opponents.faction = 'crusaders';
+        h.document.getElementById('help-units-list').replaceChildren();
+        populateHelpUnits({ units: [allies, opponents] });
+        const deployed = h.document.getElementById('help-units-list').children.filter(el => el.className?.startsWith('help-unit-card'));
+        assert.equal(deployed.length, 2);
+        assert.match(deployed[0].children[0].children[0].className, /hussites/);
+        assert.match(deployed[1].children[0].children[0].className, /crusaders/);
+        assert.notEqual(deployed[0].children[0].children[0].innerHTML, deployed[1].children[0].children[0].innerHTML);
+        assert.equal(JSON.stringify(UnitTypes), before);
+        game.destroy();
+    });
+}
 
 (async () => {
     let failures = 0;
