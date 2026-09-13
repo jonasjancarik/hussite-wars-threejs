@@ -1124,17 +1124,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         settingsModal.classList.add('hidden');
     }
 
+    const aboutClose = document.getElementById('about-close');
+    let aboutPreviousFocus = null;
+
     function showAbout() {
+        aboutPreviousFocus = document.activeElement;
+        if (typeof renderAboutModal === 'function') renderAboutModal();
         aboutModal.classList.remove('hidden');
+        document.getElementById('about-content-scroll').scrollTop = 0;
+        aboutClose.focus();
     }
 
     function hideAbout() {
         aboutModal.classList.add('hidden');
+        aboutPreviousFocus?.focus?.();
     }
 
     // Zavření about modalu
-    document.getElementById('about-close').addEventListener('click', () => {
-        hideAbout();
+    aboutClose.addEventListener('click', hideAbout);
+    aboutModal.addEventListener('click', event => {
+        if (event.target === aboutModal) hideAbout();
     });
 
     // Tlačítko Uložit nastavení
@@ -1581,6 +1590,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             initEncyclopediaContent();
         }
         helpModal.classList.remove('hidden');
+        document.getElementById('help-content').scrollTop = 0;
         helpTabs.forEach(tab => tab.setAttribute('aria-pressed', String(tab.classList.contains('active'))));
         helpClose.focus();
     }
@@ -1618,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tab.classList.add('active');
             const tabId = tab.getAttribute('data-tab');
             document.getElementById('tab-' + tabId).classList.add('active');
-            helpModal.querySelector('.help-content').scrollTop = 0;
+            document.getElementById('help-content').scrollTop = 0;
         });
     });
 
@@ -1627,6 +1637,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // =============================================
 
     document.addEventListener('keydown', (e) => {
+        if (!aboutModal.classList.contains('hidden')) {
+            if (e.key === 'Escape') { e.preventDefault(); hideAbout(); }
+            else if (e.key === 'Tab') {
+                const controls = Array.from(aboutModal.querySelectorAll('button:not(:disabled), a[href]'))
+                    .filter(el => el.getClientRects().length && getComputedStyle(el).visibility === 'visible');
+                const first = controls[0], last = controls.at(-1);
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+            }
+            return;
+        }
         if (!helpModal.classList.contains('hidden')) {
             if (e.key === 'Escape') { e.preventDefault(); closeHelpModal(); }
             else if (e.key === 'Tab') {

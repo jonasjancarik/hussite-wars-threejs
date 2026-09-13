@@ -13,6 +13,7 @@ function initEncyclopediaContent() {
     renderRulesTab();
     renderControlsTab();
     renderAboutTab();
+    renderAboutModal();
 }
 
 /**
@@ -432,63 +433,86 @@ function renderControlsTab() {
     `;
 }
 
+const ABOUT_LINKS = Object.freeze({
+    issues: 'https://github.com/josefslerka/husitske-valky/issues',
+    source: 'https://github.com/josefslerka/husitske-valky',
+    license: 'https://github.com/josefslerka/husitske-valky/blob/main/LICENSE',
+    support: 'https://buymeacoffee.com/josefslerka'
+});
+
+function getAboutContentMarkup() {
+    const text = key => i18n.t(`about.${key}`);
+
+    return `
+        <article class="about-content">
+            <header class="about-intro">
+                <p class="about-kicker">${text('tagline')}</p>
+                <h3>${text('gameTitle')}</h3>
+                <p class="about-version" data-i18n="menu.version">${i18n.t('menu.version')}</p>
+                <p class="about-lede">${text('description')}</p>
+            </header>
+
+            <div class="about-columns">
+                <section class="about-section about-panel">
+                    <div class="about-section-heading">
+                        <span class="about-section-index" aria-hidden="true">I.</span>
+                        <h4>${text('authorshipTitle')}</h4>
+                    </div>
+                    <dl class="about-facts">
+                        <div>
+                            <dt>${text('authorLabel')}</dt>
+                            <dd>${text('author')}</dd>
+                        </div>
+                        <div>
+                            <dt>${text('researchLabel')}</dt>
+                            <dd>${text('research')}</dd>
+                        </div>
+                        <div>
+                            <dt>${text('thanksLabel')}</dt>
+                            <dd>${text('thanks')}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="about-section about-panel">
+                    <div class="about-section-heading">
+                        <span class="about-section-index" aria-hidden="true">II.</span>
+                        <h4>${text('projectTitle')}</h4>
+                    </div>
+                    <nav class="about-links" aria-label="${text('projectLinksLabel')}">
+                        <a href="${ABOUT_LINKS.issues}" target="_blank" rel="noopener noreferrer">
+                            <span>${text('feedback')}</span><span aria-hidden="true">↗</span>
+                        </a>
+                        <a href="${ABOUT_LINKS.source}" target="_blank" rel="noopener noreferrer">
+                            <span>${text('source')}</span><span aria-hidden="true">↗</span>
+                        </a>
+                    </nav>
+                    <p class="about-license">
+                        <a href="${ABOUT_LINKS.license}" target="_blank" rel="noopener noreferrer">${text('license')}</a>
+                    </p>
+                    <p class="about-copyright">Copyright © 2026 Josef Šlerka</p>
+                </section>
+            </div>
+
+            <section class="about-support">
+                <div>
+                    <h4>${text('supportTitle')}</h4>
+                    <p>${text('supportText')}</p>
+                </div>
+                <a href="${ABOUT_LINKS.support}" target="_blank" rel="noopener noreferrer" class="coffee-button">
+                    <span aria-hidden="true">☕</span> ${i18n.t('menu.support')}
+                </a>
+            </section>
+        </article>
+    `;
+}
+
 function renderAboutTab() {
     const container = document.getElementById('tab-about');
-    if (!container) return;
+    if (container) container.innerHTML = getAboutContentMarkup();
+}
 
-    const lang = i18n.getCurrentLanguage();
-    const isEnglish = lang === 'en';
-
-    container.innerHTML = `
-        <h3>${isEnglish ? 'Hussite Wars - Turn-Based Strategy' : 'Husitské války - Tahová strategie'}</h3>
-
-        <div class="about-section">
-            <p class="about-version" data-i18n="menu.version">${i18n.t('menu.version')}</p>
-            <p>${isEnglish
-                ? 'Historical turn-based strategy game set in the period of the Hussite Wars (1419-1437).'
-                : 'Historická tahová strategická hra zasazená do období husitských válek (1419-1437).'
-            }</p>
-        </div>
-
-        <div class="about-section credits">
-            <h4>${isEnglish ? '📜 Credits' : '📜 Credits'}</h4>
-            <p><strong>${isEnglish ? 'Design & Development' : 'Design & Development'}</strong>: Josef Šlerka</p>
-            <p><strong>${isEnglish ? 'Historical Research' : 'Historical Research'}</strong>: ${isEnglish ? 'Scholarly literature on the Hussite Wars' : 'Odborná literatura o husitských válkách'}</p>
-            <p><strong>${isEnglish ? 'Beta Testing' : 'Beta Testing'}</strong>: TBD</p>
-        </div>
-
-        <div class="about-section contact">
-            <h4>${isEnglish ? '📧 Contact' : '📧 Kontakt'}</h4>
-            <p><strong>Email</strong>: <a href="mailto:josef.slerka@gmail.com">josef.slerka@gmail.com</a></p>
-            <p><strong>GitHub Issues</strong>: ${isEnglish ? 'After publishing on GitHub' : 'Po publikování na GitHub'}</p>
-        </div>
-
-        <div class="about-section support-section">
-            <h4>${isEnglish ? '💝 Support Development' : '💝 Podpořit vývoj'}</h4>
-            <p>${isEnglish
-                ? 'Do you like the game? Help support further development!'
-                : 'Líbí se vám hra? Pomozte podpořit další vývoj!'
-            }</p>
-            <a href="https://buymeacoffee.com/josefslerka" target="_blank" class="coffee-button">
-                ☕ Buy Me a Coffee
-            </a>
-        </div>
-
-        <div class="about-section license">
-            <h4>${isEnglish ? '📄 License' : '📄 License'}</h4>
-            <p><strong>MIT License</strong> - ${isEnglish
-                ? 'Open source project. You can freely use, modify and distribute the game under the MIT license terms.'
-                : 'Open source projekt. Můžete hru volně používat, modifikovat a distribuovat za podmínek MIT licence.'
-            }</p>
-            <p class="about-copyright">Copyright © 2026 Josef Šlerka</p>
-        </div>
-
-        <div class="about-section tech">
-            <h4>${isEnglish ? '🛠️ Technology' : '🛠️ Technologie'}</h4>
-            <p>${isEnglish
-                ? 'Vanilla JavaScript (ES6+), HTML5 Canvas, CSS3 - no dependencies'
-                : 'Vanilla JavaScript (ES6+), HTML5 Canvas, CSS3 - žádné závislosti'
-            }</p>
-        </div>
-    `;
+function renderAboutModal() {
+    const container = document.getElementById('about-content');
+    if (container) container.innerHTML = getAboutContentMarkup();
 }

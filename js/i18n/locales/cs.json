@@ -180,6 +180,26 @@
     "support": "Buy Me a Coffee",
     "version": "Alpha 0.3 · 12.09.2026"
   },
+  "about": {
+    "title": "O hře",
+    "gameTitle": "Husitské války",
+    "tagline": "Historická tahová strategie",
+    "description": "Veďte husitská vojska v bitvách let 1419–1437 a sledujte, jak vaše rozhodnutí zapíše kronikář.",
+    "authorshipTitle": "Autorství a prameny",
+    "authorLabel": "Návrh, programování a texty",
+    "author": "Josef Šlerka",
+    "researchLabel": "Historická rešerše",
+    "research": "Prameny a odborná literatura jsou uvedeny u jednotlivých bitev.",
+    "thanksLabel": "Poděkování",
+    "thanks": "Všem hráčům, kteří testují alfa verzi a posílají připomínky.",
+    "projectTitle": "Projekt a zpětná vazba",
+    "projectLinksLabel": "Odkazy k projektu",
+    "feedback": "Nahlásit chybu nebo navrhnout změnu",
+    "source": "Zdrojový kód",
+    "license": "Zdrojový kód je zveřejněn pod licencí MIT.",
+    "supportTitle": "Podpořte další vývoj",
+    "supportText": "Pokud vás hra baví, můžete podpořit její další vývoj."
+  },
   "onboarding": {
     "promise": "Veďte bitvu. Zachraňte své lidi. A pak si přečtěte, co z toho udělal kronikář.",
     "firstBattle": "První bitva: Živohošť",

@@ -458,6 +458,11 @@ function updateGameDataLocalization() {
         }
     }
 
+    const aboutModal = document.getElementById('about-modal');
+    if (aboutModal && !aboutModal.classList.contains('hidden') && typeof renderAboutModal === 'function') {
+        renderAboutModal();
+    }
+
     // Výběr mise používá uzávěr v main.js; ten se obnoví přes událost
     // languageChanged vyslanou po dokončení tohoto kroku.
 }

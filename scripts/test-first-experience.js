@@ -276,15 +276,18 @@ test('neúspěšné načtení angličtiny nezmění jazyk, cíl tlačítka ani u
     assert.equal(h.storage.get('gameLanguage'), 'cs');
 });
 
-test('menu i obě obrazovky O hře sdílejí verzi; podpora zachovává bezpečný coffee odkaz', async () => {
+test('obě obrazovky O hře vznikají z jediné lokalizované šablony a mají aktuální odkazy', async () => {
     const h = await createLocalizedHarness();
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     const version = h.i18n.t('menu.version');
     const copies = [...html.matchAll(/data-i18n="menu.version">([^<]+)</g)].map(match => match[1]);
-    assert.deepEqual(copies, [version, version, version], 'tři statické fallbacky mají stejný údaj jako locale');
+    assert.deepEqual(copies, [version], 'statický fallback zůstává pouze v titulním menu');
     assert.equal(h.i18n.translations.en.menu.version, version);
     assert.ok(fs.readFileSync(path.join(__dirname, '../README.md'), 'utf8').includes(`**Verze:** ${version.split(' · ')[0]}`));
     assert.doesNotMatch(html, /Alpha 0\.[12]\b/);
+    assert.match(html, /<div id="tab-about" class="help-tab-content"><\/div>/);
+    assert.match(html, /<div id="about-content"><\/div>/);
+    assert.doesNotMatch(html, /Beta Testing|Po publikování na GitHub|mailto:/);
     const menu = html.slice(html.indexOf('<div id="main-menu"'), html.indexOf('<div id="game-container"'));
     assert.match(menu, /<a href="https:\/\/buymeacoffee.com\/josefslerka" target="_blank" rel="noopener noreferrer" class="coffee-button">\s*<span aria-hidden="true">☕<\/span>\s*<span data-i18n="menu.support">Buy Me a Coffee<\/span>\s*<\/a>/);
     assert.doesNotMatch(menu, /class="support-link"/);
@@ -292,7 +295,16 @@ test('menu i obě obrazovky O hře sdílejí verzi; podpora zachovává bezpečn
     for (const language of ['cs', 'en']) {
         await h.i18n.setLanguage(language);
         h.context.renderAboutTab();
-        assert.ok(h.document.getElementById('tab-about').innerHTML.includes(`data-i18n="menu.version">${version}</p>`));
+        h.context.renderAboutModal();
+        const tab = h.document.getElementById('tab-about').innerHTML;
+        const modal = h.document.getElementById('about-content').innerHTML;
+        assert.equal(tab, modal);
+        assert.ok(tab.includes(`data-i18n="menu.version">${version}</p>`));
+        assert.ok(tab.includes(language === 'cs' ? 'Autorství a prameny' : 'Authorship and sources'));
+        assert.match(tab, /https:\/\/github\.com\/josefslerka\/husitske-valky\/issues/);
+        assert.match(tab, /https:\/\/github\.com\/josefslerka\/husitske-valky\/blob\/main\/LICENSE/);
+        assert.match(tab, /target="_blank" rel="noopener noreferrer"/);
+        assert.doesNotMatch(tab, /TBD|After publishing|Po publikování|mailto:/);
         assert.equal(h.i18n.t('menu.support'), 'Buy Me a Coffee');
     }
 });
@@ -331,10 +343,31 @@ test('encyklopedie z menu, z bitvy i z pauzy inicializuje stejné aktuální ná
         h.context.initEncyclopediaContent = () => { rendered++; };
     });
     for (const [index, id] of ['btn-encyclopedia', 'btn-help', 'btn-pause-help'].entries()) {
+        h.document.getElementById('help-content').scrollTop = 640;
         h.document.getElementById(id).dispatchEvent(new Event('click'));
         assert.equal(rendered, index + 1, id);
         assert.equal(h.document.getElementById('help-modal').classList.contains('hidden'), false);
+        assert.equal(h.document.getElementById('help-content').scrollTop, 0, id);
     }
+});
+
+test('samostatné O hře obnoví obsah, začne nahoře a vrátí fokus na původní tlačítko', async () => {
+    let rendered = 0;
+    const h = await menuHarness('cs', h => {
+        h.context.renderAboutModal = () => { rendered++; };
+    });
+    const button = h.document.getElementById('btn-about');
+    const close = h.document.getElementById('about-close');
+    const scroller = h.document.getElementById('about-content-scroll');
+    button.focus();
+    scroller.scrollTop = 520;
+    button.dispatchEvent(new Event('click'));
+    assert.equal(rendered, 1);
+    assert.equal(scroller.scrollTop, 0);
+    assert.equal(h.document.activeElement, close);
+    close.dispatchEvent(new Event('click'));
+    assert.equal(h.document.getElementById('about-modal').classList.contains('hidden'), true);
+    assert.equal(h.document.activeElement, button);
 });
 
 test('nový hráč nedostane neexistující pokračování ani ruční save', async () => {

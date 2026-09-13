@@ -180,6 +180,26 @@
     "support": "Buy Me a Coffee",
     "version": "Alpha 0.3 · 12.09.2026"
   },
+  "about": {
+    "title": "About",
+    "gameTitle": "Hussite Wars",
+    "tagline": "Historical turn-based strategy",
+    "description": "Lead Hussite forces through the battles of 1419–1437 and see how the chronicler records your decisions.",
+    "authorshipTitle": "Authorship and sources",
+    "authorLabel": "Design, development and writing",
+    "author": "Josef Šlerka",
+    "researchLabel": "Historical research",
+    "research": "Primary sources and scholarly literature are listed with each battle.",
+    "thanksLabel": "Thanks",
+    "thanks": "To everyone testing the alpha and sharing thoughtful feedback.",
+    "projectTitle": "Project and feedback",
+    "projectLinksLabel": "Project links",
+    "feedback": "Report a bug or suggest an improvement",
+    "source": "Source code",
+    "license": "The source code is released under the MIT License.",
+    "supportTitle": "Support further development",
+    "supportText": "If you enjoy the game, you can support its continued development."
+  },
   "onboarding": {
     "promise": "Lead the battle. Save your people. Then read what the chronicler made of it.",
     "firstBattle": "First battle: Živohošť",

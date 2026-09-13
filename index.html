@@ -18,7 +18,7 @@
     <meta property="twitter:title" content="Husitské Války - Tahová Strategie">
     <meta property="twitter:description" content="Historická tahová strategie o husitských válkách. Veďte husitská vojska Jana Žižky v bitvách 15. století.">
 
-    <link rel="stylesheet" href="style.css?v=8.24">
+    <link rel="stylesheet" href="style.css?v=8.25">
 </head>
 <body class="booting">
     <section id="startup-status" class="startup-status">
@@ -411,7 +411,7 @@
                 <button class="help-tab" data-tab="about" data-i18n="help.tabs.about">O hře</button>
             </div>
 
-            <div class="help-content" tabindex="0" role="region" aria-labelledby="help-title">
+            <div id="help-content" class="help-content" tabindex="0" role="region" aria-labelledby="help-title">
                 <!-- Historie -->
                 <div id="tab-history" class="help-tab-content active">
                     <h3>Husitské války (1419-1437)</h3>
@@ -732,47 +732,8 @@
                     </div>
                 </div>
 
-                <!-- O hře -->
-                <div id="tab-about" class="help-tab-content">
-                    <h3>Husitské války - Tahová strategie</h3>
-
-                    <div class="about-section">
-                        <p class="about-version" data-i18n="menu.version">Alpha 0.3 · 12.09.2026</p>
-                        <p>Historická tahová strategická hra zasazená do období husitských válek (1419-1437).</p>
-                    </div>
-
-                    <div class="about-section credits">
-                        <h4>📜 Credits</h4>
-                        <p><strong>Design & Development:</strong> Josef Šlerka</p>
-                        <p><strong>Historical Research:</strong> Odborná literatura o husitských válkách</p>
-                        <p><strong>Beta Testing:</strong> TBD</p>
-                    </div>
-
-                    <div class="about-section contact">
-                        <h4>📧 Kontakt</h4>
-                        <p><strong>Email:</strong> <a href="mailto:josef.slerka@gmail.com">josef.slerka@gmail.com</a></p>
-                        <p><strong>GitHub Issues:</strong> Po publikování na GitHub</p>
-                    </div>
-
-                    <div class="about-section support-section">
-                        <h4>💝 Podpořit vývoj</h4>
-                        <p>Líbí se vám hra? Pomozte podpořit další vývoj!</p>
-                        <a href="https://buymeacoffee.com/josefslerka" target="_blank" class="coffee-button">
-                            ☕ Buy Me a Coffee
-                        </a>
-                    </div>
-
-                    <div class="about-section license">
-                        <h4>📄 License</h4>
-                        <p><strong>MIT License</strong> - Open source projekt. Můžete hru volně používat, modifikovat a distribuovat za podmínek MIT licence.</p>
-                        <p class="about-copyright">Copyright © 2026 Josef Šlerka</p>
-                    </div>
-
-                    <div class="about-section tech">
-                        <h4>🛠️ Technologie</h4>
-                        <p>Vanilla JavaScript (ES6+), HTML5 Canvas, CSS3 - žádné závislosti</p>
-                    </div>
-                </div>
+                <!-- Obsah obou obrazovek O hře generuje společný renderer. -->
+                <div id="tab-about" class="help-tab-content"></div>
             </div>
         </div>
     </div>
@@ -1056,56 +1017,19 @@
     </div>
 
     <!-- About Modal -->
-    <div id="about-modal" class="modal hidden">
-        <div class="modal-content about-modal-content">
-            <button id="about-close" class="close-btn">&times;</button>
-            <h2>O hře</h2>
-
-            <div class="about-section">
-                <h3>Husitské války - Tahová strategie</h3>
-                <p class="about-version" data-i18n="menu.version">Alpha 0.3 · 12.09.2026</p>
-                <p>Historická tahová strategická hra zasazená do období husitských válek (1419-1437).</p>
-            </div>
-
-            <div class="about-section credits">
-                <h4>📜 Credits</h4>
-                <p><strong>Design & Development:</strong> Josef Šlerka</p>
-                <p><strong>Historical Research:</strong> Odborná literatura o husitských válkách</p>
-                <p><strong>Beta Testing:</strong> TBD</p>
-            </div>
-
-            <div class="about-section contact">
-                <h4>📧 Kontakt</h4>
-                <p><strong>Email:</strong> <a href="mailto:josef.slerka@gmail.com">josef.slerka@gmail.com</a></p>
-                <p><strong>GitHub Issues:</strong> Po publikování na GitHub</p>
-            </div>
-
-            <div class="about-section support-section">
-                <h4>💝 Podpořit vývoj</h4>
-                <p>Líbí se vám hra? Pomozte podpořit další vývoj!</p>
-                <a href="https://buymeacoffee.com/josefslerka" target="_blank" class="coffee-button">
-                    ☕ Buy Me a Coffee
-                </a>
-            </div>
-
-            <div class="about-section license">
-                <h4>📄 License</h4>
-                <p><strong>MIT License</strong> - Open source projekt. Můžete hru volně používat, modifikovat a distribuovat za podmínek MIT licence.</p>
-                <p class="about-copyright">Copyright © 2026 Josef Šlerka</p>
-            </div>
-
-            <div class="about-section tech">
-                <h4>🛠️ Technologie</h4>
-                <p>Vanilla JavaScript (ES6+), HTML5 Canvas, CSS3 - žádné závislosti</p>
-            </div>
+    <div id="about-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="about-title">
+        <div id="about-content-scroll" class="modal-content about-modal-content">
+            <button id="about-close" class="close-btn" data-i18n-aria-label="chronicle.close" aria-label="Zavřít">&times;</button>
+            <h2 id="about-title" data-i18n="about.title">O hře</h2>
+            <div id="about-content"></div>
         </div>
     </div>
 
     <!-- i18n - lokalizační systém (načíst jako první) -->
     <script src="js/core/GameStorage.js?v=8.9"></script>
-    <script src="js/i18n/i18n.js?v=8.23"></script>
-    <script src="js/i18n/i18nHelpers.js?v=8.17"></script>
-    <script src="js/i18n/encyclopediaRenderer.js?v=8.24"></script>
+    <script src="js/i18n/i18n.js?v=8.24"></script>
+    <script src="js/i18n/i18nHelpers.js?v=8.18"></script>
+    <script src="js/i18n/encyclopediaRenderer.js?v=8.25"></script>
     <!-- ?v= cache-busting: bumpni číslo při každém vydání, ať hráči nedostanou starý JS -->
     <script src="js/ui/sound.js?v=3.9"></script>
     <script src="js/ui/music.js?v=8.20"></script>
@@ -1137,6 +1061,6 @@
     <script src="js/ui/BattleView.js?v=8.14"></script>
     <script src="js/core/game.js?v=8.17"></script>
     <script src="js/ai.js?v=8.19"></script>
-    <script src="js/ui/main.js?v=8.24"></script>
+    <script src="js/ui/main.js?v=8.25"></script>
 </body>
 </html>

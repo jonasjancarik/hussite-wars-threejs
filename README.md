@@ -263,24 +263,23 @@ Projekt je otevřený pro příspěvky. Při přidávání nových featur dodrž
 - Separaci concerns (systems/, entities/, data/)
 - Historickou autenticitu u nových jednotek/scénářů
 
-## 📜 License
+## 📜 Licence
 
-MIT License - see LICENSE file for details
+Zdrojový kód je dostupný pod [licencí MIT](LICENSE).
 
-## 🙏 Credits
+## 🙏 Autorství a poděkování
 
-- **Design & Development:** Josef Šlerka
-- **Historical Research:** Odborná literatura o husitských válkách
-- **Testing:** Alpha testers TBD
+- **Návrh, programování a texty:** Josef Šlerka
+- **Historická rešerše:** Prameny a odborná literatura uvedené u jednotlivých bitev
+- **Testování:** Díky všem hráčům, kteří testují alfa verzi a posílají připomínky
 
 ## 💝 Support
 
 Líbí se ti hra? Podpoř vývoj: https://buymeacoffee.com/josefslerka
 
-## 📧 Contact
+## 📧 Zpětná vazba
 
-- **Email:** josef.slerka@gmail.com
-- **Issues:** GitHub Issues (po publikování)
+- [Nahlásit chybu nebo navrhnout změnu](https://github.com/josefslerka/husitske-valky/issues)
 
 ---
 
