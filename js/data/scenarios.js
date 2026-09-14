@@ -188,7 +188,15 @@ const Scenarios = {
 
         historicalSignificance: "Jeden z nejranějších písemně zachycených bojů husitů s využitím vozů; nikoli první použití vozů v dějinách.",
 
-        aiDoctrine: { charge: 'reckless', pursueRouted: true, flankSeeking: true, fearThreshold: 18 },
+        aiDoctrine: {
+            charge: 'reckless',
+            pursueRouted: true,
+            flankSeeking: true,
+            fearThreshold: 18,
+            // Hynek je přímo bonusovým cílem a podle tradice v boji padl:
+            // nesmí používat obecnou velitelskou logiku útěku do týlu.
+            aggressiveCommanders: ['HYNEK_NEKMIRE']
+        },
 
         briefing: {
             hussites: "Landfrýd dostihl váš houf s vozy poblíž Nekmíře. Sražte vozy do obrany a kryjte pěchotu. Sedm vozů a jejich polokruhová formace představují herní zpracování stručné zprávy, ne přesný plán bitvy.",
@@ -308,30 +316,28 @@ const Scenarios = {
             {
                 id: 3,
                 name: "Útok jízdy na vozovou hradbu",
-                turnRange: [5,7],
+                turnRange: [5,5],
                 description: "Švamberk vrhá jízdu proti vozům.",
                 events: [
-                    {"trigger":"turn_5","message":"Těžká jízda landfrýdu útočí! Vydrží vozová hradba?"},
-                    {"trigger":"turn_6","type":"cavalry_charge_blocked","text":"Jízda narazila na vozy! Charge bonus negován!"}
+                    {"trigger":"turn_5","message":"Těžká jízda landfrýdu útočí! Vydrží vozová hradba?"}
                 ]
             },
             {
                 id: 4,
                 name: "Klíčová fáze bitvy",
-                turnRange: [8,9],
-                description: "Rozhodující okamžik střetu.",
+                turnRange: [6,8],
+                description: "Nápor se láme; Hynek bojuje v první linii.",
                 events: [
-                    {"trigger":"turn_8","message":"(Historicky v této fázi padl Hynek z Nekmíře - majitel tvrze)"}
+                    {"trigger":"turn_6","type":"cavalry_charge_blocked","text":"Jízda narazila na vozy! Hynek z Nekmíře vede další nápor v první linii — teď je příležitost ho vyřadit."}
                 ]
             },
             {
                 id: 5,
                 name: "Ústup landfrýdu",
-                turnRange: [10,12],
+                turnRange: [9,10],
                 description: "Katolíci ustupují, husité pokračují k tvrzi.",
                 events: [
-                    {"trigger":"turn_10","message":"Jízda je odražena! Landfrýd se stahuje!"},
-                    {"trigger":"turn_12","message":"Vítězství! Žižka prokázal, že vozová hradba funguje!"}
+                    {"trigger":"turn_9","message":"Jízda je odražena! Landfrýd se začíná stahovat; na Hynka zbývá poslední příležitost."}
                 ]
             }
         ],
@@ -344,7 +350,7 @@ const Scenarios = {
                 description: 'Odražte útok landfrýdu a přežijte do kola 10 s 50% jednotek'
             },
             secondary: [
-                { type: 'kill_commander', description: 'Zabijte Hynka z Nekmíře' },
+                { type: 'kill_commander', target: 'HYNEK_NEKMIRE', description: 'Zabijte Hynka z Nekmíře' },
                 { type: 'protect_wagons', minWagons: 5, description: 'Uchraňte alespoň 5 vozů' }
             ]
         },
@@ -537,6 +543,7 @@ const Scenarios = {
                 type: 'survive',
                 turns: 12,
                 minUnitsPercent: 50,
+                alternative: { type: 'eliminate_field_army' },
                 description: 'Přežijte do kola 12 s alespoň 50% jednotek'
             },
             secondary: [
@@ -546,7 +553,10 @@ const Scenarios = {
 
         debriefing: {
             victory: 'Rybník a bahna se staly hrobem pro železné pány! Husité využili terénu a odrazili přesilu. Tato bitva ukázala, že správně zvolené bojiště může vyvážit i značnou početní nevýhodu. Žižkův génius se projevil naplno.',
-            defeat: 'Bahna u Sudoměře se nestala pastí pro nepřítele, ale pro vás. Rytíři prolomili vaši obranu. Žižkova kariéra končí dříve, než mohla skutečně začít.'
+            defeat: 'Bahna u Sudoměře se nestala pastí pro nepřítele, ale pro vás. Rytíři prolomili vaši obranu. Žižkova kariéra končí dříve, než mohla skutečně začít.',
+            victoryVariants: {
+                fieldArmyEliminated: 'Nepřátelskou polní armádu jste rozbili, ale za cenu většiny vlastních oddílů. Osamělý velitel už výsledek bitvy nemohl zvrátit. Je to vítězství — kronikář z něj však vaše ztráty nevymaže.'
+            }
         },
 
         maxTurns: 12,

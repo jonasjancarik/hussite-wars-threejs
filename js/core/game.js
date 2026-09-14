@@ -480,12 +480,20 @@ class Game {
     }
 
     handleHexClick(hex) {
-        if (!this.canStartAction()) return;
-        if (this.currentFaction !== 'hussites') return; // Blokace během tahu AI
-
         if (!hex || !this.hexGrid.inBounds(hex.col, hex.row)) return;
 
         const clickedUnit = this.getUnitAt(hex.col, hex.row);
+
+        // Po konci bitvy se stejný vstup mění v čistě prezentační prohlídku.
+        // Stav jednotek ani pravidla se už nemohou změnit, ale hráč si může
+        // rozkliknout poslední pozice a pochopit, proč bitva skončila.
+        if (this.gameState === 'victory') {
+            if (!clickedUnit || !this.inspectUnit(clickedUnit)) this.deselectUnit();
+            return;
+        }
+
+        if (!this.canStartAction()) return;
+        if (this.currentFaction !== 'hussites') return; // Blokace během tahu AI
 
         // Pokud máme vybranou jednotku
         if (this.selectedUnit) {
@@ -546,6 +554,17 @@ class Game {
 
         this.updateUnitPanel(unit);
         this.render();
+    }
+
+    inspectUnit(unit) {
+        if (this.gameState !== 'victory' || !unit || unit.health <= 0 || !this.units.includes(unit)) return false;
+        if (unit.faction !== 'hussites' && !this.fogOfWarSystem.isEnemyVisible(unit)) return false;
+
+        this.selectedUnit = unit;
+        this.view.showSelection(unit, { moves: false, attacks: false });
+        this.updateUnitPanel(unit);
+        this.render();
+        return true;
     }
 
     deselectUnit() {
@@ -971,10 +990,28 @@ class Game {
 
 
 
+    // Nevyužité akce nejsou samostatné taktické rozhodnutí: hráč mohl před
+    // koncem tahu na každém takovém oddílu ručně stisknout Obranu se stejným
+    // výsledkem. Uděláme to hromadně, bez zvuku a bez série logových řádků.
+    autoDefendUnusedUnits(faction = this.currentFaction) {
+        const units = this.units.filter(unit =>
+            unit.faction === faction &&
+            unit.health > 0 &&
+            !unit.isRouting &&
+            unit.canAct()
+        );
+        for (const unit of units) unit.defend();
+        if (units.length > 0) {
+            this.addLog(i18n.t('gameLog.autoDefend', { count: units.length }), 'move');
+        }
+        return units.length;
+    }
+
     endTurn() {
         // Pokud hra již skončila, neděláme nic
         if (!this.canStartAction()) return false;
 
+        this.autoDefendUnusedUnits();
         this.deselectUnit();
 
         // Reset undo při přepnutí tahu
@@ -1111,7 +1148,8 @@ class Game {
         this.gameState = 'victory';
         this.actions.destroy();
         this.showAIThinking(false);
-        this.updateEndTurnButton();
+        if (!this.selectedUnit || !this.inspectUnit(this.selectedUnit)) this.deselectUnit();
+        this.updateUI();
 
         const isVictory = (winner === 'hussites');
         let message = this.scenarioEventSystem.getDebriefing(isVictory);

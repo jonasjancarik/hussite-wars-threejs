@@ -14,9 +14,12 @@
     text-align: center;
 }
 #game-container {
+    --browser-bottom-clearance: 0px;
     height: 100dvh;
     min-height: 0;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+        max(env(safe-area-inset-bottom), var(--browser-bottom-clearance))
+        env(safe-area-inset-left);
 }
 #game-main { min-height: 0; }
 #map-container { display: block; position: relative; overscroll-behavior: contain; }
@@ -46,6 +49,14 @@
     background: var(--field-page-light);
     color: var(--field-ink);
     box-shadow: 0 2px 8px #0005;
+}
+/* Panel cíle sdílí pravý horní roh s kamerou. Na desktopu začíná až pod
+   její 54px lištou; kompaktní režim má vlastní pevné umístění níže. */
+#objectives-panel {
+    top: 76px;
+    right: 254px;
+    max-height: calc(100% - 88px);
+    overflow-y: auto;
 }
 #map-tools button, #compact-orders button, .order-buttons button {
     min-height: 44px;
@@ -95,8 +106,7 @@
 }
 #battle-order.hidden { display: none; }
 #order-title { font-size: 1rem; }
-#order-hint, #order-outcome { margin: 0; font-size: 0.82rem; line-height: 1.4; }
-#order-outcome:empty { display: none; }
+#order-hint { margin: 0; font-size: 0.82rem; line-height: 1.4; }
 #order-details { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 #order-details summary { min-height: 44px; padding: 10px 0; cursor: pointer; }
 #order-content { padding: 4px 0 10px; font-size: 0.9rem; }
@@ -125,7 +135,6 @@
     padding: 20px;
 }
 .order-buttons { display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
-#order-confirm { background: #30432a; color: #fff0ce; border-color: #23351f; min-width: 140px; }
 .touch-help { padding: 12px; border-left: 3px solid #796334; background: #e8d9b6; color: #3b3020; line-height: 1.55; }
 
 /* Stejné rozložení pro úzké okno i skutečný dotykový tablet. */
@@ -186,9 +195,13 @@
 .compact-battle .footer-main-actions { display: flex; flex: 1; flex-wrap: nowrap; gap: 5px; }
 .compact-battle #btn-end-turn { margin-right: auto; }
 .compact-battle #btn-end-turn, .compact-battle #btn-choral,
-.compact-battle #btn-objectives, .compact-battle .footer-btn { min-height: 44px; padding: 7px 9px; font-size: 0.8rem; }
+.compact-battle #btn-objectives, .compact-battle #btn-show-results,
+.compact-battle .footer-btn { min-height: 44px; padding: 7px 9px; font-size: 0.8rem; }
+.compact-battle.post-battle-review #btn-clear-selection,
+.compact-battle.post-battle-review #btn-next-unit,
+.compact-battle.post-battle-review #btn-unit-sheet > span:last-child { display: none; }
 .compact-battle #battle-order { width: min(420px, calc(100% - 16px)); bottom: 8px; }
-.compact-battle #objectives-panel { position: fixed; inset: 70px 12px auto; width: auto; max-height: calc(100dvh - 160px); overflow: auto; z-index: 180; }
+.compact-battle #objectives-panel { position: fixed; inset: 70px 12px auto; width: auto; max-height: calc(100dvh - 160px - var(--browser-bottom-clearance)); overflow: auto; z-index: 180; }
 .compact-battle #tooltip { display: none; }
 
 @media (max-width: 600px) {
@@ -199,7 +212,8 @@
     .compact-battle #compact-orders button { padding: 6px; font-size: 0.75rem; }
     .compact-battle #game-footer { padding: 4px; gap: 4px; }
     .compact-battle #btn-end-turn, .compact-battle #btn-choral,
-    .compact-battle #btn-objectives, .compact-battle .footer-btn { padding: 6px; font-size: 0.74rem; }
+    .compact-battle #btn-objectives, .compact-battle #btn-show-results,
+    .compact-battle .footer-btn { padding: 6px; font-size: 0.74rem; }
     .compact-battle #battle-order { padding: 10px; }
     .compact-battle #unit-panel, .compact-battle #info-panel { top: auto; max-height: calc(100% - 66px); }
     .compact-battle #unit-info .stat { padding: 3px 0; }

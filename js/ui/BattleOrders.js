@@ -1,14 +1,13 @@
-// Dotykový přesun je přímý. Útok má náhled a potvrzení, které znovu ověří pravidla.
+// Dotykové rozkazy jsou přímé. Karta slouží jen k bezpečnému prohlížení míst,
+// na která nelze vydat pohyb, pochod ani útok.
 class BattleOrders {
     constructor(view) {
         this.view = view;
         this.game = view.game;
-        this.pending = null;
         this.inspectedHex = null;
         this.panel = document.getElementById('battle-order');
         this.marker = document.getElementById('order-marker');
         const signal = view.eventAbortController.signal;
-        document.getElementById('order-confirm').addEventListener('click', () => this.confirm(), { signal });
         document.getElementById('order-cancel').addEventListener('click', () => this.cancel(), { signal });
         document.getElementById('btn-next-unit').addEventListener('click', () => {
             if (this.isCompact()) BattlePanels.closeCompactPanels();
@@ -27,7 +26,7 @@ class BattleOrders {
         if (!unit || !this.game.canStartAction(unit) || this.game.currentFaction !== 'hussites') return null;
         const target = this.game.getUnitAt(hex.col, hex.row);
         if (target && target.faction !== unit.faction && this.game.fogOfWarSystem.isEnemyVisible(target) &&
-            this.game.combatSystem.canAttack(unit, target)) return { kind: 'attack', targetId: target.id };
+            this.game.combatSystem.canAttack(unit, target)) return { kind: 'attack' };
         if (!target) {
             // Pochod je jeden existující rozkaz celé linii, ne běžný pohyb vozu.
             if (unit.isWagon() && unit.marching && unit.formationClosed && !unit.hasMoved) {
@@ -50,54 +49,26 @@ class BattleOrders {
             return;
         }
         const intent = this.intent(hex);
-        if (intent?.kind === 'move' || intent?.kind === 'march') {
-            // Stejná pravidla, animace, undo a autosave jako při běžném kliknutí.
+        if (intent) {
+            // Pohyb, pochod i útok používají stejná pravidla, animace a autosave
+            // jako běžné kliknutí. canStartAction odfiltruje i rychlý druhý tap.
             // Gesta a kompatibilní click už filtruje BattleMapInput.
             this.game.handleHexClick(hex);
             return;
         }
         const html = this.view.tooltip.contentForHex(hex);
-        if (!html && !intent) return;
-        if (intent) this.pending = { ...intent, hex: { ...hex }, unit: this.game.selectedUnit,
-            turn: this.game.turnNumber, fromCol: this.game.selectedUnit.col, fromRow: this.game.selectedUnit.row };
+        if (!html) return;
         this.inspectedHex = { ...hex };
-        document.getElementById('order-title').textContent = i18n.t(`touch.${intent?.kind || 'inspect'}`);
-        document.getElementById('order-hint').textContent = i18n.t(intent ? 'touch.confirmHint' : 'touch.inspectHint');
-        const outcome = document.getElementById('order-outcome');
-        outcome.textContent = '';
-        if (intent?.kind === 'attack') {
-            const preview = this.game.combatSystem.calculateDamagePreview(this.game.selectedUnit, unit);
-            if (preview) {
-                const range = damage => damage.min === damage.max ? `${damage.min}` : `${damage.min}–${damage.max}`;
-                outcome.textContent = `${unit.name}: ${i18n.t('touch.damage', { damage: range(preview) })}`;
-                if (preview.counter) outcome.textContent += ` · ${i18n.t('tooltip.counterattack', { damage: range(preview.counter) })}`;
-                if (preview.counter?.killsAttackerPossible) outcome.textContent += ` · ${i18n.t('tooltip.deathRisk')}`;
-            }
-        }
+        document.getElementById('order-title').textContent = i18n.t('touch.inspect');
+        document.getElementById('order-hint').textContent = i18n.t('touch.inspectHint');
         document.getElementById('order-content').innerHTML = html;
-        if (!html) document.getElementById('order-content').textContent = i18n.t('touch.unexplored');
-        document.getElementById('order-details').open = !intent;
-        const confirm = document.getElementById('order-confirm');
-        confirm.textContent = intent ? i18n.t(`touch.${intent.kind}`) : '';
-        confirm.classList.toggle('hidden', !intent);
-        confirm.disabled = !intent;
+        document.getElementById('order-details').open = true;
         this.panel.classList.remove('hidden');
         this.positionMarker();
     }
 
-    confirm() {
-        const pending = this.pending;
-        const valid = pending && pending.unit === this.game.selectedUnit && pending.turn === this.game.turnNumber &&
-            pending.fromCol === pending.unit.col && pending.fromRow === pending.unit.row;
-        const current = valid ? this.intent(pending.hex) : null;
-        const allowed = current && current.kind === pending.kind && current.targetId === pending.targetId;
-        this.cancel(); // odstranit ještě před zahájením asynchronní akce / druhým klepnutím
-        if (allowed) this.game.handleHexClick(pending.hex);
-    }
-
     refresh() {
-        if (this.inspectedHex && (!this.game.canStartAction() || this.game.currentFaction !== 'hussites' ||
-            (this.pending && (this.game.selectedUnit !== this.pending.unit || this.game.turnNumber !== this.pending.turn)))) this.cancel();
+        if (this.inspectedHex && (!this.game.canStartAction() || this.game.currentFaction !== 'hussites')) this.cancel();
         const selected = this.game.selectedUnit;
         if (!selected && this.isCompact() && document.getElementById('unit-panel').classList.contains('expanded')) {
             BattlePanels.closeCompactPanels();
@@ -121,7 +92,6 @@ class BattleOrders {
     }
 
     cancel() {
-        this.pending = null;
         this.inspectedHex = null;
         this.panel.classList.add('hidden');
         this.marker.classList.add('hidden');

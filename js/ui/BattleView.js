@@ -47,11 +47,16 @@ class BattleView {
         this.handleMapTap(event, this.orders.isCompact());
     }
 
-    handleMapTap(event, preview = false) {
+    handleMapTap(event, useTouchOrders = false) {
         const grid = this.game.hexGrid;
         const pos = this.mapInput.screenToWorld(event.clientX, event.clientY);
         const hex = grid.pixelToHex(pos.x, pos.y);
-        if (preview) this.orders.tap(hex);
+        if (this.game.gameState !== 'playing') {
+            this.orders.cancel();
+            this.game.handleHexClick(hex);
+            return;
+        }
+        if (useTouchOrders) this.orders.tap(hex);
         else { this.orders.cancel(); this.game.handleHexClick(hex); }
     }
 
@@ -82,9 +87,11 @@ class BattleView {
     showSelection(unit, { moves = true, attacks = true } = {}) {
         this.orders.cancel();
         const grid = this.game.hexGrid;
+        // Každý výběr začíná čistým stavem. Jinak jednotka bez pohybu nebo
+        // útoku zdědí barevný dosah předchozího oddílu.
+        grid.clearHighlights();
         grid.setSelected(unit.col, unit.row);
-        if (!moves) grid.setHighlighted([]);
-        else if (unit.canMove()) grid.setHighlighted(this.game.getValidMoves(unit));
+        if (moves && unit.canMove()) grid.setHighlighted(this.game.getValidMoves(unit));
         if (attacks && unit.canAttack()) grid.setAttackable(this.game.combatSystem.getValidAttackTargets(unit));
     }
 
@@ -286,21 +293,12 @@ class BattleView {
         // Hover pro tooltip
         this.tooltip.setupEventListeners(signal);
 
-        // Tlačítko konce tahu (s volitelným potvrzením z nastavení)
-        document.getElementById('btn-end-turn').addEventListener('click', async () => {
+        // Konec tahu je stejně přímý jako ostatní běžné rozkazy. Nevyužité
+        // akce se v Game.endTurn automaticky převedou na obranu.
+        document.getElementById('btn-end-turn').addEventListener('click', () => {
             if (this.game.currentFaction !== 'hussites' || !this.game.canStartAction()) return;
             this.orders.cancel();
-            if (((window.gameSettings && window.gameSettings.confirmEndTurn) ||
-                 (this.orders.isCompact() && !this.game.allPlayerUnitsActed())) &&
-                this.game.currentFaction === 'hussites' && this.game.gameState === 'playing' &&
-                typeof showConfirmDialog === 'function') {
-                const confirmed = await showConfirmDialog(
-                    i18n.t('game.confirmEndTurnPrompt'),
-                    i18n.t('game.endTurn')
-                );
-                if (!confirmed) return;
-            }
-            if (this.game.currentFaction === 'hussites') this.game.endTurn();
+            this.game.endTurn();
         }, { signal });
 
         // Klik na indikátor "Křižáci přemýšlí" zrychlí (přeskočí) animaci tahu AI.

@@ -278,8 +278,8 @@ function renderRulesTab() {
         <div class="rules-section">
             <h4>${isEnglish ? 'Turn Sequence' : 'Průběh tahu'}</h4>
             <p>${isEnglish
-                ? 'Each unit can move and attack (or only one of those) in one turn. After completing actions, click "End Turn".'
-                : 'Každá jednotka může v jednom tahu provést pohyb a útok (nebo pouze jedno z toho). Po dokončení akcí klikněte na "Ukončit tah".'
+                ? 'Each unit can move and attack (or only one of those) in one turn. Defense spends its remaining actions and reduces incoming damage by 30%. When you end the turn, unused actions become defense automatically.'
+                : 'Každá jednotka může v jednom tahu provést pohyb a útok (nebo pouze jedno z toho). Obrana spotřebuje zbývající akce a sníží příchozí poškození o 30 %. Při ukončení tahu se nevyužité akce převedou na obranu automaticky.'
             }</p>
         </div>
         <div class="rules-section">
@@ -419,11 +419,11 @@ function renderControlsTab() {
             </div>
             <div class="control-item">
                 <span class="control-key">${isEnglish ? 'Enter / Space' : 'Enter / Mezerník'}</span>
-                <span class="control-desc">${isEnglish ? 'End turn (when all have acted)' : 'Ukončit tah (když všechny jednaly)'}</span>
+                <span class="control-desc">${isEnglish ? 'End turn; unused actions become defense' : 'Ukončit tah; nevyužité akce přejdou do obrany'}</span>
             </div>
             <div class="control-item">
                 <span class="control-key">D</span>
-                <span class="control-desc">${isEnglish ? 'Defensive stance' : 'Obranný postoj'}</span>
+                <span class="control-desc">${isEnglish ? 'Defensive stance: −30% incoming damage' : 'Obranný postoj: −30 % příchozího poškození'}</span>
             </div>
             <div class="control-item">
                 <span class="control-key">Escape</span>

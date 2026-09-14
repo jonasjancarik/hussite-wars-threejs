@@ -107,9 +107,11 @@ class VictoryConditionsSystem {
             switch (sec.type) {
                 case 'kill_commander':
                     const enemyCommanders = this.game.units.filter(u =>
-                        u.faction === enemyFaction && u.unitClass === 'commander'
+                        u.faction === enemyFaction &&
+                        u.unitClass === 'commander' &&
+                        (!sec.target || u.type === sec.target)
                     );
-                    achieved = enemyCommanders.every(c => c.health <= 0);
+                    achieved = enemyCommanders.length > 0 && enemyCommanders.every(c => c.health <= 0);
                     break;
                 case 'no_losses':
                     achieved = this.game.unitsLost === 0;
@@ -254,11 +256,23 @@ class VictoryConditionsSystem {
                 }
 
                 // Uplynul požadovaný čas - vyhodnotíme podle procenta jednotek
-                victoryAchieved = currentPercent >= minPercent;
+                // Některé obranné scénáře dovolují draze zaplacené vítězství,
+                // pokud na bojišti zůstal už jen nepřátelský velitel bez armády.
+                // Je to výslovně datová alternativa, globální význam velitelů
+                // ani ostatní scénáře tím neměníme.
+                const fieldArmyEliminated = primary.alternative?.type === 'eliminate_field_army' &&
+                    enemyUnits.length > 0 &&
+                    enemyUnits.every(unit => unit.isCommander?.());
+                victoryAchieved = currentPercent >= minPercent || fieldArmyEliminated;
                 // Odehrálo se requiredTurnsSurvive kol (turnNumber už je o 1 dál)
                 this.game.gameOverTurn = requiredTurnsSurvive;
 
-                if (victoryAchieved) {
+                if (fieldArmyEliminated && currentPercent < minPercent) {
+                    this.outcome(i18n.t('gameLog.victoryFieldArmyEliminated', {
+                        turn: requiredTurnsSurvive,
+                        percent: Math.round(currentPercent)
+                    }));
+                } else if (victoryAchieved) {
                     this.outcome(i18n.t('gameLog.victorySurvival', { turn: requiredTurnsSurvive, percent: Math.round(currentPercent) }));
                 } else {
                     this.outcome(i18n.t('gameLog.defeatSurvival', { percent: Math.round(currentPercent), required: minPercent }));

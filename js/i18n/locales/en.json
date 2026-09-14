@@ -129,14 +129,9 @@
     "testNotice": "Test version · mobile and tablet. Saves and progress are separate from the original game."
   },
   "touch": {
-    "move": "Move here",
-    "attack": "Attack",
-    "march": "March the wagon line",
     "inspect": "Inspect location",
-    "confirmHint": "Preview only. Confirm to issue this order.",
     "inspectHint": "Inspecting this location will not issue an order.",
-    "unexplored": "Unexplored location. Details will become available when it comes into view.",
-    "damage": "{damage} HP damage",
+    "close": "Close",
     "details": "Unit, terrain and details",
     "noUnit": "Select a unit",
     "orders": "Orders and details",
@@ -149,12 +144,12 @@
     "zoomOut": "Zoom out of the map",
     "camera": "Map camera",
     "battlefield": "Battlefield: select a unit, then a target",
-    "help": "On touchscreens or in a compact window: tap your unit, then a reachable tile. Movement and wagon marches happen directly. Only attacks show a preview, which you confirm with Attack. Drag to pan; pinch with two fingers or use − / + to zoom. Orders and details opens the unit card; Army shows your forces. Your battle is saved automatically after completed actions, separately from your manual save.",
+    "help": "On touchscreens or in a compact window, tap your unit and then its target. A green tile moves the unit immediately; tapping a red-highlighted enemy attacks immediately. Drag to pan; pinch with two fingers or use − / + to zoom. Orders and details opens the unit card; Army shows your forces. End Turn acts immediately and automatically converts unused actions into defense. Your battle is saved automatically after completed actions, separately from your manual save.",
     "resumeAuto": "Resume current battle",
     "manualSave": "Manually saved game",
     "savedSummary": "{battle} · turn {turn} · autosaved",
     "autosaveError": "Autosave is unavailable. Keep the game open if you want to retain your progress.",
-    "chooseTarget": "{unit}: tap a green tile to move directly. Attacks show a preview first.",
+    "chooseTarget": "{unit}: a green tile moves directly; a red-highlighted enemy means a direct attack.",
     "selectHint": "Tap one of your units. Its orders are below the map."
   },
   "menu": {
@@ -178,7 +173,8 @@
     "musicMuted": "♫ Sound disabled in settings",
     "switchLanguage": "Switch to Czech",
     "support": "Buy Me a Coffee",
-    "version": "Alpha 0.3 · 12.09.2026"
+    "changelog": "Changelog",
+    "version": "Alpha 0.3.1 · 14.09.2026"
   },
   "about": {
     "title": "About",
@@ -211,8 +207,8 @@
     "controlsTitle": "Before your first turn · quick controls",
     "noRush": "This is a turn-based game. Take your time deciding; the opponent acts after you end your turn.",
     "selectStep": "Your units have red round tokens; the opponent uses blue shields. Select your unit; its status and abilities appear in the left panel or under the map in Orders and details.",
-    "actionStep": "Tap a green highlighted tile to move the selected unit directly. A red highlighted enemy is a possible attack: on touchscreens and in a compact window, review the preview and confirm the attack. With a mouse on a large screen, clicking attacks directly.",
-    "endStep": "Give orders to your other units, then press End Turn. You do not have to use every action.",
+    "actionStep": "Tap a green highlighted tile to move the selected unit immediately. Tap a red-highlighted enemy to attack immediately. Touch and mouse use the same controls.",
+    "endStep": "Give orders to your other units, then press End Turn. Unused actions automatically become defense (−30% incoming damage).",
     "helpStep": "Your main objective stays above the map. Open Objectives for details or Menu → Help for the rules. Escape opens the pause menu.",
     "resultReason": "Why the battle ended",
     "readChronicle": "Your chronicle",
@@ -228,7 +224,8 @@
       "endTurn": "Your units can no longer act. Press End Turn to continue.",
       "enemyTurn": "The opponent is acting. Click its turn indicator to shorten the wait.",
       "busy": "Carrying out your order… You can give the next one when this action finishes.",
-      "paused": "The battle is paused. Orders can wait until you return."
+      "paused": "The battle is paused. Orders can wait until you return.",
+      "review": "The battle is over. Inspect units, pan the map, and use the button below to return to the result."
     }
   },
   "quickBattle": {
@@ -243,11 +240,11 @@
     "overview": "Overview",
     "objectivesTitle": "Mission Objectives",
     "endTurn": "End Turn",
-    "confirmEndTurnPrompt": "Really end your turn?",
     "unit": "Unit",
     "selectUnit": "Select a unit",
     "attack": "Attack",
     "defend": "Defend (+30% protection)",
+    "defendHint": "Uses all remaining actions and reduces incoming damage by 30% until the next turn. Unused actions become defense automatically when the turn ends.",
     "undo": "Undo",
     "objectives": "Objectives",
     "choral": "Choral",
@@ -405,6 +402,9 @@
     "pyrrhicVictory": "Pyrrhic Victory",
     "retry": "Try Again",
     "nextMission": "Next Mission",
+    "reviewBattlefield": "Inspect Battlefield",
+    "showResults": "Show Result",
+    "finished": "Finished",
     "mainMenu": "Main Menu",
     "statistics": "Statistics",
     "details": "Details",
@@ -486,7 +486,6 @@
     "soundVolume": "Volume",
     "aiSpeed": "AI Speed",
     "showDamage": "Show Damage",
-    "confirmEndTurn": "Confirm End Turn",
     "difficulty": "Difficulty",
     "difficultyBeginner": "Beginner (no fog of war)",
     "difficultyAdvanced": "Advanced (with fog of war)",
@@ -1373,11 +1372,11 @@
         },
         {
           "title": "Defensive stance",
-          "text": "Now learn DEFENSIVE STANCE. Select unit and press D key or click 'Defend'. Unit gains +30% defense."
+          "text": "Now learn DEFENSIVE STANCE. Select a unit and press D or click 'Defend'. It takes 30% less incoming damage until its next turn."
         },
         {
           "title": "Defensive stance activated!",
-          "text": "Defending unit has +30% defense, but can't attack. Excellent for holding position. Now destroy all enemies!"
+          "text": "A defending unit takes 30% less damage and spends its remaining actions. When you end a turn, unused actions become defense automatically. Now destroy all enemies!"
         },
         {
           "title": "Training complete!",
@@ -1520,18 +1519,15 @@
           "events": [
             {
               "message": "Heavy cavalry of landfrieden attacks! Will wagon fort hold?"
-            },
-            {
-              "text": "Cavalry hit the wagons! Charge bonus negated!"
             }
           ]
         },
         {
           "name": "Key Phase of Battle",
-          "description": "Decisive moment of clash.",
+          "description": "The assault is breaking; Hynek fights in the front line.",
           "events": [
             {
-              "message": "(Historically at this phase Hynek of Nekmíř - fortress owner - fell)"
+              "text": "The cavalry has hit the wagons! Hynek of Nekmíř leads the next assault in the front line — now is the chance to take him out."
             }
           ]
         },
@@ -1540,10 +1536,7 @@
           "description": "Catholics retreat, Hussites continue to fortress.",
           "events": [
             {
-              "message": "Cavalry is repelled! Landfrieden withdraws!"
-            },
-            {
-              "message": "Victory! Žižka proved wagon fort works!"
+              "message": "The cavalry is repelled! The regional league begins to withdraw; this is the last chance to reach Hynek."
             }
           ]
         }
@@ -1562,14 +1555,17 @@
         "crusaders": "Second wave! Fresh landfrieden cavalry charges the dam!"
       },
       "objectives": {
-        "primary": "Survive until turn 12 with at least 50% units",
+        "primary": "Survive until turn 12 with at least 50% of your units, or eliminate the enemy field army",
         "secondary": [
           "Destroy 50% of enemy forces"
         ]
       },
       "debriefing": {
         "victory": "Fishpond and swamps became grave for iron lords! Hussites used terrain and repelled superior numbers. This battle showed that properly chosen battlefield can balance even significant numerical disadvantage. Žižka's genius fully manifested.",
-        "defeat": "Swamps of Sudoměř became trap not for enemy, but for you. Knights broke through your defense. Žižka's career ends before it could truly begin."
+        "defeat": "Swamps of Sudoměř became trap not for enemy, but for you. Knights broke through your defense. Žižka's career ends before it could truly begin.",
+        "victoryVariants": {
+          "fieldArmyEliminated": "You shattered the enemy field army, but at the cost of most of your own companies. The lone commander could no longer alter the battle. It is a victory — but the chronicler will not erase your losses."
+        }
       },
       "phases": [
         {
@@ -3430,6 +3426,7 @@
     "areaHit": "{attacker}: Area hit on {target} (next to {defender}): {damage} damage. (Remaining: {health} HP)",
     "areaKill": "{attacker}: Area hit destroyed {target} (next to {defender})! {damage} damage",
     "defensiveStance": "{unit} assumes defensive stance.",
+    "autoDefend": "Unused actions became defense for {count} units.",
     "panicFlee": "{unit} panics and flees!",
     "enemyPanic": "Crusaders are panicking! (-{penalty} attack)",
     "trenchBonus": "Hussite units in the trenches gain +3 defense!",
@@ -3485,6 +3482,7 @@
     "tooManyCasualties": "You have lost too many units ({percent}%)! Defeat!",
     "objectiveComplete": "Bonus objective completed: {description}",
     "victorySurvival": "Victory! You survived until round {turn} with {percent}% of units.",
+    "victoryFieldArmyEliminated": "A costly victory! {percent}% of your units survived through round {turn}, but the enemy field army was eliminated.",
     "defeatSurvival": "Defeat! Only {percent}% of units survived (required {required}%).",
     "victoryDestruction": "Victory! You destroyed {percent}% of enemies.",
     "defeatDestruction": "Defeat! Only {percent}% of enemies destroyed (required {required}%).",

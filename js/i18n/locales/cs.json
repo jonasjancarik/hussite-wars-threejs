@@ -129,14 +129,9 @@
     "testNotice": "Testovací verze · mobil a tablet. Uložené hry a postup jsou oddělené od původní hry."
   },
   "touch": {
-    "move": "Přesunout sem",
-    "attack": "Zaútočit",
-    "march": "Pochod celé hradby",
     "inspect": "Průzkum místa",
-    "confirmHint": "Zatím jen náhled. Rozkaz provedete potvrzením.",
     "inspectHint": "Prohlížíte si místo. Žádný rozkaz se neprovede.",
-    "unexplored": "Neprozkoumané místo. Podrobnosti zjistíte, až se dostane do dohledu.",
-    "damage": "zásah {damage} HP",
+    "close": "Zavřít",
     "details": "Jednotka, terén a podrobnosti",
     "noUnit": "Vyberte oddíl",
     "orders": "Rozkazy a detail",
@@ -149,12 +144,12 @@
     "zoomOut": "Oddálit mapu",
     "camera": "Pohled na mapu",
     "battlefield": "Bojiště: vyberte oddíl a poté cíl",
-    "help": "Na dotyku nebo v kompaktním okně: klepněte na vlastní oddíl, potom na dostupné pole. Přesun i pochod hradby se provedou rovnou. Jen útok má náhled, který potvrdíte tlačítkem Zaútočit. Tažením posunujete mapu; dvěma prsty nebo tlačítky − / + ji přiblížíte. Rozkazy a detail otevřou kartu oddílu, Armáda přehled jednotek. Rozehraná bitva se ukládá automaticky po dokončených akcích, odděleně od ručního uložení.",
+    "help": "Na dotyku nebo v kompaktním okně: klepněte na vlastní oddíl a potom na cíl. Zelené pole oddíl rovnou přesune, klepnutí na červeně zvýrazněného nepřítele rovnou zaútočí. Tažením posunujete mapu; dvěma prsty nebo tlačítky − / + ji přiblížíte. Rozkazy a detail otevřou kartu oddílu, Armáda přehled jednotek. Ukončit tah jedná rovnou a nevyužité akce automaticky změní v obranu. Rozehraná bitva se ukládá automaticky po dokončených akcích, odděleně od ručního uložení.",
     "resumeAuto": "Pokračovat v rozehrané",
     "manualSave": "Ručně uložená hra",
     "savedSummary": "{battle} · kolo {turn} · automaticky uloženo",
     "autosaveError": "Automatické uložení není dostupné. Nezavírejte hru, pokud si chcete uchovat postup.",
-    "chooseTarget": "{unit}: klepnutí na zelené pole rovnou přesune oddíl. Útok nejprve ukáže náhled.",
+    "chooseTarget": "{unit}: zelené pole rovnou přesune oddíl, červeně zvýrazněný nepřítel znamená přímý útok.",
     "selectHint": "Klepněte na vlastní oddíl. Jeho rozkazy najdete pod mapou."
   },
   "menu": {
@@ -178,7 +173,8 @@
     "musicMuted": "♫ Zvuk vypnutý v nastavení",
     "switchLanguage": "Přepnout do angličtiny",
     "support": "Buy Me a Coffee",
-    "version": "Alpha 0.3 · 12.09.2026"
+    "changelog": "Změny",
+    "version": "Alpha 0.3.1 · 14.09.2026"
   },
   "about": {
     "title": "O hře",
@@ -211,8 +207,8 @@
     "controlsTitle": "Před prvním tahem · ovládání v kostce",
     "noRush": "Je to tahová hra. Při rozhodování vás nic nehoní; protivník jedná až po ukončení vašeho tahu.",
     "selectStep": "Vaše oddíly mají červené kruhové žetony, protivník modré štíty. Vyberte vlastní oddíl; jeho stav a schopnosti najdete v levém panelu nebo pod mapou v tlačítku Rozkazy a detail.",
-    "actionStep": "Klepnutí na zeleně zvýrazněné pole rovnou přesune vybraný oddíl. Červeně zvýrazněný nepřítel znamená možný útok: na dotyku a v kompaktním okně nejprve uvidíte náhled a útok potvrdíte. Na velkém monitoru myší útočíte přímo kliknutím.",
-    "endStep": "Rozdejte rozkazy dalším oddílům a stiskněte Ukončit tah. Nemusíte využít každou akci.",
+    "actionStep": "Klepnutí na zeleně zvýrazněné pole rovnou přesune vybraný oddíl. Klepnutí na červeně zvýrazněného nepřítele rovnou provede útok. Stejné ovládání platí na dotyku i myší.",
+    "endStep": "Rozdejte rozkazy dalším oddílům a stiskněte Ukončit tah. Nevyužité akce se automaticky změní v obranu (−30 % příchozího poškození).",
     "helpStep": "Hlavní cíl zůstává nad mapou. Podrobnosti najdete pod Cíle, pravidla pod Menu → Nápověda. Escape otevře pauzu.",
     "resultReason": "Proč bitva skončila",
     "readChronicle": "Vaše kronika",
@@ -228,7 +224,8 @@
       "endTurn": "Vaše oddíly už nemohou jednat. Pokračujte tlačítkem Ukončit tah.",
       "enemyTurn": "Teď jedná protivník. Kliknutím na ukazatel jeho tahu můžete zkrátit čekání.",
       "busy": "Rozkaz se provádí… Další můžete vydat po dokončení akce.",
-      "paused": "Bitva je pozastavená. Rozkazy počkají na návrat do hry."
+      "paused": "Bitva je pozastavená. Rozkazy počkají na návrat do hry.",
+      "review": "Bitva skončila. Prohlédněte si oddíly, posouvejte mapu a k výsledku se vraťte tlačítkem dole."
     }
   },
   "quickBattle": {
@@ -243,11 +240,11 @@
     "overview": "Přehled",
     "objectivesTitle": "Cíle mise",
     "endTurn": "Ukončit tah",
-    "confirmEndTurnPrompt": "Opravdu chcete ukončit tah?",
     "unit": "Jednotka",
     "selectUnit": "Vyberte jednotku",
     "attack": "Útok",
     "defend": "Bránit (+30 % ochrany)",
+    "defendHint": "Spotřebuje zbývající akce a do dalšího tahu sníží příchozí poškození o 30 %. Nevyužité akce se při konci tahu převedou na obranu automaticky.",
     "undo": "Zpět",
     "objectives": "Cíle",
     "choral": "Chorál",
@@ -405,6 +402,9 @@
     "pyrrhicVictory": "Pyrrhovo vítězství",
     "retry": "Zkusit znovu",
     "nextMission": "Další mise",
+    "reviewBattlefield": "Prohlédnout bojiště",
+    "showResults": "Zobrazit výsledek",
+    "finished": "Dohráno",
     "mainMenu": "Hlavní menu",
     "statistics": "Statistiky",
     "details": "Podrobnosti",
@@ -486,7 +486,6 @@
     "soundVolume": "Hlasitost",
     "aiSpeed": "Rychlost AI",
     "showDamage": "Zobrazovat poškození",
-    "confirmEndTurn": "Potvrzovat konec tahu",
     "difficulty": "Obtížnost",
     "difficultyBeginner": "Začátečník (bez mlhy války)",
     "difficultyAdvanced": "Pokročilý (s mlhou války)",
@@ -663,6 +662,7 @@
     "areaHit": "{attacker}: Plošný zásah na {target} (vedle {defender}): {damage} poškození. (Zbývá: {health} HP)",
     "areaKill": "{attacker}: Plošný zásah zničil {target} (vedle {defender})! {damage} poškození",
     "defensiveStance": "{unit} zaujímá obranný postoj.",
+    "autoDefend": "Nevyužité akce byly převedeny na obranu: {count} oddílů.",
     "panicFlee": "{unit} propadá panice a prchá!",
     "enemyPanic": "Křižáci propadají panice! (-{penalty} útok)",
     "trenchBonus": "Husitské jednotky v příkopech získávají +3 k obraně!",
@@ -718,6 +718,7 @@
     "tooManyCasualties": "Ztratili jste příliš mnoho jednotek ({percent}%)! Porážka!",
     "objectiveComplete": "Bonusový cíl splněn: {description}",
     "victorySurvival": "Vítězství! Přežili jste do kola {turn} s {percent}% jednotek.",
+    "victoryFieldArmyEliminated": "Draze zaplacené vítězství! Do kola {turn} přežilo {percent}% vašich oddílů, ale nepřátelská bojová síla byla zničena.",
     "defeatSurvival": "Porážka! Přežilo jen {percent}% jednotek (potřeba {required}%).",
     "victoryDestruction": "Vítězství! Zničili jste {percent}% nepřátel.",
     "defeatDestruction": "Porážka! Zničeno jen {percent}% nepřátel (potřeba {required}%).",
@@ -1567,11 +1568,11 @@
         },
         {
           "title": "Obranný postoj",
-          "text": "Teď se naučíš OBRANNÝ POSTOJ. Vyber jednotku a stiskni klávesu D nebo klikni na „Obrana“. Jednotka získá +30% obranu."
+          "text": "Teď se naučíš OBRANNÝ POSTOJ. Vyber jednotku a stiskni klávesu D nebo klikni na „Bránit“. Jednotka do dalšího tahu utrpí o 30 % menší poškození."
         },
         {
           "title": "Obranný postoj aktivován!",
-          "text": "Jednotka v obraně má +30% k obraně, ale nemůže útočit. Výborné pro držení pozice. Nyní znič všechny nepřátele!"
+          "text": "Jednotka v obraně utrpí o 30 % menší poškození a spotřebuje zbývající akce. Při ukončení tahu se nevyužité akce převedou na obranu automaticky. Nyní znič všechny nepřátele!"
         },
         {
           "title": "Výcvik dokončen!",
@@ -1714,18 +1715,15 @@
           "events": [
             {
               "message": "Těžká jízda landfrýdu útočí! Vydrží vozová hradba?"
-            },
-            {
-              "text": "Jízda narazila na vozy! Charge bonus negován!"
             }
           ]
         },
         {
           "name": "Klíčová fáze bitvy",
-          "description": "Rozhodující okamžik střetu.",
+          "description": "Nápor se láme; Hynek bojuje v první linii.",
           "events": [
             {
-              "message": "(Historicky v této fázi padl Hynek z Nekmíře - majitel tvrze)"
+              "text": "Jízda narazila na vozy! Hynek z Nekmíře vede další nápor v první linii — teď je příležitost ho vyřadit."
             }
           ]
         },
@@ -1734,10 +1732,7 @@
           "description": "Katolíci ustupují, husité pokračují k tvrzi.",
           "events": [
             {
-              "message": "Jízda je odražena! Landfrýd se stahuje!"
-            },
-            {
-              "message": "Vítězství! Žižka prokázal, že vozová hradba funguje!"
+              "message": "Jízda je odražena! Landfrýd se začíná stahovat; na Hynka zbývá poslední příležitost."
             }
           ]
         }
@@ -1756,14 +1751,17 @@
         "crusaders": "Druhá vlna! Čerstvá jízda landfrýdu se žene na hráz!"
       },
       "objectives": {
-        "primary": "Přežijte do kola 12 s alespoň 50% jednotek",
+        "primary": "Přežijte do kola 12 s alespoň 50 % oddílů, nebo zničte nepřátelskou bojovou sílu",
         "secondary": [
           "Zničte 50% nepřátelských sil"
         ]
       },
       "debriefing": {
         "victory": "Rybník a bahna se staly hrobem pro železné pány! Husité využili terénu a odrazili přesilu. Tato bitva ukázala, že správně zvolené bojiště může vyvážit i značnou početní nevýhodu. Žižkův génius se projevil naplno.",
-        "defeat": "Bahna u Sudoměře se nestala pastí pro nepřítele, ale pro vás. Rytíři prolomili vaši obranu. Žižkova kariéra končí dříve, než mohla skutečně začít."
+        "defeat": "Bahna u Sudoměře se nestala pastí pro nepřítele, ale pro vás. Rytíři prolomili vaši obranu. Žižkova kariéra končí dříve, než mohla skutečně začít.",
+        "victoryVariants": {
+          "fieldArmyEliminated": "Nepřátelskou polní armádu jste rozbili, ale za cenu většiny vlastních oddílů. Osamělý velitel už výsledek bitvy nemohl zvrátit. Je to vítězství — kronikář z něj však vaše ztráty nevymaže."
+        }
       },
       "phases": [
         {

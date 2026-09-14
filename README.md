@@ -69,7 +69,7 @@ závěry Živohoště, Prokopův osud u Lipan, přepnutí jazyka i save/load.
 oddělení zničených a uprchlých jednotek i bezpečný offline export.
 `node scripts/test-first-experience.js` ověřuje situační pokyny, jejich obnovu po
 save/load, chyby překladů a nastavení i jednotný účet výsledků včetně posil.
-`node scripts/test-touch.js` ověřuje přímý přesun, náhledy útoku a potvrzení, gesta, kameru,
+`node scripts/test-touch.js` ověřuje přímý přesun, útok i konec tahu, gesta, kameru,
 samostatné automatické ukládání a přerušení hry přepnutím aplikace.
 `node scripts/test-storage.js` ověřuje oddělení savů, postupu a preferencí
 testovacího webu od stabilní hry, včetně mazání a opětovného načtení.
@@ -142,7 +142,7 @@ strategie/
 │   │   ├── WoodcutRenderer.js # Dřevořezová mapa a společné vektorové značky oddílů
 │   │   ├── BattleView.js  # Vstupy bitvy, kamera, vykreslování a UI lifecycle
 │   │   ├── BattleMapInput.js # Posun, zoom, gesta a souřadnice
-│   │   ├── BattleOrders.js # Přímý přesun a potvrzení útoku na dotyku
+│   │   ├── BattleOrders.js # Přímé dotykové rozkazy a bezpečná inspekce mapy
 │   │   ├── BattlePanels.js # Panely jednotek, armád a fází
 │   │   ├── BattleTooltip.js # Obsah a stav tooltipu
 │   │   ├── ChronicleView.js # Kronika, pramenná kritika a offline export
@@ -224,7 +224,7 @@ Nejde o úplný rozbor kritických edic ani odborné potvrzení každého detail
 
 ## 📝 Stav vývoje
 
-**Verze:** Alpha 0.3 (12. září 2026)
+**Verze:** Alpha 0.3.1 (14. září 2026)
 **Produkční adresa:** [hussitewars.com](https://hussitewars.com/)
 **Stav:** připraveno k playtestu Aktu I
 

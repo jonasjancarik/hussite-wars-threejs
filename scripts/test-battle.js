@@ -59,12 +59,126 @@ test('dvojklik spotřebuje jediný útok a během animace nelze ukončit tah', a
     assert.equal(game.saveGame(), true);
 });
 
+test('po konci bitvy lze jednotky jen prohlížet, ne jim vydávat rozkazy', () => {
+    const h = createHarness({ browserView: true }), { game, attacker, defender } = duel(h);
+    const before = game.units.map(unit => unit.serialize());
+
+    game.gameState = 'victory';
+    game.actions.destroy();
+    game.handleHexClick({ col: defender.col, row: defender.row });
+
+    assert.equal(game.selectedUnit, defender, 'lze otevřít i detail viditelného protivníka');
+    assert.equal(game.hexGrid.selectedHex.col, defender.col);
+    assert.equal(game.hexGrid.highlightedHexes.length, 0);
+    assert.equal(game.hexGrid.attackableHexes.length, 0);
+    assert.equal(h.document.getElementById('unit-actions').classList.contains('hidden'), true);
+    assert.deepEqual(game.units.map(unit => unit.serialize()), before);
+
+    const empty = [...game.hexGrid.hexes.values()].find(hex => !game.getUnitAt(hex.col, hex.row));
+    game.handleHexClick(empty);
+    assert.equal(game.selectedUnit, null);
+    assert.equal(game.endTurn(), false);
+    assert.deepEqual(game.units.map(unit => unit.serialize()), before);
+});
+
 test('rychlostřelba stále dovoluje dva dokončené útoky, třetí odmítne', async () => {
     const h = createHarness(), { game, attacker, defender } = duel(h, 'LUCISTNICI');
     await Promise.all([game.combatSystem.performAttack(attacker, defender), h.advance(500)]);
     await Promise.all([game.combatSystem.performAttack(attacker, defender), h.advance(500)]);
     assert.equal(attacker.attackCount, 2);
     assert.equal(await game.combatSystem.performAttack(attacker, defender), false);
+});
+
+test('konec tahu převede pouze skutečně nevyužité akce na obranu a další vlastní tah ji zruší', () => {
+    const h = createHarness(), game = h.newGame();
+    game.scheduleAI = () => {};
+    const fresh = game.unitFactory.createUnit('CEPNICI', 1, 1);
+    const moved = game.unitFactory.createUnit('CEPNICI', 2, 1); moved.hasMoved = true;
+    const attacked = game.unitFactory.createUnit('CEPNICI', 3, 1); attacked.hasAttacked = true;
+    const spent = game.unitFactory.createUnit('CEPNICI', 4, 1); spent.hasMoved = spent.hasAttacked = true;
+    const rapid = game.unitFactory.createUnit('LUCISTNICI', 5, 1); rapid.faction = 'hussites'; rapid.attackCount = 1;
+    const fort = game.unitFactory.createUnit('POLNI_OPEVNENI', 6, 1);
+    const routing = game.unitFactory.createUnit('CEPNICI', 7, 1); routing.isRouting = true;
+    const enemy = game.unitFactory.createUnit('KOPINICI', 8, 1);
+    game.units = [fresh, moved, attacked, spent, rapid, fort, routing, enemy];
+
+    game.endTurn();
+    assert.equal(game.currentFaction, 'crusaders');
+    for (const unit of [fresh, moved, attacked, rapid, fort]) {
+        assert.equal(unit.isDefending, true, unit.type);
+        assert.equal(unit.hasMoved, true, unit.type);
+        assert.equal(unit.hasAttacked, true, unit.type);
+    }
+    for (const unit of [spent, routing, enemy]) assert.equal(unit.isDefending, false, unit.type);
+    assert.equal(game.log.filter(line => line.message.includes('gameLog.autoDefend')).length, 1);
+    assert.ok(game.log.some(line => line.message.includes('"count":5')));
+
+    game.endTurn();
+    assert.equal(game.currentFaction, 'hussites');
+    for (const unit of [fresh, moved, attacked, spent, rapid, fort, routing]) {
+        assert.equal(unit.isDefending, false, unit.type);
+    }
+    game.destroy();
+});
+
+test('automatická obrana se ukládá a načítá jako ručně zvolený postoj', () => {
+    const h = createHarness(), game = h.newGame();
+    const player = game.units.find(unit => unit.faction === 'hussites');
+    assert.ok(game.autoDefendUnusedUnits('hussites') > 0);
+    assert.equal(player.isDefending, true);
+    assert.equal(game.saveGame(), true);
+    const restored = h.SaveGameSystem.load(h.document.getElementById('game-canvas'), game);
+    assert.equal(restored.units.find(unit => unit.id === player.id).isDefending, true);
+    restored.destroy();
+});
+
+test('Sudoměř uzná draze zaplacené vítězství, jen když z protivníka zůstal samotný velitel', () => {
+    const h = createHarness();
+    const prepare = () => {
+        const game = h.newGame('sudomere_1420');
+        game.turnNumber = 13;
+        const player = game.units.filter(unit => unit.faction === 'hussites');
+        player.slice(4).forEach(unit => { unit.health = 0; });
+        return game;
+    };
+
+    const won = prepare();
+    won.units.filter(unit => unit.faction === 'crusaders' && !unit.isCommander()).forEach(unit => { unit.health = 0; });
+    won.victoryConditionsSystem.checkScenarioVictoryConditions();
+    assert.equal(won.view.result.isVictory, true);
+    assert.match(won.view.result.stats.reason, /victoryFieldArmyEliminated/);
+
+    const lost = prepare();
+    const fieldUnits = lost.units.filter(unit => unit.faction === 'crusaders' && !unit.isCommander());
+    fieldUnits.slice(1).forEach(unit => { unit.health = 0; });
+    lost.victoryConditionsSystem.checkScenarioVictoryConditions();
+    assert.equal(lost.view.result.isVictory, false);
+    assert.match(lost.view.result.stats.reason, /defeatSurvival/);
+});
+
+test('Nekmíř vede Hynka do boje a jeho bonus nevyžaduje smrt Švamberka', () => {
+    const h = createHarness(), game = h.newGame('nekmir_1419');
+    game.view.notifications = [];
+    game.turnNumber = 6; game.updatePhase(); game.checkPhaseEvents();
+    assert.equal(game.currentPhase.id, 4);
+    assert.ok(game.view.notifications.some(event => event.text.includes('Hynek')));
+
+    game.currentFaction = 'crusaders';
+    const hynek = game.units.find(unit => unit.type === 'HYNEK_NEKMIRE');
+    const svamberk = game.units.find(unit => unit.type === 'BOHUSLAV_SVAMBERK');
+    const action = h.AI.decideAction(game, hynek);
+    assert.equal(action.type, 'move');
+    const before = Math.min(...game.getEnemyUnits('crusaders').map(unit =>
+        game.hexGrid.getDistance(hynek.col, hynek.row, unit.col, unit.row)));
+    const after = Math.min(...game.getEnemyUnits('crusaders').map(unit =>
+        game.hexGrid.getDistance(action.col, action.row, unit.col, unit.row)));
+    assert.ok(after < before, 'Hynek má postupovat k boji, ne do severozápadního lesa');
+
+    hynek.health = 0; svamberk.health = svamberk.maxHealth;
+    game.victoryConditionsSystem.evaluateSecondaryConditions('hussites');
+    const result = game.secondaryResults.find(item => item.target === 'HYNEK_NEKMIRE');
+    assert.equal(result.achieved, true);
+    game.destroy();
 });
 
 test('protizásah započítá smrt a škodu ještě před animací', async () => {

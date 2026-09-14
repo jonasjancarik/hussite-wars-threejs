@@ -22,16 +22,15 @@ Prezentace bitvy je rozdělena podle odpovědností:
 - `BattleMapInput` vlastní gesta a kameru: posun, zoom, převody souřadnic a
   potlačení kompatibilního clicku po dotyku/tažení. Zvětšuje prezentační velikost
   Canvasu, ne logickou mřížku nebo pohybové dosahy.
-- `BattleOrders` provádí přesun a pochod přímo, drží pouze dočasný náhled útoku
-  a inspekci hexu. Obsah sdílí
-  s `BattleTooltip.contentForHex()`, včetně mlhy a odhadu protiútoku. Potvrzení
-  znovu zkontroluje jednotku, kolo, výchozí pozici, cíl a platnost akce.
+- `BattleOrders` převádí dotykové rozkazy na stejné přímé herní příkazy jako myš
+  a drží pouze bezpečnou inspekci hexu. Obsah inspekce sdílí
+  s `BattleTooltip.contentForHex()` a respektuje mlhu války.
 
 Pohled čte stav a dotazuje se pravidel. Změny herního stavu provádí příkazy `Game`
 nebo příslušného systému, nikoli přímým přepisováním jeho polí. Například klik na
 Canvas převede `BattleView.handleClick()` přes kameru na hex. Myš na desktopu jej
-předá `Game.handleHexClick()` přímo. Dotyk/kompaktní režim předá přesun a pochod
-také přímo, ale útok až po potvrzení náhledu. Filtr gest zůstává v `BattleMapInput`.
+předá `Game.handleHexClick()` přímo. Dotyk/kompaktní režim stejnou cestou provádí
+přesun, pochod i útok bez mezikroku. Filtr gest zůstává v `BattleMapInput`.
 Přepnutí rychlosti AI jde přes `Game.skipAIAnimations()`.
 
 Dosavadní metody `Game.updateUI()`, `Game.updateUnitPanel()` a další veřejné vstupy
@@ -201,7 +200,7 @@ zastaví render a zruší gesta/náhled. Podrobnosti: [MOBILE_PLAYTEST.md](MOBIL
 | `menu-and-results.css` | Hlavní menu, nastavení, výsledky a tutorial |
 | `feedback.css` | Animace, indikátory, přístupnost a kronika |
 | `field-theme.css` | Výsledné dřevořezové téma a jeho přepsání základních stylů |
-| `touch-and-layout.css` | Kamera, náhled rozkazu, dotykové panely a kompaktní rozložení |
+| `touch-and-layout.css` | Kamera, inspekce místa, dotykové panely a kompaktní rozložení |
 
 Rozdělení zachovalo relativní pořadí selektorů i media queries. Pozdější téma stále
 přepisuje základní rozložení; soubory se nesmí prostě abecedně seřadit. Validátor

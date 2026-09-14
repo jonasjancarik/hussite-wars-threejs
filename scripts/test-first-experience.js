@@ -190,7 +190,7 @@ test('poškozené nastavení neblokuje start a nikdy se automaticky nepřepisuje
     }
     h.storage.set('husitskeValky_settings', JSON.stringify({ soundEnabled: false, soundVolume: 40, aiSpeed: 'fast',
         difficultyLevel: 'advanced', showDamage: true, confirmEndTurn: false, extra: 'ignored' }));
-    assert.deepEqual(read(), { soundEnabled: false, showDamage: true, confirmEndTurn: false,
+    assert.deepEqual(read(), { soundEnabled: false, showDamage: true,
         soundVolume: 40, aiSpeed: 'fast', difficultyLevel: 'advanced' });
     h.storage.set('husitskeValky_settings', '{"soundEnabled":"false","soundVolume":-1,"aiSpeed":"warp","difficultyLevel":"expert","__proto__":{"polluted":true}}');
     assert.deepEqual(read(), {});
@@ -227,6 +227,64 @@ test('výsledkové hodnocení zahrne posily i uprchlé a nevydává dílčí ús
     assert.deepEqual(plain(h.context.getBattleResultCounts({ enemiesKilled: 2, unitsLost: 1 }, {
         units: [{ faction: 'hussites', health: 50 }, { faction: 'crusaders', health: 10 }, { faction: 'crusaders', health: 0 }]
     })), { player: { lost: 1, total: 2 }, enemy: { lost: 2, total: 3 } });
+});
+
+test('výsledek lze skrýt, znovu otevřít a režim prohlížení se při odchodu uklidí', async () => {
+    const root = path.join(__dirname, '..');
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(html, /id="btn-review-battlefield"[\s\S]{0,160}data-i18n="gameover\.reviewBattlefield"/);
+    assert.match(html, /id="btn-show-results"[^>]*data-i18n="gameover\.showResults"[^>]*aria-hidden="true"/);
+
+    const h = await menuHarness(), el = id => h.document.getElementById(id);
+    h.context.window.showGameOver(false, 'Test', {
+        turns: 3,
+        lossesByFaction: { hussites: 2, crusaders: 1 },
+        fledByFaction: { hussites: 0, crusaders: 0 },
+        aliveByFaction: { hussites: 3, crusaders: 4 }
+    });
+    assert.equal(el('gameover-modal').classList.contains('hidden'), false);
+    assert.equal(el('gameover-modal').getAttribute('aria-hidden'), 'false');
+    assert.equal(el('game-container').classList.contains('post-battle-review'), true);
+    assert.equal(el('btn-show-results').classList.contains('hidden'), false);
+
+    el('btn-review-battlefield').dispatchEvent(new Event('click'));
+    assert.equal(el('gameover-modal').classList.contains('hidden'), true);
+    assert.equal(el('gameover-modal').getAttribute('aria-hidden'), 'true');
+    assert.equal(h.document.activeElement, el('btn-show-results'));
+
+    el('btn-show-results').dispatchEvent(new Event('click'));
+    assert.equal(el('gameover-modal').classList.contains('hidden'), false);
+    assert.equal(h.document.activeElement, el('gameover-title'));
+
+    // Testovací DOM neparsuje výchozí třídy z HTML; skutečné překryvy jsou při hře skryté.
+    for (const id of ['about-modal', 'help-modal', 'chronicle-modal']) el(id).classList.add('hidden');
+    const escape = new Event('keydown', { cancelable: true });
+    Object.defineProperty(escape, 'key', { value: 'Escape' });
+    h.document.dispatchEvent(escape);
+    assert.equal(el('gameover-modal').classList.contains('hidden'), true);
+    assert.equal(h.document.activeElement, el('btn-show-results'));
+    const reopen = new Event('keydown', { cancelable: true });
+    Object.defineProperty(reopen, 'key', { value: 'Escape' });
+    h.document.dispatchEvent(reopen);
+    assert.equal(el('gameover-modal').classList.contains('hidden'), false);
+
+    el('btn-gameover-menu').dispatchEvent(new Event('click'));
+    assert.equal(el('game-container').classList.contains('post-battle-review'), false);
+    assert.equal(el('btn-show-results').classList.contains('hidden'), true);
+    assert.equal(el('gameover-modal').getAttribute('aria-hidden'), 'true');
+});
+
+test('dohraná časová mise ukazuje skutečný počet kol a nehlásí další tah', async () => {
+    const h = await createLocalizedHarness('cs', { browserView: true });
+    const game = h.newGame('vitkov_1420');
+    game.turnNumber = 9;
+    game.gameOverTurn = 8;
+    game.gameState = 'victory';
+    game.updateUI();
+    assert.equal(h.document.getElementById('current-player').textContent, 'Dohráno');
+    assert.equal(h.document.getElementById('current-player').className, 'finished');
+    assert.equal(h.document.getElementById('turn-number').textContent, 'Kolo: 8/8');
+    game.destroy();
 });
 
 async function menuHarness(language = 'cs', prepare = () => {}) {
@@ -308,6 +366,7 @@ test('obě obrazovky O hře vznikají z jediné lokalizované šablony a mají a
     assert.match(html, /<div id="about-content"><\/div>/);
     assert.doesNotMatch(html, /Beta Testing|Po publikování na GitHub|mailto:/);
     const menu = html.slice(html.indexOf('<div id="main-menu"'), html.indexOf('<div id="game-container"'));
+    assert.match(menu, /<a href="https:\/\/github\.com\/josefslerka\/husitske-valky\/blob\/main\/CHANGELOG\.md" target="_blank" rel="noopener noreferrer" class="changelog-link" data-i18n="menu\.changelog">Změny<\/a>/);
     assert.match(menu, /<a href="https:\/\/buymeacoffee.com\/josefslerka" target="_blank" rel="noopener noreferrer" class="coffee-button">\s*<span aria-hidden="true">☕<\/span>\s*<span data-i18n="menu.support">Buy Me a Coffee<\/span>\s*<\/a>/);
     assert.doesNotMatch(menu, /class="support-link"/);
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/i18n/encyclopediaRenderer.js'), 'utf8'), h.context);
@@ -325,6 +384,7 @@ test('obě obrazovky O hře vznikají z jediné lokalizované šablony a mají a
         assert.match(tab, /target="_blank" rel="noopener noreferrer"/);
         assert.doesNotMatch(tab, /TBD|After publishing|Po publikování|mailto:/);
         assert.equal(h.i18n.t('menu.support'), 'Buy Me a Coffee');
+        assert.equal(h.i18n.t('menu.changelog'), language === 'cs' ? 'Změny' : 'Changelog');
     }
 });
 

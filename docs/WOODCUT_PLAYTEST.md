@@ -2,7 +2,7 @@
 
 Výtvarný směr z interaktivní studie je převedený na skutečné scénáře. Studie
 nebyla zkopírovaná jako nová hra: zůstávají původní mapy, pravidla, kamera,
-potvrzení útoku, přímý přesun a save v4. Lokální větev je `codex/mobile-ui`,
+přímé rozkazy a save v4. Lokální větev je `codex/mobile-ui`,
 publikační cíl pouze `husitske-valky-test`. Stabilní repozitář se nemění.
 
 ## Vizuální jazyk

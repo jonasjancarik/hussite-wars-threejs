@@ -34,6 +34,24 @@ class ScenarioEventSystem {
                 outcome.victoryVariant = remaining >= initial ? 'allPilgrims' : remaining > 0 ? 'somePilgrims' : 'noPilgrims';
             }
         }
+        if (isVictory && scenario.id === 'sudomere_1420' && debriefing.victoryVariants) {
+            const primary = scenario.victoryConditions?.primary;
+            const playerFaction = scenario.playerFaction || 'hussites';
+            const enemyFaction = playerFaction === 'hussites' ? 'crusaders' : 'hussites';
+            const survivors = this.game.units.filter(unit =>
+                unit.faction === playerFaction && unit.health > 0 && !unit.escaped
+            ).length;
+            const survivorPercent = this.game.initialPlayerUnits > 0
+                ? (survivors / this.game.initialPlayerUnits) * 100 : 0;
+            const enemySurvivors = this.game.units
+                .filter(unit => unit.faction === enemyFaction && unit.health > 0 && !unit.escaped);
+            const enemyFieldArmyEliminated = enemySurvivors.length > 0 &&
+                enemySurvivors.every(unit => unit.isCommander?.());
+            if (primary?.alternative?.type === 'eliminate_field_army' &&
+                survivorPercent < (primary.minUnitsPercent || 0) && enemyFieldArmyEliminated) {
+                outcome.victoryVariant = 'fieldArmyEliminated';
+            }
+        }
         return outcome;
     }
 
@@ -41,7 +59,7 @@ class ScenarioEventSystem {
         const debriefing = scenario?.debriefing;
         if (!debriefing) return '';
         let text = debriefing[isVictory ? 'victory' : 'defeat'] || '';
-        if (isVictory && ['allPilgrims', 'somePilgrims', 'noPilgrims'].includes(outcome?.victoryVariant)) {
+        if (isVictory && outcome?.victoryVariant) {
             text = debriefing.victoryVariants?.[outcome.victoryVariant] || text;
         }
         const statusText = ['alive', 'fallen', 'escaped'].includes(outcome?.unitState)

@@ -137,7 +137,7 @@ test('narativní úprava Lipan nemění kola událostí, léčku AI ani jednotky
 });
 
 test('přepnutí CS → EN → CS obnoví všechny varianty, ale nezmění herní stav', async () => {
-    for (const id of ['zivohost_1419', 'lipany_1434']) {
+    for (const id of ['zivohost_1419', 'sudomere_1420', 'lipany_1434']) {
         const { h, game } = await fixture(id);
         h.context.window.game = game;
         const before = unitState(game), original = game.scenarioEventSystem.getDebriefing(true);
@@ -151,9 +151,23 @@ test('přepnutí CS → EN → CS obnoví všechny varianty, ale nezmění hern�
     }
 });
 
+for (const lang of ['cs', 'en']) {
+    test(`${lang}: draze vyhraná Sudoměř má pravdivý závěr a běžná výhra původní`, async () => {
+        const { game } = await fixture('sudomere_1420', lang);
+        const hussites = game.units.filter(unit => unit.faction === 'hussites');
+        hussites.forEach((unit, index) => { unit.health = index < 4 ? 1 : 0; });
+        game.units.filter(unit => unit.faction === 'crusaders' && !unit.isCommander()).forEach(unit => { unit.health = 0; });
+        assert.equal(game.scenarioEventSystem.getDebriefing(true),
+            game.currentScenario.debriefing.victoryVariants.fieldArmyEliminated);
+
+        hussites.forEach(unit => { unit.health = 1; });
+        assert.equal(game.scenarioEventSystem.getDebriefing(true), game.currentScenario.debriefing.victory);
+    });
+}
+
 test('ostatní scénáře zachovají dosavadní texty debriefingu', async () => {
     const { h } = await fixture('sudomere_1420');
-    for (const id of Object.keys(h.Scenarios).filter(id => !['zivohost_1419', 'lipany_1434'].includes(id))) {
+    for (const id of Object.keys(h.Scenarios).filter(id => !['zivohost_1419', 'sudomere_1420', 'lipany_1434'].includes(id))) {
         const game = h.newGame(id);
         for (const victory of [true, false]) {
             assert.equal(game.scenarioEventSystem.getDebriefing(victory), game.currentScenario.debriefing[victory ? 'victory' : 'defeat'], id);

@@ -82,14 +82,15 @@ test('částečný překlad velitelů zachová sílu a složení bez chybějíc�
     assert.ok(lore.enemySide.composition);
 });
 
-test('Sudoměř má beze změny terén, síly, cíle, mechaniky i načasování událostí', () => {
+test('Sudoměř zachová terén, síly a načasování; navíc výslovně dovolí zničení polní armády', () => {
     const h = createHarness(), scenario = h.Scenarios.sudomere_1420;
+    assert.equal(scenario.victoryConditions.primary.alternative?.type, 'eliminate_field_army');
     const stripText = value => Array.isArray(value) ? value.map(stripText) : value && typeof value === 'object'
         ? Object.fromEntries(Object.entries(value).filter(([key]) => !['name','date','description','message','text','title','commander'].includes(key)).map(([key,v]) => [key,stripText(v)])) : value;
     const keys = ['mapSize','terrain','forces','victoryConditions','phases','specialMechanics','defeatConditions','turnLimit'];
     const data = stripText(Object.fromEntries(keys.filter(key => scenario[key] !== undefined).map(key => [key,scenario[key]])));
-    // Snapshot před historickou revizí; nevyžaduje dostupný Git při spuštění testů.
-    assert.equal(crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex'), 'b85ad23b294366bda5f3d3e7dbb8d9564be4a5ff78bbfb9477f1040ac0825545');
+    // Snapshot po výslovné alternativě výsledku; nevyžaduje dostupný Git při spuštění testů.
+    assert.equal(crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex'), '3b75a2e47ad48cf09c175093868646ed74549e1e6d372231d523edf575b70b7a');
 });
 
 test('Vítkov má dvě pevné posádky, ne pohyblivé či rozpojitelné vozy', () => {

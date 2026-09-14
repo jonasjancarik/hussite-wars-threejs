@@ -171,6 +171,8 @@ const AI = {
         const enemies = game.getEnemyUnits('crusaders');
         const isCommander = unit.isCommander && unit.isCommander();
         const doctrine = this.getDoctrine(game);
+        const aggressiveCommander = isCommander &&
+            doctrine.aggressiveCommanders?.includes(unit.type);
 
         // WP0: skriptovaný postoj přebírá rozhodování (kromě default/aggressive,
         // které používají standardní chování níže). Vrací akci definitivně.
@@ -181,7 +183,8 @@ const AI = {
 
         // Zlomená jednotka se nejdřív snaží dostat z dosahu. Vyšší práh
         // ve scénáři modeluje armádu, kterou poráží už pověst protivníka.
-        if (!unit.isRouting && Number.isFinite(unit.morale) && unit.morale <= doctrine.fearThreshold) {
+        if (!unit.isRouting && !aggressiveCommander &&
+            Number.isFinite(unit.morale) && unit.morale <= doctrine.fearThreshold) {
             if (unit.canMove()) {
                 const safeMove = this.findSafeMove(game, unit, enemies);
                 if (safeMove) return { type: 'move', col: safeMove.col, row: safeMove.row };
@@ -203,7 +206,7 @@ const AI = {
 
         // === OCHRANA VELITELE ===
         // Velitel by měl zůstat vzadu a být chráněn spojenci
-        if (isCommander) {
+        if (isCommander && !aggressiveCommander) {
             // Spočítej okolní spojence
             const neighbors = game.hexGrid.getNeighbors(unit.col, unit.row);
             let adjacentAllies = 0;

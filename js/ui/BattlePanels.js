@@ -37,15 +37,24 @@ class BattlePanels {
     updateUI() {
         // Aktuální hráč
         const playerSpan = document.getElementById('current-player');
-        const factionName = this.factionLabel(this.game.currentFaction);
-        playerSpan.textContent = `${i18n.t('game.turnLabel')} ${factionName}`;
-        playerSpan.className = this.game.currentFaction === 'crusaders' ? 'crusaders' : '';
+        const finished = this.game.gameState === 'victory';
+        if (finished) {
+            playerSpan.textContent = i18n.t('gameover.finished');
+            playerSpan.className = 'finished';
+        } else {
+            const factionName = this.factionLabel(this.game.currentFaction);
+            playerSpan.textContent = `${i18n.t('game.turnLabel')} ${factionName}`;
+            playerSpan.className = this.game.currentFaction === 'crusaders' ? 'crusaders' : '';
+        }
 
         // Číslo kola - u misí s limitem ukaž i deadline (Kolo X/Y)
         const maxT = this.game.currentScenario && this.game.currentScenario.maxTurns;
+        const displayedTurn = finished
+            ? (this.game.gameOverTurn ?? (maxT ? Math.min(this.game.turnNumber, maxT) : this.game.turnNumber))
+            : this.game.turnNumber;
         document.getElementById('turn-number').textContent = maxT
-            ? `${i18n.t('game.roundLabel')} ${this.game.turnNumber}/${maxT}`
-            : `${i18n.t('game.roundLabel')} ${this.game.turnNumber}`;
+            ? `${i18n.t('game.roundLabel')} ${displayedTurn}/${maxT}`
+            : `${i18n.t('game.roundLabel')} ${displayedTurn}`;
 
         // Přehled armád
         this.updateArmyOverview();
@@ -82,6 +91,7 @@ class BattlePanels {
     // za mlhou a nevolí za hráče taktiku. Akční systém obnoví text i po animaci.
     getGuidance() {
         const game = this.game;
+        if (game.gameState === 'victory') return { key: 'review' };
         if (game.gameState !== 'playing') return null;
         if (game.isPaused) return { key: 'paused' };
         if (game.currentFaction !== 'hussites') return { key: 'enemyTurn' };
@@ -167,8 +177,10 @@ class BattlePanels {
             // Kliknutí na jednotku v přehledu - vybere jednotku
             if (unit.health > 0) {
                 li.addEventListener('click', () => {
-                    // Pouze husitské jednotky jsou vybíratelné hráčem
-                    if (unit.faction === 'hussites' && this.game.currentFaction === 'hussites') {
+                    if (this.game.gameState === 'victory') {
+                        this.game.inspectUnit(unit);
+                    // Během bitvy jsou rozkazy dostupné pouze vlastním jednotkám.
+                    } else if (unit.faction === 'hussites' && this.game.currentFaction === 'hussites') {
                         this.game.selectUnit(unit);
                         this.game.render();
                     }
@@ -411,7 +423,7 @@ class BattlePanels {
             ${statusHtml ? `<div class="status-effects" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(201, 162, 39, 0.3);">${statusHtml}</div>` : ''}
         `;
 
-        if (unit.faction === this.game.currentFaction) {
+        if (this.game.gameState === 'playing' && unit.faction === this.game.currentFaction) {
             actionsDiv.classList.remove('hidden');
             attackBtn.disabled = !unit.canAttack();
 

@@ -1,5 +1,18 @@
 # 📜 Changelog
 
+## Alpha 0.3.1 (14. září 2026)
+
+Opravy a úpravy ovládání podle prvního veřejného playtestu.
+
+- Útok i ukončení tahu se provedou přímo, bez potvrzovacího mezikroku; rychlý druhý vstup během animace nevydá duplicitní rozkaz.
+- Nevyužité akce se při ukončení tahu automaticky převedou na obranu. Rozhraní i nápověda jasně uvádějí její účinek.
+- Po skončení bitvy lze skrýt výsledek, prohlédnout poslední stav bojiště a stejný debriefing znovu otevřít.
+- Opravené zůstávající dosahy při přepínání oddílů, překrytý cíl mise a spodní ovládání v mobilních prohlížečích uvnitř aplikací.
+- Sudoměř uzná draze zaplacené vítězství, pokud z nepřátelské armády zůstal pouze velitel.
+- Nekmíř spouští rozhodující fázi včas, vede Hynka do boje a ponechává bonusový cíl dosažitelný.
+- Vyšehrad už v 7. kole hromadně nemaže prchající vojsko; pozdější pravidlo „bez milosti“ platí jen pro historickou past u Podolí.
+- Rozšířené regresní testy ovládání, výsledků, scénářových událostí, mobilního rozložení a dvojjazyčných textů.
+
 ## Alpha 0.3 (12. září 2026)
 
 Vydání pro GitHub Pages s vlastní doménou `hussitewars.com`.

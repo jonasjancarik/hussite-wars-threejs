@@ -12,7 +12,7 @@ function readGamePreferences() {
         const saved = JSON.parse(readLocalPreference('husitskeValky_settings'));
         if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {};
         const clean = {};
-        for (const key of ['soundEnabled', 'showDamage', 'confirmEndTurn']) {
+        for (const key of ['soundEnabled', 'showDamage']) {
             if (typeof saved[key] === 'boolean') clean[key] = saved[key];
         }
         if (Number.isFinite(saved.soundVolume) && saved.soundVolume >= 0 && saved.soundVolume <= 100) clean.soundVolume = saved.soundVolume;
@@ -38,6 +38,47 @@ function getBattleResultCounts(stats, activeGame) {
         player: tally('hussites', 'unitsLost', 'initialPlayerUnits'),
         enemy: tally('crusaders', 'enemiesKilled', 'initialEnemyUnits')
     };
+}
+
+// Browser chrome in embedded webviews is not always represented by the CSS
+// safe-area inset. Prefer the measured visual viewport; known embedded-browser
+// signals are only a fallback when the host draws a floating bar over it.
+function calculateBrowserBottomClearance({ compact, standalone, innerHeight, viewportHeight, viewportOffsetTop = 0, embedded } = {}) {
+    if (!compact || standalone) return 0;
+    const occluded = Number.isFinite(innerHeight) && Number.isFinite(viewportHeight)
+        ? Math.max(0, innerHeight - viewportHeight - viewportOffsetTop)
+        : 0;
+    if (occluded >= 20 && occluded <= 120) return Math.ceil(occluded);
+    return embedded ? 68 : 0;
+}
+
+function isLikelyEmbeddedBrowser() {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+    const referrer = typeof document !== 'undefined' ? document.referrer || '' : '';
+    return /Twitter|LinkedInApp|FBAN|FBAV|Instagram|Line\/|;\s*wv\)|\bwv\b|(?:x|t)\.co|linkedin\.com/i.test(`${ua} ${referrer}`);
+}
+
+function syncBrowserBottomClearance(gameContainer, compact) {
+    if (!gameContainer || typeof window === 'undefined') return 0;
+    const viewport = window.visualViewport;
+    const standalone = Boolean(
+        window.matchMedia?.('(display-mode: standalone)')?.matches ||
+        (typeof navigator !== 'undefined' && navigator.standalone)
+    );
+    const clearance = calculateBrowserBottomClearance({
+        compact,
+        standalone,
+        innerHeight: window.innerHeight,
+        viewportHeight: viewport?.height,
+        viewportOffsetTop: viewport?.offsetTop || 0,
+        embedded: isLikelyEmbeddedBrowser()
+    });
+    if (gameContainer.style?.setProperty) {
+        gameContainer.style.setProperty('--browser-bottom-clearance', `${clearance}px`);
+    } else if (gameContainer.style) {
+        gameContainer.style['--browser-bottom-clearance'] = `${clearance}px`;
+    }
+    return clearance;
 }
 
 // Custom confirm dialog
@@ -118,10 +159,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     let hexGrid = null;
     let game = null;
     let selectedScenario = null;
+    const showResultsButton = document.getElementById('btn-show-results');
+
+    function setPostBattleReview(active) {
+        gameContainer.classList.toggle('post-battle-review', active);
+        showResultsButton.classList.toggle('hidden', !active);
+        showResultsButton.setAttribute('aria-hidden', String(!active));
+    }
+
+    function openGameOverResults() {
+        gameoverModal.classList.remove('hidden');
+        gameoverModal.setAttribute('aria-hidden', 'false');
+        document.getElementById('gameover-scroll').scrollTop = 0;
+        document.getElementById('gameover-title').focus({ preventScroll: true });
+    }
+
+    function reviewBattlefield() {
+        gameoverModal.classList.add('hidden');
+        gameoverModal.setAttribute('aria-hidden', 'true');
+        game?.view?.orders?.cancel();
+        game?.view?.panels?.updateGuidance();
+        showResultsButton.focus({ preventScroll: true });
+    }
+
+    function resetPostBattleReview() {
+        setPostBattleReview(false);
+        gameoverModal.classList.add('hidden');
+        gameoverModal.setAttribute('aria-hidden', 'true');
+    }
 
     // Úklid staré instance hry - jinak její listenery a animační smyčka
     // zůstávají aktivní a každý klik na tlačítka se zpracuje vícekrát
     function destroyCurrentGame() {
+        resetPostBattleReview();
         if (game && typeof game.destroy === 'function') {
             game.saveGame({ automatic: true });
             game.destroy();
@@ -137,12 +207,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         soundVolume: 70,
         aiSpeed: 'normal',
         showDamage: true,
-        confirmEndTurn: false,
         difficultyLevel: 'beginner' // 'beginner' = bez mlhy, 'advanced' = s mlhou války
     };
 
     // Nastavení musí být dostupné i pro game.js / ai.js / CombatSystem
-    // (confirmEndTurn, aiSpeed, showDamage)
+    // (aiSpeed, showDamage)
     window.gameSettings = gameSettings;
 
     // Načtení uložených nastavení
@@ -274,8 +343,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Statické data-i18n uzly řeší i18n samo. Tady obnovujeme obsah, který
     // vzniká až za běhu (karty misí, detail, cíle a hlavička rychlé bitvy).
     document.addEventListener('languageChanged', () => {
-        game?.view.orders.cancel();
-        game?.view.orders.refresh();
+        game?.view?.orders?.cancel();
+        game?.view?.orders?.refresh();
         checkSavedGame();
         updateLanguageToggle();
         updateCampaignProgressUI();
@@ -310,6 +379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!gameoverModal.classList.contains('hidden')) {
             HistoricalNotesView.mount(document.getElementById('gameover-sources'), game?.currentScenario?.id || selectedScenario?.id);
         }
+        game?.view?.panels?.updateGuidance();
     });
 
     function updateCampaignProgressUI() {
@@ -746,6 +816,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         gameContainer.classList.remove('hidden');
         pauseModal.classList.add('hidden');
         gameoverModal.classList.add('hidden');
+        resetPostBattleReview();
         missionModal.classList.add('hidden');
         objectivesPanel.classList.add('hidden');
         document.getElementById('save-load-error').classList.add('hidden');
@@ -895,6 +966,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         layoutWidth = width;
         gameContainer.classList.toggle('compact-battle', compact);
         document.body.classList.toggle('compact-interface', compact);
+        syncBrowserBottomClearance(gameContainer, compact);
         if (reframe) {
             game?.view.mapInput.cancel(); game?.view.orders.cancel();
         }
@@ -916,6 +988,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('scroll', handleResize);
     touchQuery?.addEventListener('change', handleResize);
     handleResize();
 
@@ -1108,7 +1182,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sound-volume').value = gameSettings.soundVolume;
         document.getElementById('ai-speed').value = gameSettings.aiSpeed;
         document.getElementById('show-damage').checked = gameSettings.showDamage;
-        document.getElementById('confirm-end-turn').checked = gameSettings.confirmEndTurn;
         document.getElementById('difficulty-level').value = gameSettings.difficultyLevel;
 
         // Nastavení aktuálního jazyka
@@ -1152,7 +1225,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         gameSettings.soundVolume = parseInt(document.getElementById('sound-volume').value);
         gameSettings.aiSpeed = document.getElementById('ai-speed').value;
         gameSettings.showDamage = document.getElementById('show-damage').checked;
-        gameSettings.confirmEndTurn = document.getElementById('confirm-end-turn').checked;
         gameSettings.difficultyLevel = document.getElementById('difficulty-level').value;
 
         // Aplikace jazyka
@@ -1493,6 +1565,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             nextBtn.classList.add('hidden');
         }
+        document.getElementById('btn-review-battlefield').classList.toggle('primary', nextBtn.classList.contains('hidden'));
 
         // Trivia - "Věděli jste, že...?" (pouze při vítězství)
         const triviaSection = document.getElementById('gameover-trivia');
@@ -1533,17 +1606,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Chyba v showGameOver:', e);
         }
         // Modal zobrazíme vždy, i pokud nastala chyba ve statistikách
-        gameoverModal.classList.remove('hidden');
-        document.getElementById('gameover-scroll').scrollTop = 0;
-        document.getElementById('gameover-title').focus();
+        setPostBattleReview(true);
+        openGameOverResults();
         document.getElementById('btn-gameover-chronicle').classList.toggle('hidden', !stats?.scenarioId || !game?.chronicleRecorded);
     };
 
     document.getElementById('btn-gameover-chronicle').addEventListener('click', () => ChronicleView.open());
+    document.getElementById('btn-review-battlefield').addEventListener('click', reviewBattlefield);
+    showResultsButton.addEventListener('click', openGameOverResults);
 
     // Tlačítko Zkusit znovu
     document.getElementById('btn-retry').addEventListener('click', () => {
-        gameoverModal.classList.add('hidden');
+        resetPostBattleReview();
         if (selectedScenario) {
             startMission(selectedScenario);
         } else {
@@ -1553,7 +1627,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Tlačítko Další mise
     document.getElementById('btn-next-mission').addEventListener('click', () => {
-        gameoverModal.classList.add('hidden');
+        resetPostBattleReview();
         if (!selectedScenario) return;
 
         const nextScenarioId = typeof CampaignProgressSystem !== 'undefined'
@@ -1571,7 +1645,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Tlačítko Hlavní menu z game over
     document.getElementById('btn-gameover-menu').addEventListener('click', () => {
-        gameoverModal.classList.add('hidden');
+        resetPostBattleReview();
         returnToMainMenu();
     });
 
@@ -1666,7 +1740,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (!gameoverModal.classList.contains('hidden')) {
             // Výsledky nejsou bojový vstup: Tab/Enter mají ovládat tlačítka.
-            if (e.key === 'Tab') {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                reviewBattlefield();
+            } else if (e.key === 'Tab') {
                 const controls = Array.from(gameoverModal.querySelectorAll('button:not(.hidden):not(:disabled), summary, a[href]'))
                     .filter(el => el.getClientRects().length && getComputedStyle(el).visibility === 'visible');
                 const first = controls[0], last = controls.at(-1);
@@ -1674,6 +1751,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     e.preventDefault(); last?.focus();
                 } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
             }
+            return;
+        }
+        if (e.key === 'Escape' && gameContainer.classList.contains('post-battle-review')) {
+            e.preventDefault();
+            openGameOverResults();
             return;
         }
         // Klávesnice formuláře/tlačítka patří ovládacímu prvku, ne zkratce tahu.
@@ -1724,10 +1806,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Pokud všechny jednotky jednaly, Space/Enter ukončí tah
-            if (game.currentFaction === 'hussites' && game.allPlayerUnitsActed()) {
+            // Stejná přímá cesta jako tlačítko; skutečně nevyužité akce se
+            // automaticky převedou na obranu.
+            const endTurnButton = document.getElementById('btn-end-turn');
+            if (game.currentFaction === 'hussites' && endTurnButton && !endTurnButton.disabled) {
                 e.preventDefault();
-                game.endTurn();
+                endTurnButton.click();
             }
         }
     });
