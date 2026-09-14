@@ -34,6 +34,40 @@
 
 ## 🔧 Před releasem (Alpha 1.0)
 
+### Mobilní prohlížeče uvnitř aplikací
+- [ ] **Spodní bezpečná zóna pro in-app browsery (X, LinkedIn apod.)**
+  - Reprodukce: otevřít sdílený odkaz v aplikaci X na telefonu na výšku; její plovoucí lišta překryje tlačítka `Ukončit tah`, `Cíle` a `Menu`.
+  - Příčina: ovládání hostitelské aplikace se kreslí nad viewportem a není zahrnuto v `env(safe-area-inset-bottom)`.
+  - Návrh: na mobilu přidat pod spodní herní lištu přibližně 60–72 px bezpečného prostoru a umožnit poslední ovládací prvky vysunout nad něj; neřešit pouze detekcí konkrétní aplikace.
+  - Ověřit: X a LinkedIn in-app browser, běžný Chrome/Safari, portrait i landscape; mimo webview nesmí zůstat zbytečně velká mezera.
+
+### První veřejný playtest — 14. 9. 2026
+- [ ] **P1 — Po přepnutí jednotky nezůstává na mapě dosah předchozí jednotky.**
+  - Reprodukce: proklikávat oddíly, které už táhly, až k oddílu s dostupnou akcí; zvýraznění polí někdy patří dříve vybrané jednotce.
+  - Hotovo když: výběr, `Další oddíl`, dokončení pohybu i zrušení výběru vždy odstraní staré zvýraznění a vykreslí pouze aktuálně platný dosah.
+- [ ] **P1 — Cíl mise se na PC nesmí schovat pod ovládání zoomu/mapy.**
+  - Ověřit zejména menší výšku okna, úzký desktop a nenulový zoom prohlížeče; widget kamery nesmí překrývat text ani interakce cíle.
+- [ ] **P2 — U viditelného nepřítele ukázat při hoveru jeho možný dojezd.**
+  - Respektovat terén, aktuální stav jednotky a mlhu války; hover nesmí odhalovat skryté jednotky ani informace, které hráč nemá znát.
+- [ ] **P2 — Přidat do menu/pauzy akci `Zkusit znovu`.**
+  - Restartuje aktuální scénář od začátku; rozehraný postup se zahodí až po jasném potvrzení.
+- [ ] **P1 — Ověřit obtížnost Živohoště jako první hráčovy bitvy.**
+  - První veřejný tester ji nedokončil ani na pět pokusů a označil těžkého rytíře za příliš silného.
+  - Před změnou čísel získat alespoň tři další průchody; zvlášť ověřit srozumitelnost cíle, načasování posil a možnosti obrany proti rytíři.
+- [ ] **P2 — Ověřit, zda Nekmíř neřeší jediná triviální taktika.**
+  - Tester vyhrál napoprvé pouhým rozestavením vozové hradby v počáteční pozici; prověřit, zda AI umí tuto pasivní obranu ohrozit nebo scénář hráče motivuje k rozhodnutí.
+- [ ] **P1 — Událost „rozhodující část bitvy/střetu“ nesmí přijít až po faktickém rozhodnutí boje.**
+  - Prověřit podmínku a kolo spuštění v Nekmíři; narativní zpráva podle testera dorazila, až když už bylo „vymalováno“.
+- [ ] **P1 — Bonus za nepřátelského velitele v Nekmíři musí být dosažitelný.**
+  - Velitelé prchají do lesa na severozápadě a tester je nedokázal včas dostihnout; ověřit směr ústupu, limit kol, pohybový terén a srozumitelnost bonusového cíle.
+- [ ] **P2 — Terén musí být rozpoznatelný bez tooltipu.**
+  - Testerovi připadá pláň příliš neutrální a výtvarné řešení svahu a kopce nečitelné či nelíbivé.
+  - Vyzkoušet jemný žlutozelený tón pláně a přepracovat kresbu svahu/kopce v rámci současného dřevorytového stylu; zachovat dostatečný kontrast jednotek, dosahů a stavových barev.
+  - Ověřit rychlým testem: nový hráč má bez nápovědy správně pojmenovat základní typy polí a nezaměnit kopec se svahem.
+- [ ] **P3 — Ověřit výtvarnou konkrétnost piktogramů jednotek.**
+  - Jednomu testerovi připadají příliš abstraktní a připomínají fantasy strategii; nejde zatím o problém pravidel ani jednoznačný důvod k plošné výměně.
+  - Prověřit u dalších hráčů, zda z žetonu bezpečně poznají druh vojska a velitele; případnou úpravu vést k historicky konkrétnějším siluetám, ale zachovat čitelnost v malém měřítku.
+
 ### Čištění kódu
 - [ ] Odstranit debug console.log záznamy:
   - [ ] `/js/ui/main.js` - Quick Battle logy (řádky 516, 525, 532, 539, 543, 546-548)

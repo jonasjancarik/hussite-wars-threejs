@@ -464,6 +464,10 @@ function getAboutContentMarkup() {
                             <dd>${text('author')}</dd>
                         </div>
                         <div>
+                            <dt>${text('developmentLabel')}</dt>
+                            <dd>${text('development')}</dd>
+                        </div>
+                        <div>
                             <dt>${text('researchLabel')}</dt>
                             <dd>${text('research')}</dd>
                         </div>

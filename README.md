@@ -269,7 +269,8 @@ Zdrojový kód je dostupný pod [licencí MIT](LICENSE).
 
 ## 🙏 Autorství a poděkování
 
-- **Návrh, programování a texty:** Josef Šlerka
+- **Koncept, herní návrh a texty:** Josef Šlerka
+- **Vývoj:** Vytvořeno metodou vibe codingu ve spolupráci s OpenAI Codex a Claude Code
 - **Historická rešerše:** Prameny a odborná literatura uvedené u jednotlivých bitev
 - **Testování:** Díky všem hráčům, kteří testují alfa verzi a posílají připomínky
 

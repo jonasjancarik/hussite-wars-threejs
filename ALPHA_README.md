@@ -111,9 +111,10 @@ Díky, že testuješ alpha verzi! Tvůj feedback pomůže udělat hru lepší.
 
 ## 📜 Credits
 
-**Design & Development:** Josef Šlerka
-**Beta testeři:** (doplní se po testování)
-**Historie:** Husitské války 1419-1437
+- **Koncept, herní návrh a texty:** Josef Šlerka
+- **Vývoj:** Vytvořeno metodou vibe codingu ve spolupráci s OpenAI Codex a Claude Code
+- **Beta testeři:** (doplní se po testování)
+- **Historie:** Husitské války 1419-1437
 
 **Líbí se ti hra?** ☕ https://buymeacoffee.com/josefslerka
 
