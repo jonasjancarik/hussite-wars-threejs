@@ -57,6 +57,7 @@ function tags(html) {
 
 function validateEntrypoint({ html = readFile('index.html'), read = readFile, exists = exactFileExists, scripts = listScripts() } = {}) {
     const assets = new Set(), loadedScripts = [], stylesheets = [];
+    const cloudflareBeacon = 'https://static.cloudflareinsights.com/beacon.min.js';
     function reference(value, source) {
         const url = value.trim();
         if (/^(?:[a-z][\w+.-]*:|\/\/|#)/i.test(url)) return null; // bez síťových dotazů
@@ -80,6 +81,13 @@ function validateEntrypoint({ html = readFile('index.html'), read = readFile, ex
         }
         if (name === 'script') {
             assert.ok(attrs.src, 'Vstup podporuje pouze explicitní externí soubory skriptů');
+            if (reference(attrs.src, 'index.html script') === null) {
+                assert.equal(attrs.src, cloudflareBeacon, `Nepovolený externí skript: ${attrs.src}`);
+                assert.equal(attrs.type, 'module', 'Cloudflare beacon musí být načten jako modul');
+                assert.match(attrs['data-cf-beacon'] || '', /^\{"token":"[a-f0-9]{32}"\}$/,
+                    'Cloudflare beacon potřebuje platný veřejný token projektu');
+                continue;
+            }
             assert.ok(!('async' in attrs) && !('defer' in attrs) && !('nomodule' in attrs) &&
                 [undefined, '', 'text/javascript', 'application/javascript'].includes(attrs.type),
                 `Skript musí zůstat synchronní a klasický: ${attrs.src}`);

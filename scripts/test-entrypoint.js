@@ -10,8 +10,8 @@ const tests = [];
 const test = (name, run) => tests.push({ name, run });
 const scriptTag = file => html.match(new RegExp(`<script src="${file.replaceAll('.', '\\.')}\\?v=[\\d.]+"></script>`))[0];
 
-test('skutečný HTML vstup zahrnuje všechny skripty, hudbu, logo i překlady', () => {
-    assert.deepEqual(validateEntrypoint(), { scripts: 35, assets: 41, languages: 2 });
+test('skutečný HTML vstup zahrnuje všechny skripty, hudbu, značku i překlady', () => {
+    assert.deepEqual(validateEntrypoint(), { scripts: 35, assets: 40, languages: 2 });
 });
 
 test('chybějící skript nepřekryje ani jeho kopie v komentáři', () => {
@@ -42,26 +42,34 @@ test('async, defer, module a nomodule nesmí obejít načtení klasických skrip
     }
 });
 
+test('povolený Cloudflare beacon je oddělený od pořadí herních skriptů', () => {
+    assert.equal(validateEntrypoint().scripts, 35);
+    assert.throws(
+        () => validateEntrypoint({ html: html.replace('https://static.cloudflareinsights.com/beacon.min.js', 'https://example.com/tracker.js') }),
+        /Nepovolený externí skript/
+    );
+});
+
 test('relativní URL mohou mít cache verzi, fragment a nezávislé vnější odkazy', () => {
-    const changed = html.replace('imgs/novelogo.png', './imgs/novelogo.png?v=999#logo') +
+    const changed = html.replace('imgs/menu-woodcut.svg', './imgs/menu-woodcut.svg?v=999#art') +
         '<a href="https://example.com/missing">externí</a><a href="mailto:test@example.com">mail</a>' +
         '<a href="#menu">kotva</a><img src="data:image/png;base64,AAAA">';
-    assert.equal(validateEntrypoint({ html: changed }).assets, 41);
+    assert.equal(validateEntrypoint({ html: changed }).assets, 40);
 });
 
 test('velikost písmen se kontroluje i na case-insensitive disku', () => {
-    for (const file of ['Imgs/novelogo.png', 'imgs/novelogo.PNG']) {
-        assert.throws(() => validateEntrypoint({ html: html.replace('imgs/novelogo.png', file) }), /velikost písmen/);
+    for (const file of ['Imgs/menu-woodcut.svg', 'imgs/menu-woodcut.SVG']) {
+        assert.throws(() => validateEntrypoint({ html: html.replace('imgs/menu-woodcut.svg', file) }), /velikost písmen/);
     }
 });
 
 test('absolutní cesty a únik z projektu jsou odmítnuty', () => {
-    for (const file of ['/imgs/novelogo.png', '../novelogo.png', '%2e%2e/novelogo.png', 'imgs\\novelogo.png', '%00.png']) {
-        assert.throws(() => validateEntrypoint({ html: html.replace('imgs/novelogo.png', file) }), /relativní uvnitř projektu/);
+    for (const file of ['/imgs/menu-woodcut.svg', '../menu-woodcut.svg', '%2e%2e/menu-woodcut.svg', 'imgs\\menu-woodcut.svg', '%00.svg']) {
+        assert.throws(() => validateEntrypoint({ html: html.replace('imgs/menu-woodcut.svg', file) }), /relativní uvnitř projektu/);
     }
 });
 
-for (const file of ['style.css', 'imgs/novelogo.png', 'imgs/menu-woodcut.svg', 'audio/ktoz-jsu-bozi-bojovnici-u-ohne.mp3', 'js/i18n/locales/cs.json', 'js/i18n/locales/en.json']) {
+for (const file of ['style.css', 'imgs/menu-woodcut.svg', 'audio/ktoz-jsu-bozi-bojovnici-u-ohne.mp3', 'js/i18n/locales/cs.json', 'js/i18n/locales/en.json']) {
     test(`chybějící asset ${file} zastaví kontrolu`, () => {
         assert.throws(() => validateEntrypoint({ exists: value => value !== file && exactFileExists(value) }), /chybí soubor/);
     });

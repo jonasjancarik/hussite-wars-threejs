@@ -37,13 +37,26 @@ body {
     box-shadow: none;
 }
 
-.header-logo {
-
+.header-home-button {
+    color: var(--field-page-light);
+    border-color: rgba(242, 232, 211, 0.52);
     border-radius: 0;
-    border: 1px solid var(--field-rule);
-    background: var(--field-page-light);
     box-shadow: none;
-    filter: grayscale(1) sepia(.25);
+}
+
+.header-home-button:hover {
+    color: var(--field-ink);
+    background: var(--field-page-light);
+    border-color: var(--field-page-light);
+}
+
+.header-home-button:focus-visible {
+    outline: 2px solid var(--field-gold);
+    outline-offset: 2px;
+}
+
+.header-mark-flag {
+    fill: var(--field-red);
 }
 
 #game-header h1,
@@ -634,8 +647,8 @@ body {
     padding: 5px 16px;
 }
 
-.header-logo {
-    height: 38px;
+.header-home-button {
+    height: 40px;
 }
 
 #game-header h1,

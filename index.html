@@ -31,7 +31,7 @@
     <meta name="twitter:image" content="https://hussitewars.com/imgs/social-preview.png">
     <meta name="twitter:image:alt" content="Husitská vozová hradba pod kalichem · A Hussite wagon fort beneath the chalice banner">
 
-    <link rel="stylesheet" href="style.css?v=8.30">
+    <link rel="stylesheet" href="style.css?v=8.31">
 </head>
 <body class="booting">
     <section id="startup-status" class="startup-status">
@@ -139,7 +139,15 @@
     <div id="game-container" class="screen hidden">
         <header id="game-header">
             <div class="header-left">
-                <img src="imgs/novelogo.png" alt="Hussite Wars" class="header-logo" id="logo-home-btn" title="Zpět na hlavní menu">
+                <button type="button" class="header-home-button" id="logo-home-btn"
+                        data-i18n-title="game.backToMenu" data-i18n-aria-label="game.backToMenu"
+                        title="Zpět na hlavní menu" aria-label="Zpět na hlavní menu">
+                    <svg class="header-home-mark" viewBox="0 0 48 38" aria-hidden="true" focusable="false">
+                        <path class="header-mark-pole" d="M12 4v31"/>
+                        <path class="header-mark-flag" d="M13 6c7 2 13-2 24 0l-4 7 4 8c-10-2-14 3-24 0z"/>
+                        <path class="header-mark-chalice" d="M21 9h9c-.2 3.6-1.7 5.4-4 5.9v3.2h2.5m-5 0H31m-9 2.8h10"/>
+                    </svg>
+                </button>
             </div>
             <div class="header-center">
                 <h1 id="battle-name">Bitva u Sudoměře</h1>
@@ -1077,5 +1085,9 @@
     <script src="js/core/game.js?v=8.19"></script>
     <script src="js/ai.js?v=8.20"></script>
     <script src="js/ui/main.js?v=8.28"></script>
+
+    <!-- Cloudflare Web Analytics: souhrnné návštěvy bez cookies. -->
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon='{"token":"f59194328b7f418e9a5fa33de63d11e0"}'></script>
 </body>
 </html>

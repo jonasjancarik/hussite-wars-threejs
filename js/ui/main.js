@@ -1126,7 +1126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         returnToMainMenu();
     });
 
-    // Klik na logo - návrat do hlavního menu
+    // Značka v záhlaví slouží jako návrat do hlavního menu.
     const logoHomeBtn = document.getElementById('logo-home-btn');
     if (logoHomeBtn) {
         logoHomeBtn.addEventListener('click', async () => {
