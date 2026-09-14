@@ -6,6 +6,31 @@ class MoraleSystem {
         this.playerMoraleWarningShown = false; // Flag pro zamezení opakování hlášek
     }
 
+    // „Bez milosti“ není obecný stav celé bitvy. Scénář může účinek
+    // odložit na konkrétní událost a omezit na historickou past/oblast.
+    // Starší scénáře bez těchto polí si zachovávají původní chování.
+    isNoQuarterTarget(unit, mechanic) {
+        if (!mechanic) return false;
+
+        const playerFaction = this.game.currentScenario?.playerFaction || 'hussites';
+        if (unit.faction === playerFaction) return false;
+
+        if (Number.isFinite(mechanic.activeFromTurn) && this.game.turnNumber < mechanic.activeFromTurn) {
+            return false;
+        }
+        if (mechanic.requiresEvent && !this.game.processedEvents.has(mechanic.requiresEvent)) {
+            return false;
+        }
+
+        const area = mechanic.area;
+        if (area && (unit.col < area.minCol || unit.col > area.maxCol ||
+            unit.row < area.minRow || unit.row > area.maxRow)) {
+            return false;
+        }
+
+        return true;
+    }
+
     // Zpracování prchajících jednotek
     processRoutingUnits() {
         const routingUnits = this.game.units.filter(u =>
@@ -14,13 +39,13 @@ class MoraleSystem {
             u.isRouting
         );
 
-        // noQuarterGiven - prchající jsou zničeni (Vyšehrad)
+        // noQuarterGiven - prchající jsou zničeni jen tam a tehdy, kde to
+        // scénář výslovně dovolí (u Vyšehradu až po události v úvozu).
         const noQuarter = this.game.currentScenario && this.game.currentScenario.specialMechanics &&
             this.game.currentScenario.specialMechanics.noQuarterGiven;
 
         for (const unit of routingUnits) {
-            // Pokud noQuarterGiven - prchající jednotky jsou zničeny (kromě šlechticů)
-            if (noQuarter && unit.faction !== (this.game.currentScenario.playerFaction || 'hussites')) {
+            if (this.isNoQuarterTarget(unit, noQuarter)) {
                 this.game.addLog(i18n.t('gameLog.routedCaught', {unit: unit.name}), 'combat');
                 unit.health = 0;
                 this.game.combatSystem.trackUnitDeath(unit, null);

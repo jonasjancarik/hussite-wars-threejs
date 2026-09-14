@@ -96,6 +96,18 @@ test('podmíněný event čeká na podmínku i časové okno a později se neopa
     assert.equal(game.view.notifications.length, 1);
 });
 
+test('podmínka prchajících jednotek respektuje volitelnou oblast', () => {
+    const { h, game, enemy } = fixture();
+    const condition = {
+        type: 'units_routing', faction: 'crusaders', minCount: 1,
+        area: { minCol: 0, maxCol: 3, minRow: 0, maxRow: 3 }
+    };
+    enemy.isRouting = true;
+    assert.equal(h.ScenarioManager.checkEventCondition(game, condition), false);
+    enemy.col = 2; enemy.row = 2;
+    assert.equal(h.ScenarioManager.checkEventCondition(game, condition), true);
+});
+
 test('oba formáty posil přijdou ve správném kole, na správnou stranu a jen jednou', () => {
     const { game } = fixture();
     addReinforcements(game.currentScenario);

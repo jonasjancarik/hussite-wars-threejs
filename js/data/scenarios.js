@@ -1190,14 +1190,24 @@ const Scenarios = {
                         id: "nobility_trapped",
                         trigger: "turn_9",
                         triggerBefore: "turn_14",
-                        condition: {"type":"units_routing","faction":"crusaders","minCount":2},
+                        condition: {
+                            "type":"units_routing",
+                            "faction":"crusaders",
+                            "minCount":2,
+                            "area":{"minCol":6,"maxCol":10,"minRow":18,"maxRow":23}
+                        },
                         message: "Česká šlechta uvízla v úvozu! Nemůže uniknout!"
                     },
                     {
                         id: "massacre_event",
                         trigger: "turn_10",
                         triggerBefore: "turn_14",
-                        condition: {"type":"units_routing","faction":"crusaders","minCount":3},
+                        condition: {
+                            "type":"units_routing",
+                            "faction":"crusaders",
+                            "minCount":3,
+                            "area":{"minCol":6,"maxCol":10,"minRow":18,"maxRow":23}
+                        },
                         type: "massacre",
                         faction: "crusaders",
                         text: "Táboři a orebité nebrali zajatce... Masakr v úvozu!"
@@ -1259,7 +1269,10 @@ const Scenarios = {
             noQuarterGiven: {
                 description: 'Táboři a orebité nebrali zajatce',
                 effect: 'routed_units_destroyed',
-                exception: 'hussite_nobles_could_ransom'
+                exception: 'hussite_nobles_could_ransom',
+                activeFromTurn: 10,
+                requiresEvent: 'massacre_event',
+                area: { minCol: 6, maxCol: 10, minRow: 18, maxRow: 23 }
             }
         },
 
@@ -4438,10 +4451,13 @@ const ScenarioManager = {
                 return lossPercent >= (condition.percent || 50);
             }
             case 'units_routing': {
+                const area = condition.area;
                 const routingCount = game.units.filter(u =>
                     u.faction === condition.faction &&
                     u.health > 0 &&
-                    u.isRouting
+                    u.isRouting &&
+                    (!area || (u.col >= area.minCol && u.col <= area.maxCol &&
+                               u.row >= area.minRow && u.row <= area.maxRow))
                 ).length;
                 return routingCount >= (condition.minCount || 1);
             }
