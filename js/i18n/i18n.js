@@ -204,11 +204,11 @@ class I18n {
     updateMetaTags() {
         const metaData = {
             cs: {
-                title: 'Husitské Války - Tahová Strategie',
+                title: 'Husitské války — historická tahová strategie',
                 description: 'Historická tahová strategie o husitských válkách. Veďte husitská vojska Jana Žižky v bitvách 15. století.'
             },
             en: {
-                title: 'Hussite Wars - Turn-Based Strategy',
+                title: 'Hussite Wars — historical turn-based strategy',
                 description: 'Historical turn-based strategy about Hussite Wars. Lead Jan Žižka\'s armies in 15th century battles.'
             }
         };
@@ -224,19 +224,8 @@ class I18n {
             metaDesc.content = data.description;
         }
 
-        // Aktualizuj Open Graph tagy
-        const ogTitle = document.querySelector('meta[property="og:title"]');
-        if (ogTitle) ogTitle.content = data.title;
-
-        const ogDesc = document.querySelector('meta[property="og:description"]');
-        if (ogDesc) ogDesc.content = data.description;
-
-        // Aktualizuj Twitter tagy
-        const twitterTitle = document.querySelector('meta[property="twitter:title"]');
-        if (twitterTitle) twitterTitle.content = data.title;
-
-        const twitterDesc = document.querySelector('meta[property="twitter:description"]');
-        if (twitterDesc) twitterDesc.content = data.description;
+        // Sociální crawlery čtou statické HTML bez přepnutí jazyka. Open Graph
+        // a Twitter metadata proto zůstávají záměrně dvojjazyčná pro jedinou URL.
     }
 
     /**

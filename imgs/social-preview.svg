@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="cover-lines" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <path d="M0 0v10" stroke="#f2e8d3" stroke-opacity=".08" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="#28302b"/>
+  <rect width="1200" height="630" fill="url(#cover-lines)"/>
+  <rect x="24" y="24" width="1152" height="582" fill="#f2e8d3" stroke="#a19d86" stroke-width="2"/>
+  <rect x="32" y="32" width="1136" height="566" fill="none" stroke="#e2d3b5" stroke-width="8"/>
+
+  <g fill="#28302b" font-family="Georgia, 'Times New Roman', serif">
+    <text x="58" y="73" font-size="18" letter-spacing="2.7">HISTORICKÁ TAHOVÁ STRATEGIE</text>
+    <text x="1142" y="73" text-anchor="end" font-size="18" letter-spacing="2.7">HISTORICAL TURN-BASED STRATEGY</text>
+  </g>
+  <path d="M58 94h1084" stroke="#28302b" stroke-width="3"/>
+  <path d="M58 99h1084" stroke="#28302b" stroke-width="1"/>
+  <path d="M637 126v407" stroke="#a19d86" stroke-width="1.5"/>
+
+  <image href="menu-woodcut.svg" x="54" y="143" width="555" height="382" preserveAspectRatio="xMidYMid meet"/>
+  <text x="334" y="564" text-anchor="middle" fill="#6a6758" font-family="Georgia, 'Times New Roman', serif" font-size="18" letter-spacing="2.2">ČECHY V NEKLIDU · BOHEMIA IN TURMOIL</text>
+
+  <g font-family="Georgia, 'Times New Roman', serif">
+    <text x="682" y="168" fill="#80352d" font-size="18" letter-spacing="3">1419 — 1437</text>
+    <text x="682" y="243" fill="#28302b" font-size="68" font-weight="700" letter-spacing="-1">HUSITSKÉ</text>
+    <text x="682" y="337" fill="#28302b" font-size="98" font-weight="700" letter-spacing="5">VÁLKY</text>
+
+    <path d="M682 373h404" stroke="#80352d" stroke-width="3"/>
+    <path d="M682 379h404" stroke="#80352d" stroke-width="1"/>
+    <text x="682" y="442" fill="#28302b" font-size="49" font-weight="700" letter-spacing="1.4">HUSSITE WARS</text>
+
+    <text x="682" y="492" fill="#6a6758" font-size="20" font-style="italic">Veďte bitvu. Zachraňte své lidi.</text>
+    <text x="682" y="523" fill="#6a6758" font-size="20" font-style="italic">Lead the battle. Save your people.</text>
+    <text x="682" y="565" fill="#80352d" font-size="21" font-weight="700" letter-spacing="2">HUSSITEWARS.COM</text>
+  </g>
+</svg>

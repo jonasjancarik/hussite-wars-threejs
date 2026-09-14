@@ -10,6 +10,25 @@ const test = (name, run) => tests.push({ name, run });
 const plain = value => JSON.parse(JSON.stringify(value));
 const quiet = h => { h.context.console = { ...console, warn() {}, error() {} }; };
 
+test('sociální náhled má dvojjazyčná metadata a skutečný obrázek 1200 × 630', () => {
+    const root = path.join(__dirname, '..');
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const imageUrl = 'https://hussitewars.com/imgs/social-preview.png';
+    assert.match(html, /<link rel="canonical" href="https:\/\/hussitewars\.com\/">/);
+    assert.match(html, /<meta property="og:title" content="[^"]*Husitské války[^"]*Hussite Wars">/);
+    assert.match(html, new RegExp(`<meta property="og:image" content="${imageUrl}">`));
+    assert.match(html, /<meta property="og:image:width" content="1200">/);
+    assert.match(html, /<meta property="og:image:height" content="630">/);
+    assert.match(html, /<meta name="twitter:card" content="summary_large_image">/);
+    assert.match(html, new RegExp(`<meta name="twitter:image" content="${imageUrl}">`));
+    assert.match(html, /<meta (?:property="og:image:alt"|name="twitter:image:alt") content="[^"]+">/);
+
+    const png = fs.readFileSync(path.join(root, 'imgs/social-preview.png'));
+    assert.equal(png.subarray(1, 4).toString('ascii'), 'PNG');
+    assert.equal(png.readUInt32BE(16), 1200);
+    assert.equal(png.readUInt32BE(20), 630);
+});
+
 for (const language of ['cs', 'en']) {
     test(`${language}: pokyny jsou lokalizované pro výběr, pohyb, ústup i konec tahu`, async () => {
         const h = await createLocalizedHarness(language), game = h.newGame('zivohost_1419');
