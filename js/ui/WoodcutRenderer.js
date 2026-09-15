@@ -287,9 +287,9 @@ class WoodcutRenderer {
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y + .5);
     }
 
-    unit(unit) {
+    unit(unit, position = null) {
         const ctx = this.ctx, p = WoodcutRenderer.palette, grid = this.grid;
-        const { x, y } = grid.hexToPixel(unit.col, unit.row), r = grid.hexSize * .61;
+        const { x, y } = position || grid.hexToPixel(unit.col, unit.row), r = grid.hexSize * .61;
         const enemy = unit.faction !== 'hussites', color = enemy ? p.blue : p.red;
         const commander = WoodcutRenderer.isCommander(unit);
         ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round';
@@ -327,7 +327,7 @@ class WoodcutRenderer {
         ctx.restore();
     }
 
-    render(units, fog = null) {
+    render(units, fog = null, tokenPositions = null) {
         const ctx = this.ctx, grid = this.grid, p = WoodcutRenderer.palette;
         ctx.save(); ctx.fillStyle = p.paper; ctx.fillRect(0, 0, grid.canvas.width, grid.canvas.height);
         this.drawTerrain(fog);
@@ -337,7 +337,7 @@ class WoodcutRenderer {
         if (grid.selectedHex) this.highlight(grid.selectedHex, 'selected');
         grid.drawMapLabels(fog?.fogOfWar, fog?.exploredHexes);
         grid.drawWagonChains(units);
-        for (const unit of units) if (unit.health > 0) this.unit(unit);
+        for (const unit of units) if (unit.health > 0) this.unit(unit, tokenPositions?.get(unit.id));
         if (grid.escapeZoneHexes.length && grid.escapeZoneLabel) {
             const points = grid.escapeZoneHexes.map(h => grid.hexToPixel(h.col, h.row));
             const x = points.reduce((sum, point) => sum + point.x, 0) / points.length;

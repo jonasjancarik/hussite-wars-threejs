@@ -30,6 +30,27 @@ test('sociální náhled má dvojjazyčná metadata a skutečný obrázek 1200 �
 });
 
 for (const language of ['cs', 'en']) {
+    test(`${language}: vysvětlení obrany rozliší krycí palbu a ruční volbu`, async () => {
+        const h = await createLocalizedHarness(language, { browserView: true });
+        assert.equal(h.i18n.t('game.defend'), language === 'cs' ? 'Bránit' : 'Defend');
+        assert.match(h.i18n.t('game.defendHint'), language === 'cs' ? /nesčítají/ : /do not stack/);
+        assert.match(h.i18n.t('game.defendExplanation'), language === 'cs' ? /místo toho kryje palbou bez bonusu obrany/ : /uses covering fire instead, with no defense bonus/);
+        assert.match(h.i18n.t('game.defendExplanationRanged'), language === 'cs' ? /Krycí palba není obrana/ : /Covering fire is not defense/);
+        const game = h.newGame();
+        const shooter = game.unitFactory.createUnit('RUCNICARI', 5, 5);
+        game.units.push(shooter);
+        game.selectUnit(shooter);
+        const explanation = h.document.getElementById('defend-explanation');
+        assert.equal(explanation.getAttribute('data-i18n'), 'game.defendExplanationRanged');
+        assert.equal(explanation.textContent, h.i18n.t('game.defendExplanationRanged'));
+        assert.equal(h.i18n.hasTranslation('game.endTurnHint'), true);
+        shooter.hasMoved = true;
+        game.view.updateUnitPanel(shooter);
+        assert.equal(explanation.getAttribute('data-i18n'), 'game.defendExplanation');
+        assert.equal(explanation.textContent, h.i18n.t('game.defendExplanation'));
+        game.destroy();
+    });
+
     test(`${language}: pokyny jsou lokalizované pro výběr, pohyb, ústup i konec tahu`, async () => {
         const h = await createLocalizedHarness(language), game = h.newGame('zivohost_1419');
         const panels = new h.BattlePanels(game), unit = game.units.find(u => u.type === 'CEPNICI');
@@ -493,6 +514,46 @@ for (const language of ['cs', 'en']) {
         assert.equal(JSON.stringify([...h.storage]), before);
     });
 }
+
+for (const language of ['cs', 'en']) {
+    test(`${language}: Další mise ukáže své rozkazy a historii před startem bitvy`, async () => {
+        const h = await menuHarness(language, h => { h.BattleView.prototype.render = () => {}; });
+        const el = id => h.document.getElementById(id);
+        el('btn-first-battle').dispatchEvent(new Event('click'));
+        h.context.window.showGameOver(true, 'Vítězství', { turns: 4 });
+        assert.equal(el('btn-next-mission').classList.contains('hidden'), false);
+
+        el('mission-detail-body').scrollTop = 500;
+        el('btn-next-mission').dispatchEvent(new Event('click'));
+        assert.equal(el('gameover-modal').classList.contains('hidden'), true);
+        assert.equal(el('mission-modal').classList.contains('hidden'), false);
+        assert.equal(el('mission-details').classList.contains('hidden'), false);
+        assert.equal(el('mission-list').classList.contains('hidden'), true);
+        assert.equal(el('mission-detail-body').scrollTop, 0);
+        assert.match(el('mission-title').textContent, /Nekm[íi]ř|Nekmir/);
+        assert.ok(el('mission-briefing').textContent.length > 20);
+        assert.equal(el('mission-history').classList.contains('hidden'), false);
+        assert.equal(h.document.activeElement, el('mission-title'));
+        assert.equal(h.context.window.game ?? null, null, 'bitva nezačne kliknutím na Další misi');
+
+        el('btn-start-mission').dispatchEvent(new Event('click'));
+        assert.equal(el('mission-modal').classList.contains('hidden'), true);
+        assert.equal(h.context.window.game?.currentScenario.id, 'nekmir_1419');
+        h.context.window.game?.destroy();
+    });
+}
+
+test('CS/EN návod nerozšiřuje protiútok na všechny oddíly ani na střelce po zásahu', async () => {
+    const h = await createLocalizedHarness();
+    for (const language of ['cs', 'en']) {
+        const attackStep = h.i18n.translations[language].scenarios.tutorial.steps.find(step =>
+            step.title === (language === 'cs' ? 'Útok!' : 'Attack!'));
+        assert.ok(attackStep);
+        assert.match(attackStep.text, /28\+/);
+        assert.match(attackStep.text, language === 'cs' ? /pohyb nepřítele/ : /enemy movement/);
+        assert.doesNotMatch(attackStep.text, language === 'cs' ? /obě strany utrpí/ : /both sides take damage/);
+    }
+});
 
 for (const language of ['cs', 'en']) {
     test(`${language}: pokračování má prioritu jen s platným rozehraným checkpointem`, async () => {

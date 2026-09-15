@@ -34,6 +34,8 @@ class TestBattleView {
     showEventNotification(title, text) { this.notifications.push({ title, text }); }
     showAttackAnimation() {}
     showExplosionAnimation() {}
+    animateMove() { return Promise.resolve(true); }
+    onPauseChange() {}
     showDamageNumber(col, row, damage, isHeal) {
         const effect = { col, row, damage, isHeal };
         this.effects.push(effect);

@@ -1,4 +1,8 @@
-# Husitské války - Tahová strategie
+# Husitské války — tahová strategie
+
+Čeština · [English](README.en.md)
+
+![Husitské války / Hussite Wars](imgs/social-preview.png)
 
 Historická tahová strategická hra zasazená do období husitských válek (1419-1437). Hrajte za husitské armády pod vedením Jana Žižky, Prokopa Holého a dalších legendárních velitelů.
 
@@ -8,7 +12,7 @@ Taktická tahovka na hexagonálním poli inspirovaná husitskými válkami. Vozo
 
 ### Hlavní funkce
 
-- **18 historických bitev** - Od Živohoště po poslední odpor na Sionu
+- **18 historicky zasazených scénářů** - Od Živohoště po poslední odpor na Sionu
 - **Historické typy jednotek** - Cepníci, vozová hradba, ručničáři, šlechtická jízda a další
 - **Komplexní bojový systém** - Terén, morálka, velitelé, speciální schopnosti
 - **Fog of War** - Omezená viditelnost, průzkum, skryté jednotky
@@ -18,6 +22,8 @@ Taktická tahovka na hexagonálním poli inspirovaná husitskými válkami. Vozo
 - **Kampaňový režim** - Propojené scénáře s progresí příběhu
 - **Encyklopedie** - Historické informace o jednotkách, bitvách a osobnostech
 - **Osobní kronika** - Paměť vašich bitev, pramenná kritika a stažitelná offline kniha
+
+Hrajte zdarma a bez registrace na [hussitewars.com](https://hussitewars.com/).
 
 ## 🚀 Jak spustit
 
@@ -41,7 +47,9 @@ Nasazení na GitHub Pages a postup aktualizace jsou v
 je oddělený od volitelných bonusů. Situační řádek pod mapou vysvětlí výběr oddílu,
 pohyb, sepnutý vůz, útěk nebo čekání na protivníka; nevydává rozkazy za hráče.
 Výsledek zvýrazňuje důvod konce a ponechává další volby dostupné i při dlouhém
-vyprávění. Z uloženého výsledku lze rovnou otevřít osobní kroniku.
+vyprávění. Z uloženého výsledku lze rovnou otevřít osobní kroniku. **Další mise**
+vede nejprve na její detail s rozkazy, prameny a historickým úvodem; bitva začne
+až po kliknutí na **Zahájit bitvu**.
 
 Menu čeká na načtení překladů. Při chybě nabídne čitelný dvojjazyčný návod;
 poškozené nastavení nebo blokované úložiště preferencí nebrání samotnému startu.
@@ -92,7 +100,8 @@ načítání; chyba sestavení, validace nebo zápisu nepřepíše předchozí u
 Živohošť má tři vítězné závěry podle toho, kolik původních skupin poutníků zůstalo
 na bojišti. Krátký hlas svědka je označený jako autorská fikce, ne citace pramene.
 Lipanské zprávy a závěr rozlišují živého, padlého a uprchlého Prokopa; nepřisuzují
-hráči předem danou taktiku. Pravidla vítězství, AI a historické podklady se nemění.
+hráči předem danou taktiku. Tato vyprávěcí úprava nemění pravidla vítězství ani
+historické podklady.
 
 V hlavním menu otevřete **Kroniku** a pod zápisem rozbalte **Pramennou kritiku**.
 Uvidíte odděleně nespolehlivý hlas kronikáře, skutečný účet herních jednotek a epilog
@@ -114,7 +123,7 @@ strategie/
 ├── .github/workflows/ci.yml # Automatické kontroly při pushi a pull requestu
 ├── index.html              # Hlavní HTML soubor
 ├── style.css               # Vstupní manifest: pevné pořadí CSS importů
-├── styles/                 # Osm částí stylů včetně kompaktního dotykového rozložení
+├── styles/                 # Devět částí stylů včetně kompaktního dotykového rozložení
 ├── js/
 │   ├── core/              # Základní herní logika
 │   │   ├── game.js        # Hlavní herní třída
@@ -167,6 +176,20 @@ a harfu. [Původ, licence samplů a postup nového renderu](audio/README.md).
 Při hraní se přehrává hotové lokální MP3, bez externí hudební služby.
 
 ### Bojový systém
+
+Útok a ukončení tahu jsou přímé rozkazy bez dalšího potvrzení. Přeživší pěchota
+s útokem alespoň 28 může v boji zblízka protiútočit; střelci po vlastním zásahu
+automaticky neopětují palbu. Stojící oddíl s dostřelem 2+ a zbývajícím výstřelem
+na konci tahu připraví **krycí palbu**, která reaguje na pohyb protivníka a
+nepřidává bonus obrany. Ostatní nevyužité oddíly se automaticky brání a dostanou
+−30 % příchozího poškození. Ruční **Bránit** chrání i střelce, ale spotřebuje
+jeho reakční výstřel. Jde o vědomou volbu mezi palbou a ochranou, nikoli dva
+sčítající se bonusy.
+
+Přesun žetonu je krátce animovaný; krycí palba a navazující útok začnou až po
+jeho příjezdu. Při omezení animací nebo zrychleném tahu AI se efekt přeskočí.
+Klidné bojiště se nepřekresluje v každém animačním snímku.
+
 - **Damage calculation** - Komplexní pipeline s 13 kroky výpočtu
 - **Terrain bonuses** - Les (+20% obrana), kopce (+30%), města (+40%)
 - **Special abilities** - Reach, RapidFire, Charge, ArmorPiercing, Siege...
@@ -201,7 +224,7 @@ Viz: [docs/VICTORY_CONDITIONS.md](docs/VICTORY_CONDITIONS.md)
 
 ## 🎨 Grafický styl
 
-Testovací větev používá **dřevořez**: teplý papír, tmavou rytinu krajiny a střídmou
+Současná hra používá **dřevořez**: teplý papír, tmavou rytinu krajiny a střídmou
 červenou/modrou pro strany. Vlastní oddíly mají kruhové žetony, protivník štíty;
 značky zbraní jsou společné pro mapu a přehled armády. Pohyb má přerušovaný obrys
 s tečkou, útok červený obrys s křížky a výběr dvojitou linku.
@@ -224,9 +247,11 @@ Nejde o úplný rozbor kritických edic ani odborné potvrzení každého detail
 
 ## 📝 Stav vývoje
 
-**Verze:** Alpha 0.3.1 (14. září 2026)
+**Verze:** Alpha 0.3.2 (15. září 2026)
+
 **Produkční adresa:** [hussitewars.com](https://hussitewars.com/)
-**Stav:** připraveno k playtestu Aktu I
+
+**Stav:** veřejná alfa pro zpětnou vazbu; podrobnosti vydání jsou v [changelogu](CHANGELOG.md).
 
 ### Dokončeno
 - ✅ Kompletní bojový systém
@@ -246,15 +271,14 @@ Nejde o úplný rozbor kritických edic ani odborné potvrzení každého detail
 
 - AI používá čitelné historické doktríny, ale nenahrazuje lidského soupeře.
 - Balanc scénářů, hlavně v pozdějších aktech, potřebuje ověřit reálnými hráči.
-- Dotykové ovládání a iPad zatím nemají samostatný UX průchod.
+- Dotykové ovládání funguje, ale některé texty na úzkých telefonech ještě potřebují ověřit a upravit.
 - Postup i savy jsou v `localStorage`; vymazání dat webu je odstraní a mezi prohlížeči se nesynchronizují.
 - Hra nemá backend, multiplayer ani cloudové ukládání.
 
-### Plánované funkce
-- 🔄 Multiplayer/hotseat mode
-- 🔄 Scenario editor
-- 🔄 Achievement system
-- 🔄 Extended campaign (1434-1436)
+### Další práce
+
+Z veřejného playtestu zbývá zejména ověřit balanc Živohoště, mobilní přetékající
+texty, srozumitelnost terénů a návaznost vodních polí. Podrobnosti jsou v [TODO.md](TODO.md).
 
 ## 🤝 Contributing
 

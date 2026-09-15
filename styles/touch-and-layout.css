@@ -168,7 +168,7 @@
 .compact-battle #unit-panel.expanded, .compact-battle #info-panel.expanded { display: flex; }
 .compact-battle #unit-panel.expanded h2, .compact-battle #unit-panel.expanded #unit-info,
 .compact-battle #info-panel.expanded h2, .compact-battle #info-panel.expanded #army-overview { display: block; }
-.compact-battle #unit-panel.expanded #unit-actions:not(.hidden) { display: flex; }
+.compact-battle #unit-panel.expanded #unit-actions:not(.hidden) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .compact-battle .panel-toggle { width: 44px; height: 44px; top: 5px; }
 .compact-battle #unit-panel h2 { min-height: 40px; padding-right: 42px; }
 .compact-battle #info-panel h2 { min-height: 40px; padding-left: 42px; }

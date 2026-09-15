@@ -245,9 +245,17 @@ body {
 
 #unit-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 7px;
     margin: 0 0 12px;
+}
+
+#unit-actions .defend-explanation {
+    grid-column: 1 / -1;
+    margin: -2px 0 3px;
+    color: var(--field-ink-soft);
+    font-size: 0.78rem;
+    line-height: 1.35;
 }
 
 #unit-actions button {
@@ -900,7 +908,7 @@ body {
 
 #unit-panel:not(.empty-unit-panel) #unit-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin: 0 0 14px;
 }
@@ -911,7 +919,8 @@ body {
 
 #unit-panel:not(.empty-unit-panel) #unit-actions button {
     min-width: 0;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 #unit-panel:not(.empty-unit-panel) #unit-info h3 {

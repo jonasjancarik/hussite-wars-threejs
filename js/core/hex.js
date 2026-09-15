@@ -193,7 +193,9 @@ class HexGrid {
     // Kreslení je oddělené od geometrie a herního stavu.
     getTerrainColor(terrain) { return WoodcutRenderer.terrainColor(terrain); }
 
-    render(units, fogOptions = null) { this.renderer.render(units, fogOptions); }
+    render(units, fogOptions = null, tokenPositions = null) {
+        this.renderer.render(units, fogOptions, tokenPositions);
+    }
 
     // Vykreslí názvy míst (mapLabels) na střed jejich hexů - kurzívou se světlým halo,
     // ať jsou čitelné na libovolném terénu. Respektuje fog of war: popisek se ukáže,
@@ -531,7 +533,7 @@ class Minimap {
     }
 
     // Vykreslení minimapy
-    render(units) {
+    render(units, tokenPositions = null) {
         const ctx = this.ctx;
         const scale = this.scale;
         const padding = this.padding;
@@ -557,7 +559,8 @@ class Minimap {
 
         // Vykreslení jednotek
         for (const unit of units) {
-            const { x, y } = this.hexGrid.hexToPixel(unit.col, unit.row);
+            const { x, y } = tokenPositions?.get(unit.id) ||
+                this.hexGrid.hexToPixel(unit.col, unit.row);
             // Odečíst offset paddingu
             const mx = (x - this.offsetX) * scale + padding;
             const my = (y - this.offsetY) * scale + padding;

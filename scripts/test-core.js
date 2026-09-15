@@ -163,6 +163,62 @@ test('holdWagonFort nerozpojuje ukotvený vůz', () => {
     assert.deepStrictEqual(AI.decideAction(game, wagon), { type: 'defend' });
 });
 
+test('velitel bez doprovodu neustupuje před vzdáleným nepřítelem, ale reaguje na skutečnou hrozbu', () => {
+    const commander = unit({ id: 'commander', col: 5, row: 5, isCommander: () => true });
+    const enemy = unit({ id: 'enemy', faction: 'hussites', col: 15, row: 5 });
+    const hexGrid = grid([commander, enemy]);
+    const game = {
+        currentScenario: {}, aiStance: null, hexGrid,
+        getEnemyUnits: () => [enemy],
+        getUnitsOfFaction: () => [commander],
+        getUnitAt: hexGrid.unitAt,
+        getValidMoves: () => [{ col: 4, row: 5 }]
+    };
+    assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'defend' });
+
+    enemy.col = 6;
+    assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'move', col: 4, row: 5 });
+    enemy.col = 7;
+    enemy.range = 2;
+    assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'move', col: 4, row: 5 });
+    enemy.isRouting = true;
+    assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'defend' });
+});
+
+test('velitel drží výhodnou podpůrnou pozici místo bezúčelného přesunu', () => {
+    const commander = unit({ id: 'commander', col: 5, row: 5, isCommander: () => true });
+    const allies = [
+        unit({ id: 'ally-a', col: 5, row: 6 }),
+        unit({ id: 'ally-b', col: 6, row: 5 })
+    ];
+    const enemy = unit({ id: 'enemy', faction: 'hussites', col: 13, row: 5 });
+    const hexGrid = grid([commander, ...allies, enemy]);
+    const game = {
+        currentScenario: {}, aiStance: null, hexGrid,
+        getEnemyUnits: () => [enemy],
+        getUnitsOfFaction: () => [commander, ...allies],
+        getUnitAt: hexGrid.unitAt,
+        getValidMoves: () => [{ col: 4, row: 5 }]
+    };
+    assert.strictEqual(AI.findCommanderSupportPosition(game, commander, [enemy]), null);
+    assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'defend' });
+});
+
+test('velitelé prvních tří scénářů už v úvodním tahu neutíkají od chráněné linie', () => {
+    const h = createHarness();
+    for (const [scenarioId, leaderType] of [
+        ['zivohost_1419', 'PETR_STERNBERK'],
+        ['nekmir_1419', 'BOHUSLAV_SVAMBERK'],
+        ['sudomere_1420', 'BOHUSLAV_SVAMBERK']
+    ]) {
+        const game = h.newGame(scenarioId);
+        const leader = game.units.find(candidate => candidate.type === leaderType && candidate.faction === 'crusaders');
+        assert.ok(leader, scenarioId);
+        assert.strictEqual(h.AI.decideAction(game, leader)?.type, 'defend', scenarioId);
+        game.destroy();
+    }
+});
+
 test('velká armáda a přeskočení zkrátí prezentační prodlevy AI', () => {
     assert.strictEqual(AI.getActionDelay({ fastForwardAI: false }, { type: 'move' }, 20), 500);
     assert.strictEqual(AI.getActionDelay({ fastForwardAI: false }, { type: 'move' }, 48), 250);

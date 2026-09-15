@@ -144,7 +144,7 @@
     "zoomOut": "Oddálit mapu",
     "camera": "Pohled na mapu",
     "battlefield": "Bojiště: vyberte oddíl a poté cíl",
-    "help": "Na dotyku nebo v kompaktním okně: klepněte na vlastní oddíl a potom na cíl. Zelené pole oddíl rovnou přesune, klepnutí na červeně zvýrazněného nepřítele rovnou zaútočí. Tažením posunujete mapu; dvěma prsty nebo tlačítky − / + ji přiblížíte. Rozkazy a detail otevřou kartu oddílu, Armáda přehled jednotek. Ukončit tah jedná rovnou a nevyužité akce automaticky změní v obranu. Rozehraná bitva se ukládá automaticky po dokončených akcích, odděleně od ručního uložení.",
+    "help": "Na dotyku nebo v kompaktním okně: klepněte na vlastní oddíl a potom na cíl. Zelené pole oddíl rovnou přesune, klepnutí na červeně zvýrazněného nepřítele rovnou zaútočí. Tažením posunujete mapu; dvěma prsty nebo tlačítky − / + ji přiblížíte. Rozkazy a detail otevřou kartu oddílu, Armáda přehled jednotek. Ukončit tah jedná rovnou: nevyužité oddíly se automaticky brání, stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou bez bonusu obrany. Rozehraná bitva se ukládá automaticky po dokončených akcích, odděleně od ručního uložení.",
     "resumeAuto": "Pokračovat v rozehrané",
     "manualSave": "Ručně uložená hra",
     "savedSummary": "{battle} · kolo {turn} · automaticky uloženo",
@@ -174,7 +174,7 @@
     "switchLanguage": "Přepnout do angličtiny",
     "support": "Buy Me a Coffee",
     "changelog": "Změny",
-    "version": "Alpha 0.3.1 · 14.09.2026"
+    "version": "Alpha 0.3.2 · 15.09.2026"
   },
   "about": {
     "title": "O hře",
@@ -208,7 +208,7 @@
     "noRush": "Je to tahová hra. Při rozhodování vás nic nehoní; protivník jedná až po ukončení vašeho tahu.",
     "selectStep": "Vaše oddíly mají červené kruhové žetony, protivník modré štíty. Vyberte vlastní oddíl; jeho stav a schopnosti najdete v levém panelu nebo pod mapou v tlačítku Rozkazy a detail.",
     "actionStep": "Klepnutí na zeleně zvýrazněné pole rovnou přesune vybraný oddíl. Klepnutí na červeně zvýrazněného nepřítele rovnou provede útok. Stejné ovládání platí na dotyku i myší.",
-    "endStep": "Rozdejte rozkazy dalším oddílům a stiskněte Ukončit tah. Nevyužité akce se automaticky změní v obranu (−30 % příchozího poškození).",
+    "endStep": "Rozdejte rozkazy dalším oddílům a stiskněte Ukončit tah. Nevyužité oddíly se automaticky brání (−30 % příchozího poškození), ale stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho připraví krycí palbu bez bonusu obrany.",
     "helpStep": "Hlavní cíl zůstává nad mapou. Podrobnosti najdete pod Cíle, pravidla pod Menu → Nápověda. Escape otevře pauzu.",
     "resultReason": "Proč bitva skončila",
     "readChronicle": "Vaše kronika",
@@ -240,11 +240,14 @@
     "overview": "Přehled",
     "objectivesTitle": "Cíle mise",
     "endTurn": "Ukončit tah",
+    "endTurnHint": "Nevyužité oddíly se automaticky brání (−30 % příchozího poškození). Stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou, bez bonusu obrany.",
     "unit": "Jednotka",
     "selectUnit": "Vyberte jednotku",
     "attack": "Útok",
-    "defend": "Bránit (+30 % ochrany)",
-    "defendHint": "Spotřebuje zbývající akce a do dalšího tahu sníží příchozí poškození o 30 %. Nevyužité akce se při konci tahu převedou na obranu automaticky.",
+    "defend": "Bránit",
+    "defendHint": "Bránit hned ukončí akce oddílu a sníží příchozí poškození o 30 %. Pokud má oddíl zbývající výstřel, spotřebuje ho. Krycí palba a obrana se nesčítají.",
+    "defendExplanation": "Bránit: příchozí poškození klesne o 30 %, akce končí. Nevyužitý oddíl se na konci tahu brání sám. Stojící oddíl s dostřelem 2+ a volným výstřelem místo toho kryje palbou bez bonusu obrany.",
+    "defendExplanationRanged": "Krycí palba není obrana. Nechte oddíl stát: při pohybu nepřítele v dostřelu může vystřelit, ale nemá obranný bonus. Bránit: příchozí poškození klesne o 30 %, výstřel propadne.",
     "undo": "Zpět",
     "objectives": "Cíle",
     "choral": "Chorál",
@@ -297,6 +300,8 @@
     "wagonsBonus": "+{value} vozy",
     "cavalryBonus": "+{value} jízda",
     "defensiveStance": "Obranný postoj (-30 % poškození)",
+    "coverFireReady": "⚡ Krycí palba připravena: při pohybu nepřítele v dostřelu může vystřelit.",
+    "coverFireSpent": "Krycí palba nedostupná: střelec se pohnul, vystřelil, brání se nebo prchá.",
     "terrified": "Vyděšený (-10 % útok)",
     "routing": "PRCHÁ!",
     "attacksRemaining": "Zbývá {count} útok",
@@ -663,6 +668,7 @@
     "areaKill": "{attacker}: Plošný zásah zničil {target} (vedle {defender})! {damage} poškození",
     "defensiveStance": "{unit} zaujímá obranný postoj.",
     "autoDefend": "Nevyužité akce byly převedeny na obranu: {count} oddílů.",
+    "autoCoverFire": "Krycí palba připravena: {count} stojících oddílů s dostřelem.",
     "panicFlee": "{unit} propadá panice a prchá!",
     "enemyPanic": "Křižáci propadají panice! (-{penalty} útok)",
     "trenchBonus": "Husitské jednotky v příkopech získávají +3 k obraně!",
@@ -1560,7 +1566,7 @@
         },
         {
           "title": "Útok!",
-          "text": "Při boji zblízka obě strany utrpí poškození (protiútok). Střelci útočí na dálku BEZ protiútoku."
+          "text": "Ne každý oddíl po zásahu oplácí úder. V boji zblízka protiútočí jen přeživší pěchota s útokem 28+. Střelci při zásahu neopětují palbu; krycí palba reaguje na pohyb nepřítele."
         },
         {
           "title": "Tip: Terén",
@@ -1572,7 +1578,7 @@
         },
         {
           "title": "Obranný postoj aktivován!",
-          "text": "Jednotka v obraně utrpí o 30 % menší poškození a spotřebuje zbývající akce. Při ukončení tahu se nevyužité akce převedou na obranu automaticky. Nyní znič všechny nepřátele!"
+          "text": "Jednotka v obraně utrpí o 30 % menší poškození a spotřebuje zbývající akce. Na konci tahu se nevyužité oddíly brání automaticky; stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou bez bonusu obrany. Ruční Bránit jim výstřel vezme. Nyní znič všechny nepřátele!"
         },
         {
           "title": "Výcvik dokončen!",
@@ -2439,14 +2445,14 @@
           ]
         },
         {
-          "name": "Výpad obránců",
-          "description": "Plzeňané provádějí odvážný výpad!",
+          "name": "Boj o brány",
+          "description": "Posádka se může pokusit o výpad, pokud má ještě sílu. Boj pokračuje u opevnění.",
           "events": [
             {
-              "message": "Vilém Švihovský vede výpad z bran! Překvapení útočníků!"
+              "message": "Vilém Švihovský připravuje výpad z bran. Bojeschopní obránci se shromažďují u opevnění."
             },
             {
-              "text": "Obráncům roste sebedůvěra! Zajali husitského velblouda!"
+              "text": "Bojeschopným obráncům u bran roste sebedůvěra."
             }
           ]
         },

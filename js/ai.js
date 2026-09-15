@@ -205,7 +205,8 @@ const AI = {
         }
 
         // === OCHRANA VELITELE ===
-        // Velitel by měl zůstat vzadu a být chráněn spojenci
+        // Řídká formace sama o sobě není důvod k okamžitému ústupu.
+        // Velitel couvá až před jednotkou, která ho nyní může zasáhnout.
         if (isCommander && !aggressiveCommander) {
             // Spočítej okolní spojence
             const neighbors = game.hexGrid.getNeighbors(unit.col, unit.row);
@@ -217,14 +218,20 @@ const AI = {
                 if (nearUnit && nearUnit.health > 0) {
                     if (nearUnit.faction === unit.faction) {
                         adjacentAllies++;
-                    } else {
+                    } else if (!nearUnit.isRouting) {
                         nearbyEnemies++;
                     }
                 }
             }
 
-            // Pokud je velitel v nebezpečí (málo spojenců nebo blízko nepřátel), ustup
-            if (unit.canMove() && (adjacentAllies < 2 || nearbyEnemies > 0)) {
+            const immediateThreat = enemies.some(enemy =>
+                enemy.health > 0 && !enemy.isRouting &&
+                game.hexGrid.getDistance(unit.col, unit.row, enemy.col, enemy.row) <=
+                    Math.max(1, enemy.range || 1) + (enemy.special === 'reach' ? 1 : 0)
+            );
+            // Nedostatek doprovodu zesiluje skutečnou hrozbu, ne hypotetickou
+            // hrozbu od vzdálené armády na druhém konci mapy.
+            if (unit.canMove() && immediateThreat && (adjacentAllies < 2 || nearbyEnemies > 0)) {
                 const safeMove = this.findSafeMove(game, unit, enemies);
                 if (safeMove) {
                     return { type: 'move', col: safeMove.col, row: safeMove.row };
@@ -239,8 +246,10 @@ const AI = {
                 }
             }
 
-            // Velitel se snaží zůstat za svými jednotkami
-            if (unit.canMove()) {
+            // Velitel se přesouvá za linií jen když ztratil doprovod.
+            // Se dvěma sousedními spojenci už stojí na podpůrném místě;
+            // v prvních tazích nemá důvod běžet dál od bitvy.
+            if (unit.canMove() && adjacentAllies < 2) {
                 const supportMove = this.findCommanderSupportPosition(game, unit, enemies);
                 if (supportMove) {
                     return { type: 'move', col: supportMove.col, row: supportMove.row };
@@ -803,6 +812,7 @@ const AI = {
     findCommanderSupportPosition: function(game, unit, enemies) {
         const validMoves = game.getValidMoves(unit);
         if (validMoves.length === 0) return null;
+        if (enemies.length === 0) return null;
 
         const allies = game.getUnitsOfFaction(unit.faction).filter(u => u !== unit && u.health > 0);
         if (allies.length === 0) return null;
@@ -825,27 +835,24 @@ const AI = {
         enemyAvgCol = Math.round(enemyAvgCol / enemies.length);
         enemyAvgRow = Math.round(enemyAvgRow / enemies.length);
 
-        let bestMove = null;
-        let bestScore = -Infinity;
-
-        for (const move of validMoves) {
+        const scorePosition = position => {
             let score = 0;
 
             // Chceme být blízko spojenců (v dosahu aury)
-            const distToAllies = game.hexGrid.getDistance(move.col, move.row, avgCol, avgRow);
+            const distToAllies = game.hexGrid.getDistance(position.col, position.row, avgCol, avgRow);
             if (distToAllies <= 4) {
                 score += (5 - distToAllies) * 20;
             }
 
             // Ale dál od nepřátel než spojenci (za linií)
-            const distToEnemies = game.hexGrid.getDistance(move.col, move.row, enemyAvgCol, enemyAvgRow);
+            const distToEnemies = game.hexGrid.getDistance(position.col, position.row, enemyAvgCol, enemyAvgRow);
             const alliesToEnemies = game.hexGrid.getDistance(avgCol, avgRow, enemyAvgCol, enemyAvgRow);
             if (distToEnemies > alliesToEnemies) {
                 score += 50; // Bonus za pozici za linií
             }
 
             // Počet spojenců v okolí
-            const neighbors = game.hexGrid.getNeighbors(move.col, move.row);
+            const neighbors = game.hexGrid.getNeighbors(position.col, position.row);
             let adjacentAllies = 0;
             for (const neighbor of neighbors) {
                 const nearUnit = game.getUnitAt(neighbor.col, neighbor.row);
@@ -856,8 +863,17 @@ const AI = {
             score += adjacentAllies * 25;
 
             // Terrain bonus
-            const terrain = game.hexGrid.getTerrain(move.col, move.row);
+            const terrain = game.hexGrid.getTerrain(position.col, position.row);
             score += this.getUnitTerrainBonus(unit, terrain);
+            return score;
+        };
+
+        // Neprocházej mapu bez účelu, když už velitel stojí na dobré
+        // podpůrné pozici. Drobné rozdíly skóre nestojí za novou akci.
+        let bestMove = null;
+        let bestScore = scorePosition(unit) + 10;
+        for (const move of validMoves) {
+            const score = scorePosition(move);
 
             if (score > bestScore) {
                 bestScore = score;

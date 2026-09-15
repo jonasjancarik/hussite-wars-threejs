@@ -31,7 +31,7 @@
     <meta name="twitter:image" content="https://hussitewars.com/imgs/social-preview.png">
     <meta name="twitter:image:alt" content="Husitská vozová hradba pod kalichem · A Hussite wagon fort beneath the chalice banner">
 
-    <link rel="stylesheet" href="style.css?v=8.31">
+    <link rel="stylesheet" href="style.css?v=8.33">
 </head>
 <body class="booting">
     <section id="startup-status" class="startup-status">
@@ -121,7 +121,7 @@
                     </div>
                     <div class="version-info">
                         <span class="release-meta">
-                            <span data-i18n="menu.version">Alpha 0.3.1 · 14.09.2026</span>
+                            <span data-i18n="menu.version">Alpha 0.3.2 · 15.09.2026</span>
                             <span aria-hidden="true">·</span>
                             <a href="https://github.com/josefslerka/husitske-valky/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="changelog-link" data-i18n="menu.changelog">Změny</a>
                         </span>
@@ -185,6 +185,7 @@
                     <button id="btn-formation-line" class="hidden"></button>
                     <button id="btn-formation-march" class="hidden"></button>
                     <button id="btn-undo" class="hidden">↩ <span data-i18n="game.undo"></span></button>
+                    <p id="defend-explanation" class="defend-explanation" data-i18n="game.defendExplanation"></p>
                 </div>
             </aside>
 
@@ -272,7 +273,7 @@
         <p id="autosave-status" class="hidden" role="status" aria-live="polite"></p>
         <footer id="game-footer">
             <div class="footer-main-actions">
-                <button id="btn-end-turn" data-i18n="game.endTurn"></button>
+                <button id="btn-end-turn" data-i18n="game.endTurn" data-i18n-title="game.endTurnHint"></button>
                 <button id="btn-choral" title="Ktož jsú boží bojovníci - jednorázový bonus +50% útok, -20% obrana na 2 kola">⚔️ <span data-i18n="game.choral"></span></button>
                 <button id="btn-objectives" data-i18n-title="game.objectives">☑ <span data-i18n="game.objectives"></span></button>
                 <button id="btn-show-results" class="hidden" data-i18n="gameover.showResults" aria-hidden="true">Zobrazit výsledek</button>
@@ -632,7 +633,7 @@
                     <h3>Pravidla boje</h3>
                     <div class="rules-section">
                         <h4>Průběh tahu</h4>
-                        <p>Každá jednotka může v jednom tahu provést pohyb a útok (nebo pouze jedno z toho). Obrana spotřebuje zbývající akce a sníží příchozí poškození o 30 %. Při ukončení tahu se nevyužité akce převedou na obranu automaticky.</p>
+                        <p>Každá jednotka může v jednom tahu provést pohyb a útok (nebo pouze jedno z toho). Bránit spotřebuje zbývající akce a sníží příchozí poškození o 30 %. Na konci tahu se nevyužité oddíly brání automaticky, kromě stojících oddílů s dostřelem 2+ a zbývajícím výstřelem: ty připraví krycí palbu bez bonusu obrany. Ruční Bránit střelce ochrání, ale připraví ho o reakční výstřel.</p>
                     </div>
                     <div class="rules-section">
                         <h4>Výpočet poškození</h4>
@@ -1050,22 +1051,22 @@
 
     <!-- i18n - lokalizační systém (načíst jako první) -->
     <script src="js/core/GameStorage.js?v=8.9"></script>
-    <script src="js/i18n/i18n.js?v=8.31"></script>
+    <script src="js/i18n/i18n.js?v=8.34"></script>
     <script src="js/i18n/i18nHelpers.js?v=8.18"></script>
-    <script src="js/i18n/encyclopediaRenderer.js?v=8.26"></script>
+    <script src="js/i18n/encyclopediaRenderer.js?v=8.27"></script>
     <!-- ?v= cache-busting: bumpni číslo při každém vydání, ať hráči nedostanou starý JS -->
     <script src="js/ui/sound.js?v=3.9"></script>
     <script src="js/ui/music.js?v=8.20"></script>
-    <script src="js/ui/WoodcutRenderer.js?v=8.24"></script>
-    <script src="js/core/hex.js?v=8.11"></script>
+    <script src="js/ui/WoodcutRenderer.js?v=8.25"></script>
+    <script src="js/core/hex.js?v=8.12"></script>
     <script src="js/data/unitTypes.js?v=8.17"></script>
-    <script src="js/entities/Unit.js?v=8.17"></script>
+    <script src="js/entities/Unit.js?v=8.18"></script>
     <script src="js/entities/UnitFactory.js?v=3.9"></script>
     <script src="js/data/battleLore.js?v=8.17"></script>
     <script src="js/data/historicalSources.js?v=8.17"></script>
     <script src="js/data/campaign.js?v=8.0"></script>
     <script src="js/systems/CampaignProgressSystem.js?v=8.9"></script>
-    <script src="js/data/scenarios.js?v=8.21"></script>
+    <script src="js/data/scenarios.js?v=8.22"></script>
     <script src="js/systems/CombatSystem.js?v=8.2"></script>
     <script src="js/systems/BattleActionSystem.js?v=8.8"></script>
     <script src="js/systems/SaveGameSystem.js?v=8.17"></script>
@@ -1077,14 +1078,14 @@
     <script src="js/systems/ChronicleSystem.js?v=8.9"></script>
     <script src="js/ui/HistoricalNotesView.js?v=8.17"></script>
     <script src="js/ui/ChronicleView.js?v=8.17"></script>
-    <script src="js/ui/BattlePanels.js?v=8.17"></script>
-    <script src="js/ui/BattleTooltip.js?v=8.15"></script>
+    <script src="js/ui/BattlePanels.js?v=8.18"></script>
+    <script src="js/ui/BattleTooltip.js?v=8.16"></script>
     <script src="js/ui/BattleMapInput.js?v=8.8"></script>
     <script src="js/ui/BattleOrders.js?v=8.11"></script>
-    <script src="js/ui/BattleView.js?v=8.17"></script>
-    <script src="js/core/game.js?v=8.19"></script>
-    <script src="js/ai.js?v=8.20"></script>
-    <script src="js/ui/main.js?v=8.28"></script>
+    <script src="js/ui/BattleView.js?v=8.18"></script>
+    <script src="js/core/game.js?v=8.20"></script>
+    <script src="js/ai.js?v=8.21"></script>
+    <script src="js/ui/main.js?v=8.29"></script>
 
     <!-- Cloudflare Web Analytics: souhrnné návštěvy bez cookies. -->
     <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"

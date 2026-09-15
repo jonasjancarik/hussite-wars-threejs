@@ -119,6 +119,24 @@ test('nový obsah začíná nahoře, dotykový náhled si ponechá plné informa
     f.game.destroy();
 });
 
+test('viditelný střelec ukazuje skutečnou připravenost reakční palby', () => {
+    const f = fixture();
+    const shooter = f.game.unitFactory.createUnit('KUSNICI', 6, 6);
+    shooter.faction = 'crusaders';
+    f.game.units.push(shooter);
+    assert.equal(f.game.isCoverFireReady(shooter), true);
+    assert.match(f.tooltip.contentForHex({ col: 6, row: 6 }), /tooltip\.coverFireReady/);
+    f.game.view.updateUnitPanel(shooter);
+    assert.match(f.h.document.getElementById('unit-info').innerHTML, /tooltip\.coverFireReady/);
+
+    shooter.defend();
+    assert.equal(f.game.isCoverFireReady(shooter), false);
+    assert.match(f.tooltip.contentForHex({ col: 6, row: 6 }), /tooltip\.coverFireSpent/);
+    f.game.view.updateUnitPanel(shooter);
+    assert.match(f.h.document.getElementById('unit-info').innerHTML, /tooltip\.coverFireSpent/);
+    f.game.destroy();
+});
+
 test('zničená bitva odpojí i události tooltipu', () => {
     const f = fixture();
     f.game.destroy();

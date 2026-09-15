@@ -73,6 +73,154 @@ test('vykreslení panelů, mapy a tooltipu nemění herní stav', () => {
     game.destroy();
 });
 
+test('klidná mapa neplánuje snímky; RAF běží jen do konce projektilu', () => {
+    const h = createHarness({ browserView: true });
+    const frames = new Map();
+    let nextFrame = 1;
+    h.context.requestAnimationFrame = callback => {
+        const id = nextFrame++;
+        frames.set(id, callback);
+        return id;
+    };
+    h.context.cancelAnimationFrame = id => frames.delete(id);
+    const game = h.newGame();
+    assert.equal(frames.size, 0, 'bez animace není trvalá smyčka');
+
+    let renders = 0;
+    game.hexGrid.render = () => {
+        renders++;
+        game.hexGrid.animations = game.hexGrid.animations.filter(animation => ++animation.progress < animation.duration);
+    };
+    game.view.showAttackAnimation(1, 1, 2, 1);
+    assert.equal(frames.size, 1);
+    for (let i = 0; i < 20; i++) {
+        const [id, callback] = frames.entries().next().value;
+        frames.delete(id);
+        callback();
+    }
+    assert.equal(renders, 20);
+    assert.equal(frames.size, 0, 'po animaci se už neplánuje další snímek');
+
+    game.view.showExplosionAnimation(2, 1);
+    assert.equal(frames.size, 1);
+    game.view.stopAnimationLoop();
+    assert.equal(frames.size, 0, 'skrytá či zrušená bitva čekající snímek zahodí');
+    game.destroy();
+});
+
+test('pohyb žetonu dojede před reakcí a nechá herní pozici i další rozkazy bezpečné', async () => {
+    const h = createHarness({ browserView: true });
+    const frames = new Map(); let nextFrame = 1;
+    h.context.requestAnimationFrame = callback => {
+        const id = nextFrame++; frames.set(id, callback); return id;
+    };
+    h.context.cancelAnimationFrame = id => frames.delete(id);
+    const game = h.newGame();
+    const mover = game.unitFactory.createUnit('CEPNICI', 5, 5);
+    const enemy = game.unitFactory.createUnit('RUCNICARI', 7, 5); enemy.faction = 'crusaders';
+    game.units = [mover, enemy];
+    const visuals = [], minimapVisuals = [], reactions = [];
+    game.hexGrid.render = (_units, _fog, positions) => {
+        visuals.push(positions?.get(mover.id) || null);
+    };
+    game.view.minimap.render = (_units, positions) => {
+        minimapVisuals.push(positions?.get(mover.id) || null);
+    };
+    game.triggerOverwatch = async () => { reactions.push('po vizuálním příjezdu'); };
+    const from = game.hexGrid.hexToPixel(5, 5), to = game.hexGrid.hexToPixel(6, 5);
+    const move = game.moveUnit(mover, 6, 5);
+    assert.equal(mover.col, 6, 'pravidla používají cílový hex hned');
+    assert.equal(game.actions.busy, true);
+    assert.equal(game.endTurn(), false);
+    assert.equal(game.saveGame(), false);
+    assert.deepEqual(visuals.at(-1), from);
+    assert.deepEqual(minimapVisuals.at(-1), from);
+    assert.equal(frames.size, 1);
+    await h.advance(110);
+    const [frameId, frame] = frames.entries().next().value;
+    frames.delete(frameId); frame();
+    assert.ok(visuals.at(-1).x > from.x && visuals.at(-1).x < to.x);
+    assert.deepEqual(minimapVisuals.at(-1), visuals.at(-1));
+    assert.equal(reactions.length, 0);
+    await h.advance(110); await move;
+    assert.equal(reactions.length, 1);
+    assert.equal(game.view.moveAnimation, null);
+    assert.equal(frames.size, 0, 'po příjezdu nezůstane klidný RAF');
+    assert.equal(visuals.at(-1), null, 'výsledný žeton čte přímo herní souřadnice');
+    assert.equal(minimapVisuals.at(-1), null);
+    assert.equal(game.actions.busy, false);
+    game.destroy();
+});
+
+test('pohyb se pozastaví a zrušená bitva odstraní jeho snímek i čekání', async () => {
+    const h = createHarness({ browserView: true });
+    const frames = new Map(); let nextFrame = 1;
+    h.context.requestAnimationFrame = callback => {
+        const id = nextFrame++; frames.set(id, callback); return id;
+    };
+    h.context.cancelAnimationFrame = id => frames.delete(id);
+    const game = h.newGame();
+    const mover = game.unitFactory.createUnit('CEPNICI', 5, 5);
+    game.units = [mover, game.unitFactory.createUnit('TEZKY_RYTIR', 10, 5)];
+    const move = game.moveUnit(mover, 6, 5);
+    await h.advance(100);
+    const [id, frame] = frames.entries().next().value;
+    frames.delete(id); frame();
+    const progress = game.view.moveAnimation.elapsed;
+    game.setPaused(true);
+    assert.equal(frames.size, 0);
+    await h.advance(1000);
+    assert.equal(game.view.moveAnimation.elapsed, progress);
+    assert.equal(game.actions.busy, true);
+    game.setPaused(false);
+    assert.equal(frames.size, 1);
+    await h.advance(119);
+    assert.equal(game.actions.busy, true);
+    await h.advance(1); await move;
+    assert.equal(game.actions.busy, false);
+    assert.equal(frames.size, 0);
+
+    const next = game.unitFactory.createUnit('CEPNICI', 7, 5);
+    game.units.push(next);
+    const interrupted = game.moveUnit(next, 8, 5);
+    assert.equal(frames.size, 1);
+    game.destroy(); await h.flush(); await interrupted;
+    assert.equal(frames.size, 0);
+    assert.equal(h.timers.size, 0);
+});
+
+test('omezený pohyb a zrychlený tah AI přeskočí animaci žetonu', async () => {
+    const h = createHarness({ browserView: true });
+    const game = h.newGame();
+    const mover = game.unitFactory.createUnit('CEPNICI', 5, 5);
+    const enemy = game.unitFactory.createUnit('TEZKY_RYTIR', 10, 5);
+    game.units = [mover, enemy];
+    h.context.window.matchMedia = () => ({ matches: true });
+    assert.equal(await game.moveUnit(mover, 6, 5), true);
+    assert.equal(game.view.moveAnimation, null);
+    assert.equal(h.timers.size, 0);
+
+    h.context.window.matchMedia = () => ({ matches: false });
+    game.currentFaction = 'crusaders'; game.fastForwardAI = true;
+    assert.equal(await game.moveUnit(enemy, 9, 5), true);
+    assert.equal(game.view.moveAnimation, null);
+    assert.equal(h.timers.size, 0);
+    game.destroy();
+});
+
+test('pohyb neprozradí žeton nepřítele, který se přesouvá mimo viditelné hexy', async () => {
+    const h = createHarness({ browserView: true }), game = h.newGame();
+    const player = game.unitFactory.createUnit('CEPNICI', 0, 0);
+    const enemy = game.unitFactory.createUnit('TEZKY_RYTIR', 5, 5);
+    game.units = [player, enemy]; game.currentFaction = 'crusaders';
+    game.fogOfWar = true;
+    game.visibleHexes = new Set(['5,5']);
+    assert.equal(await game.moveUnit(enemy, 6, 5), true);
+    assert.equal(game.view.moveAnimation, null);
+    assert.equal(h.timers.size, 0);
+    game.destroy();
+});
+
 test('klik z Canvasu volá hexový příkaz a zaniklá bitva již vstup nedostane', () => {
     const h = createHarness({ browserView: true }), game = h.newGame();
     const pixel = game.hexGrid.hexToPixel(5, 5), received = [];

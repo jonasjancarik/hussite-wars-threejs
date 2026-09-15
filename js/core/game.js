@@ -109,6 +109,7 @@ class Game {
     setPaused(paused) {
         this.isPaused = paused;
         this.actions.setPaused(paused);
+        this.view.onPauseChange(paused);
     }
 
     skipAIAnimations() {
@@ -797,6 +798,11 @@ class Game {
 
         this.addLog(i18n.t('gameLog.moved', {unit: unit.name, oldCol, oldRow, col, row}), 'move');
 
+        // Pravidla pracují s cílovým hexem hned; vykreslený žeton do něj
+        // plynule dojede před kontrolou terénu, úniku a reakční palby.
+        // Rozpracovaná akce dál blokuje další rozkaz i automatický checkpoint.
+        if (!await this.view.animateMove(unit, oldCol, oldRow, col, row)) return false;
+
         // Označení mostu jako použitého (bridge bottleneck)
         if (this.currentScenario && this.currentScenario.specialMechanics &&
             this.currentScenario.specialMechanics.bridgeBottleneck) {
@@ -848,21 +854,22 @@ class Game {
         return true;
     }
 
-    // Overwatch (krycí palba): střelci s dosahem 2+, kteří ve svém tahu
-    // nehnuli ani nevystřelili, automaticky pálí na nepřítele, který se
-    // pohne v jejich dostřelu. Zadržený výstřel - canAttack() hlídá,
-    // že jednotka střílí jen jednou za kolo (aktivně NEBO reakčně).
+    // Overwatch (krycí palba): oddíly s dosahem 2+, které se nehýbaly
+    // a ještě mohou útočit, automaticky pálí na nepřítele v dostřelu.
+    // Výjimkou jsou rychlostřelci se zbývajícím druhým výstřelem.
+    // Ruční obrana výstřel spotřebuje, automatický konec tahu nikoli.
     // Síla vozové hradby: přiblížit se k ní něco stojí už cestou.
+    isCoverFireReady(unit) {
+        return !!unit && unit.health > 0 && !unit.escaped && unit.range >= 2 &&
+            !unit.hasMoved && unit.canAttack();
+    }
+
     async triggerOverwatch(movedUnit) {
         if (!movedUnit || movedUnit.health <= 0) return;
 
         const watcherFaction = movedUnit.faction === 'hussites' ? 'crusaders' : 'hussites';
         const watchers = this.units.filter(u =>
-            u.faction === watcherFaction &&
-            u.health > 0 &&
-            u.range >= 2 &&
-            !u.hasMoved &&
-            u.canAttack()
+            u.faction === watcherFaction && this.isCoverFireReady(u)
         );
 
         for (const watcher of watchers) {
@@ -990,9 +997,10 @@ class Game {
 
 
 
-    // Nevyužité akce nejsou samostatné taktické rozhodnutí: hráč mohl před
-    // koncem tahu na každém takovém oddílu ručně stisknout Obranu se stejným
-    // výsledkem. Uděláme to hromadně, bez zvuku a bez série logových řádků.
+    // Při konci tahu necháme stojící oddíly s dostřelem 2+ připravené ke
+    // krycí palbě. Nemají bonus obrany; ten střelec získá jen vědomou volbou
+    // Bránit, která současně spotřebuje zbývající výstřel. Ostatním
+    // nevyužitým oddílům obranu zapneme bez mikromanagementu.
     autoDefendUnusedUnits(faction = this.currentFaction) {
         const units = this.units.filter(unit =>
             unit.faction === faction &&
@@ -1000,9 +1008,14 @@ class Game {
             !unit.isRouting &&
             unit.canAct()
         );
-        for (const unit of units) unit.defend();
-        if (units.length > 0) {
-            this.addLog(i18n.t('gameLog.autoDefend', { count: units.length }), 'move');
+        const coverFire = units.filter(unit => this.isCoverFireReady(unit));
+        const defenders = units.filter(unit => !this.isCoverFireReady(unit));
+        for (const unit of defenders) unit.defend();
+        if (defenders.length > 0) {
+            this.addLog(i18n.t('gameLog.autoDefend', { count: defenders.length }), 'move');
+        }
+        if (coverFire.length > 0) {
+            this.addLog(i18n.t('gameLog.autoCoverFire', { count: coverFire.length }), 'move');
         }
         return units.length;
     }

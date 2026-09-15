@@ -354,6 +354,10 @@ class BattlePanels {
         if (unit.isDefending) {
             statusHtml += `<span style="color: #4488ff; font-size: 0.85rem;">🛡️ ${i18n.t('tooltip.defensiveStance')}</span><br>`;
         }
+        if (this.game.gameState === 'playing' && unit.faction !== this.game.currentFaction && unit.range >= 2) {
+            const ready = this.game.isCoverFireReady(unit);
+            statusHtml += `<span style="color: ${ready ? '#387049' : '#675f4d'}; font-size: 0.85rem;">${i18n.t(ready ? 'tooltip.coverFireReady' : 'tooltip.coverFireSpent')}</span><br>`;
+        }
         // WP1/P4: stav vozové hradby - pevná zeď (nehýbe se) vs pochod (poloviční kryt)
         if (unit.isWagon() && unit.formationClosed) {
             if (unit.marching) {
@@ -426,6 +430,15 @@ class BattlePanels {
         if (this.game.gameState === 'playing' && unit.faction === this.game.currentFaction) {
             actionsDiv.classList.remove('hidden');
             attackBtn.disabled = !unit.canAttack();
+
+            const defendExplanation = document.getElementById('defend-explanation');
+            if (defendExplanation) {
+                const key = this.game.isCoverFireReady(unit)
+                    ? 'game.defendExplanationRanged'
+                    : 'game.defendExplanation';
+                defendExplanation.setAttribute('data-i18n', key);
+                defendExplanation.textContent = i18n.t(key);
+            }
 
             // WP1: tlačítka hradby - jen pro hráčův vůz, který ještě nejednal
             const formationBtn = document.getElementById('btn-formation');

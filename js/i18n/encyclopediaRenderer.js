@@ -278,8 +278,8 @@ function renderRulesTab() {
         <div class="rules-section">
             <h4>${isEnglish ? 'Turn Sequence' : 'Průběh tahu'}</h4>
             <p>${isEnglish
-                ? 'Each unit can move and attack (or only one of those) in one turn. Defense spends its remaining actions and reduces incoming damage by 30%. When you end the turn, unused actions become defense automatically.'
-                : 'Každá jednotka může v jednom tahu provést pohyb a útok (nebo pouze jedno z toho). Obrana spotřebuje zbývající akce a sníží příchozí poškození o 30 %. Při ukončení tahu se nevyužité akce převedou na obranu automaticky.'
+                ? 'Each unit can move and attack (or only one of those) in one turn. Defend spends its remaining actions and reduces incoming damage by 30%. At End Turn, unused units defend automatically, except stationary units with range 2 or more and a shot left: they prepare covering fire instead, without the defense bonus. Choosing Defend for a shooter gives protection but forfeits that reaction shot.'
+                : 'Každá jednotka může v jednom tahu provést pohyb a útok (nebo pouze jedno z toho). Bránit spotřebuje zbývající akce a sníží příchozí poškození o 30 %. Na konci tahu se nevyužité oddíly brání automaticky, kromě stojících oddílů s dostřelem 2+ a zbývajícím výstřelem: ty připraví krycí palbu bez bonusu obrany. Ruční Bránit střelce ochrání, ale připraví ho o reakční výstřel.'
             }</p>
         </div>
         <div class="rules-section">
@@ -287,6 +287,13 @@ function renderRulesTab() {
             <p>${isEnglish
                 ? 'Damage = Unit Attack - Target Defense. Minimum damage is 5. Terrain adds bonuses to defense.'
                 : 'Poškození = Útok jednotky - Obrana cíle. Minimální poškození je 5. Terén přidává bonus k obraně.'
+            }</p>
+        </div>
+        <div class="rules-section">
+            <h4>${isEnglish ? 'Striking Back' : 'Opětování útoku'}</h4>
+            <p>${isEnglish
+                ? 'In melee, only surviving infantry with Attack 28 or more counterattacks. Shooters do not return fire when hit: a stationary unit with range 2 or more and a shot left can instead fire at an enemy moving within range. That covering fire gives no defense bonus.'
+                : 'V boji zblízka protiútočí jen přeživší pěchota s útokem alespoň 28. Střelci při zásahu neopětují palbu: stojící oddíl s dostřelem 2+ a volným výstřelem může místo toho vystřelit na nepřítele pohybujícího se v dostřelu. Krycí palba nedává bonus obrany.'
             }</p>
         </div>
         <div class="rules-section">
@@ -419,7 +426,7 @@ function renderControlsTab() {
             </div>
             <div class="control-item">
                 <span class="control-key">${isEnglish ? 'Enter / Space' : 'Enter / Mezerník'}</span>
-                <span class="control-desc">${isEnglish ? 'End turn; unused actions become defense' : 'Ukončit tah; nevyužité akce přejdou do obrany'}</span>
+                <span class="control-desc">${isEnglish ? 'End turn; unused units defend or prepare covering fire' : 'Ukončit tah; nevyužité oddíly se brání či kryjí palbou'}</span>
             </div>
             <div class="control-item">
                 <span class="control-key">D</span>

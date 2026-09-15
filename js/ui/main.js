@@ -1634,13 +1634,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? CampaignProgressSystem.getNextBattle(selectedScenario.id)
             : null;
         if (!nextScenarioId) return;
-        const baseScenario = ScenarioManager.getScenario(nextScenarioId);
-        const nextScenario = baseScenario && typeof getLocalizedScenario === 'function'
-            ? getLocalizedScenario(nextScenarioId, baseScenario)
-            : baseScenario;
-        if (!nextScenario) return;
-        selectedScenario = nextScenario;
-        startMission(nextScenario);
+        if (!ScenarioManager.getScenario(nextScenarioId)) return;
+        const nextAct = CampaignProgressSystem.getActForBattle(nextScenarioId);
+        if (nextAct) currentAct = nextAct.id;
+        // „Další mise“ otevírá i její prameny a rozkazy; bitva začne až
+        // vědomým kliknutím na Zahájit bitvu v detailu mise.
+        showMissionSelection();
+        showMissionDetails(nextScenarioId);
     });
 
     // Tlačítko Hlavní menu z game over
@@ -1806,8 +1806,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Stejná přímá cesta jako tlačítko; skutečně nevyužité akce se
-            // automaticky převedou na obranu.
+            // Stejná přímá cesta jako tlačítko; nevyužité oddíly se podle
+            // pravidel buď brání, nebo připraví krycí palbu.
             const endTurnButton = document.getElementById('btn-end-turn');
             if (game.currentFaction === 'hussites' && endTurnButton && !endTurnButton.disabled) {
                 e.preventDefault();

@@ -63,10 +63,13 @@
 - [x] **P1 — Ukončení tahu automaticky převede nevyužité akce na obranu.**
   - Dva nezávislí testeři se ptali, proč musí před koncem tahu ručně zapínat obranu; druhý navíc postoj objevil až pozdě během hraní.
   - Obranný postoj nyní spotřebuje zbývající pohyb i útok a do dalšího tahu snižuje příchozí poškození o 30 %. Před ukončením tahu proto nemá ruční klikání na obranu žádnou nevýhodu a je pouze povinným mikromanagementem.
-  - Při `Ukončit tah` automaticky zavolat stejnou obrannou akci pro každou živou neprchající hráčovu jednotku, která ještě může jednat; jednotky, jež už vyčerpaly pohyb i útok, bonus nedostanou.
+  - Při `Ukončit tah` automaticky bránit každou živou neprchající jednotku, která ještě může jednat; stojící oddíly s dostřelem 2+ a zbývajícím výstřelem jsou výjimkou popsanou níže. Jednotky, jež už vyčerpaly pohyb i útok, bonus nedostanou.
   - Ruční `Obrana` musí zůstat pro vědomé ukončení akcí konkrétní jednotky během tahu a pro výuku v tutoriálu.
-  - V rozhraní přímo uvést účinek (`−30 % příchozího poškození`) a pravidlo automatizace (`Nevyužité akce se při konci tahu změní v obranu`); aktivní postoj musí být zřetelný i na žetonu.
+  - V rozhraní přímo uvést účinek (`−30 % příchozího poškození`) a pravidlo automatizace včetně výjimky pro krycí palbu; aktivní postoj musí být zřetelný i na žetonu.
   - Ověřit jednotky bez akce, po pohybu, po útoku, po pohybu i útoku, vícenásobnou střelbu, opevnění, prchající jednotky a save/load; upravit také tutoriál a nápovědu.
+- [x] **P1 — Rozhodnout vztah automatické obrany a krycí palby.**
+  - Stojící oddíl s dostřelem 2+ a zbývajícím výstřelem na konci tahu připraví krycí palbu bez bonusu obrany. Ostatní nevyužité oddíly se dál brání automaticky.
+  - Ruční `Bránit` dá střelci o 30 % méně příchozího poškození, ale spotřebuje jeho reakční výstřel. Pravidlo je popsáno u rozkazu, na konci tahu, v nápovědě a tutoriálu v obou jazycích.
 - [ ] **P1 — Ověřit obtížnost Živohoště jako první hráčovy bitvy.**
   - První veřejný tester ji nedokončil ani na pět pokusů a označil těžkého rytíře za příliš silného.
   - Před změnou čísel získat alespoň tři další průchody; zvlášť ověřit srozumitelnost cíle, načasování posil a možnosti obrany proti rytíři.
@@ -92,6 +95,18 @@
 - [ ] **P3 — Ověřit výtvarnou konkrétnost piktogramů jednotek.**
   - Jednomu testerovi připadají příliš abstraktní a připomínají fantasy strategii; nejde zatím o problém pravidel ani jednoznačný důvod k plošné výměně.
   - Prověřit u dalších hráčů, zda z žetonu bezpečně poznají druh vojska a velitele; případnou úpravu vést k historicky konkrétnějším siluetám, ale zachovat čitelnost v malém měřítku.
+
+### Další veřejný playtest — 15. 9. 2026
+- [x] **Další mise po výsledku nepřeskakuje briefing a historický úvod.**
+  - Tlačítko vede přes detail další mise; rozkazy a prameny se zobrazí před samostatným zahájením bitvy.
+- [x] **Návod netvrdí, že každá napadená jednotka protiútočí.**
+  - Protiútok zblízka má jen přeživší pěchota s útokem alespoň 28; střelci reagují krycí palbou na pohyb nepřítele, ne na vlastní zásah. Popsáno v tutoriálu i pravidlech CS/EN.
+- [x] **Velitel AI neutíká jen kvůli řídkému doprovodu.**
+  - Nouzový ústup vyžaduje nepřítele schopného velitele právě zasáhnout; již vhodné podpůrné postavení se bez důvodu neopouští. Ještě ověřit v konkrétních hráčských scénářích.
+- [ ] **P1 — Dohledat další přetékající texty na Samsung S24.**
+  - Úzké tlačítko `Bránit` je opravené lokálně; tester hlásí i jiné texty. Potřebujeme snímek nebo názvy konkrétních obrazovek při mobilním rozlišení a zoomu.
+- [ ] **P2 — Redakčně projít české texty, které působí strojově.**
+  - Vzít konkrétní pasáže od testera jako výchozí vzorek; zachovat rozlišení mezi pramennými fakty, herní rekonstrukcí a autorskou fikcí.
 
 ### Čištění kódu
 - [ ] Odstranit debug console.log záznamy:
@@ -185,7 +200,8 @@
 ### Audio/Visual
 - [ ] Další hudební tracky pro různé části hry
 - [ ] Zvukové efekty pro jednotlivé jednotky
-- [ ] Animace pohybu jednotek
+- [x] Krátká animace pohybu jednotlivých oddílů; po vizuálním příjezdu teprve vyhodnotit reakční palbu a navazující útok, zrychlený tah AI a omezený pohyb přeskočí efekt.
+- [ ] Animace skupinového pochodu sepnuté vozové linie (samostatný rozkaz bez reakční palby).
 - [ ] Particle effects (kouř, jiskry, krev)
 - [ ] Weather effects (déšť, sníh)
 
@@ -223,6 +239,6 @@
 
 ---
 
-**Aktuální verze:** Alpha 0.3.1 (14.09.2026)
+**Aktuální verze:** Alpha 0.3.2 (15.09.2026)
 **Cílová verze pro release:** Alpha 1.0
 **Udržováno od:** 04.02.2026

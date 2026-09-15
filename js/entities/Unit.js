@@ -274,7 +274,7 @@ class Unit {
         }
 
         // Protiútok - pouze pokud obránce přežil a může útočit (melee vs melee)
-        // Jen těžká pěchota (útok ≥ 28) může provést protiútok
+        // Jen pěchota se základním útokem ≥ 28 může provést protiútok
         if (!result.killed && target.range === 1 && this.range === 1 &&
             target.unitClass === 'infantry' && target.attack >= 28) {
             result.counterDamage = this.calculateCounterDamage(target, attackerTerrain, gameContext);

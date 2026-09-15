@@ -122,6 +122,7 @@ const validAiStanceModes = ['aggressive', 'default', 'defensive', 'hold', 'retre
 // Typy podmínek eventů implementované v ScenarioManager.checkEventCondition
 // (neznámá podmínka se tiše vyhodnotí jako splněná - default: return true)
 const implementedEventConditionTypes = [
+    'ready_units',
     'units_in_area',
     'no_units_in_area',
     'faction_losses_percent',

@@ -114,6 +114,13 @@ class BattleTooltip {
                 html += `<div class="tooltip-bonus">${i18n.t('tooltip.defensiveStance')}</div>`;
             }
 
+            // Pouze u viditelného protivníka, jenž může reagovat na pohyb
+            // během právě probíhajícího tahu. Stejnou připravenost čte Game.
+            if (this.game.gameState === 'playing' && unit.faction !== this.game.currentFaction && unit.range >= 2) {
+                const ready = this.game.isCoverFireReady(unit);
+                html += `<div class="${ready ? 'tooltip-bonus' : 'tooltip-info'}">${i18n.t(ready ? 'tooltip.coverFireReady' : 'tooltip.coverFireSpent')}</div>`;
+            }
+
             if (unit.isTerrified) {
                 html += `<div class="tooltip-debuff">${i18n.t('tooltip.terrified')}</div>`;
             }

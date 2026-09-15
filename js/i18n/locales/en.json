@@ -144,7 +144,7 @@
     "zoomOut": "Zoom out of the map",
     "camera": "Map camera",
     "battlefield": "Battlefield: select a unit, then a target",
-    "help": "On touchscreens or in a compact window, tap your unit and then its target. A green tile moves the unit immediately; tapping a red-highlighted enemy attacks immediately. Drag to pan; pinch with two fingers or use − / + to zoom. Orders and details opens the unit card; Army shows your forces. End Turn acts immediately and automatically converts unused actions into defense. Your battle is saved automatically after completed actions, separately from your manual save.",
+    "help": "On touchscreens or in a compact window, tap your unit and then its target. A green tile moves the unit immediately; tapping a red-highlighted enemy attacks immediately. Drag to pan; pinch with two fingers or use − / + to zoom. Orders and details opens the unit card; Army shows your forces. End Turn acts immediately: unused units defend automatically, while stationary units with range 2 or more and a shot left prepare covering fire instead, without the defense bonus. Your battle is saved automatically after completed actions, separately from your manual save.",
     "resumeAuto": "Resume current battle",
     "manualSave": "Manually saved game",
     "savedSummary": "{battle} · turn {turn} · autosaved",
@@ -174,7 +174,7 @@
     "switchLanguage": "Switch to Czech",
     "support": "Buy Me a Coffee",
     "changelog": "Changelog",
-    "version": "Alpha 0.3.1 · 14.09.2026"
+    "version": "Alpha 0.3.2 · 15.09.2026"
   },
   "about": {
     "title": "About",
@@ -208,7 +208,7 @@
     "noRush": "This is a turn-based game. Take your time deciding; the opponent acts after you end your turn.",
     "selectStep": "Your units have red round tokens; the opponent uses blue shields. Select your unit; its status and abilities appear in the left panel or under the map in Orders and details.",
     "actionStep": "Tap a green highlighted tile to move the selected unit immediately. Tap a red-highlighted enemy to attack immediately. Touch and mouse use the same controls.",
-    "endStep": "Give orders to your other units, then press End Turn. Unused actions automatically become defense (−30% incoming damage).",
+    "endStep": "Give orders to your other units, then press End Turn. Unused units defend automatically (−30% incoming damage), but stationary units with range 2 or more and a shot left prepare covering fire instead, without the defense bonus.",
     "helpStep": "Your main objective stays above the map. Open Objectives for details or Menu → Help for the rules. Escape opens the pause menu.",
     "resultReason": "Why the battle ended",
     "readChronicle": "Your chronicle",
@@ -240,11 +240,14 @@
     "overview": "Overview",
     "objectivesTitle": "Mission Objectives",
     "endTurn": "End Turn",
+    "endTurnHint": "Unused units defend automatically (−30% incoming damage). Stationary units with range 2 or more and a shot left prepare covering fire instead, without the defense bonus.",
     "unit": "Unit",
     "selectUnit": "Select a unit",
     "attack": "Attack",
-    "defend": "Defend (+30% protection)",
-    "defendHint": "Uses all remaining actions and reduces incoming damage by 30% until the next turn. Unused actions become defense automatically when the turn ends.",
+    "defend": "Defend",
+    "defendHint": "Defend immediately ends this unit's actions and reduces incoming damage by 30%. It uses any remaining shot. Covering fire and defense do not stack.",
+    "defendExplanation": "Defend: 30% less incoming damage, ends actions. Unused units defend automatically at End Turn. A stationary unit with range 2+ and a shot left uses covering fire instead, with no defense bonus.",
+    "defendExplanationRanged": "Covering fire is not defense. Leave this unit still: it can fire when an enemy moves within range, but has no defense bonus. Defend: 30% less incoming damage, forfeits the shot.",
     "undo": "Undo",
     "objectives": "Objectives",
     "choral": "Choral",
@@ -297,6 +300,8 @@
     "wagonsBonus": "+{value} wagons",
     "cavalryBonus": "+{value} cavalry",
     "defensiveStance": "Defensive stance (-30% damage)",
+    "coverFireReady": "⚡ Covering fire ready: may shoot when an enemy moves into range.",
+    "coverFireSpent": "Covering fire unavailable: this unit moved, fired, defended, or is routing.",
     "terrified": "Terrified (-10% attack)",
     "routing": "ROUTING!",
     "attacksRemaining": "{count} attack remaining",
@@ -1364,7 +1369,7 @@
         },
         {
           "title": "Attack!",
-          "text": "In melee both sides take damage (counterattack). Shooters attack at range WITHOUT counterattack."
+          "text": "Not every unit strikes back when hit. In melee, only surviving infantry with Attack 28+ counterattacks. Shooters do not return fire when hit; covering fire reacts to enemy movement."
         },
         {
           "title": "Tip: Terrain",
@@ -1376,7 +1381,7 @@
         },
         {
           "title": "Defensive stance activated!",
-          "text": "A defending unit takes 30% less damage and spends its remaining actions. When you end a turn, unused actions become defense automatically. Now destroy all enemies!"
+          "text": "A defending unit takes 30% less damage and spends its remaining actions. At End Turn, unused units defend automatically; stationary units with range 2 or more and a shot left prepare covering fire instead, without the defense bonus. Manual Defend forfeits that shot. Now destroy all enemies!"
         },
         {
           "title": "Training complete!",
@@ -2243,14 +2248,14 @@
           ]
         },
         {
-          "name": "Defenders' sortie",
-          "description": "Plzeň people make daring sortie!",
+          "name": "Fight at the gates",
+          "description": "The garrison may attempt a sortie if it still has the strength. Fighting continues at the fortifications.",
           "events": [
             {
-              "message": "Vilém Švihovský leads sortie from gates! Attackers surprised!"
+              "message": "Vilém Švihovský prepares a sortie. The defenders still fit to fight gather near the gates."
             },
             {
-              "text": "Defenders' confidence grows! Captured Hussite camel!"
+              "text": "The defenders still fit to fight near the gates gain confidence."
             }
           ]
         },
@@ -3427,6 +3432,7 @@
     "areaKill": "{attacker}: Area hit destroyed {target} (next to {defender})! {damage} damage",
     "defensiveStance": "{unit} assumes defensive stance.",
     "autoDefend": "Unused actions became defense for {count} units.",
+    "autoCoverFire": "Covering fire prepared: {count} stationary ranged units.",
     "panicFlee": "{unit} panics and flees!",
     "enemyPanic": "Crusaders are panicking! (-{penalty} attack)",
     "trenchBonus": "Hussite units in the trenches gain +3 defense!",

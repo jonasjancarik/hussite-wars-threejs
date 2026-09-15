@@ -14,6 +14,8 @@ class BattleView {
         this.orders = new BattleOrders(this);
         this.mapInput = new BattleMapInput(this);
         this.backgroundPaused = false;
+        this.animationEnabled = false;
+        this.moveAnimation = null;
         this.setupEventListeners();
     }
 
@@ -21,6 +23,7 @@ class BattleView {
         this.mapInput.cancel();
         this.orders.cancel();
         this.stopAnimationLoop();
+        this.moveAnimation = null;
         this.eventAbortController.abort();
         this.minimap.destroy();
         this.tooltip.hideTooltip();
@@ -245,21 +248,89 @@ class BattleView {
     }
 
     startAnimationLoop() {
-        if (this.animationLoop) return;
+        this.animationEnabled = true;
+        this.scheduleAnimationFrame();
+    }
 
-        const animate = () => {
+    // Stavové změny volají render() přímo. Celou mapu překreslujeme v RAF
+    // jen po dobu pohybu žetonu, projektilu či exploze, ne v klidné bitvě.
+    scheduleAnimationFrame() {
+        if (!this.animationEnabled || this.animationLoop !== null ||
+            (this.game.hexGrid.animations.length === 0 &&
+                (!this.moveAnimation || this.game.actions.paused)) || document.hidden) return;
+
+        this.animationLoop = requestAnimationFrame(() => {
+            this.animationLoop = null;
+            if (!this.animationEnabled || document.hidden) return;
             this.render();
-            this.animationLoop = requestAnimationFrame(animate);
-        };
-
-        this.animationLoop = requestAnimationFrame(animate);
+            this.scheduleAnimationFrame();
+        });
     }
 
     stopAnimationLoop() {
-        if (this.animationLoop) {
+        this.animationEnabled = false;
+        if (this.animationLoop !== null) {
             cancelAnimationFrame(this.animationLoop);
             this.animationLoop = null;
         }
+    }
+
+    onPauseChange(paused) {
+        if (!this.moveAnimation) return;
+        this.moveAnimation.lastFrameAt = Date.now();
+        if (paused && this.game.hexGrid.animations.length === 0 && this.animationLoop !== null) {
+            cancelAnimationFrame(this.animationLoop);
+            this.animationLoop = null;
+        } else if (!paused) {
+            this.scheduleAnimationFrame();
+        }
+    }
+
+    async animateMove(unit, fromCol, fromRow, toCol, toRow) {
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+        const hiddenEnemy = this.game.fogOfWar && unit.faction !== 'hussites' &&
+            (!this.game.fogOfWarSystem.isHexVisible(fromCol, fromRow) ||
+                !this.game.fogOfWarSystem.isEnemyVisible(unit));
+        if (!this.animationEnabled || document.hidden || reducedMotion || hiddenEnemy ||
+            (this.game.currentFaction === 'crusaders' && this.game.fastForwardAI)) return true;
+
+        const grid = this.game.hexGrid;
+        const animation = {
+            unit, from: grid.hexToPixel(fromCol, fromRow), to: grid.hexToPixel(toCol, toRow),
+            elapsed: 0, lastFrameAt: Date.now(), duration: unit.faction === 'crusaders' ? 180 : 220
+        };
+        this.moveAnimation = animation;
+        this.render();
+        this.scheduleAnimationFrame();
+
+        try {
+            // Stejný pozastavitelný a zrušitelný časovač jako ostatní herní akce.
+            return await this.game.actions.wait(animation.duration);
+        } finally {
+            if (this.moveAnimation === animation) this.moveAnimation = null;
+            if (this.animationLoop !== null && grid.animations.length === 0) {
+                cancelAnimationFrame(this.animationLoop);
+                this.animationLoop = null;
+            }
+            if (!this.eventAbortController.signal.aborted) this.render();
+        }
+    }
+
+    moveTokenPosition() {
+        const animation = this.moveAnimation;
+        if (!animation) return null;
+        const now = Date.now();
+        if (!this.game.actions.paused && !document.hidden) {
+            animation.elapsed = Math.min(animation.duration,
+                animation.elapsed + Math.max(0, now - animation.lastFrameAt));
+        }
+        animation.lastFrameAt = now;
+        const t = animation.elapsed / animation.duration;
+        const eased = t * t * (3 - 2 * t);
+        return {
+            x: animation.from.x + (animation.to.x - animation.from.x) * eased,
+            y: animation.from.y + (animation.to.y - animation.from.y) * eased
+        };
     }
 
     setupEventListeners() {
@@ -283,6 +354,7 @@ class BattleView {
             } else {
                 if (this.backgroundPaused) this.game.setPaused(false);
                 this.backgroundPaused = false;
+                this.render();
                 this.startAnimationLoop();
             }
         }, { signal });
@@ -294,7 +366,7 @@ class BattleView {
         this.tooltip.setupEventListeners(signal);
 
         // Konec tahu je stejně přímý jako ostatní běžné rozkazy. Nevyužité
-        // akce se v Game.endTurn automaticky převedou na obranu.
+        // oddíly v Game.endTurn automaticky brání nebo připraví krycí palbu.
         document.getElementById('btn-end-turn').addEventListener('click', () => {
             if (this.game.currentFaction !== 'hussites' || !this.game.canStartAction()) return;
             this.orders.cancel();
@@ -429,10 +501,12 @@ class BattleView {
 
     showAttackAnimation(fromCol, fromRow, toCol, toRow) {
         this.game.hexGrid.addAttackAnimation(fromCol, fromRow, toCol, toRow);
+        this.scheduleAnimationFrame();
     }
 
     showExplosionAnimation(col, row) {
         this.game.hexGrid.addExplosionAnimation(col, row);
+        this.scheduleAnimationFrame();
     }
 
     render() {
@@ -443,12 +517,18 @@ class BattleView {
             ? aliveUnits.filter(u => u.faction === 'hussites' || this.game.fogOfWarSystem.isEnemyVisible(u))
             : aliveUnits;
 
+        // Obě mapy kreslí stejnou krátkodobou pozici žetonu; herní souřadnice
+        // už ukazují na cíl a renderer je nikdy nemění.
+        const tokenPositions = this.moveAnimation && visibleUnits.includes(this.moveAnimation.unit)
+            ? new Map([[this.moveAnimation.unit.id, this.moveTokenPosition()]])
+            : null;
+
         // Předání informací o mlze do rendereru
         this.game.hexGrid.render(visibleUnits, {
             fogOfWar: this.game.fogOfWar,
             visibleHexes: this.game.visibleHexes,
             exploredHexes: this.game.exploredHexes
-        });
-        this.minimap.render(visibleUnits);
+        }, tokenPositions);
+        this.minimap.render(visibleUnits, tokenPositions);
     }
 }

@@ -1,5 +1,17 @@
 # 📜 Changelog
 
+## Alpha 0.3.2 (15. září 2026)
+
+- Klidné bojiště už nepřekresluje celou mapu a minimapu v každém animačním snímku; smyčka běží jen po dobu krátkého pohybu žetonu, projektilu nebo exploze.
+- Jednotlivé oddíly při pohybu krátce plynule dojedou na cílové pole. Krycí palba a navazující útok začnou až po vizuálním příjezdu; během pauzy animace stojí, omezený pohyb a zrychlený tah AI ji přeskočí.
+- Plzeňský výpad a bonus morálky se neohlásí, pokud u bran nezůstalo dost bojeschopných obránců včetně Viléma Švihovského. Název fáze už netvrdí, že výpad skutečně probíhá.
+- Nevyužité stojící oddíly s dostřelem 2+ a zbývajícím výstřelem na konci tahu připraví krycí palbu bez bonusu obrany; ostatní nevyužité oddíly se automaticky brání. Ruční `Bránit` střelce ochrání, ale spotřebuje jeho výstřel. Rozdíl je vysvětlený u rozkazu, v nápovědě a tutoriálu česky i anglicky; viditelný nepřátelský střelec ukazuje připravenost krycí palby.
+- Tlačítko `Bránit` se vejde i do úzkého panelu; text u rozkazu výslovně říká, že krycí palba není obrana a obě možnosti se nesčítají.
+- `Další mise` po vítězství otevře nejdřív její detail s rozkazy, prameny a historickým úvodem; nový boj začne až po kliknutí na `Zahájit bitvu`.
+- Tutoriál a pravidla boje nyní přesně uvádějí, kdo v boji zblízka protiútočí a že krycí palba střelce reaguje na pohyb nepřítele, nikoli na zásah.
+- Velitel AI se bez bezprostřední hrozby nestahuje jen proto, že má málo sousedních spojenců; z dobré podpůrné pozice se také bezúčelně nepřesouvá.
+- Regresní testy hlídají klidnou animační smyčku, stav plzeňské posádky, krycí palbu po konci tahu, ruční obranu a uložení postojů.
+
 ## Alpha 0.3.1 (14. září 2026)
 
 Opravy a úpravy ovládání podle prvního veřejného playtestu.

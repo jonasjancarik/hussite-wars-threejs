@@ -89,46 +89,99 @@ test('rychlostřelba stále dovoluje dva dokončené útoky, třetí odmítne', 
     assert.equal(await game.combatSystem.performAttack(attacker, defender), false);
 });
 
-test('konec tahu převede pouze skutečně nevyužité akce na obranu a další vlastní tah ji zruší', () => {
+test('konec tahu ponechá stojícím střelcům výstřel a ostatním nevyužitým oddílům zapne obranu', () => {
     const h = createHarness(), game = h.newGame();
     game.scheduleAI = () => {};
     const fresh = game.unitFactory.createUnit('CEPNICI', 1, 1);
     const moved = game.unitFactory.createUnit('CEPNICI', 2, 1); moved.hasMoved = true;
     const attacked = game.unitFactory.createUnit('CEPNICI', 3, 1); attacked.hasAttacked = true;
     const spent = game.unitFactory.createUnit('CEPNICI', 4, 1); spent.hasMoved = spent.hasAttacked = true;
-    const rapid = game.unitFactory.createUnit('LUCISTNICI', 5, 1); rapid.faction = 'hussites'; rapid.attackCount = 1;
+    const rapid = game.unitFactory.createUnit('LUCISTNICI', 5, 1); rapid.faction = 'hussites'; rapid.attackCount = 1; rapid.hasAttacked = true;
     const fort = game.unitFactory.createUnit('POLNI_OPEVNENI', 6, 1);
     const routing = game.unitFactory.createUnit('CEPNICI', 7, 1); routing.isRouting = true;
     const enemy = game.unitFactory.createUnit('KOPINICI', 8, 1);
-    game.units = [fresh, moved, attacked, spent, rapid, fort, routing, enemy];
+    const shooter = game.unitFactory.createUnit('RUCNICARI', 9, 1);
+    const movedShooter = game.unitFactory.createUnit('RUCNICARI', 10, 1); movedShooter.hasMoved = true;
+    const manualDefender = game.unitFactory.createUnit('RUCNICARI', 11, 1); manualDefender.defend();
+    const firedShooter = game.unitFactory.createUnit('RUCNICARI', 12, 1); firedShooter.hasAttacked = true;
+    const wagon = game.unitFactory.createUnit('VOZOVA_HRADBA', 13, 1);
+    game.units = [fresh, moved, attacked, spent, rapid, fort, routing, enemy, shooter, movedShooter, manualDefender, firedShooter, wagon];
 
     game.endTurn();
     assert.equal(game.currentFaction, 'crusaders');
-    for (const unit of [fresh, moved, attacked, rapid, fort]) {
+    for (const unit of [fresh, moved, attacked, movedShooter, manualDefender, firedShooter]) {
         assert.equal(unit.isDefending, true, unit.type);
         assert.equal(unit.hasMoved, true, unit.type);
         assert.equal(unit.hasAttacked, true, unit.type);
     }
+    for (const unit of [rapid, fort, shooter, wagon]) {
+        assert.equal(unit.isDefending, false, unit.type);
+        assert.equal(unit.hasMoved, false, unit.type);
+        assert.equal(game.isCoverFireReady(unit), true, unit.type);
+    }
     for (const unit of [spent, routing, enemy]) assert.equal(unit.isDefending, false, unit.type);
+    assert.equal(game.isCoverFireReady(manualDefender), false);
     assert.equal(game.log.filter(line => line.message.includes('gameLog.autoDefend')).length, 1);
-    assert.ok(game.log.some(line => line.message.includes('"count":5')));
+    assert.ok(game.log.some(line => line.message.includes('gameLog.autoDefend') && line.message.includes('"count":5')));
+    assert.ok(game.log.some(line => line.message.includes('gameLog.autoCoverFire') && line.message.includes('"count":4')));
 
     game.endTurn();
     assert.equal(game.currentFaction, 'hussites');
-    for (const unit of [fresh, moved, attacked, spent, rapid, fort, routing]) {
+    for (const unit of [fresh, moved, attacked, spent, rapid, fort, routing, shooter, movedShooter, manualDefender, firedShooter, wagon]) {
         assert.equal(unit.isDefending, false, unit.type);
     }
     game.destroy();
 });
 
+test('střelec po konci tahu reaguje na nepřátelský přesun bez bonusu obrany', async () => {
+    const h = createHarness(), game = h.newGame();
+    game.scheduleAI = () => {};
+    const shooter = game.unitFactory.createUnit('RUCNICARI', 5, 5);
+    const enemy = game.unitFactory.createUnit('TEZKY_RYTIR', 7, 5);
+    const reserve = game.unitFactory.createUnit('CEPNICI', 15, 9);
+    game.units = [shooter, enemy, reserve];
+    game.endTurn();
+    assert.equal(game.currentFaction, 'crusaders');
+    assert.equal(shooter.isDefending, false);
+    assert.equal(game.isCoverFireReady(shooter), true);
+    enemy.col = 6;
+    const health = enemy.health;
+    const reaction = game.triggerOverwatch(enemy);
+    await h.advance(600); await reaction;
+    assert.equal(shooter.attackCount, 1);
+    assert.ok(enemy.health < health);
+    assert.equal(game.isCoverFireReady(shooter), false);
+    game.destroy();
+});
+
 test('automatická obrana se ukládá a načítá jako ručně zvolený postoj', () => {
     const h = createHarness(), game = h.newGame();
-    const player = game.units.find(unit => unit.faction === 'hussites');
+    const player = game.units.find(unit => unit.faction === 'hussites' && unit.range < 2);
+    assert.ok(player, 'výchozí bitva obsahuje oddíl bez střelby na dálku');
     assert.ok(game.autoDefendUnusedUnits('hussites') > 0);
     assert.equal(player.isDefending, true);
     assert.equal(game.saveGame(), true);
     const restored = h.SaveGameSystem.load(h.document.getElementById('game-canvas'), game);
     assert.equal(restored.units.find(unit => unit.id === player.id).isDefending, true);
+    restored.destroy();
+});
+
+test('uložení zachová připravenou krycí palbu i vědomou obranu střelce', () => {
+    const h = createHarness(), game = h.newGame();
+    const ready = game.unitFactory.createUnit('RUCNICARI', 5, 5);
+    const defending = game.unitFactory.createUnit('RUCNICARI', 6, 5); defending.defend();
+    const melee = game.unitFactory.createUnit('CEPNICI', 7, 5);
+    const enemy = game.unitFactory.createUnit('TEZKY_RYTIR', 8, 5);
+    game.units = [ready, defending, melee, enemy];
+    game.autoDefendUnusedUnits('hussites');
+    assert.equal(game.saveGame(), true);
+    const restored = h.SaveGameSystem.load(h.document.getElementById('game-canvas'), game);
+    const byId = id => restored.units.find(unit => unit.id === id);
+    assert.equal(restored.isCoverFireReady(byId(ready.id)), true);
+    assert.equal(byId(ready.id).isDefending, false);
+    assert.equal(restored.isCoverFireReady(byId(defending.id)), false);
+    assert.equal(byId(defending.id).isDefending, true);
+    assert.equal(byId(melee.id).isDefending, true);
     restored.destroy();
 });
 

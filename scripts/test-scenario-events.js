@@ -108,6 +108,28 @@ test('podmínka prchajících jednotek respektuje volitelnou oblast', () => {
     assert.equal(h.ScenarioManager.checkEventCondition(game, condition), true);
 });
 
+test('Plzeň nehlásí výpad ani neposiluje morálku, když posádka už nemůže jednat', () => {
+    const h = createHarness();
+    const game = h.newGame('oblehani_plzne_1433');
+    const defenders = game.units.filter(unit => unit.faction === 'crusaders');
+    for (const unit of defenders.slice(2)) unit.isRouting = true;
+    refresh(game, 8);
+    assert.equal(game.currentPhase.name, 'Boj o brány');
+    assert.equal(game.processedEvents.has('phase3_evt0'), false);
+    assert.equal(game.view.notifications.some(event => event.text.includes('výpad z bran')), false);
+    refresh(game, 9);
+    assert.equal(game.processedEvents.has('phase3_evt1'), false);
+    assert.equal(game.view.notifications.some(event => event.text.includes('sebedůvěra')), false);
+    game.destroy();
+
+    const active = h.newGame('oblehani_plzne_1433');
+    refresh(active, 8);
+    assert.equal(active.processedEvents.has('phase3_evt0'), true);
+    refresh(active, 9);
+    assert.equal(active.processedEvents.has('phase3_evt1'), true);
+    active.destroy();
+});
+
 test('oba formáty posil přijdou ve správném kole, na správnou stranu a jen jednou', () => {
     const { game } = fixture();
     addReinforcements(game.currentScenario);

@@ -3153,17 +3153,27 @@ const Scenarios = {
             },
             {
                 id: 3,
-                name: "Výpad obránců",
+                name: "Boj o brány",
                 turnRange: [8,10],
-                description: "Plzeňané provádějí odvážný výpad!",
+                description: "Posádka se může pokusit o výpad, pokud má ještě sílu. Boj pokračuje u opevnění.",
                 events: [
-                    {"trigger":"turn_8","message":"Vilém Švihovský vede výpad z bran! Překvapení útočníků!"},
+                    {
+                        trigger: 'turn_8', triggerBefore: 'turn_8',
+                        message: 'Vilém Švihovský připravuje výpad z bran. Bojeschopní obránci se shromažďují u opevnění.',
+                        condition: { type: 'ready_units', faction: 'crusaders', minCount: 5,
+                            requiredType: 'VILEM_SVIHOVSKY',
+                            area: { minCol: 15, maxCol: 18, minRow: 4, maxRow: 8 } }
+                    },
                     {
                         trigger: "turn_9",
+                        triggerBefore: 'turn_9',
                         type: "morale_boost",
                         faction: "crusaders",
                         modifier: 15,
-                        text: "Obráncům roste sebedůvěra! Zajali husitského velblouda!"
+                        text: "Bojeschopným obráncům u bran roste sebedůvěra.",
+                        condition: { type: 'ready_units', faction: 'crusaders', minCount: 5,
+                            requiredType: 'VILEM_SVIHOVSKY',
+                            area: { minCol: 15, maxCol: 18, minRow: 4, maxRow: 8 } }
                     }
                 ]
             },
@@ -4432,6 +4442,16 @@ const ScenarioManager = {
     // Kontrola podmínky eventu
     checkEventCondition: function(game, condition) {
         switch (condition.type) {
+            case 'ready_units': {
+                const area = condition.area;
+                const ready = game.units.filter(u =>
+                    u.faction === condition.faction && u.health > 0 && !u.isRouting && !u.escaped &&
+                    (!area || (u.col >= area.minCol && u.col <= area.maxCol &&
+                               u.row >= area.minRow && u.row <= area.maxRow))
+                );
+                return ready.length >= (condition.minCount ?? 1) &&
+                    (!condition.requiredType || ready.some(u => u.type === condition.requiredType));
+            }
             case 'units_in_area': {
                 const area = condition.area;
                 const count = game.units.filter(u =>
