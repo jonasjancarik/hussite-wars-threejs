@@ -9,6 +9,7 @@ Starší plánovací oddíly níže zachováváme jako dobový záznam; nejsou a
 - Changelog má úplnou anglickou verzi propojenou s českým originálem.
 - Odkaz `Změny` v titulním menu otevírá český nebo anglický changelog podle právě zvoleného jazyka, včetně první návštěvy podle nastavení prohlížeče.
 - Anglický README odkazuje přímo na anglickou historii vydání; regresní testy hlídají oba jazykové směry i případ, kdy se překlad nepodaří načíst.
+- Obrazovka `O hře` už neopakuje copyrightovou řádku; autorství zůstává v příslušné sekci a standardní notice v souboru `LICENSE`.
 
 ## Alpha 0.3.2 (15. září 2026)
 

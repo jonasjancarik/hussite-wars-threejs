@@ -9,6 +9,7 @@ The older planning sections below are preserved as a record of earlier developme
 - The changelog now has a complete English version linked with the Czech original.
 - The **Changelog** link in the title menu opens the Czech or English file according to the currently selected language, including a first visit using the browser preference.
 - The English README links directly to the English release history. Regression tests cover both language directions and the case where a translation fails to load.
+- The **About** screen no longer repeats a copyright line. Authorship remains in its dedicated section and the standard notice remains in `LICENSE`.
 
 ## Alpha 0.3.2 (15 September 2026)
 

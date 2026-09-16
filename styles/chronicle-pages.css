@@ -471,8 +471,7 @@
     text-underline-offset: 3px;
 }
 
-.about-license,
-.about-copyright {
+.about-license {
     margin: 14px 0 0 !important;
     color: var(--field-ink-soft) !important;
     font-size: .82rem !important;

@@ -501,7 +501,6 @@ function getAboutContentMarkup() {
                     <p class="about-license">
                         <a href="${ABOUT_LINKS.license}" target="_blank" rel="noopener noreferrer">${text('license')}</a>
                     </p>
-                    <p class="about-copyright">Copyright © 2026 Josef Šlerka</p>
                 </section>
             </div>
 

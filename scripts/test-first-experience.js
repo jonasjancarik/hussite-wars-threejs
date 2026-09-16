@@ -414,7 +414,7 @@ test('obě obrazovky O hře vznikají z jediné lokalizované šablony a mají a
         assert.match(tab, /https:\/\/github\.com\/josefslerka\/husitske-valky\/issues/);
         assert.match(tab, /https:\/\/github\.com\/josefslerka\/husitske-valky\/blob\/main\/LICENSE/);
         assert.match(tab, /target="_blank" rel="noopener noreferrer"/);
-        assert.doesNotMatch(tab, /TBD|After publishing|Po publikování|mailto:/);
+        assert.doesNotMatch(tab, /TBD|After publishing|Po publikování|mailto:|Copyright|©\s*2026/);
         assert.equal(h.i18n.t('menu.support'), 'Buy Me a Coffee');
         assert.equal(h.i18n.t('menu.changelog'), language === 'cs' ? 'Změny' : 'Changelog');
     }

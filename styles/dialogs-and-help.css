@@ -1003,9 +1003,3 @@
     box-shadow: 0 6px 15px rgba(201, 162, 39, 0.5);
     text-decoration: none;
 }
-
-.about-copyright {
-    font-size: var(--font-size-sm);
-    color: var(--parchment-shadow);
-    margin-top: 10px;
-}
