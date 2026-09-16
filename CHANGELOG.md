@@ -1,5 +1,15 @@
 # 📜 Changelog
 
+Čeština · [English](CHANGELOG.en.md)
+
+Starší plánovací oddíly níže zachováváme jako dobový záznam; nejsou aktuálním plánem vydání. Aktuální stav a otevřené úkoly jsou v [TODO.md](TODO.md).
+
+## Alpha 0.3.3 (16. září 2026)
+
+- Changelog má úplnou anglickou verzi propojenou s českým originálem.
+- Odkaz `Změny` v titulním menu otevírá český nebo anglický changelog podle právě zvoleného jazyka, včetně první návštěvy podle nastavení prohlížeče.
+- Anglický README odkazuje přímo na anglickou historii vydání; regresní testy hlídají oba jazykové směry i případ, kdy se překlad nepodaří načíst.
+
 ## Alpha 0.3.2 (15. září 2026)
 
 - Klidné bojiště už nepřekresluje celou mapu a minimapu v každém animačním snímku; smyčka běží jen po dobu krátkého pohybu žetonu, projektilu nebo exploze.

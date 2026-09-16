@@ -239,6 +239,6 @@
 
 ---
 
-**Aktuální verze:** Alpha 0.3.2 (15.09.2026)
+**Aktuální verze:** Alpha 0.3.3 (16.09.2026)
 **Cílová verze pro release:** Alpha 1.0
 **Udržováno od:** 04.02.2026

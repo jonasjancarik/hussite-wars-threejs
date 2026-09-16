@@ -8,6 +8,8 @@ Při startu má přednost platná uložená volba `gameLanguage`. Bez ní hra ve
 
 Verzi zobrazovanou v menu i obou obrazovkách O hře určuje společný klíč `menu.version`. Obsah obou obrazovek O hře generuje jediná šablona z klíčů `about.*`; v HTML nejsou její kopie. Při změně verze aktualizujte oba locale a stav vývoje v README; jejich shodu hlídá regresní test.
 
+Odkaz `Změny` / `Changelog` v titulním menu vede podle aktivního jazyka na `CHANGELOG.md` nebo `CHANGELOG.en.md`. Přepíná se při prvním načtení i při změně jazyka; aktualizaci URL vlastní `updateLanguageToggle()` v `js/ui/main.js`.
+
 ## 🏗️ Struktura
 
 ```

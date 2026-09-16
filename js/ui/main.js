@@ -315,13 +315,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Tlačítko přepínání jazyka v hlavním menu
     const languageToggleBtn = document.getElementById('btn-language-toggle');
     const languageTarget = document.getElementById('language-target');
+    const changelogLink = document.getElementById('menu-changelog');
 
     // Značka říká, do kterého jazyka tlačítko přepne, ne který právě čteme.
     function updateLanguageToggle() {
-        languageTarget.textContent = i18n.getCurrentLanguage() === 'cs' ? 'EN' : 'CS';
+        const currentLanguage = i18n.getCurrentLanguage();
+        languageTarget.textContent = currentLanguage === 'cs' ? 'EN' : 'CS';
         const label = i18n.t('menu.switchLanguage');
         languageToggleBtn.setAttribute('title', label);
         languageToggleBtn.setAttribute('aria-label', label);
+        // Stejný jazyk jako menu, včetně první návštěvy dle prohlížeče.
+        if (changelogLink) {
+            const file = currentLanguage === 'en' ? 'CHANGELOG.en.md' : 'CHANGELOG.md';
+            changelogLink.setAttribute('href', `https://github.com/josefslerka/husitske-valky/blob/main/${file}`);
+        }
     }
 
     languageToggleBtn.addEventListener('click', async () => {

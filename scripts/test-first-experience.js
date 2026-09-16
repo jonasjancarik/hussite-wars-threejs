@@ -344,10 +344,11 @@ test('titulní menu zachovává všechny akce, pořadí pokračování a dekorat
     assert.match(menu, /<img[^>]*menu-woodcut\.svg[^>]*alt=""[^>]*aria-hidden="true"/);
 });
 
-test('přepínač jazyka ukazuje a přístupně pojmenovává cíl v obou směrech', async () => {
+test('přepínač jazyka ukazuje cíl a vede na changelog v obou směrech', async () => {
     const h = await menuHarness();
     const button = h.document.getElementById('btn-language-toggle');
     const target = h.document.getElementById('language-target');
+    const changelog = h.document.getElementById('menu-changelog');
     for (const [language, next, label] of [
         ['cs', 'EN', 'Přepnout do angličtiny'],
         ['en', 'CS', 'Switch to Czech'],
@@ -357,9 +358,17 @@ test('přepínač jazyka ukazuje a přístupně pojmenovává cíl v obou směre
         assert.equal(target.textContent, next);
         assert.equal(button.getAttribute('aria-label'), label);
         assert.equal(button.getAttribute('title'), label);
+        assert.equal(changelog.getAttribute('href'),
+            `https://github.com/josefslerka/husitske-valky/blob/main/${language === 'en' ? 'CHANGELOG.en.md' : 'CHANGELOG.md'}`);
         button.dispatchEvent(new Event('click'));
         await new Promise(setImmediate);
     }
+});
+
+test('anglický prohlížeč dostane odkaz na anglický changelog už při načtení menu', async () => {
+    const h = await menuHarness('en');
+    assert.equal(h.document.getElementById('menu-changelog').getAttribute('href'),
+        'https://github.com/josefslerka/husitske-valky/blob/main/CHANGELOG.en.md');
 });
 
 test('neúspěšné načtení angličtiny nezmění jazyk, cíl tlačítka ani uloženou volbu', async () => {
@@ -371,6 +380,8 @@ test('neúspěšné načtení angličtiny nezmění jazyk, cíl tlačítka ani u
     assert.equal(h.i18n.getCurrentLanguage(), 'cs');
     assert.equal(h.document.getElementById('language-target').textContent, 'EN');
     assert.equal(h.document.getElementById('btn-language-toggle').getAttribute('aria-label'), 'Přepnout do angličtiny');
+    assert.equal(h.document.getElementById('menu-changelog').getAttribute('href'),
+        'https://github.com/josefslerka/husitske-valky/blob/main/CHANGELOG.md');
     assert.equal(h.storage.get('gameLanguage'), 'cs');
 });
 
@@ -387,7 +398,7 @@ test('obě obrazovky O hře vznikají z jediné lokalizované šablony a mají a
     assert.match(html, /<div id="about-content"><\/div>/);
     assert.doesNotMatch(html, /Beta Testing|Po publikování na GitHub|mailto:/);
     const menu = html.slice(html.indexOf('<div id="main-menu"'), html.indexOf('<div id="game-container"'));
-    assert.match(menu, /<a href="https:\/\/github\.com\/josefslerka\/husitske-valky\/blob\/main\/CHANGELOG\.md" target="_blank" rel="noopener noreferrer" class="changelog-link" data-i18n="menu\.changelog">Změny<\/a>/);
+    assert.match(menu, /<a id="menu-changelog" href="https:\/\/github\.com\/josefslerka\/husitske-valky\/blob\/main\/CHANGELOG\.md" target="_blank" rel="noopener noreferrer" class="changelog-link" data-i18n="menu\.changelog">Změny<\/a>/);
     assert.match(menu, /<a href="https:\/\/buymeacoffee.com\/josefslerka" target="_blank" rel="noopener noreferrer" class="coffee-button">\s*<span aria-hidden="true">☕<\/span>\s*<span data-i18n="menu.support">Buy Me a Coffee<\/span>\s*<\/a>/);
     assert.doesNotMatch(menu, /class="support-link"/);
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/i18n/encyclopediaRenderer.js'), 'utf8'), h.context);
