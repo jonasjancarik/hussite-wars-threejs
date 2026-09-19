@@ -37,6 +37,7 @@ class HexGrid {
         this.attackableHexes = [];
         this.escapeZoneHexes = [];
         this.escapeZoneLabel = '';
+        this.escapeZoneKind = 'escape';
         this.mapLabels = [];
 
         // Animace
@@ -417,9 +418,10 @@ class HexGrid {
         this.attackableHexes = hexes || [];
     }
 
-    setEscapeZone(hexes, label = '') {
+    setEscapeZone(hexes, label = '', kind = 'escape') {
         this.escapeZoneHexes = hexes || [];
         this.escapeZoneLabel = label || '';
+        this.escapeZoneKind = kind || 'escape';
     }
 
     clearHighlights() {

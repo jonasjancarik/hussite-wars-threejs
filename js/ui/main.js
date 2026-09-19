@@ -882,6 +882,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 secondaryObjectives.appendChild(div);
             }
         }
+        if (game?.currentScenario === scenario) game.view?.panels?.updateObjectiveProgress();
     }
 
     // Tlačítko Cíle

@@ -174,7 +174,7 @@
     "switchLanguage": "Přepnout do angličtiny",
     "support": "Buy Me a Coffee",
     "changelog": "Změny",
-    "version": "Alpha 0.3.4 · 19.09.2026"
+    "version": "Alpha 0.3.5 · 19.09.2026"
   },
   "about": {
     "title": "O hře",
@@ -239,6 +239,7 @@
     "roundLabel": "Kolo:",
     "overview": "Přehled",
     "objectivesTitle": "Cíle mise",
+    "captureProgress": "Obsazeno {captured}/{required}",
     "endTurn": "Ukončit tah",
     "endTurnHint": "Nevyužité oddíly se automaticky brání (−30 % příchozího poškození). Stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou, bez bonusu obrany.",
     "unit": "Jednotka",
@@ -2411,7 +2412,8 @@
         "crusaders": "Husité chystají generální útok! Vilém Švihovský z Rýzmberka vede obranu. Udrž hradby za každou cenu!"
       },
       "objectives": {
-        "primary": "Obsaďte alespoň 3 pozice uvnitř městských hradeb",
+        "primary": "Obsaďte 3 libovolná pole Plzně",
+        "zoneLabel": "CÍL: PLZEŇ",
         "secondary": [
           "Zničte 70% obránců",
           "Zabijte Viléma Švihovského"

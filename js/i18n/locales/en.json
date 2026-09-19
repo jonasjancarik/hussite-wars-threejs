@@ -174,7 +174,7 @@
     "switchLanguage": "Switch to Czech",
     "support": "Buy Me a Coffee",
     "changelog": "Changelog",
-    "version": "Alpha 0.3.4 · 19.09.2026"
+    "version": "Alpha 0.3.5 · 19.09.2026"
   },
   "about": {
     "title": "About",
@@ -239,6 +239,7 @@
     "roundLabel": "Round:",
     "overview": "Overview",
     "objectivesTitle": "Mission Objectives",
+    "captureProgress": "Occupied {captured}/{required}",
     "endTurn": "End Turn",
     "endTurnHint": "Unused units defend automatically (−30% incoming damage). Stationary units with range 2 or more and a shot left prepare covering fire instead, without the defense bonus.",
     "unit": "Unit",
@@ -2213,7 +2214,8 @@
         "crusaders": "Hussites prepare general assault! Vilém Švihovský of Rýzmburk leads defense. Hold walls at all costs!"
       },
       "objectives": {
-        "primary": "Occupy at least 3 positions inside city walls",
+        "primary": "Occupy any 3 tiles in Plzeň",
+        "zoneLabel": "OBJECTIVE: PLZEŇ",
         "secondary": [
           "Destroy 70% of defenders",
           "Kill Vilém Švihovský"

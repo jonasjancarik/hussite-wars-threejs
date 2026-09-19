@@ -56,6 +56,8 @@ class BattlePanels {
             ? `${i18n.t('game.roundLabel')} ${displayedTurn}/${maxT}`
             : `${i18n.t('game.roundLabel')} ${displayedTurn}`;
 
+        this.updateObjectiveProgress();
+
         // Přehled armád
         this.updateArmyOverview();
 
@@ -64,6 +66,26 @@ class BattlePanels {
 
         // Aktualizace pulsujícího efektu tlačítka Ukončit tah
         this.updateEndTurnButton();
+    }
+
+    updateObjectiveProgress() {
+        const primary = this.game.currentScenario?.victoryConditions?.primary;
+        if (!primary?.description) return;
+        let text = primary.description;
+        if (primary.type === 'capture_position') {
+            const playerFaction = this.game.currentScenario.playerFaction || 'hussites';
+            const positions = primary.positions || [];
+            const required = primary.count || positions.length;
+            const captured = positions.filter(([col, row]) => {
+                const unit = this.game.getUnitAt(col, row);
+                return unit && unit.faction === playerFaction && unit.health > 0;
+            }).length;
+            text += ` · ${i18n.t('game.captureProgress', { captured, required })}`;
+        }
+        for (const id of ['primary-objective', 'objective-hud-text']) {
+            const element = document.getElementById(id);
+            if (element && element.textContent !== text) element.textContent = text;
+        }
     }
 
     updateEndTurnButton() {

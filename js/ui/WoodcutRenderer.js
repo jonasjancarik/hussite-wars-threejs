@@ -247,12 +247,18 @@ class WoodcutRenderer {
     highlight(hex, kind) {
         const ctx = this.ctx, p = WoodcutRenderer.palette, { x, y } = this.grid.hexToPixel(hex.col, hex.row);
         ctx.save();
-        const color = kind === 'attack' ? p.danger : kind === 'selected' ? p.ink : p.move;
+        const color = kind === 'attack' ? p.danger
+            : kind === 'selected' ? p.ink
+            : kind === 'objective' ? p.gold
+            : p.move;
         this.hexPath(hex.col, hex.row, 3);
-        ctx.fillStyle = kind === 'attack' ? 'rgba(152,46,38,.15)' : 'rgba(242,232,211,.22)'; ctx.fill();
+        ctx.fillStyle = kind === 'attack' ? 'rgba(152,46,38,.15)'
+            : kind === 'objective' ? 'rgba(183,137,55,.16)'
+            : 'rgba(242,232,211,.22)'; ctx.fill();
         ctx.strokeStyle = p.light; ctx.lineWidth = 5; ctx.stroke();
         ctx.strokeStyle = color; ctx.lineWidth = 2;
         if (kind === 'move') ctx.setLineDash([4, 5]);
+        if (kind === 'objective') ctx.setLineDash([3, 4]);
         ctx.stroke(); ctx.setLineDash([]);
         if (kind === 'selected') { this.hexPath(hex.col, hex.row, 7); ctx.lineWidth = 1; ctx.stroke(); }
         if (kind === 'move') { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill(); }
@@ -331,7 +337,7 @@ class WoodcutRenderer {
         const ctx = this.ctx, grid = this.grid, p = WoodcutRenderer.palette;
         ctx.save(); ctx.fillStyle = p.paper; ctx.fillRect(0, 0, grid.canvas.width, grid.canvas.height);
         this.drawTerrain(fog);
-        for (const hex of grid.escapeZoneHexes) this.highlight(hex, 'escape');
+        for (const hex of grid.escapeZoneHexes) this.highlight(hex, grid.escapeZoneKind || 'escape');
         for (const hex of grid.highlightedHexes) this.highlight(hex, 'move');
         for (const hex of grid.attackableHexes) this.highlight(hex, 'attack');
         if (grid.selectedHex) this.highlight(grid.selectedHex, 'selected');
@@ -344,7 +350,8 @@ class WoodcutRenderer {
             const y = points.reduce((sum, point) => sum + point.y, 0) / points.length - grid.hexSize;
             ctx.font = `bold ${Math.round(grid.hexSize * .38)}px Georgia, serif`; ctx.textAlign = 'center';
             ctx.strokeStyle = p.light; ctx.lineWidth = 4; ctx.strokeText(grid.escapeZoneLabel, x, y);
-            ctx.fillStyle = p.move; ctx.fillText(grid.escapeZoneLabel, x, y);
+            ctx.fillStyle = grid.escapeZoneKind === 'objective' ? p.gold : p.move;
+            ctx.fillText(grid.escapeZoneLabel, x, y);
         }
         grid.renderAnimations(); ctx.restore();
     }

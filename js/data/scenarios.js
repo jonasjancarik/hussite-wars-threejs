@@ -1,4 +1,16 @@
 
+// Jediný zdroj pravdy pro herní plochu Plzně. Městský terén, popisek mapy
+// i vítězná zóna musí obsahovat stejné hexy, jinak hráč vidí jiný cíl, než
+// jaký ve skutečnosti vyhodnocují pravidla.
+const PLZEN_CITY_HEXES = [
+    [16,4], [17,4], [18,4], [19,4],
+    [16,5], [17,5], [18,5], [19,5],
+    [16,6], [17,6], [18,6], [19,6],
+    [16,7], [17,7], [18,7], [19,7],
+    [16,8], [17,8], [18,8], [19,8]
+];
+const plzenCityHexes = () => PLZEN_CITY_HEXES.map(([col, row]) => [col, row]);
+
 const Scenarios = {
     // ==========================================
     // BITVA 0: ŽIVOHOŠŤ (4. listopadu 1419) - TUTORIÁL
@@ -3015,13 +3027,7 @@ const Scenarios = {
 
         terrain: {
             // Město Plzeň (východ mapy)
-            town: [
-                [16,4], [17,4], [18,4], [19,4],
-                [16,5], [17,5], [18,5], [19,5],
-                [16,6], [17,6], [18,6], [19,6],
-                [16,7], [17,7], [18,7], [19,7],
-                [16,8], [17,8], [18,8], [19,8]
-            ],
+            town: plzenCityHexes(),
             // Kostel sv. Bartoloměje (centrum města)
             church: [
                 [17,6], [18,6]
@@ -3060,7 +3066,7 @@ const Scenarios = {
         },
 
         mapLabels: [
-            { text: 'Plzeň', hexes: [[17,5], [18,5], [17,6], [18,6], [17,7], [18,7]], offset: [0, -3.4] },
+            { text: 'Plzeň', hexes: plzenCityHexes(), offset: [0, -3.4] },
             { text: 'Sv. Bartoloměj', hexes: [[17,6], [18,6]], offset: [2.5, 2.2] },
             { text: 'Řeka Mže', i18nKey: 'mzeRiver', hexes: [[16,10], [17,10], [18,10]] },
             { text: 'Husitský tábor', i18nKey: 'hussiteCamp', hexes: [[0,6], [1,6], [0,7], [1,7]] },
@@ -3210,9 +3216,10 @@ const Scenarios = {
         victoryConditions: {
             primary: {
                 type: 'capture_position',
-                positions: [[16,5], [16,6], [16,7], [17,5], [17,6], [17,7]],
+                positions: plzenCityHexes(),
                 count: 3,
-                description: 'Obsaďte alespoň 3 pozice uvnitř městských hradeb'
+                description: 'Obsaďte 3 libovolná pole Plzně',
+                zoneLabel: 'CÍL: PLZEŇ'
             },
             secondary: [
                 { type: 'destroy_percent', percent: 70, description: 'Zničte 70% obránců' },

@@ -73,6 +73,35 @@ test('vykreslení panelů, mapy a tooltipu nemění herní stav', () => {
     game.destroy();
 });
 
+test('Plzeň viditelně označí celou cílovou zónu a průběžně počítá obsazení', async () => {
+    const h = await createLocalizedHarness('cs', { browserView: true });
+    const game = h.newGame('oblehani_plzne_1433');
+
+    assert.equal(game.hexGrid.escapeZoneKind, 'objective');
+    assert.equal(game.hexGrid.escapeZoneHexes.length, 20);
+    assert.equal(game.hexGrid.escapeZoneLabel, 'CÍL: PLZEŇ');
+    assert.match(h.document.getElementById('objective-hud-text').textContent, /Obsazeno 0\/3/);
+
+    const unit = game.units.find(candidate => candidate.faction === 'hussites');
+    unit.col = 18;
+    unit.row = 4;
+    game.view.render();
+    assert.match(h.document.getElementById('objective-hud-text').textContent, /Obsazeno 1\/3/);
+    game.destroy();
+
+    const en = await createLocalizedHarness('en', { browserView: true });
+    const scenario = en.getLocalizedScenario('oblehani_plzne_1433', en.Scenarios.oblehani_plzne_1433);
+    const englishGame = new en.Game(
+        new en.HexGrid(en.document.getElementById('game-canvas'), scenario.mapSize.width, scenario.mapSize.height, 40),
+        { viewFactory: en.viewFactory }
+    );
+    englishGame.fogOfWar = false;
+    englishGame.initGameWithScenario(structuredClone(scenario));
+    assert.equal(englishGame.hexGrid.escapeZoneLabel, 'OBJECTIVE: PLZEŇ');
+    assert.match(en.document.getElementById('objective-hud-text').textContent, /Occupied 0\/3/);
+    englishGame.destroy();
+});
+
 test('klidná mapa neplánuje snímky; RAF běží jen do konce projektilu', () => {
     const h = createHarness({ browserView: true });
     const frames = new Map();

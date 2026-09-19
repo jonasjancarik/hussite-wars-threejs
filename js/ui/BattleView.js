@@ -64,15 +64,20 @@ class BattleView {
     }
 
     configureScenario(scenario) {
-        // Nastavení zvýrazněné cílové zóny (escape zóna nebo breakthrough pozice)
+        // Nastavení zvýrazněné cílové zóny (únik, průlom nebo obsazení pozic)
         // Game už převedl souřadnice vítězných podmínek na mapu.
         const _primary = scenario.victoryConditions && scenario.victoryConditions.primary;
         if (_primary) {
             const zoneHexes = _primary.type === 'escape' ? (_primary.escapeZone || [])
-                            : _primary.type === 'breakthrough' ? (_primary.positions || [])
+                            : ['breakthrough', 'capture_position'].includes(_primary.type) ? (_primary.positions || [])
                             : [];
             if (zoneHexes.length > 0) {
-                this.game.hexGrid.setEscapeZone(zoneHexes.map(([col, row]) => ({ col, row })), _primary.zoneLabel || '');
+                const zoneKind = _primary.type === 'capture_position' ? 'objective' : 'escape';
+                this.game.hexGrid.setEscapeZone(
+                    zoneHexes.map(([col, row]) => ({ col, row })),
+                    _primary.zoneLabel || '',
+                    zoneKind
+                );
             }
         }
 
@@ -510,6 +515,7 @@ class BattleView {
     }
 
     render() {
+        this.panels.updateObjectiveProgress();
         const aliveUnits = this.game.units.filter(u => u.health > 0);
 
         // Filtrování viditelných jednotek pro render

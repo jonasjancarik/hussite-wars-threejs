@@ -273,6 +273,20 @@ test('plzeňská bombarda začíná v dostřelu obránců', () => {
     game.destroy();
 });
 
+test('Plzeň má stejnou městskou, pojmenovanou a vítěznou zónu', () => {
+    const { Scenarios } = loadScenarios();
+    const scenario = Scenarios.oblehani_plzne_1433;
+    const normalize = positions => Array.from(positions, ([col, row]) => `${col},${row}`).sort();
+    const town = normalize(scenario.terrain.town);
+    const label = normalize(scenario.mapLabels.find(item => item.text === 'Plzeň').hexes);
+    const objective = normalize(scenario.victoryConditions.primary.positions);
+
+    assert.equal(town.length, 20);
+    assert.deepEqual(label, town);
+    assert.deepEqual(objective, town);
+    assert.equal(scenario.victoryConditions.primary.count, 3);
+});
+
 test('velká armáda a přeskočení zkrátí prezentační prodlevy AI', () => {
     assert.strictEqual(AI.getActionDelay({ fastForwardAI: false }, { type: 'move' }, 20), 500);
     assert.strictEqual(AI.getActionDelay({ fastForwardAI: false }, { type: 'move' }, 48), 250);

@@ -4,6 +4,13 @@
 
 Starší plánovací oddíly níže zachováváme jako dobový záznam; nejsou aktuálním plánem vydání. Aktuální stav a otevřené úkoly jsou v [TODO.md](TODO.md).
 
+## Alpha 0.3.5 (19. září 2026)
+
+- Cíl obléhání Plzně nyní počítá všech dvacet polí města: vítězství přinesou libovolná tři obsazená městská pole, ne skrytá šestice souřadnic odlišná od popisku mapy.
+- Celá plzeňská cílová zóna je na mapě označena a záhlaví cíle průběžně ukazuje `Obsazeno 0/3`; česká i anglická verze používají stejné pravidlo a srozumitelný text.
+- Regresní testy hlídají shodu městského terénu, názvu Plzně a vítězné zóny i skutečné vítězství na dříve nepočítaných polích.
+- `TODO.md` je zkrácený na skutečně otevřené priority a odložené náměty; dokončenou práci zachovává changelog.
+
 ## Alpha 0.3.4 (19. září 2026)
 
 - Spodní herní menu i pauza nabízejí `Zkusit znovu`; restart současný postup zahodí až po potvrzení a zrušený dialog bezpečně obnoví předchozí stav hry.

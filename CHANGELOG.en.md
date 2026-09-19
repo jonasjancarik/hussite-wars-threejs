@@ -4,6 +4,13 @@
 
 The older planning sections below are preserved as a record of earlier development; they are not the current release plan. See [TODO.md](TODO.md) for the current state and open tasks (currently maintained in Czech).
 
+## Alpha 0.3.5 (19 September 2026)
+
+- The Siege of Plzeň objective now counts all twenty city tiles: any three occupied city tiles bring victory, rather than a hidden set of six coordinates that differed from the map label.
+- The full Plzeň objective zone is marked on the map and the objective header shows live progress such as `Occupied 0/3`; Czech and English now describe the same rule clearly.
+- Regression tests keep the city terrain, Plzeň label and victory zone aligned and verify an actual victory on tiles that were previously ignored.
+- `TODO.md` has been reduced to genuinely open priorities and deferred ideas; completed work remains in the changelog.
+
 ## Alpha 0.3.4 (19 September 2026)
 
 - Both the bottom battle menu and the pause screen now offer **Try Again**. Restarting discards current progress only after confirmation, while cancelling safely restores the previous game state.

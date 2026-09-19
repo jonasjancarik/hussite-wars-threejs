@@ -41,6 +41,24 @@ test('Sion může před limitem prohrát smrtí velitele', () => {
     assert.ok(game.log.some(line => line.message.includes('commanderFallen')));
 });
 
+test('Plzeň vyhrají tři libovolná obsazená pole města', () => {
+    const h = createHarness(), game = h.newGame('oblehani_plzne_1433');
+    const hussites = game.units.filter(unit => unit.faction === 'hussites');
+    // Pravý a horní okraj města dříve nebyl ve skryté šestici vítězných polí.
+    [[18,4], [19,4]].forEach(([col, row], index) => {
+        hussites[index].col = col;
+        hussites[index].row = row;
+    });
+    game.victoryConditionsSystem.checkMidGameVictory();
+    assert.equal(game.gameState, 'playing');
+
+    hussites[2].col = 19;
+    hussites[2].row = 8;
+    game.victoryConditionsSystem.checkMidGameVictory();
+    assert.equal(game.gameState, 'victory');
+    assert.ok(game.log.some(line => line.message.includes('victoryCapturePosition')));
+});
+
 test('dvojklik spotřebuje jediný útok a během animace nelze ukončit tah', async () => {
     const h = createHarness(), { game, attacker, defender } = duel(h);
     game.selectedUnit = attacker;
