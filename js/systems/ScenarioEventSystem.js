@@ -52,6 +52,16 @@ class ScenarioEventSystem {
                 outcome.victoryVariant = 'fieldArmyEliminated';
             }
         }
+        if (isVictory && scenario.id === 'kutna_hora_1421' && debriefing.victoryVariants) {
+            const primary = scenario.victoryConditions?.primary;
+            const playerFaction = scenario.playerFaction || 'hussites';
+            const enemyFaction = playerFaction === 'hussites' ? 'crusaders' : 'hussites';
+            const historicalVictory = (this.game.escapedUnits || 0) >= (primary?.unitsRequired || 5);
+            if (!historicalVictory &&
+                this.game.victoryConditionsSystem?.fieldArmyAlternativeAchieved(primary, playerFaction, enemyFaction)) {
+                outcome.victoryVariant = 'fieldArmyEliminated';
+            }
+        }
         return outcome;
     }
 

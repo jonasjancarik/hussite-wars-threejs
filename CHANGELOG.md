@@ -4,6 +4,15 @@
 
 Starší plánovací oddíly níže zachováváme jako dobový záznam; nejsou aktuálním plánem vydání. Aktuální stav a otevřené úkoly jsou v [TODO.md](TODO.md).
 
+## Alpha 0.3.4 (19. září 2026)
+
+- Spodní herní menu i pauza nabízejí `Zkusit znovu`; restart současný postup zahodí až po potvrzení a zrušený dialog bezpečně obnoví předchozí stav hry.
+- Kutná Hora zachovává historický ústup jako hlavní cíl, ale na konci uzná i alternativní vítězství, pokud z nepřátelské polní armády zůstanou pouze velitelé a Žižka přežije; tato odchylka od historie má vlastní závěr.
+- Plzeňská bombarda začíná v předsunuté baterii, odkud má i s nulovým pohybem obránce ihned v dostřelu.
+- Křižácký zadní voj u Tachova a Domažlic nejprve několik kol klade odpor a teprve potom ustupuje; u Tachova vede ústup ke scénářovému únikovému bodu směrem k Bavorsku.
+- Velitelé řízení AI neutíkají jen kvůli nízké morálce a během jednoho tahu se přesunou nejvýše o tři hexy, takže nepřebíhají přes polovinu bojiště.
+- Regresní testy hlídají postavení bombard, počáteční odpor zadního voje, směr ústupu i chování velitelů.
+
 ## Alpha 0.3.3 (16. září 2026)
 
 - Changelog má úplnou anglickou verzi propojenou s českým originálem.

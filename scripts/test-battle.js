@@ -209,6 +209,51 @@ test('Sudoměř uzná draze zaplacené vítězství, jen když z protivníka zů
     assert.match(lost.view.result.stats.reason, /defeatSurvival/);
 });
 
+test('Kutná Hora na konci uzná rozbití polní armády, jen pokud Žižka přežije', () => {
+    const h = createHarness();
+    const prepare = () => {
+        const game = h.newGame('kutna_hora_1421');
+        game.units.filter(unit => unit.faction === 'crusaders' && !unit.isCommander())
+            .forEach(unit => { unit.health = 0; });
+        return game;
+    };
+
+    const historical = h.newGame('kutna_hora_1421');
+    historical.escapedUnits = 5;
+    historical.turnNumber = 4;
+    historical.victoryConditionsSystem.checkScenarioVictoryConditions();
+    assert.equal(historical.view.result.isVictory, true, 'historický ústup zůstává hlavní okamžitou cestou');
+    assert.match(historical.view.result.stats.reason, /victoryEscape/);
+    historical.destroy();
+
+    const early = prepare();
+    early.turnNumber = 8;
+    early.victoryConditionsSystem.checkScenarioVictoryConditions();
+    assert.equal(early.gameState, 'playing', 'alternativa se nesmí vyhodnotit před koncem bitvy');
+    early.destroy();
+
+    const won = prepare();
+    won.turnNumber = 9;
+    won.victoryConditionsSystem.checkScenarioVictoryConditions();
+    assert.equal(won.view.result.isVictory, true);
+    assert.match(won.view.result.stats.reason, /victoryAlternativeFieldArmy/);
+    won.destroy();
+
+    const fieldUnitSurvives = prepare();
+    fieldUnitSurvives.units.find(unit => unit.faction === 'crusaders' && !unit.isCommander()).health = 1;
+    fieldUnitSurvives.turnNumber = 9;
+    fieldUnitSurvives.victoryConditionsSystem.checkScenarioVictoryConditions();
+    assert.equal(fieldUnitSurvives.view.result.isVictory, false);
+    fieldUnitSurvives.destroy();
+
+    const zizkaFell = prepare();
+    zizkaFell.units.find(unit => unit.type === 'JAN_ZIZKA').health = 0;
+    zizkaFell.turnNumber = 9;
+    zizkaFell.victoryConditionsSystem.checkScenarioVictoryConditions();
+    assert.equal(zizkaFell.view.result.isVictory, false);
+    zizkaFell.destroy();
+});
+
 test('Nekmíř vede Hynka do boje a jeho bonus nevyžaduje smrt Švamberka', () => {
     const h = createHarness(), game = h.newGame('nekmir_1419');
     game.view.notifications = [];

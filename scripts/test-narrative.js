@@ -137,7 +137,7 @@ test('narativní úprava Lipan nemění kola událostí, léčku AI ani jednotky
 });
 
 test('přepnutí CS → EN → CS obnoví všechny varianty, ale nezmění herní stav', async () => {
-    for (const id of ['zivohost_1419', 'sudomere_1420', 'lipany_1434']) {
+    for (const id of ['zivohost_1419', 'sudomere_1420', 'kutna_hora_1421', 'lipany_1434']) {
         const { h, game } = await fixture(id);
         h.context.window.game = game;
         const before = unitState(game), original = game.scenarioEventSystem.getDebriefing(true);
@@ -162,6 +162,23 @@ for (const lang of ['cs', 'en']) {
 
         hussites.forEach(unit => { unit.health = 1; });
         assert.equal(game.scenarioEventSystem.getDebriefing(true), game.currentScenario.debriefing.victory);
+    });
+
+    test(`${lang}: alternativní vítězství u Kutné Hory má vlastní závěr i záznam v Kronice`, async () => {
+        const { h, game } = await fixture('kutna_hora_1421', lang);
+        assert.match(game.currentScenario.victoryConditions.primary.description,
+            lang === 'cs' ? /Alternativa/ : /Alternative/);
+        game.units.filter(unit => unit.faction === 'crusaders' && !unit.isCommander())
+            .forEach(unit => { unit.health = 0; });
+        game.turnNumber = 9;
+        game.victoryConditionsSystem.checkScenarioVictoryConditions();
+        const expected = game.currentScenario.debriefing.victoryVariants.fieldArmyEliminated;
+        assert.equal(game.view.result.isVictory, true);
+        assert.equal(game.view.result.message, expected);
+        assert.match(expected, lang === 'cs' ? /odchyluje/ : /diverges/);
+        const entry = h.ChronicleSystem.getEntries()[0];
+        assert.equal(entry.narrative.victoryVariant, 'fieldArmyEliminated');
+        assert.equal(h.ChronicleSystem.getPersonalEpilogue(entry), expected);
     });
 }
 

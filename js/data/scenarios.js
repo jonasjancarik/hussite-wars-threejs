@@ -1661,7 +1661,8 @@ const Scenarios = {
                 unitsRequired: 5,
                 zoneLabel: "↖ Kolín",
                 zoneLabelKey: "towardKolin",
-                description: "Probijte se z obklíčení ke Kolínu (alespoň 5 jednotek)"
+                alternative: { type: 'eliminate_field_army', survivingCommander: 'JAN_ZIZKA' },
+                description: "Probijte se z obklíčení ke Kolínu (alespoň 5 jednotek). Alternativa: do konce bitvy rozbijte nepřátelskou polní armádu a zachraňte Žižku."
             },
             secondary: [
                 {"type":"survive_commander","description":"Žižka musí přežít"},
@@ -1689,7 +1690,10 @@ const Scenarios = {
 
         debriefing: {
             victory: "Průlom se podařil! Zachráněné oddíly se vydávají ke Kolínu. Historicky Žižka unikl z obklíčení a na začátku ledna 1422 se vrátil do protiútoku. Počty zachráněných vozů v této partii najdete ve výsledcích, nikoli v kronikářských součtech celého tažení.",
-            defeat: "Průlom selhal. Vozová hradba byla rozbita a Žižkova armáda zničena. Kutná Hora zůstává v rukou nepřítele a husitské hnutí přichází o svého nejschopnějšího vojevůdce."
+            defeat: "Průlom selhal. Vozová hradba byla rozbita a Žižkova armáda zničena. Kutná Hora zůstává v rukou nepřítele a husitské hnutí přichází o svého nejschopnějšího vojevůdce.",
+            victoryVariants: {
+                fieldArmyEliminated: "Místo historického ústupu ke Kolínu jste na bojišti rozdrtili Zikmundovu polní armádu. Žižka přežil a důvod k průlomu zanikl. Je to alternativní vítězství: výsledek se od doloženého průběhu bitvy vědomě odchyluje."
+            }
         },
 
         maxTurns: 8,
@@ -2538,6 +2542,9 @@ const Scenarios = {
                 description: 'Husité postupují od Stříbra. Křižáci vysílají jízdu, aby zpomalila postup.',
                 events: [
                     { trigger: 'turn_1', message: 'Husitské vojsko se blíží od Stříbra! 16 000 pěších a 1500 jezdců pod Prokopem Holým.' },
+                    // Zadní voj první kola kryje ústup. Hráč tak skutečně
+                    // narazí na odpor, ne pouze na oddíly prchající od prvního tahu.
+                    { id: 'tachov-rear-guard', trigger: 'turn_1', type: 'ai_stance', mode: 'defensive', untilTurn: 4 },
                     { trigger: 'turn_2', type: 'panic', faction: 'crusaders', level: 1, text: 'Harcovníci Jindřicha z Plavna odraženi husity na pochodu - ve zmatku se ženou zpět do ležení a šíří paniku!' }
                 ]
             },
@@ -2900,6 +2907,9 @@ const Scenarios = {
                 description: "Husité se rychle přibližují k Domažlicím.",
                 events: [
                     {"trigger":"turn_1","message":"Husitské vojsko urazilo 80 km za 2 dny a blíží se k Domažlicím!"},
+                    // Před skriptovaným ústupem ve 4. kole drží zadní voj
+                    // krátkou obranu, aby pronásledování obsahovalo i střet.
+                    { id: "domazlice-rear-guard", trigger: "turn_1", type: "ai_stance", mode: "defensive", untilTurn: 3 },
                     {
                         trigger: "turn_2",
                         type: "panic",
@@ -3089,7 +3099,9 @@ const Scenarios = {
                     { type: 'HOUFNICE', col: 3, row: 5 },
                     { type: 'HOUFNICE', col: 3, row: 7 },
                     { type: 'TARASNICE', col: 3, row: 6 },
-                    { type: 'BOMBARDA', col: 2, row: 6 },  // Dál vzadu, vedle Prokopa
+                    // Těžká bombarda je před bitvou usazená v předsunuté
+                    // baterii; s pohybem 0 odtud skutečně dostřelí na obranu.
+                    { type: 'BOMBARDA', col: 11, row: 6 },
                     // Jízda - záloha
                     { type: 'JIZDA_HUSITI', col: 2, row: 4 },
                     { type: 'JIZDA_HUSITI', col: 2, row: 8 }

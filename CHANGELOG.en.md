@@ -4,6 +4,15 @@
 
 The older planning sections below are preserved as a record of earlier development; they are not the current release plan. See [TODO.md](TODO.md) for the current state and open tasks (currently maintained in Czech).
 
+## Alpha 0.3.4 (19 September 2026)
+
+- Both the bottom battle menu and the pause screen now offer **Try Again**. Restarting discards current progress only after confirmation, while cancelling safely restores the previous game state.
+- Kutná Hora retains the historical withdrawal as its primary objective, but now recognizes an alternative victory at the deadline when only enemy commanders remain and Žižka survives. This divergence from history has its own ending.
+- The Plzeň bombarda now begins in a forward battery where defenders are immediately within range despite its zero movement.
+- The Crusader rear guard at Tachov and Domažlice now resists for several turns before retreating. At Tachov, the retreat follows the scenario's escape point towards Bavaria.
+- AI-controlled commanders no longer flee merely because of low morale and move no more than three hexes in one turn, preventing them from crossing half the battlefield at once.
+- Regression tests cover the bombarda's position, the rear guard's initial resistance, the retreat direction and commander behavior.
+
 ## Alpha 0.3.3 (16 September 2026)
 
 - The changelog now has a complete English version linked with the Czech original.

@@ -26,6 +26,17 @@ const AI = {
         return typeof game.random === 'function' ? game.random() : Math.random();
     },
 
+    // Velitel má držet kontakt s vlastním vojskem, ne jedním tahem přeskočit
+    // půl bojiště. Šablona si ponechává svůj pohyb; pouze AI vybírá pozice
+    // vzdálené nejvýše tři hexy.
+    getValidTacticalMoves: function(game, unit) {
+        const moves = game.getValidMoves(unit);
+        if (!unit?.isCommander || !unit.isCommander()) return moves;
+        return moves.filter(move =>
+            game.hexGrid.getDistance(unit.col, unit.row, move.col, move.row) <= 3
+        );
+    },
+
     // Mapování herních terénů na klíče v tactics.terrain
     terrainMapping: {
         forest: 'forest',
@@ -183,7 +194,7 @@ const AI = {
 
         // Zlomená jednotka se nejdřív snaží dostat z dosahu. Vyšší práh
         // ve scénáři modeluje armádu, kterou poráží už pověst protivníka.
-        if (!unit.isRouting && !aggressiveCommander &&
+        if (!unit.isRouting && !isCommander && !aggressiveCommander &&
             Number.isFinite(unit.morale) && unit.morale <= doctrine.fearThreshold) {
             if (unit.canMove()) {
                 const safeMove = this.findSafeMove(game, unit, enemies);
@@ -345,7 +356,7 @@ const AI = {
             if (atk) return atk;
             // Pohyb max 1 hex jen pokud tím jednotka získá cíl v dosahu útoku
             if (unit.canMove()) {
-                for (const move of game.getValidMoves(unit)) {
+                for (const move of this.getValidTacticalMoves(game, unit)) {
                     if (game.hexGrid.getDistance(unit.col, unit.row, move.col, move.row) > 1) continue;
                     for (const enemy of enemies) {
                         if (enemy.health <= 0) continue;
@@ -365,7 +376,7 @@ const AI = {
     // WP0: platný tah, který nejvíc přiblíží jednotku k bodu (targetCol,targetRow).
     // null, pokud je jednotka už <= 1 hex od cíle nebo žádný tah vzdálenost nezkracuje.
     findMoveTowardPoint: function(game, unit, targetCol, targetRow) {
-        const validMoves = game.getValidMoves(unit);
+        const validMoves = this.getValidTacticalMoves(game, unit);
         if (validMoves.length === 0) return null;
 
         const currentDist = game.hexGrid.getDistance(unit.col, unit.row, targetCol, targetRow);
@@ -385,7 +396,7 @@ const AI = {
 
     // Hledání příležitosti pro charge útok (pohyb + útok)
     findChargeOpportunity: function(game, unit, enemies) {
-        const validMoves = game.getValidMoves(unit);
+        const validMoves = this.getValidTacticalMoves(game, unit);
         const doctrine = this.getDoctrine(game);
         const strength = unit.getAttackStrength();
         let bestOpportunity = null;
@@ -671,7 +682,7 @@ const AI = {
     },
 
     findBestMove: function(game, unit, enemies) {
-        const validMoves = game.getValidMoves(unit);
+        const validMoves = this.getValidTacticalMoves(game, unit);
         const doctrine = this.getDoctrine(game);
 
         if (validMoves.length === 0) {
@@ -733,12 +744,17 @@ const AI = {
 
     // Pursuit - najdi nejlepší ústupový hex směrem k mostu/řece
     findRetreatMove: function(game, unit) {
-        const validMoves = game.getValidMoves(unit);
+        const validMoves = this.getValidTacticalMoves(game, unit);
         if (validMoves.length === 0) return null;
 
-        // Cíl ústupu - most (bridgeBottleneck position) nebo spodek mapy
+        // Cíl ústupu - výslovný únikový bod scénáře, most,
+        // nebo teprve jako nouzový fallback spodek mapy.
         let targetCol, targetRow;
-        if (game.currentScenario.specialMechanics.bridgeBottleneck) {
+        const escapeTarget = game.currentScenario.specialMechanics.escapeTarget;
+        if (escapeTarget && Number.isFinite(escapeTarget.col) && Number.isFinite(escapeTarget.row)) {
+            targetCol = escapeTarget.col;
+            targetRow = escapeTarget.row;
+        } else if (game.currentScenario.specialMechanics.bridgeBottleneck) {
             const pos = game.currentScenario.specialMechanics.bridgeBottleneck.position;
             targetCol = pos[0];
             targetRow = pos[1];
@@ -768,7 +784,7 @@ const AI = {
 
     // Najde bezpečnou pozici pro velitele (pryč od nepřátel, blízko spojenců)
     findSafeMove: function(game, unit, enemies) {
-        const validMoves = game.getValidMoves(unit);
+        const validMoves = this.getValidTacticalMoves(game, unit);
         if (validMoves.length === 0) return null;
 
         const allies = game.getUnitsOfFaction(unit.faction).filter(u => u !== unit && u.health > 0);
@@ -810,7 +826,7 @@ const AI = {
 
     // Najde pozici kde velitel může podporovat své jednotky (blízko, ale za nimi)
     findCommanderSupportPosition: function(game, unit, enemies) {
-        const validMoves = game.getValidMoves(unit);
+        const validMoves = this.getValidTacticalMoves(game, unit);
         if (validMoves.length === 0) return null;
         if (enemies.length === 0) return null;
 

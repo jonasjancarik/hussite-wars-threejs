@@ -58,7 +58,7 @@
   - Rychlý druhý tap během animace nevydá duplicitní útok. Potvrzení zůstává pouze u destruktivních navigačních akcí, například opuštění bitvy.
 - [ ] **P2 — U viditelného nepřítele ukázat při hoveru jeho možný dojezd.**
   - Respektovat terén, aktuální stav jednotky a mlhu války; hover nesmí odhalovat skryté jednotky ani informace, které hráč nemá znát.
-- [ ] **P2 — Přidat do menu/pauzy akci `Zkusit znovu`.**
+- [x] **P2 — Přidat do menu/pauzy akci `Zkusit znovu`.**
   - Restartuje aktuální scénář od začátku; rozehraný postup se zahodí až po jasném potvrzení.
 - [x] **P1 — Ukončení tahu automaticky převede nevyužité akce na obranu.**
   - Dva nezávislí testeři se ptali, proč musí před koncem tahu ručně zapínat obranu; druhý navíc postoj objevil až pozdě během hraní.
@@ -109,10 +109,7 @@
   - Vzít konkrétní pasáže od testera jako výchozí vzorek; zachovat rozlišení mezi pramennými fakty, herní rekonstrukcí a autorskou fikcí.
 
 ### Čištění kódu
-- [ ] Odstranit debug console.log záznamy:
-  - [ ] `/js/ui/main.js` - Quick Battle logy (řádky 516, 525, 532, 539, 543, 546-548)
-  - [ ] `/js/core/game.js` - Army creation log (řádek 108)
-  - [ ] `/js/core/game.js` - First render log (řádky 1880-1883)
+- [x] Odstranit debug `console.log` záznamy z běžícího kódu; ponechat pouze chybové hlášení skutečných selhání.
 
 ### Testování
 - [ ] **Scénáře** - projít všech 18 scénářů v obou jazycích:
@@ -239,6 +236,6 @@
 
 ---
 
-**Aktuální verze:** Alpha 0.3.3 (16.09.2026)
+**Aktuální verze:** Alpha 0.3.4 (19.09.2026)
 **Cílová verze pro release:** Alpha 1.0
 **Udržováno od:** 04.02.2026

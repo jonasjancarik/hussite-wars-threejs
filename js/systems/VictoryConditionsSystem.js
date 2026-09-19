@@ -13,6 +13,23 @@ class VictoryConditionsSystem {
         return text;
     }
 
+    // Scénářová alternativa: původní úkol přestane být nutný, pokud z
+    // nepřátelské polní armády zůstanou pouze velitelé. Volitelný typ
+    // hráčova velitele dovoluje scénáři vyžadovat jeho skutečné přežití.
+    fieldArmyAlternativeAchieved(primary, playerFaction, enemyFaction) {
+        const alternative = primary?.alternative;
+        if (alternative?.type !== 'eliminate_field_army') return false;
+        const enemySurvivors = this.game.units.filter(unit =>
+            unit.faction === enemyFaction && unit.health > 0 && !unit.escaped
+        );
+        if (enemySurvivors.length === 0 || !enemySurvivors.every(unit => unit.isCommander?.())) return false;
+        if (!alternative.survivingCommander) return true;
+        return this.game.units.some(unit =>
+            unit.faction === playerFaction && unit.type === alternative.survivingCommander &&
+            unit.health > 0 && !unit.escaped
+        );
+    }
+
     // Hlavní kontrola vítězství
     checkVictory() {
         if (this.game.gameState !== 'playing') return;
@@ -260,9 +277,7 @@ class VictoryConditionsSystem {
                 // pokud na bojišti zůstal už jen nepřátelský velitel bez armády.
                 // Je to výslovně datová alternativa, globální význam velitelů
                 // ani ostatní scénáře tím neměníme.
-                const fieldArmyEliminated = primary.alternative?.type === 'eliminate_field_army' &&
-                    enemyUnits.length > 0 &&
-                    enemyUnits.every(unit => unit.isCommander?.());
+                const fieldArmyEliminated = this.fieldArmyAlternativeAchieved(primary, playerFaction, enemyFaction);
                 victoryAchieved = currentPercent >= minPercent || fieldArmyEliminated;
                 // Odehrálo se requiredTurnsSurvive kol (turnNumber už je o 1 dál)
                 this.game.gameOverTurn = requiredTurnsSurvive;
@@ -328,17 +343,28 @@ class VictoryConditionsSystem {
                 }
                 break;
 
-            case 'escape':
+            case 'escape': {
                 const required = primary.unitsRequired || 5;
                 const escaped = this.game.escapedUnits || 0;
-                victoryAchieved = escaped >= required;
+                const historicalVictory = escaped >= required;
+                const deadline = this.game.currentScenario.maxTurns;
+                // Únik může zvítězit ihned, scénářová alternativa se však
+                // posuzuje teprve po dohrání posledního kola.
+                if (!historicalVictory && deadline && this.game.turnNumber <= deadline) return;
+                const fieldArmyEliminated = !historicalVictory &&
+                    this.fieldArmyAlternativeAchieved(primary, playerFaction, enemyFaction);
+                victoryAchieved = historicalVictory || fieldArmyEliminated;
+                if (deadline && this.game.turnNumber > deadline) this.game.gameOverTurn = deadline;
 
-                if (victoryAchieved) {
+                if (fieldArmyEliminated) {
+                    this.outcome(i18n.t('gameLog.victoryAlternativeFieldArmy'));
+                } else if (historicalVictory) {
                     this.outcome(i18n.t('gameLog.victoryEscape', { escaped: escaped }));
                 } else {
                     this.outcome(i18n.t('gameLog.defeatEscape', { escaped: escaped, required: required }));
                 }
                 break;
+            }
 
             case 'survive_turns':
                 const requiredTurns = primary.turns || this.game.currentScenario.maxTurns;

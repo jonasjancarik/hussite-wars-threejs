@@ -1026,6 +1026,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Položky v dropdown menu
     const btnSave = document.getElementById('btn-save');
     const btnLoad = document.getElementById('btn-load');
+    const btnRetryBattle = document.getElementById('btn-retry-battle');
     const btnSound = document.getElementById('btn-sound');
     const btnHelp = document.getElementById('btn-help');
 
@@ -1087,6 +1088,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Restart je destruktivní i tehdy, když hra průběžně ukládá checkpoint.
+    // Během potvrzení se bitva zastaví; při zrušení se obnoví přesně původní
+    // stav pauzy a případně i otevřené pauzovací menu.
+    async function restartCurrentBattle() {
+        const currentGame = game;
+        if (!currentGame) return false;
+
+        const pauseWasOpen = !pauseModal.classList.contains('hidden');
+        const wasPaused = currentGame.isPaused;
+        footerMenu?.classList.remove('open');
+        pauseModal.classList.add('hidden');
+        if (!wasPaused) currentGame.setPaused(true);
+
+        const confirmed = await showConfirmDialog(
+            i18n.t('pause.confirmRetry'),
+            i18n.t('pause.retry')
+        );
+        if (!confirmed) {
+            if (game === currentGame) {
+                currentGame.setPaused(wasPaused);
+                if (pauseWasOpen) pauseModal.classList.remove('hidden');
+            }
+            return false;
+        }
+        if (game !== currentGame) return false;
+
+        const scenario = currentGame.currentScenario;
+        if (scenario) {
+            selectedScenario = scenario;
+            startMission(scenario);
+        } else {
+            selectedScenario = null;
+            startQuickBattle();
+        }
+        return true;
+    }
+
+    if (btnRetryBattle) {
+        btnRetryBattle.addEventListener('click', () => restartCurrentBattle());
+    }
+
     // Tlačítko Pokračovat
     document.getElementById('btn-resume').addEventListener('click', () => {
         hidePauseMenu();
@@ -1110,6 +1152,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-pause-load').addEventListener('click', () => {
         startGameFromSave();
         hidePauseMenu();
+    });
+
+    // Tlačítko Zkusit znovu v pauze
+    document.getElementById('btn-pause-retry').addEventListener('click', () => {
+        restartCurrentBattle();
     });
 
     // Tlačítko Nastavení v pause menu

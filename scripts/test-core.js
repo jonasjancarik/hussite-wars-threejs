@@ -176,6 +176,11 @@ test('velitel bez doprovodu neustupuje před vzdáleným nepřítelem, ale reagu
     };
     assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'defend' });
 
+    commander.morale = 5;
+    assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'defend' },
+        'samotná nízká morálka nesmí velitele poslat na útěk');
+    commander.morale = 70;
+
     enemy.col = 6;
     assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'move', col: 4, row: 5 });
     enemy.col = 7;
@@ -183,6 +188,31 @@ test('velitel bez doprovodu neustupuje před vzdáleným nepřítelem, ale reagu
     assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'move', col: 4, row: 5 });
     enemy.isRouting = true;
     assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'defend' });
+});
+
+test('AI velitel nepřekročí při ústupu tři hexy za tah', () => {
+    const commander = unit({ id: 'commander', col: 5, row: 5, isCommander: () => true });
+    const enemy = unit({ id: 'enemy', faction: 'hussites', col: 15, row: 5 });
+    const hexGrid = grid([commander, enemy]);
+    const game = {
+        currentScenario: {}, aiStance: { mode: 'retreat', target: { col: 19, row: 5 } }, hexGrid,
+        getEnemyUnits: () => [enemy],
+        getUnitsOfFaction: () => [commander],
+        getUnitAt: hexGrid.unitAt,
+        getValidMoves: () => [{ col: 9, row: 5 }, { col: 8, row: 5 }]
+    };
+    assert.deepStrictEqual(AI.decideAction(game, commander), { type: 'move', col: 8, row: 5 });
+});
+
+test('ústup použije scénářový únikový bod místo spodního okraje mapy', () => {
+    const runner = unit({ col: 10, row: 6 });
+    const hexGrid = grid([runner]);
+    const game = {
+        currentScenario: { specialMechanics: { escapeTarget: { col: 19, row: 6 } } },
+        hexGrid,
+        getValidMoves: () => [{ col: 11, row: 6 }, { col: 10, row: 9 }]
+    };
+    assert.deepStrictEqual(AI.findRetreatMove(game, runner), { col: 11, row: 6 });
 });
 
 test('velitel drží výhodnou podpůrnou pozici místo bezúčelného přesunu', () => {
@@ -217,6 +247,30 @@ test('velitelé prvních tří scénářů už v úvodním tahu neutíkají od c
         assert.strictEqual(h.AI.decideAction(game, leader)?.type, 'defend', scenarioId);
         game.destroy();
     }
+});
+
+test('Tachov a Domažlice začínají odporem zadního voje, ne okamžitým ústupem', () => {
+    const h = createHarness();
+    for (const [scenarioId, untilTurn] of [
+        ['tachov_1427', 4],
+        ['domazlice_1431', 3]
+    ]) {
+        const game = h.newGame(scenarioId);
+        assert.strictEqual(game.aiStance.mode, 'defensive', scenarioId);
+        assert.strictEqual(game.aiStance.untilTurn, untilTurn, scenarioId);
+        game.destroy();
+    }
+});
+
+test('plzeňská bombarda začíná v dostřelu obránců', () => {
+    const h = createHarness(), game = h.newGame('oblehani_plzne_1433');
+    const bombarda = game.units.find(candidate => candidate.type === 'BOMBARDA');
+    const defenders = game.units.filter(candidate => candidate.faction === 'crusaders');
+    const nearest = Math.min(...defenders.map(defender =>
+        game.hexGrid.getDistance(bombarda.col, bombarda.row, defender.col, defender.row)));
+    assert.strictEqual(bombarda.movement, 0);
+    assert.ok(nearest <= bombarda.range, `nejbližší obránce je ${nearest} hexů, dostřel ${bombarda.range}`);
+    game.destroy();
 });
 
 test('velká armáda a přeskočení zkrátí prezentační prodlevy AI', () => {

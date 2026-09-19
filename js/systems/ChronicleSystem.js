@@ -30,7 +30,7 @@ const ChronicleSystem = {
         const narrative = entry.narrative;
         // Budoucí/neúplný formát nezahodí statistiky a nepředstírá známý osud.
         if (narrative?.version === 1
-            && [null, 'allPilgrims', 'somePilgrims', 'noPilgrims'].includes(narrative.victoryVariant)
+            && [null, 'allPilgrims', 'somePilgrims', 'noPilgrims', 'fieldArmyEliminated'].includes(narrative.victoryVariant)
             && [null, 'alive', 'fallen', 'escaped'].includes(narrative.unitState)) {
             normalized.narrative = { version: 1, victoryVariant: narrative.victoryVariant, unitState: narrative.unitState };
         }

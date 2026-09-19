@@ -295,6 +295,75 @@ test('výsledek lze skrýt, znovu otevřít a režim prohlížení se při odcho
     assert.equal(el('gameover-modal').getAttribute('aria-hidden'), 'true');
 });
 
+for (const language of ['cs', 'en']) {
+    test(`${language}: restart bitvy je dostupný v herním menu i v pauze`, async () => {
+        const h = await menuHarness(language);
+        const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+        assert.match(html, /id="btn-retry-battle"[^>]*data-i18n-title="pause\.retry"[\s\S]{0,160}data-i18n="pause\.retry"/);
+        assert.match(html, /id="btn-pause-retry"[\s\S]{0,160}data-i18n="pause\.retry"/);
+        assert.ok(h.i18n.t('pause.retry').length > 3);
+        assert.ok(h.i18n.t('pause.confirmRetry').length > 30);
+    });
+}
+
+test('restart zahodí rozehranou bitvu až po potvrzení a zrušení zachová pauzu', async () => {
+    const h = await menuHarness('cs', h => { h.BattleView.prototype.render = () => {}; });
+    const el = id => h.document.getElementById(id);
+    el('btn-first-battle').dispatchEvent(new Event('click'));
+    el('btn-start-mission').dispatchEvent(new Event('click'));
+    const original = h.context.window.game;
+    original.turnNumber = 7;
+    original.units[0].health = 1;
+    original.setPaused(true);
+    el('pause-modal').classList.remove('hidden');
+    el('confirm-modal').classList.add('hidden');
+
+    el('btn-pause-retry').dispatchEvent(new Event('click'));
+    assert.equal(el('confirm-modal').classList.contains('hidden'), false);
+    assert.equal(el('confirm-message').textContent, h.i18n.t('pause.confirmRetry'));
+    assert.equal(original.isPaused, true);
+    el('confirm-cancel').dispatchEvent(new Event('click'));
+    await Promise.resolve();
+    assert.equal(h.context.window.game, original);
+    assert.equal(original.turnNumber, 7);
+    assert.equal(original.units[0].health, 1);
+    assert.equal(original.isPaused, true);
+    assert.equal(el('pause-modal').classList.contains('hidden'), false);
+
+    el('btn-pause-retry').dispatchEvent(new Event('click'));
+    el('confirm-ok').dispatchEvent(new Event('click'));
+    await Promise.resolve();
+    const restarted = h.context.window.game;
+    assert.notEqual(restarted, original);
+    assert.equal(restarted.currentScenario.id, 'zivohost_1419');
+    assert.equal(restarted.turnNumber, 1);
+    assert.equal(restarted.isPaused, false);
+    assert.equal(el('pause-modal').classList.contains('hidden'), true);
+    restarted.destroy();
+});
+
+test('restart rychlé bitvy nevytvoří omylem dříve vybraný scénář', async () => {
+    const h = await menuHarness('cs', h => { h.BattleView.prototype.render = () => {}; });
+    const el = id => h.document.getElementById(id);
+    el('btn-first-battle').dispatchEvent(new Event('click'));
+    el('mission-close').dispatchEvent(new Event('click'));
+    el('btn-quick-battle').dispatchEvent(new Event('click'));
+    const original = h.context.window.game;
+    original.turnNumber = 5;
+    el('confirm-modal').classList.add('hidden');
+
+    el('btn-retry-battle').dispatchEvent(new Event('click'));
+    assert.equal(original.isPaused, true, 'bitva se během potvrzení nesmí hýbat');
+    el('confirm-ok').dispatchEvent(new Event('click'));
+    await Promise.resolve();
+    const restarted = h.context.window.game;
+    assert.notEqual(restarted, original);
+    assert.equal(restarted.currentScenario, null);
+    assert.equal(restarted.turnNumber, 1);
+    assert.equal(restarted.isPaused, false);
+    restarted.destroy();
+});
+
 test('dohraná časová mise ukazuje skutečný počet kol a nehlásí další tah', async () => {
     const h = await createLocalizedHarness('cs', { browserView: true });
     const game = h.newGame('vitkov_1420');
