@@ -1,6 +1,6 @@
 # Husitské války — tahová strategie
 
-> This fork adds a playable Three.js Sudoměř diorama alongside the original campaign. See [fork setup and controls](FORK.md).
+> This fork adds an interchangeable Three.js landscape to the original campaign while keeping the 2D map as the default. See [fork setup and controls](FORK.md).
 
 Čeština · [English](README.en.md)
 
@@ -24,6 +24,7 @@ Taktická tahovka na hexagonálním poli inspirovaná husitskými válkami. Vozo
 - **Kampaňový režim** - Propojené scénáře s progresí příběhu
 - **Encyklopedie** - Historické informace o jednotkách, bitvách a osobnostech
 - **Osobní kronika** - Paměť vašich bitev, pramenná kritika a stažitelná offline kniha
+- **2D mapa nebo 3D krajina** - Stejnou rozehranou bitvu lze přepínat bez restartu pravidel, AI nebo tahu
 
 Hrajte zdarma a bez registrace na [hussitewars.com](https://hussitewars.com/).
 

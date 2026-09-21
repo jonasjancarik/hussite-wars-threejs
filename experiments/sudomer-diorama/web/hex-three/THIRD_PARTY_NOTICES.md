@@ -13,3 +13,7 @@ The ground texture `assets/textures/procedural-worlds/T_ConceptBGroundCalm.webp`
 `assets/textures/sky/sudomer-painted-day.webp` was generated with OpenAI image generation for this project, then encoded as WebP at quality 92 (1774 by 887 pixels). Brief: softly painted blue daylight, ivory clouds, pale atmospheric lower hemisphere, no land, sun disc, text or objects. SHA-256: `afe44acbeff37ddf7a45122c045b22baa3d2c2ac7f64a794b9232183861410fe`. The borrowed cloud skies remain available as source assets; this generated sky is now the default. Light and fog colors have been adjusted to this daylight palette.
 
 Meadow details, worn road, soil profile and periodic pond normal texture are project-local procedural geometry/data, not downloaded assets.
+
+## Campaign integration, 21 September 2026
+
+The deterministic terrain-region field, campaign view adapter and terrain-derived scenery are project-local code. They consume the original campaign's live hex map and do not copy rules or scenario data into the renderer. Existing procedural-worlds-derived render, lighting, sky, focus and vegetation assets retain the provenance above.

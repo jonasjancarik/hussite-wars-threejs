@@ -1,6 +1,6 @@
 # Hussite Wars — turn-based strategy
 
-> This fork adds a playable Three.js Sudoměř diorama alongside the original campaign. See [fork setup and controls](FORK.md).
+> This fork adds an interchangeable Three.js landscape to the original campaign while keeping the 2D map as the default. See [fork setup and controls](FORK.md).
 
 [Čeština](README.md) · English
 
@@ -18,6 +18,7 @@ Play in Czech or English, without registration or installation, at [hussitewars.
 - **Campaign progression** connecting battles across the story.
 - **An encyclopedia and a personal chronicle** with historical context, source criticism and a downloadable offline reading copy.
 - **Local save and load** during an unfinished battle.
+- **2D map or 3D landscape** for the same live battle, without restarting rules, AI or the current turn.
 
 The game is an alpha: balance and some mobile layouts still need feedback from players.
 

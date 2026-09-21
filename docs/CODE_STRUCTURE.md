@@ -25,6 +25,15 @@ Prezentace bitvy je rozdělena podle odpovědností:
 - `BattleOrders` převádí dotykové rozkazy na stejné přímé herní příkazy jako myš
   a drží pouze bezpečnou inspekci hexu. Obsah inspekce sdílí
   s `BattleTooltip.contentForHex()` a respektuje mlhu války.
+- `ThreeBattleMapView` je mapový adaptér pod stejným `BattleView`. Sestaví pouze
+  čtecí snapshot aktuální mapy, jednotek, výběru a legálních cílů a načte 3D bundle
+  až při prvním přepnutí. Kliknutí v 3D volá stejný `Game.handleHexClick()` jako 2D.
+  `mount`, `unmount`, `resize`, `focusUnit`, `render` a `destroy` tvoří životní cyklus
+  mapového pohledu; při skrytí se ruší jeho RAF, při zániku hry listenery, observer,
+  OrbitControls i GPU zdroje. Jedna hra proto nikdy nemá druhou kopii pravidel nebo AI.
+  Snapshot přenáší i mlhu války a cílové/únikové zóny. Neprozkoumaný 3D terén a
+  jeho dekorace zůstávají zakryté; scénářová změna terénu bezpečně přestaví jen
+  renderer, nikoli herní stav.
 
 Pohled čte stav a dotazuje se pravidel. Změny herního stavu provádí příkazy `Game`
 nebo příslušného systému, nikoli přímým přepisováním jeho polí. Například klik na
@@ -36,6 +45,12 @@ Přepnutí rychlosti AI jde přes `Game.skipAIAnimations()`.
 Dosavadní metody `Game.updateUI()`, `Game.updateUnitPanel()` a další veřejné vstupy
 pro prezentaci jsou zatím tenké delegáty. Udržují kompatibilitu s `main.js`, AI
 a systémy; nejde o novou druhou implementaci UI.
+
+3D krajinu generuje `terrain-regions.ts` přímo z `HexGrid.hexes`. Stejný typ terénu
+v sousedních buňkách sdílí souvislé pole; hranice různých typů se posouvají koherentním
+seedovaným šumem pouze v okrajovém pásu. Chráněné jádro každé buňky brání tomu, aby
+organická křivka změnila čitelný význam mapy. Test rovnoměrně vzorkuje plochu všech
+5 224 buněk v 18 scénářích a vyžaduje nejméně 75 % shody i u okolní suché země.
 
 ### Stav se nemění při kreslení
 

@@ -49,7 +49,13 @@ The normal browser build uses Bevy's WebGPU backend. Browsers without WebGPU sup
 - Flattened 50,000-soldier Bevy WebGPU check: `http://localhost:8082/army-benchmark-webgpu.html`
 - Flattened 50,000-soldier Bevy WebGL 2 comparison: `http://localhost:8082/army-benchmark-webgl-50k.html`
 
-## Turn-based Sudoměř hex battle
+## Integrated turn-based campaign view
+
+The root campaign now loads the Three.js renderer on demand through `js/ui/ThreeBattleMapView.js`. Its terrain comes from the active root `HexGrid`, not from `public/sudomer-landscape.json` or the vendored rules copy. The same generator handles every campaign scenario; forest and settlement decoration is derived only from matching gameplay terrain. The standalone Sudoměř page below remains a renderer fixture.
+
+`web/hex-three/src/terrain-regions.ts` is renderer-neutral. It merges same-terrain neighbours, applies deterministic coherent variation at region borders and preserves a protected core inside every source cell. The test suite measures area coverage across all campaign scenarios and keeps the 75% minimum explicit.
+
+## Standalone Sudoměř hex battle
 
 The default turn-based page uses the pinned JavaScript rules and AI with a Three.js WebGPU presentation. Build it without Rust or Wasm using:
 
@@ -58,7 +64,7 @@ npm --prefix web/hex-three install
 ./scripts/build_sudomer_hex_three.sh
 ```
 
-The landscape is continuous and authored independently from the rules grid: irregular pond and mud contours, a narrow curving causeway, drainage channels, fields, woodland masses and village landmarks sit on the retained soil plinth. The grid is hidden until it is useful for selection or orders. Procedural-worlds supplies the WebGPU/TSL render graph, the lighting and atmospheric foundation, cursor-driven miniature focus, static batching and generated tree/shrub assets. The default desktop profile matches its high settings: up to 2× pixel ratio, full-resolution 12-sample GTAO, SMAA, compact DoF, 16× ground anisotropy and high-resolution shadows. The visual polish adds its painted ground and cliff textures, a generated daylight sky, softer road verges and wagon ruts, reflective pond ripples, shoreline reeds, meadow tufts, flowers, field-edge stone walls, and a layered soil edge. The opening view is wider; focus starts on the battlefield and follows the cursor through camera movement. Provenance is recorded in `web/hex-three/THIRD_PARTY_NOTICES.md`.
+The retained page uses the same generated renderer as the campaign and continues to use the Sudoměř fixture for bridge/parity checks. Procedural-worlds supplies the WebGPU/TSL render graph, lighting and atmospheric foundation, cursor-driven miniature focus and generated tree/shrub assets. Provenance is recorded in `web/hex-three/THIRD_PARTY_NOTICES.md`.
 
 The build preserves every other page in `web/dist`. `sudomer-hex-three.html` is an alias of the default Three.js page, while `sudomer-hex-bevy.html` keeps the previous renderer for comparison. Add `?effects=off` to judge the composition without AO, depth of field or grading, or `?quality=photo` for the stronger photographic bokeh graph. Three.js can fall back automatically where supported, but WebGPU is the tested target and WebGL 2 compatibility is not claimed.
 
