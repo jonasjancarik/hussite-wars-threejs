@@ -36,7 +36,8 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | Asset | Contents |
 | --- | --- |
 | `war_wagon` | Four ten-spoke wheels, iron tyres and axles, separate wooden planks, fittings and rivets, defensive boards and stakes, two crew, towing poles, chalice banner |
-| `cavalry` | Faceted horse, saddle and blanket, reins and bridle, rider with polearm, walking loop |
+| `cavalry` | Original faceted horse and polearm rider with walking loop, retained unchanged |
+| `cavalry_light`, `cavalry_scout`, `cavalry_heavy` | Static mounted variants with distinct equipment and side-colour cloth/shields |
 | `infantry_spear` | Long plain spear, kettle hat and side-colour cloth |
 | `infantry_archer` | Drawn wooden bow, nocked arrow, hip quiver, cloth cap and side-colour cloth |
 | `infantry_polearm` | Red coat, kettle helmet, polearm |
@@ -62,6 +63,8 @@ The village and troop detailing is intended for a stylized battlefield, not a re
 The infantry additions are defined in `infantry_batch.py`, registered by the shared generator. Their references, intentional simplifications and gameplay mappings are recorded in [infantry-references.md](infantry-references.md). They keep static poses; the campaign only recolours materials named `team_cloth` and `team_paint`. `render_infantry_batch.py` renders the exported batch together in both game-side palettes to `previews/infantry-batch.png`. Pass `-- --spear-bow` to render the spear/archer pair as `previews/spear-bow-batch.png`.
 
 The artillery batch is defined in `artillery_batch.py`; [artillery-references.md](artillery-references.md) records its evidence, reuse choices and crew abstraction. `render_artillery_batch.py` renders the three exported guns with both crew palettes to `previews/artillery-batch.png`.
+
+The static cavalry variants are defined in `cavalry_batch.py`. They reuse the original horse with its actions removed and standing leg transforms, then add new riders and equipment. [cavalry-references.md](cavalry-references.md) documents the period references and reuse decisions. Pass `-- --cavalry` to `render_infantry_batch.py` for the comparison render.
 
 ## Verification
 

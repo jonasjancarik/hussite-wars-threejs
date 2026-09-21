@@ -440,5 +440,65 @@
     "up_axis": "Y",
     "animations": [],
     "animation_seconds": null
+  },
+  "cavalry_light": {
+    "file": "units/cavalry_light.glb",
+    "dimensions_blender_xyz_m": [
+      2.882,
+      1.087,
+      3.963
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.882,
+      3.963,
+      1.087
+    ],
+    "mesh_objects": 14,
+    "editable_source_mesh_objects": 86,
+    "triangles": 2726,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "cavalry_scout": {
+    "file": "units/cavalry_scout.glb",
+    "dimensions_blender_xyz_m": [
+      2.882,
+      1.087,
+      2.91
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.882,
+      2.91,
+      1.087
+    ],
+    "mesh_objects": 11,
+    "editable_source_mesh_objects": 86,
+    "triangles": 2824,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "cavalry_heavy": {
+    "file": "units/cavalry_heavy.glb",
+    "dimensions_blender_xyz_m": [
+      2.882,
+      1.087,
+      4.123
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.882,
+      4.123,
+      1.087
+    ],
+    "mesh_objects": 13,
+    "editable_source_mesh_objects": 107,
+    "triangles": 3110,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
   }
 }

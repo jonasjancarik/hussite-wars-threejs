@@ -19,6 +19,15 @@ const TEAM_MATERIAL_COLORS = {
 const TEAM_MATERIAL_NAMES = new Set(["team_cloth", "team_paint"]);
 
 function displayRecipe(unit: UnitSnapshot): FigureRecipe[] {
+  if (["JIZDA_HUSITI", "LEHKA_JIZDA", "JIZDA_PRASKY"].includes(unit.type)) {
+    return cavalryRecipe("cavalry_light");
+  }
+  if (["ZVED", "ZVED_KRIZACI"].includes(unit.type)) {
+    return cavalryRecipe("cavalry_scout");
+  }
+  if (["SLECHTICKA_JIZDA_HUSITI", "TEZKY_RYTIR", "TEZKOODENCI"].includes(unit.type)) {
+    return cavalryRecipe("cavalry_heavy");
+  }
   if (["HOUFNICE", "HOUFNICE_PRASKY"].includes(unit.type)) {
     return artilleryRecipe("artillery_houfnice");
   }
@@ -27,9 +36,6 @@ function displayRecipe(unit: UnitSnapshot): FigureRecipe[] {
   }
   if (unit.type === "BOMBARDA") return artilleryRecipe("artillery_bombard");
   if (unit.type === "VOZOVA_HRADBA") return [{ model: "war_wagon", offsets: [[0, 0]], scale: 1.1 }];
-  if (["JIZDA_HUSITI", "TEZKY_RYTIR", "TEZKOODENCI"].includes(unit.type)) {
-    return [{ model: "cavalry", offsets: [[-0.82, -0.34], [0.74, 0.38]], scale: 0.98 }];
-  }
   if (["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(unit.type)) {
     return [{ model: "infantry_shield", offsets: [[0, 0]], scale: 1.28 }];
   }
@@ -44,6 +50,10 @@ function displayRecipe(unit: UnitSnapshot): FigureRecipe[] {
         : ["PAVEZNICI", "PAVEZNICI_KRIZACI"].includes(unit.type) ? "infantry_pavise"
       : "infantry_polearm";
   return [{ model, offsets: [[-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1]], scale: 1.15 }];
+}
+
+function cavalryRecipe(model: string): FigureRecipe[] {
+  return [{ model, offsets: [[-0.70, -0.20], [0.70, 0.20]], scale: 0.98 }];
 }
 
 function artilleryRecipe(model: string): FigureRecipe[] {

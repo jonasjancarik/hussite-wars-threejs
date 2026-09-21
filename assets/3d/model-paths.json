@@ -28,5 +28,8 @@
   "artillery_bombard": "models/units/artillery_bombard.glb",
   "artillery_gunner": "models/units/artillery_gunner.glb",
   "infantry_spear": "models/units/infantry_spear.glb",
-  "infantry_archer": "models/units/infantry_archer.glb"
+  "infantry_archer": "models/units/infantry_archer.glb",
+  "cavalry_light": "models/units/cavalry_light.glb",
+  "cavalry_scout": "models/units/cavalry_scout.glb",
+  "cavalry_heavy": "models/units/cavalry_heavy.glb"
 }

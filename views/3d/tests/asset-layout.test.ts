@@ -100,9 +100,37 @@ test("artillery exports have open muzzles, static geometry and ground-level supp
   }
 });
 
-test("actual artillery, spear and bow assemblies fit the picking volume on either side", async () => {
+test("new cavalry exports are static with four grounded hooves and isolated cloth materials", async () => {
+  for (const name of ["cavalry_light", "cavalry_scout", "cavalry_heavy"]) {
+    const bytes = readFileSync(new URL(paths[name]!, assetRoot));
+    const { scene, animations } = await new GLTFLoader().parseAsync(new Uint8Array(bytes).buffer, "");
+    const bounds = new THREE.Box3().setFromObject(scene);
+    assert.equal(animations.length, 0, `${name}: retain a static standing pose`);
+    assert.ok(Math.abs(bounds.min.y) < 0.005);
+    const hoofQuadrants = new Set<string>();
+    const materials = new Set<string>();
+    let triangles = 0;
+    scene.traverse(object => {
+      assert.ok(!(object instanceof THREE.SkinnedMesh));
+      if (!(object instanceof THREE.Mesh)) return;
+      const vertices = object.geometry.attributes.position!;
+      triangles += (object.geometry.index?.count ?? vertices.count) / 3;
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) materials.add(material.name);
+      for (let index = 0; index < vertices.count; index += 1) {
+        const point = new THREE.Vector3().fromBufferAttribute(vertices, index).applyMatrix4(object.matrixWorld);
+        if (point.y < 0.005) hoofQuadrants.add(`${Math.sign(point.x)},${Math.sign(point.z)}`);
+      }
+    });
+    assert.deepEqual([...hoofQuadrants].sort(), ["-1,-1", "-1,1", "1,-1", "1,1"]);
+    assert.ok(triangles > 0 && triangles < 4000, `${name}: keep each mount low-poly`);
+    for (const material of ["horse", "mane", "leather", "team_cloth"]) assert.ok(materials.has(material));
+    if (name !== "cavalry_scout") assert.ok(materials.has("team_paint"));
+  }
+});
+
+test("actual artillery and new troop assemblies fit the picking volume on either side", async () => {
   const prototypes = new Map<string, THREE.Group>();
-  for (const name of ["artillery_houfnice", "artillery_tarasnice", "artillery_bombard", "artillery_gunner", "infantry_spear", "infantry_archer"]) {
+  for (const name of ["artillery_houfnice", "artillery_tarasnice", "artillery_bombard", "artillery_gunner", "infantry_spear", "infantry_archer", "cavalry_light", "cavalry_scout", "cavalry_heavy"]) {
     const bytes = readFileSync(new URL(paths[name]!, assetRoot));
     const model = await new GLTFLoader().parseAsync(new Uint8Array(bytes).buffer, "");
     assert.equal(model.animations.length, 0);
@@ -115,8 +143,9 @@ test("actual artillery, spear and bow assemblies fit the picking volume on eithe
   for (const faction of ["hussites", "crusaders"] as const) {
     const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
       new HexLayout(1, 1), assets);
-    for (const type of ["HOUFNICE", "TARASNICE", "BOMBARDA", "KOPINICI", "LUCISTNICI"]) {
-      const unitClass = type === "KOPINICI" ? "infantry" : type === "LUCISTNICI" ? "ranged" : "artillery";
+    for (const type of ["HOUFNICE", "TARASNICE", "BOMBARDA", "KOPINICI", "LUCISTNICI", "JIZDA_HUSITI", "ZVED", "TEZKY_RYTIR"]) {
+      const unitClass = type === "KOPINICI" ? "infantry" : type === "LUCISTNICI" ? "ranged"
+        : ["JIZDA_HUSITI", "ZVED", "TEZKY_RYTIR"].includes(type) ? "cavalry" : "artillery";
       const unit: UnitSnapshot = { id: 1, type, name: type, col: 0, row: 0, faction, unitClass,
         health: 100, maxHealth: 100, morale: 100, maxMorale: 100, hasMoved: false, hasAttacked: false,
         isDefending: false, isRouting: false, formationClosed: false, marching: false };

@@ -21,9 +21,9 @@ KCD II is set in **1403**, shortly before this game's **1419–1437** campaign (
 
 ## Current coverage
 
-There are **36 GLB files**, **59 unit definitions**, and **18 scenarios**. The 36 exports include alternative vegetation and experimental variants; they are not all distinct gameplay unit models. Current unit presentation uses thirteen main models: eight infantry types, cavalry, war wagon, houfnice, tarasnice and bombard, plus a reusable artillery gunner and commander banner.
+There are **39 GLB files**, **59 unit definitions**, and **18 scenarios**. The 39 exports include alternative vegetation and experimental variants; they are not all distinct gameplay unit models. Current unit presentation uses fifteen main models: eight infantry types, three cavalry types, war wagon, houfnice, tarasnice and bombard, plus a reusable artillery gunner and commander banner.
 
-The first batch adds recognisable flails, crossbows and pavises, with red/blue appearances for those three families. The second batch adds all five artillery types using three gun models and a reusable crew figure. The third batch adds dedicated spearmen and archers. Remaining major omissions include pilgrims, field fortifications, commander identities and distinct light/heavy cavalry. [Infantry references](../tools/art/blender/infantry-references.md) and [artillery references](../tools/art/blender/artillery-references.md). Some missing coverage needs only a renderer mapping or a material variant; other types require new geometry.
+The first batch adds recognisable flails, crossbows and pavises, with red/blue appearances for those three families. The second batch adds all five artillery types using three gun models and a reusable crew figure. The third batch adds dedicated spearmen and archers. The fourth batch gives all eight mounted definitions dedicated light/scout/heavy models. Remaining major omissions include pilgrims, field fortifications, commander identities and dismounted knights. [Infantry references](../tools/art/blender/infantry-references.md) and [artillery references](../tools/art/blender/artillery-references.md), and [cavalry references](../tools/art/blender/cavalry-references.md). Some missing coverage needs only a renderer mapping or a material variant; other types require new geometry.
 
 ### Available model files
 
@@ -39,7 +39,8 @@ Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `b
 | `units/infantry_polearm.glb` | 1 | Red-coated soldier, kettle helmet, polearm. Useful for sudličníci; currently also the catch-all for unrelated types. |
 | `units/infantry_handgun.glb` | 1 | Ochre-coated handgunner with powder flask. Used for ručničáři and, incorrectly as a visual identity, Koranda. |
 | `units/infantry_shield.glb` | 1 | Sword and shield with pale cross. Not a crossbowman or a dedicated large-pavise bearer. |
-| `units/cavalry.glb` | 1 | Horse and polearm rider. One `HorseWalk` animation; no distinct scout, light cavalry, or armoured knight model. |
+| `units/cavalry.glb` | 1 | Original horse and polearm rider with `HorseWalk`; retained unchanged. The campaign now uses the static mounted variants below. |
+| `units/cavalry_light.glb`, `units/cavalry_scout.glb`, `units/cavalry_heavy.glb` | 3 | Static light rider, equipped scout and armoured knight; all eight cavalry definitions, with side-colour cloth and shields. |
 | `units/war_wagon.glb` | 1 | Defensive wagon with two crew, wheels, towing poles, stakes and chalice flag. |
 | `units/artillery_houfnice.glb`, `units/artillery_tarasnice.glb`, `units/artillery_bombard.glb` | 3 | Short field gun, long light field gun and heavy siege gun; one model per artillery unit. |
 | `units/artillery_gunner.glb` | 1 | Static ramrod-bearing crew figure with side-colour cloth; two independently grounded figures accompany each gun. |
@@ -88,9 +89,9 @@ Only Sudoměř has an authored scenario-art manifest registered. Other scenarios
 | Handgunners | `RUCNICARI` | Matching base model | Cloth variants; optional weapon variation. |
 | Archers | `LUCISTNICI` | Dedicated `infantry_archer`, drawn bow and hip quiver | Base coverage complete; relaxed/loading poses remain optional. The existing archer type belongs to the opposing side. |
 | Mercenary infantry | `ZOLDNERI` | Polearm fallback | Reuse sword/shield body with equipment variation; no unique body required initially. |
-| Light cavalry | `JIZDA_HUSITI`, `LEHKA_JIZDA`, `JIZDA_PRASKY` | Only first explicitly maps to cavalry | Map all to horse/rider; lighter equipment and side variants. |
-| Scouts | `ZVED`, `ZVED_KRIZACI` | Polearm fallback | Light rider variant with simpler equipment; distinct small pennant or silhouette. |
-| Heavy cavalry | `SLECHTICKA_JIZDA_HUSITI`, `TEZKY_RYTIR`, `TEZKOODENCI` | Last two use generic cavalry; first falls back | Armoured rider/lance variant, optional horse cloth; mounted and dismounted versions. |
+| Light cavalry | `JIZDA_HUSITI`, `LEHKA_JIZDA`, `JIZDA_PRASKY` | Dedicated `cavalry_light`, red/blue cloth and shield | Base mounted coverage complete; more regional equipment and poses can follow. |
+| Scouts | `ZVED`, `ZVED_KRIZACI` | Dedicated `cavalry_scout`, cloth cap, travel gear and no raised lance | Base mounted coverage complete; further clothing/horse variation optional. |
+| Heavy cavalry | `SLECHTICKA_JIZDA_HUSITI`, `TEZKY_RYTIR`, `TEZKOODENCI` | Dedicated `cavalry_heavy`, armour, lance, shield and horse cloth | Mounted baseline complete. Dismounted knights and a less armoured men-at-arms variant remain future work. |
 | Field artillery | `HOUFNICE`, `HOUFNICE_PRASKY`, `TARASNICE`, `POLNI_DELO` | Dedicated houfnice/tarasnice models, each with two visual crew figures | Base coverage complete; the generic field gun shares the tarasnice silhouette. Additional crew poses and equipment variants can follow. |
 | Siege artillery | `BOMBARDA` | Dedicated bombard on a timber bed with stone shot and two visual crew figures | Base coverage complete. Definition belongs to `hussites`; the displayed pair is a crew abstraction, not the historical crew size. |
 | War wagons | `VOZOVA_HRADBA`, `VOZOVA_HRADBA_PRASKY` | Only first uses wagon | Map Prague variant; recolour cloth/flags while preserving chalice identity where appropriate. |
@@ -104,7 +105,7 @@ Mounted/dismounted heavy infantry is particularly useful for the Sudoměř and H
 
 Keep **game side**, **historical affiliation**, and **unit equipment** separate. The data uses two gameplay factions, `hussites` and `crusaders`, but the second can represent Prague/moderate Hussites or another coalition. Lipany explicitly defines blue Prague variants. A blue Hussite wagon should not automatically receive a crusader cross.
 
-The Three.js presenter now recolours the dedicated cloth and shield-paint slots in the five new infantry models and the artillery gunner according to game side. It preserves neutral materials and isolates the two palettes. Original models still have baked red/ochre clothing and chalice flags; extending side recognition to those assets remains work to do.
+The Three.js presenter now recolours the dedicated cloth and shield-paint slots in the five new infantry models, artillery gunner and three cavalry variants according to game side. It preserves neutral materials and isolates the two palettes. Original models still have baked red/ochre clothing and chalice flags; extending side recognition to those assets remains work to do.
 
 Proposed art scheme, not a claim about historical uniforms:
 
@@ -160,7 +161,7 @@ These are candidates derived from current map labels, terrain and battle lore. T
 ## Suggested production order
 
 1. **Make current units readable:** fix type-to-model mappings, integrate the unarmed adult, establish two side appearances and replace the universal commander chalice. This unlocks existing assets before new modelling.
-2. **Differentiate mounted troops:** light/heavy/scout riders and dismounted knights. The flail, crossbow, pavise, spear and bow infantry are now covered; add pose and clothing variation after broader coverage. Share bodies and horse geometry.
+2. **Add dismounted knights and commander identities:** light/heavy/scout mounted troops are now covered alongside the five new infantry families. Shared captain, noble and cleric bases can cover the leaders before individual details. Add pose and clothing variation after broader coverage.
 3. **Add fieldworks:** the Vítkov blockhouse still appears as ordinary soldiers. The artillery batch now covers houfnice, tarasnice/generic field gun and bombarda; deploy/loading poses remain optional later work.
 4. **Build one modular fortification kit:** use it for Nekmíř/Malešov, town walls, Hněvín/Vyšehrad and Sion, with individually authored placement and a few landmark parts.
 5. **Add civilian/commander variety and camps**, followed by scene-specific atmosphere and optional lore props.
@@ -175,7 +176,7 @@ No need to commission 59 bespoke troop meshes or 18 completely separate scenery 
 - Loading/material reuse: sibling `assets.ts`; scenery coverage: `generated-scenery.ts`, `scenery.ts`, `landscape-details.ts`; authored map registration: `scenario-art.ts`.
 - Asset descriptions and conventions: `tools/art/blender/README.md`; shared GLBs and manifests under `assets/3d/models/`; experimental exports under `experiments/sudomer-diorama/assets/models/`.
 
-The original inventory checked live source definitions, the original 27 GLB JSON headers/material/animation lists, and the renderer mappings. The first infantry batch subsequently added three models with linked visual/historical references, inspected Blender previews and an exported-model comparison in both side colours. GLB loading, dimensions, grounding, static geometry, faction material isolation and unit mappings have automated coverage; the 3D build and browser formation checks passed. The artillery batch also passed exported-geometry checks for open muzzles, ground contact and the combined gun/crew picking footprint, followed by browser rendering and selection checks. The spear/bow pair passed the same export and browser checks, including the height of the raised spear tips within the picking volume. Battle-specific architectural details remain research work before modelling.
+The original inventory checked live source definitions, the original 27 GLB JSON headers/material/animation lists, and the renderer mappings. The first infantry batch subsequently added three models with linked visual/historical references, inspected Blender previews and an exported-model comparison in both side colours. GLB loading, dimensions, grounding, static geometry, faction material isolation and unit mappings have automated coverage; the 3D build and browser formation checks passed. The artillery batch also passed exported-geometry checks for open muzzles, ground contact and the combined gun/crew picking footprint, followed by browser rendering and selection checks. The spear/bow pair passed the same export and browser checks, including the height of the raised spear tips within the picking volume. Cavalry checks also cover static exports, four planted hooves, all eight mappings and the full geometry of two-mount formations within the selectable area. Battle-specific architectural details remain research work before modelling.
 
 ## Complete roster mapping
 
@@ -193,14 +194,14 @@ This appendix records the current Three.js base-model selection, not whether tha
 | `TARASNICE` | Tarasnice | H | `artillery_tarasnice` |
 | `POLNI_OPEVNENI` | Posádka srubu | H | `infantry_polearm` |
 | `VOZOVA_HRADBA` | Bojový vůz | H | `war_wagon` |
-| `JIZDA_HUSITI` | Lehká jízda | H | `cavalry` |
-| `SLECHTICKA_JIZDA_HUSITI` | Šlechtická jízda | H | `infantry_polearm` |
+| `JIZDA_HUSITI` | Lehká jízda | H | `cavalry_light` |
+| `SLECHTICKA_JIZDA_HUSITI` | Šlechtická jízda | H | `cavalry_heavy` |
 | `POUTNICI` | Poutníci | H | `infantry_polearm` |
-| `ZVED` | Zvěd | H | `infantry_polearm` |
-| `TEZKY_RYTIR` | Těžký rytíř | C | `cavalry` |
-| `TEZKOODENCI` | Těžkooděnci | C | `cavalry` |
-| `LEHKA_JIZDA` | Lehká jízda | C | `infantry_polearm` |
-| `ZVED_KRIZACI` | Zvěd | C | `infantry_polearm` |
+| `ZVED` | Zvěd | H | `cavalry_scout` |
+| `TEZKY_RYTIR` | Těžký rytíř | C | `cavalry_heavy` |
+| `TEZKOODENCI` | Těžkooděnci | C | `cavalry_heavy` |
+| `LEHKA_JIZDA` | Lehká jízda | C | `cavalry_light` |
+| `ZVED_KRIZACI` | Zvěd | C | `cavalry_scout` |
 | `KOPINICI` | Kopiníci | C | `infantry_spear` |
 | `HALAPARTNICI` | Halapartníci | C | `infantry_polearm` |
 | `PAVEZNICI_KRIZACI` | Pavézníci | C | `infantry_pavise` |
@@ -241,4 +242,4 @@ This appendix records the current Three.js base-model selection, not whether tha
 | `CEPNICI_PRASKY` | Pražští cepníci | C | `infantry_flail` |
 | `KUSINICI_PRASKY` | Pražští kušiníci | C | `infantry_crossbow` |
 | `HOUFNICE_PRASKY` | Pražské houfnice | C | `artillery_houfnice` |
-| `JIZDA_PRASKY` | Pražská jízda | C | `infantry_polearm` |
+| `JIZDA_PRASKY` | Pražská jízda | C | `cavalry_light` |

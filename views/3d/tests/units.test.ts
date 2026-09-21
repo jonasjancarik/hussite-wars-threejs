@@ -120,6 +120,22 @@ test("maps the first dedicated infantry batch and keeps five-figure formations",
   }
 });
 
+test("maps the cavalry batch to two-mount formations", async () => {
+  const assets = new TestAssets();
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(8, 1), assets);
+  const cavalry = [
+    "JIZDA_HUSITI", "LEHKA_JIZDA", "JIZDA_PRASKY", "ZVED", "ZVED_KRIZACI",
+    "SLECHTICKA_JIZDA_HUSITI", "TEZKY_RYTIR", "TEZKOODENCI",
+  ];
+  await units.update(snapshotWithUnits(cavalry.map((type, index) => unit(index + 1, type))));
+
+  assert.deepEqual(new Set(assets.loaded), new Set(["cavalry_light", "cavalry_scout", "cavalry_heavy"]));
+  for (const formation of units.group.children) {
+    assert.equal(formation.children.filter(child => child instanceof THREE.Group).length, 2);
+  }
+});
+
 test("maps artillery to one gun and two independently placed crew", async () => {
   const assets = new TestAssets();
   const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },

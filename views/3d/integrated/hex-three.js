@@ -9184,7 +9184,10 @@ var gu = {
 	artillery_bombard: "models/units/artillery_bombard.glb",
 	artillery_gunner: "models/units/artillery_gunner.glb",
 	infantry_spear: "models/units/infantry_spear.glb",
-	infantry_archer: "models/units/infantry_archer.glb"
+	infantry_archer: "models/units/infantry_archer.glb",
+	cavalry_light: "models/units/cavalry_light.glb",
+	cavalry_scout: "models/units/cavalry_scout.glb",
+	cavalry_heavy: "models/units/cavalry_heavy.glb"
 }, _u = class {
 	baseUrl;
 	loader = new gl();
@@ -31423,18 +31426,18 @@ var tV = class {
 	}
 }, rV = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]);
 function iV(e) {
-	return ["HOUFNICE", "HOUFNICE_PRASKY"].includes(e.type) ? aV("artillery_houfnice") : ["TARASNICE", "POLNI_DELO"].includes(e.type) ? aV("artillery_tarasnice") : e.type === "BOMBARDA" ? aV("artillery_bombard") : e.type === "VOZOVA_HRADBA" ? [{
+	return [
+		"JIZDA_HUSITI",
+		"LEHKA_JIZDA",
+		"JIZDA_PRASKY"
+	].includes(e.type) ? aV("cavalry_light") : ["ZVED", "ZVED_KRIZACI"].includes(e.type) ? aV("cavalry_scout") : [
+		"SLECHTICKA_JIZDA_HUSITI",
+		"TEZKY_RYTIR",
+		"TEZKOODENCI"
+	].includes(e.type) ? aV("cavalry_heavy") : ["HOUFNICE", "HOUFNICE_PRASKY"].includes(e.type) ? oV("artillery_houfnice") : ["TARASNICE", "POLNI_DELO"].includes(e.type) ? oV("artillery_tarasnice") : e.type === "BOMBARDA" ? oV("artillery_bombard") : e.type === "VOZOVA_HRADBA" ? [{
 		model: "war_wagon",
 		offsets: [[0, 0]],
 		scale: 1.1
-	}] : [
-		"JIZDA_HUSITI",
-		"TEZKY_RYTIR",
-		"TEZKOODENCI"
-	].includes(e.type) ? [{
-		model: "cavalry",
-		offsets: [[-.82, -.34], [.74, .38]],
-		scale: .98
 	}] : ["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(e.type) ? [{
 		model: "infantry_shield",
 		offsets: [[0, 0]],
@@ -31477,6 +31480,13 @@ function iV(e) {
 function aV(e) {
 	return [{
 		model: e,
+		offsets: [[-.7, -.2], [.7, .2]],
+		scale: .98
+	}];
+}
+function oV(e) {
+	return [{
+		model: e,
 		offsets: [[0, 0]],
 		scale: 1
 	}, {
@@ -31486,7 +31496,7 @@ function aV(e) {
 		rotateOffsetsWithFacing: !0
 	}];
 }
-var oV = class {
+var sV = class {
 	group = new $n();
 	hitTargets = [];
 	visuals = /* @__PURE__ */ new Map();
@@ -31584,7 +31594,7 @@ var oV = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, sV = class e {
+}, cV = class e {
 	canvas;
 	options;
 	scene = new cr();
@@ -31636,7 +31646,7 @@ var oV = class {
 			effects: !0,
 			gtaoSamples: 12,
 			maxPixelRatio: 2
-		}), this.units = new oV(this.terrain, this.terrain.layout, this.assets), this.overlays = new Gd(this.terrain, this.terrain.layout), this.lighting = Vd(this.scene), this.picker = new Kd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new ZB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
+		}), this.units = new sV(this.terrain, this.terrain.layout, this.assets), this.overlays = new Gd(this.terrain, this.terrain.layout), this.lighting = Vd(this.scene), this.picker = new Kd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new ZB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await qB(n.snapshot, r), a = new e(t, n, i);
@@ -31826,8 +31836,8 @@ var oV = class {
 		this.lastRendererCounters = tf(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, a - r, o - a, o - r) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => sV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function cV() {
+window.HussiteBattle3D = { create: (e, t) => cV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function lV() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = JB(() => t.takeSnapshot(), window), r = new XB(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -31839,7 +31849,7 @@ async function cV() {
 			action: e,
 			...n
 		}));
-	}, s = await sV.create(e, {
+	}, s = await cV.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -31852,7 +31862,7 @@ async function cV() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-cV().catch((e) => {
+lV().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });
