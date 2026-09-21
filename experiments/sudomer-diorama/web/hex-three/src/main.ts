@@ -8,6 +8,7 @@ import { createBattleLighting } from "./lighting.ts";
 import { TacticalOverlays } from "./overlays.ts";
 import { BattlePicker } from "./picking.ts";
 import { beginPointerGesture, pointerGestureIsClick, recordPointerGestureMovement, type PointerGesture } from "./pointer-gesture.ts";
+import { PerformanceTracker, rendererCounters, type RendererCounters } from "./performance.ts";
 import { BattleRenderPipeline } from "./render-pipeline.ts";
 import { AuthoredScenery } from "./scenery.ts";
 import { loadScenarioArt } from "./scenario-art.ts";
@@ -43,7 +44,9 @@ class IntegratedThreeBattle {
   private cameraMoving = false;
   private active = true;
   private disposed = false;
-  private frameTimes: number[] = [];
+  private readonly performanceTracker = new PerformanceTracker();
+  private lastRendererCounters: RendererCounters = {};
+  private performanceWarm = false;
   private frameCount = 0;
   private listenerCount = 0;
   private snapshotRevision = -1;
@@ -59,7 +62,7 @@ class IntegratedThreeBattle {
       this.scenery = new AuthoredScenery(art, terrain, this.assets);
       this.artMode = "authored";
     } else {
-      const terrain = new GeneratedTerrain(options.snapshot);
+      const terrain = new GeneratedTerrain(options.snapshot, assetBase);
       this.terrain = terrain;
       this.scenery = new GeneratedScenery(terrain, this.assets);
       this.artMode = "generated";
@@ -132,7 +135,11 @@ class IntegratedThreeBattle {
       cancelAnimationFrame(this.frameRequest);
       this.frameRequest = null;
     }
-    if (active) { this.lastFrame = performance.now(); this.resize(); this.scheduleFrame(); }
+    if (active) {
+      this.lastFrame = performance.now();
+      this.performanceTracker.skipNextFrameInterval();
+      this.resize(); this.scheduleFrame();
+    }
   }
 
   public frameScene(): void {
@@ -176,9 +183,17 @@ class IntegratedThreeBattle {
   }
 
   public diagnostics(): Record<string, unknown> {
-    const sorted = [...this.frameTimes].sort((a, b) => a - b);
-    const percentile = (fraction: number): number => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * fraction))] ?? 0;
+    const performanceSnapshot = this.performanceTracker.snapshot();
     const terrainBox = new THREE.Box3().setFromObject(this.terrain.group);
+    const drawingBuffer = this.pipeline.renderer.getDrawingBufferSize(new THREE.Vector2());
+    const rect = this.canvas.getBoundingClientRect();
+    const capture = { version: 1, capturedAt: new Date().toISOString(),
+      provenance: "procedural-worlds@bada861a8d5c8cb7275a1b3d6e6a3f4ea4844cf4",
+      backend: this.pipeline.backendName(), scenario: this.options.snapshot.scenario, artMode: this.artMode,
+      viewport: [rect.width, rect.height], drawingBuffer: drawingBuffer.toArray(), devicePixelRatio: window.devicePixelRatio || 1,
+      effectivePixelRatio: rect.width > 0 ? drawingBuffer.x / rect.width : 0,
+      userAgent: navigator.userAgent, timings: performanceSnapshot, renderer: this.lastRendererCounters,
+      active: this.active, disposed: this.disposed };
     return { backend: this.pipeline.backendName(), active: this.active, disposed: this.disposed,
       listenerCount: this.listenerCount, frameRequestActive: this.frameRequest !== null,
       scenario: this.options.snapshot.scenario, artMode: this.artMode, terrainTypes: this.terrain.terrainTypes,
@@ -188,9 +203,19 @@ class IntegratedThreeBattle {
       cameraDirection: this.cameraRig.camera.getWorldDirection(new THREE.Vector3()).toArray(),
       cameraNear: this.cameraRig.camera.near, cameraFar: this.cameraRig.camera.far,
       focusDistance: this.focusDistance, targetFocusDistance: this.targetFocusDistance,
-      frameTimeMedianMs: percentile(0.5), frameTimeP95Ms: percentile(0.95), sampleFrames: this.frameTimes.length,
-      drawCalls: this.pipeline.renderer.info.render.calls, triangles: this.pipeline.renderer.info.render.triangles,
-      drawingBuffer: this.pipeline.renderer.getDrawingBufferSize(new THREE.Vector2()).toArray() };
+      frameTimeMedianMs: performanceSnapshot.medianFrameMs, frameTimeP95Ms: performanceSnapshot.p95FrameMs,
+      longestFrameMs: performanceSnapshot.longestFrameMs, sampleFrames: performanceSnapshot.sampleCount,
+      preparationTimeMedianMs: performanceSnapshot.medianPreparationMs, preparationTimeP95Ms: performanceSnapshot.p95PreparationMs,
+      rendererTimeMedianMs: performanceSnapshot.medianRendererMs, rendererTimeP95Ms: performanceSnapshot.p95RendererMs,
+      drawCalls: this.lastRendererCounters.drawCalls, triangles: this.lastRendererCounters.triangles,
+      drawingBuffer: drawingBuffer.toArray(), performance: capture };
+  }
+
+  public resetDiagnostics(): void {
+    this.performanceTracker.reset();
+    this.performanceTracker.skipNextFrameInterval();
+    this.lastRendererCounters = {};
+    this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
   }
 
   public dispose(): void {
@@ -291,11 +316,11 @@ class IntegratedThreeBattle {
   private animate = (now: number): void => {
     this.frameRequest = null;
     if (!this.active || this.disposed) return;
-    const delta = Math.min(64, now - this.lastFrame);
+    const frameMs = now - this.lastFrame;
+    const delta = Math.min(64, frameMs);
     this.lastFrame = now;
-    this.frameTimes.push(delta);
     this.frameCount += 1;
-    if (this.frameTimes.length > 3600) this.frameTimes.shift();
+    const renderStartedAt = performance.now();
     const controlsChanged = this.cameraRig.controls.update();
     if (controlsChanged) {
       const point = this.focusPointer
@@ -307,7 +332,19 @@ class IntegratedThreeBattle {
     this.pipeline.setDepthOfField(!this.cameraMoving, this.focusDistance, this.cameraMoving ? 0 : 0.35);
     this.sky.update(this.cameraRig.camera);
     this.lighting.updateShadows();
+    const rendererStartedAt = performance.now();
+    this.pipeline.renderer.info.reset();
     this.pipeline.render();
+    const rendererFinishedAt = performance.now();
+    this.lastRendererCounters = rendererCounters(this.pipeline.renderer);
+    if (this.performanceWarm) {
+      this.performanceTracker.record(frameMs, rendererStartedAt - renderStartedAt,
+        rendererFinishedAt - rendererStartedAt, rendererFinishedAt - renderStartedAt);
+    } else {
+      this.performanceWarm = true;
+      this.performanceTracker.reset();
+      this.performanceTracker.skipNextFrameInterval();
+    }
     if (this.frameCount % 120 === 0) this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
     this.scheduleFrame();
   };
@@ -332,7 +369,8 @@ async function startStandalone(): Promise<void> {
   const client = new SnapshotClient();
   client.connect(battle);
   window.SudomerHexRenderer = { frameScene: () => battle.frameScene(), setGridVisible: visible => battle.setGridVisible(visible),
-    setEffectsEnabled: enabled => battle.setEffectsEnabled(enabled), diagnostics: () => battle.diagnostics() };
+    setEffectsEnabled: enabled => battle.setEffectsEnabled(enabled), diagnostics: () => battle.diagnostics(),
+    resetDiagnostics: () => battle.resetDiagnostics() };
   window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
 

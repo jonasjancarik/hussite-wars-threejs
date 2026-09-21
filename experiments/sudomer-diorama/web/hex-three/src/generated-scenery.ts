@@ -1,16 +1,20 @@
 import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
+import { createMeadowMesh, createMeadowPlacements, decorationSeed } from "./generated-meadow.ts";
 import { mulberry32 } from "./geometry-utils.ts";
 import { GeneratedTerrain } from "./generated-terrain.ts";
+import { SceneryVisibility } from "./scenery-visibility.ts";
 import type { BattleScenery, BattleSnapshot } from "./types.ts";
 
 export class GeneratedScenery implements BattleScenery {
   public readonly group = new THREE.Group();
   private disposed = false;
-  private readonly placements: Array<{ object: THREE.Object3D; key: string }> = [];
+  private readonly visibility: SceneryVisibility;
+  private meadowMesh: THREE.InstancedMesh | null = null;
 
   public constructor(private readonly terrain: GeneratedTerrain, private readonly assets: BattleAssets) {
     this.group.name = "Terrain-derived scenery";
+    this.visibility = new SceneryVisibility(terrain.layout);
   }
 
   public async build(): Promise<void> {
@@ -23,9 +27,18 @@ export class GeneratedScenery implements BattleScenery {
     }
     await this.assets.preload([...needed]);
     if (this.disposed) return;
-    const random = mulberry32(this.terrain.field.seed ^ 0x51f15e);
+    const meadow = createMeadowMesh(createMeadowPlacements(this.terrain), (x, z) => this.terrain.heightAt(x, z));
+    if (meadow.matrices.length > 0) {
+      this.meadowMesh = meadow.mesh;
+      this.group.add(meadow.mesh);
+      this.visibility.trackInstances(meadow.mesh, meadow.matrices);
+    } else {
+      meadow.mesh.geometry.dispose();
+      (meadow.mesh.material as THREE.Material).dispose();
+    }
     for (const cell of this.terrain.field.tiles) {
       if (this.disposed) return;
+      const random = mulberry32(decorationSeed(this.terrain.field.seed, cell.col, cell.row, "terrain-models"));
       const placements = cell.terrain === "forest" ? 3 : ["town", "church", "trenches"].includes(cell.terrain) ? 1 : 0;
       for (let index = 0; index < placements; index += 1) {
         const modelName = cell.terrain === "forest" ? "procedural-worlds/pw_deciduous_02"
@@ -41,17 +54,22 @@ export class GeneratedScenery implements BattleScenery {
         model.scale.setScalar(scale);
         model.name = `${cell.terrain} ${cell.col},${cell.row} decoration ${index + 1}`;
         this.group.add(model);
-        this.placements.push({ object: model, key: `${cell.col},${cell.row}` });
+        this.visibility.trackObject(model, x, z);
       }
     }
   }
 
   public updateVisibility(snapshot: BattleSnapshot): void {
-    const explored = new Set(snapshot.exploredHexes);
-    for (const placement of this.placements) {
-      placement.object.visible = !snapshot.fogOfWar || explored.has(placement.key);
-    }
+    this.visibility.update(snapshot);
   }
 
-  public dispose(): void { this.disposed = true; this.placements.length = 0; this.group.clear(); }
+  public dispose(): void {
+    this.disposed = true;
+    this.visibility.clear();
+    this.meadowMesh?.geometry.dispose();
+    const material = this.meadowMesh?.material;
+    if (material) for (const entry of Array.isArray(material) ? material : [material]) entry.dispose();
+    this.meadowMesh = null;
+    this.group.clear();
+  }
 }

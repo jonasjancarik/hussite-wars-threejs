@@ -47,9 +47,90 @@ test("a rules-level field hex receives cultivated ground instead of the plains p
     tiles: [{ col: 0, row: 0, terrain: "farmland" }] }));
   assert.equal(farmland.renderedTerrainAt(0, 0), "farmland");
   const plainsColor = averageSurfaceColor(plains), fieldColor = averageSurfaceColor(farmland);
-  assert.ok(fieldColor.r > plainsColor.r && fieldColor.b < plainsColor.b,
+  const colorDistance = Math.hypot(fieldColor.r - plainsColor.r, fieldColor.g - plainsColor.g, fieldColor.b - plainsColor.b);
+  assert.ok(colorDistance > 0.04 && fieldColor.b < plainsColor.b,
     `field ${fieldColor.getHexString()} should differ from plains ${plainsColor.getHexString()}`);
   plains.dispose(); farmland.dispose();
+});
+
+test("generated plinth sides follow elevated terrain at the map edge", () => {
+  const terrain = new GeneratedTerrain(snapshot({ cols: 1, rows: 1,
+    tiles: [{ col: 0, row: 0, terrain: "hills" }] }));
+  const skirt = terrain.group.children[1] as THREE.Mesh;
+  const positions = skirt.geometry.getAttribute("position") as THREE.BufferAttribute;
+  let maximum = -Infinity, minimum = Infinity;
+  for (let index = 0; index < positions.count; index += 1) {
+    maximum = Math.max(maximum, positions.getY(index));
+    minimum = Math.min(minimum, positions.getY(index));
+  }
+  assert.ok(maximum > 3, `plinth should meet the hill edge, got ${maximum}`);
+  assert.ok(minimum <= -5.9);
+  const surface = terrain.group.children[0] as THREE.Mesh;
+  const surfacePositions = surface.geometry.getAttribute("position") as THREE.BufferAttribute;
+  const skirtTops = new Map<string, number>();
+  for (let index = 0; index < positions.count; index += 2) {
+    skirtTops.set(`${positions.getX(index).toFixed(6)},${positions.getZ(index).toFixed(6)}`, positions.getY(index));
+  }
+  const { minX, maxX, minZ, maxZ } = terrain.bounds;
+  for (let index = 0; index < surfacePositions.count; index += 1) {
+    const x = surfacePositions.getX(index), z = surfacePositions.getZ(index);
+    if (Math.min(Math.abs(x - minX), Math.abs(x - maxX), Math.abs(z - minZ), Math.abs(z - maxZ)) > 1e-5) continue;
+    const key = `${x.toFixed(6)},${z.toFixed(6)}`;
+    assert.equal(skirtTops.get(key), surfacePositions.getY(index), `plinth seam at ${key}`);
+  }
+  terrain.dispose();
+});
+
+test("fog cover follows elevated hills instead of leaking terrain above it", () => {
+  const hidden = snapshot({ cols: 1, rows: 1, tiles: [{ col: 0, row: 0, terrain: "hills" }],
+    visibleHexes: [], exploredHexes: [], objectiveHexes: [] });
+  const terrain = new GeneratedTerrain(hidden);
+  const overlays = new TacticalOverlays(terrain, terrain.layout);
+  overlays.update(hidden);
+  const cover = overlays.group.children[2] as THREE.Mesh;
+  const positions = cover.geometry.getAttribute("position") as THREE.BufferAttribute;
+  for (let index = 0; index < positions.count; index += 1) {
+    const ground = terrain.heightAt(positions.getX(index), positions.getZ(index));
+    assert.ok(positions.getY(index) >= ground + 0.39, `${index}: cover ${positions.getY(index)} ground ${ground}`);
+  }
+  terrain.dispose();
+});
+
+test("fog cover follows local peaks without lifting low neighbouring cells", () => {
+  const group = new THREE.Group();
+  const peak = new THREE.Mesh(new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute([
+    -4, 0, -3, 4, 0, -3, 0, 5, 3,
+  ], 3)), new THREE.MeshBasicMaterial());
+  group.add(peak);
+  const layout = new HexLayout(2, 1);
+  const peakCenter = layout.center(0, 0), lowCenter = layout.center(1, 0);
+  const heightAt = (x: number, z: number): number => Math.max(0, 5 - Math.hypot(x - peakCenter.x, z - peakCenter.z) * 2.5);
+  const overlays = new TacticalOverlays({ group, interactiveMeshes: [peak], heightAt }, layout);
+  overlays.update(snapshot({ cols: 2, rows: 1, tiles: [
+    { col: 0, row: 0, terrain: "hills" }, { col: 1, row: 0, terrain: "plains" },
+  ],
+    visibleHexes: [], exploredHexes: [], objectiveHexes: [] }));
+  const highCover = overlays.group.children[2] as THREE.Mesh;
+  const lowCover = overlays.group.children[5] as THREE.Mesh;
+  const highPositions = highCover.geometry.getAttribute("position") as THREE.BufferAttribute;
+  const lowPositions = lowCover.geometry.getAttribute("position") as THREE.BufferAttribute;
+  const highCenterIndex = nearestVertex(highCover, peakCenter.x, peakCenter.z);
+  const lowCenterIndex = nearestVertex(lowCover, lowCenter.x, lowCenter.z);
+  assert.ok(highPositions.getY(highCenterIndex) >= 5.4);
+  assert.ok(lowPositions.getY(lowCenterIndex) < 1, "lowland fog must not inherit the map-wide maximum");
+  peak.geometry.dispose(); (peak.material as THREE.Material).dispose();
+});
+
+test("fog cover stays above a separately rendered authored water surface", () => {
+  const layout = new HexLayout(1, 1);
+  const group = new THREE.Group();
+  const overlays = new TacticalOverlays({ group, interactiveMeshes: [], heightAt: () => -1.2 }, layout);
+  overlays.update(snapshot({ cols: 1, rows: 1, tiles: [{ col: 0, row: 0, terrain: "water" }],
+    visibleHexes: [], exploredHexes: [], objectiveHexes: [] }));
+  const positions = (overlays.group.children[2] as THREE.Mesh).geometry.getAttribute("position") as THREE.BufferAttribute;
+  for (let index = 0; index < positions.count; index += 1) {
+    assert.ok(positions.getY(index) > -0.52, `${index}: fog ${positions.getY(index)} is below water`);
+  }
 });
 
 test("unexplored 3D terrain is masked and restores when fog is disabled", () => {

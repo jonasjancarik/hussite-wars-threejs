@@ -1,13 +1,15 @@
 import * as THREE from "three";
+import { createGeneratedSurfaceMaterials, surfaceMaterialIndex } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, isFieldTerrain, type TerrainRegions } from "./terrain-regions.ts";
+import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 
 const COLORS: Record<string, number> = {
-  plains: 0xacb273, forest: 0x45633c, hills: 0x858453, water: 0x4f918c,
-  town: 0xa68768, road: 0xb7a47c, road2: 0x9d8b69, dam: 0xb9aa7b,
-  mud: 0x725443, swamp: 0x66705a, slope: 0x837b59, trenches: 0x665342,
-  church: 0x96826b, field: 0xc7ad68, fields: 0xc7ad68, farmland: 0xc7ad68, cropland: 0xc7ad68,
+  plains: 0xdfe6b3, forest: 0xb3c68f, hills: 0xcfce98, water: 0x78aaa4,
+  town: 0xd1b99d, road: 0xd9c7a0, road2: 0xc7b28f, dam: 0xdacaa2,
+  mud: 0xb28f78, swamp: 0x9ba589, slope: 0xc3b59b, trenches: 0xa88972,
+  church: 0xcab79e, field: 0xddc47d, fields: 0xddc47d, farmland: 0xddc47d, cropland: 0xddc47d,
 };
 
 export class GeneratedTerrain implements BattleTerrain {
@@ -16,7 +18,9 @@ export class GeneratedTerrain implements BattleTerrain {
   public readonly field: TerrainRegions;
   public readonly layout: HexLayout;
   public readonly bounds;
-  private surfaceMesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+  public readonly topography: TopographyPlan;
+  private surfaceMesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial[]>;
+  private readonly surfaceTextures: THREE.Texture[] = [];
   private basePositions!: Float32Array;
   private baseColors!: Float32Array;
   private vertexKeys: Array<string | null> = [];
@@ -27,24 +31,32 @@ export class GeneratedTerrain implements BattleTerrain {
 
   public get terrainTypes(): readonly string[] { return this.field.terrainTypes; }
 
-  public constructor(snapshot: BattleSnapshot) {
+  public constructor(snapshot: BattleSnapshot, assetBase?: string) {
     const cols = snapshot.cols ?? Math.max(...snapshot.tiles.map(tile => tile.col)) + 1;
     const rows = snapshot.rows ?? Math.max(...snapshot.tiles.map(tile => tile.row)) + 1;
     this.layout = new HexLayout(cols, rows);
     this.field = createTerrainRegions({ cols, rows, tiles: snapshot.tiles, scenario: snapshot.scenario ?? "battle",
       seed: snapshot.seed ?? 1, hexRadius: this.layout.radius, coreCoverage: 0.76, boundaryNoise: 0.75 });
+    this.topography = new TopographyPlan(this.field);
     this.bounds = this.layout.bounds();
     this.group.name = `Generated ${snapshot.scenario ?? "battle"} landscape`;
-    this.createSurface();
+    this.createSurface(assetBase);
     this.createPlinth();
   }
 
   public heightAt(x: number, z: number): number {
     const input = this.field.heightInputAt(x, z);
     const terrain = this.field.classify(x, z);
-    if (terrain === "water") return -0.52 + input.variation * 0.035;
-    if (terrain === "road" || terrain === "road2" || terrain === "dam") return input.base + input.variation * 0.24;
-    return input.base + input.variation * (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
+    const elevation = this.topography.elevationAt(x, z);
+    const weights = this.field.weightsAt(x, z);
+    const waterWeight = Object.entries(weights).reduce((total, [name, weight]) =>
+      total + (["water", "river", "lake"].includes(name.toLowerCase()) ? weight : 0), 0);
+    if (waterWeight > 0) {
+      const dryVariation = (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
+      return elevation + input.variation * THREE.MathUtils.lerp(dryVariation, 0.035, waterWeight);
+    }
+    if (terrain === "road" || terrain === "road2" || terrain === "dam") return elevation + input.variation * 0.24;
+    return elevation + input.variation * (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
   }
 
   public updateVisibility(snapshot: BattleSnapshot): void {
@@ -117,9 +129,11 @@ export class GeneratedTerrain implements BattleTerrain {
     this.interactiveMeshes.length = 0;
     this.vertexKeys.length = 0;
     this.visualWeights.clear();
+    for (const texture of this.surfaceTextures) texture.dispose();
+    this.surfaceTextures.length = 0;
   }
 
-  private createSurface(): void {
+  private createSurface(assetBase?: string): void {
     const area = (this.bounds.maxX - this.bounds.minX) * (this.bounds.maxZ - this.bounds.minZ);
     const step = Math.max(0.36, Math.sqrt(area * 2 / 260_000));
     const nx = Math.ceil((this.bounds.maxX - this.bounds.minX) / step) + 1;
@@ -129,7 +143,7 @@ export class GeneratedTerrain implements BattleTerrain {
     for (const terrain of this.field.terrainTypes) this.visualWeights.set(terrain, new Float32Array(nx * nz));
     const positions: number[] = [];
     const colors: number[] = [];
-    const indices: number[] = [];
+    const uvs: number[] = [];
     const color = new THREE.Color();
     const sampleColor = new THREE.Color();
     for (let iz = 0; iz < nz; iz += 1) {
@@ -137,6 +151,7 @@ export class GeneratedTerrain implements BattleTerrain {
         const x = THREE.MathUtils.lerp(this.bounds.minX, this.bounds.maxX, ix / (nx - 1));
         const z = THREE.MathUtils.lerp(this.bounds.minZ, this.bounds.maxZ, iz / (nz - 1));
         positions.push(x, this.heightAt(x, z), z);
+        uvs.push(x / 34, z / 34);
         const coord = this.layout.coordAt(x, z);
         this.vertexKeys.push(coord ? `${coord.col},${coord.row}` : null);
         const weights = this.field.weightsAt(x, z);
@@ -162,21 +177,35 @@ export class GeneratedTerrain implements BattleTerrain {
         colors.push(color.r * grain, color.g * grain, color.b * grain);
       }
     }
+    const materialIndices: number[][] = [[], [], [], [], []];
+    const addTriangle = (a: number, b: number, c: number): void => {
+      const x = (positions[a * 3]! + positions[b * 3]! + positions[c * 3]!) / 3;
+      const z = (positions[a * 3 + 2]! + positions[b * 3 + 2]! + positions[c * 3 + 2]!) / 3;
+      const terrain = this.field.classify(x, z) ?? "plains";
+      materialIndices[surfaceMaterialIndex(terrain)]!.push(a, b, c);
+    };
     for (let iz = 0; iz < nz - 1; iz += 1) {
       for (let ix = 0; ix < nx - 1; ix += 1) {
         const a = iz * nx + ix, b = a + 1, c = a + nx, d = c + 1;
-        if ((ix + iz) % 2 === 0) indices.push(a, c, b, b, c, d);
-        else indices.push(a, c, d, a, d, b);
+        if ((ix + iz) % 2 === 0) { addTriangle(a, c, b); addTriangle(b, c, d); }
+        else { addTriangle(a, c, d); addTriangle(a, d, b); }
       }
     }
+    const indices = materialIndices.flat();
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices);
+    let groupStart = 0;
+    materialIndices.forEach((bucket, materialIndex) => {
+      if (bucket.length > 0) geometry.addGroup(groupStart, bucket.length, materialIndex);
+      groupStart += bucket.length;
+    });
     geometry.computeVertexNormals();
-    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
-      color: 0xffffff, vertexColors: true, roughness: 0.9, metalness: 0, side: THREE.DoubleSide,
-    }));
+    const surface = createGeneratedSurfaceMaterials(assetBase);
+    this.surfaceTextures.push(...surface.textures);
+    const mesh = new THREE.Mesh(geometry, surface.materials);
     mesh.name = `Continuous terrain regions: ${this.field.terrainTypes.join(", ")}`;
     mesh.receiveShadow = true;
     this.surfaceMesh = mesh;
@@ -187,13 +216,45 @@ export class GeneratedTerrain implements BattleTerrain {
   }
 
   private createPlinth(): void {
-    const width = this.bounds.maxX - this.bounds.minX;
-    const depth = this.bounds.maxZ - this.bounds.minZ;
-    const plinth = new THREE.Mesh(new THREE.BoxGeometry(width + 0.8, 5.6, depth + 0.8),
-      new THREE.MeshStandardMaterial({ color: 0x665540, roughness: 1 }));
-    plinth.position.y = -3.2;
-    plinth.name = "Layered battlefield soil plinth";
-    plinth.receiveShadow = true;
-    this.group.add(plinth);
+    const { minX, maxX, minZ, maxZ } = this.bounds;
+    const surfacePositions = this.surfaceMesh.geometry.getAttribute("position") as THREE.BufferAttribute;
+    const edgeIndices: number[] = [];
+    for (let x = 0; x < this.gridWidth; x += 1) edgeIndices.push(x);
+    for (let z = 1; z < this.gridHeight; z += 1) edgeIndices.push(z * this.gridWidth + this.gridWidth - 1);
+    for (let x = this.gridWidth - 2; x >= 0; x -= 1) edgeIndices.push((this.gridHeight - 1) * this.gridWidth + x);
+    for (let z = this.gridHeight - 2; z > 0; z -= 1) edgeIndices.push(z * this.gridWidth);
+    edgeIndices.push(edgeIndices[0]!);
+    const positions: number[] = [], colors: number[] = [], indices: number[] = [];
+    const topColor = new THREE.Color(0x79684b), bottomColor = new THREE.Color(0x46382d);
+    for (let index = 0; index < edgeIndices.length; index += 1) {
+      const sourceIndex = edgeIndices[index]!;
+      const x = surfacePositions.getX(sourceIndex), top = surfacePositions.getY(sourceIndex);
+      const z = surfacePositions.getZ(sourceIndex);
+      positions.push(x, top, z, x, -5.9, z);
+      const variation = 0.94 + 0.06 * Math.sin(index * 0.43);
+      colors.push(topColor.r * variation, topColor.g * variation, topColor.b * variation,
+        bottomColor.r * variation, bottomColor.g * variation, bottomColor.b * variation);
+      if (index < edgeIndices.length - 1) {
+        const a = index * 2, b = a + 2;
+        indices.push(a, a + 1, b, b, a + 1, b + 1);
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const skirt = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+      color: 0xffffff, vertexColors: true, roughness: 1, side: THREE.DoubleSide,
+    }));
+    skirt.name = "Topography-following layered battlefield soil plinth";
+    skirt.receiveShadow = true;
+    const width = maxX - minX, depth = maxZ - minZ;
+    const base = new THREE.Mesh(new THREE.BoxGeometry(width + 0.8, 0.5, depth + 0.8),
+      new THREE.MeshStandardMaterial({ color: 0x46382d, roughness: 1 }));
+    base.position.y = -6.1;
+    base.name = "Battlefield plinth base";
+    base.receiveShadow = true;
+    this.group.add(skirt, base);
   }
 }

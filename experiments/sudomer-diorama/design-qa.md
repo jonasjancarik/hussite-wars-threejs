@@ -72,3 +72,9 @@ The in-app WebGPU browser confirmed the authored mode, selection and mint/gold t
 Advanced fog now keeps a gameplay-hex key for ordinary decorations and every instance inside shared draw calls. Explored cells reveal their trees, landmarks and ground details independently; unexplored cells remain concealed without disabling the whole authored layer. A focused regression test covers both batched reveal and restoration when fog is disabled.
 
 Playable Sudoměř `plains` now use one meadow language: grass, low flowers and normal surface variation. Authored crop polygons, the village, woodland framing, field walls and scattered stones were moved or filtered into the outer diorama fringe so they do not imply an unimplemented movement cost. Rules-level field aliases remain visually cultivated in the generated renderer. The full 20×12 grid is shown by default in 3D and the localized **Hex grid** control toggles it without changing game state.
+
+## Generator v2 Vítkov baseline, 21 September 2026
+
+The original generated Vítkov view had continuous semantic regions but only flat vertex colour and almost no dressing. The first shared Generator v2 slice adds terrain-specific painted materials, one deterministic instanced meadow batch, semantic plateau and slope elevation, and a topography-following diorama cut. `slope` remains grassy or earthy; only an explicit future `rock` or `cliff` terrain uses a rock material. The generator contains no Vítkov coordinates.
+
+The live WebGPU comparison used the same 1214×1083 browser viewport, DPR 2 and 1300×1666 drawing buffer. The final steady 240-frame capture reported 16.7 ms median, 17.4 ms p95 and no frame stalls; synchronous renderer submission was 3.1 ms median and 3.5 ms p95. Advanced fog was forced on and visually confirmed to cover material detail and hide unexplored grass instances, then restored. These are desktop warm-state measurements, not cold-start, mobile, or GPU-time claims.

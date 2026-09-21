@@ -129,7 +129,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'experiments/sudomer-diorama/web/hex-three/integrated/hex-three.js?v=2.5';
+                script.src = 'experiments/sudomer-diorama/web/hex-three/integrated/hex-three.js?v=2.14';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -239,6 +239,8 @@ class ThreeBattleMapView {
     resize() { if (this.active) this.renderer?.resize(); }
     zoomBy(factor) { this.renderer?.zoomBy(factor); }
     setGridVisible(visible) { this.gridVisible = visible; this.renderer?.setGridVisible(visible); }
+    diagnostics() { return this.renderer?.diagnostics() ?? null; }
+    resetDiagnostics() { this.renderer?.resetDiagnostics(); }
     setPageVisible(visible) { this.pageVisible = visible; this.renderer?.setActive(this.active && visible); }
     focusSelection() {
         if (this.game.selectedUnit) this.renderer?.focusHex(this.game.selectedUnit.col, this.game.selectedUnit.row);

@@ -41,6 +41,21 @@ export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "
   return geometry;
 }
 
+function fogOverlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt">,
+  layout: HexLayout): THREE.BufferGeometry {
+  const geometry = overlayGeometry(coord, terrain, true, layout, 1.04);
+  const positions = geometry.getAttribute("position") as THREE.BufferAttribute;
+  for (let index = 0; index < positions.count; index += 1) {
+    // overlayGeometry already sampled the shared surface oracle and applied
+    // the authored pond floor. Reuse that value instead of resampling every
+    // vertex during synchronous scene construction.
+    positions.setY(index, positions.getY(index) + 0.35);
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 export class TacticalOverlays {
   public readonly group = new THREE.Group();
   private readonly rings = new Map<string, THREE.Mesh>();
@@ -75,11 +90,7 @@ export class TacticalOverlays {
         fill.visible = false;
         this.fills.set(`${col},${row}`, fill);
         this.group.add(fill);
-        const fogGeometry = overlayGeometry({ col, row }, terrain, true, layout, 1.04);
-        const fogPositions = fogGeometry.getAttribute("position") as THREE.BufferAttribute;
-        for (let index = 0; index < fogPositions.count; index += 1) fogPositions.setY(index, 3.2);
-        fogPositions.needsUpdate = true;
-        fogGeometry.computeVertexNormals();
+        const fogGeometry = fogOverlayGeometry({ col, row }, terrain, layout);
         const fogCover = new THREE.Mesh(fogGeometry, new THREE.MeshBasicMaterial({
           color: 0xa5a58f, transparent: false, depthWrite: true, depthTest: true,
           toneMapped: false, fog: false, side: THREE.DoubleSide,

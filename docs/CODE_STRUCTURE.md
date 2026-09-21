@@ -66,6 +66,21 @@ rozpoznává `field`, `fields`, `farmland` a `cropland`, takže skutečný poln�
 má zlatohnědou brázděnou kresbu. 3D pohled zobrazuje celou hexovou síť ve výchozím
 stavu a hráč ji může vypnout tlačítkem v ovládání mapy.
 
+Generátor v2 rozděluje povrch do několika stabilních materiálových skupin nad
+jedinou souvislou geometrií: louka a kopce používají malovanou půdu, bahno a
+cesty zeminu, svahy jemnou travnato-hlinitou kresbu a voda vlastní hladký
+materiál. `TopographyPlan` odvozuje výšku z herních typů bez scénářových větví:
+`hills` tvoří plošinu, sousední `slope` přechází podle vzdálenosti k vysokému a
+nízkému terénu a mokrá místa zůstávají snížená. Jediný instancovaný batch trávy
+má deterministické pozice, volný střed hexu pro figuriny, vlastní klíč mlhy a
+nevytváří tisíce stínů.
+
+`performance.ts` měří nezkrácený interval snímku, přípravu na CPU a synchronní
+čas celé renderer pipeline odděleně. Udržuje posledních 240 běžných vzorků,
+stally nad 250 ms počítá mimo percentily a čte `renderer.info` po ručním resetu
+před každým snímkem. Diagnostický JSON obsahuje viewport, efektivní pixel ratio,
+backend, scénář, medián, p95, nejhorší časy a skutečné počty rendereru.
+
 ### Stav se nemění při kreslení
 
 `Game.render()` je kompatibilní bod pro obnovení odvozené viditelnosti po změně hry

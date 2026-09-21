@@ -137,6 +137,7 @@ declare global {
         focusHex(col: number, row: number): void;
         zoomBy(factor: number): void;
         diagnostics(): Record<string, unknown>;
+        resetDiagnostics(): void;
         dispose(): void;
       }>;
     };
@@ -150,6 +151,7 @@ declare global {
       setGridVisible(visible: boolean): void;
       setEffectsEnabled(enabled: boolean): void;
       diagnostics(): Record<string, unknown>;
+      resetDiagnostics(): void;
     };
   }
 }
