@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tin soldiers — Diorama study</title>
+<style>
+:root{color-scheme:dark;font-family:ui-sans-serif,system-ui,sans-serif;color:#e8e4d7;background:#293036}*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none}canvas{display:block;width:100%!important;height:100%!important;outline:none;touch-action:none}
+header{position:fixed;top:26px;left:30px;right:30px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;z-index:2;pointer-events:none}h1{font-family:Georgia,serif;font-weight:400;font-size:27px;line-height:1.15;margin:0 0 7px}header p{font-size:12px;color:#bfc3bc;margin:0;letter-spacing:.02em}nav{display:flex;gap:9px;pointer-events:auto}a,button{font:inherit;color:inherit}nav a,button{border:1px solid #ffffff26;background:#252c31ba;border-radius:5px;padding:9px 12px;font-size:12px;text-decoration:none;cursor:pointer}nav a:hover,button:hover{background:#46504c}footer{position:fixed;bottom:20px;left:30px;right:30px;display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#c5c9c2;pointer-events:none;z-index:2}.keys{line-height:1.8}.keys span{white-space:nowrap;margin-right:13px}kbd{font:inherit;color:#f1ead9}#loading{position:fixed;inset:0;display:grid;place-items:center;z-index:5;background:#293036;color:#ded9ca;font-family:Georgia,serif;font-size:20px}dialog{border:1px solid #68746b;border-radius:8px;background:#232a2c;color:#e5e2d6;padding:18px;max-height:94vh;max-width:min(780px,94vw)}dialog::backdrop{background:#1119}dialog img{display:block;max-width:100%;max-height:70vh;margin:auto}dialog h2{font:22px Georgia,serif;margin:0 0 10px}dialog p{font-size:13px;line-height:1.5;max-width:650px}dialog button{float:right;margin-left:14px}body.hide-ui header,body.hide-ui footer{display:none}@media(max-width:700px){header{top:18px;left:18px;right:18px;flex-direction:column;gap:12px}h1{font-size:23px}footer{left:18px;right:18px;bottom:12px;flex-direction:column;gap:2px}header p{max-width:280px;line-height:1.5}.keys{max-width:310px}}
+.touch-help{display:none}.scene-controls{position:fixed;right:24px;bottom:65px;display:flex;gap:8px;z-index:3}.scene-controls button{min-height:44px;min-width:44px;touch-action:manipulation}body.hide-ui .scene-controls{display:none}@media(pointer:coarse){.desktop-help{display:none}.touch-help{display:block}nav a,nav button{min-height:44px}.scene-controls{right:18px;bottom:100px}footer .keys{max-width:100%}}
+</style>
+</head>
+<body>
+<div id="loading" role="status">Setting the scene…</div>
+<header><div><h1>Tin soldiers</h1><p>A small landscape, a moment held still.</p></div><nav aria-label="Views"><button id="plan">Landscape plan</button><a href="./">Main landscape</a><a href="./battlefield-study.html">Battlefield study</a></nav></header>
+<footer><div class="keys desktop-help"><span><kbd>Right drag</kbd> orbit</span><span><kbd>Middle drag</kbd> pan</span><span><kbd>Scroll</kbd> zoom</span><br><span><kbd>F</kbd> frame</span><span><kbd>Space</kbd> <span id="motion-label">pause atmosphere</span></span><span><kbd>R</kbd> reset</span><span><kbd>H</kbd> hide text</span></div><div class="keys touch-help">Drag to orbit · Pinch to zoom<br>Move two fingers together to pan</div><div>Imagined landscape · not a historical reconstruction</div></footer>
+<div class="scene-controls" aria-label="Scene controls"><button id="frame-view">Frame scene</button><button id="pause-atmosphere">Pause atmosphere</button></div>
+<dialog id="plan-dialog" aria-labelledby="plan-title"><button id="close-plan">Close</button><h2 id="plan-title">From landscape plan to miniature</h2><p>This generated overhead study guided the woodland, fields, track, village, and pond. Those shapes were traced into editable regions that place the 3D scenery. Elevation and figures are art-directed; this is not a map of historical Sudoměř.</p><img src="assets/diorama/landscape-plan.png" alt="Generated overhead landscape study showing strip fields, woodland, a winding track, village and pond"/></dialog>
+<script type="module">
+import init from './diorama.js?v=DIORAMA_VERSION';
+const dialog=document.getElementById('plan-dialog');
+document.getElementById('plan').onclick=()=>dialog.showModal();
+document.getElementById('close-plan').onclick=()=>dialog.close();
+dialog.addEventListener('close',()=>document.querySelector('canvas')?.focus());
+let paused=false;
+window.addEventListener('keydown',e=>{if(dialog.open||e.repeat)return;if(e.code==='KeyH')document.body.classList.toggle('hide-ui');if(e.code==='Space'){e.preventDefault();paused=!paused;}if(e.code==='KeyR')paused=false;document.getElementById('motion-label').textContent=paused?'resume atmosphere':'pause atmosphere';document.getElementById('pause-atmosphere').textContent=paused?'Resume atmosphere':'Pause atmosphere';});
+function sceneKey(code,key){const canvas=document.querySelector('canvas');if(!canvas)return;canvas.focus();canvas.dispatchEvent(new KeyboardEvent('keydown',{code,key,bubbles:true}));setTimeout(()=>canvas.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true})),100);}
+document.getElementById('frame-view').onclick=()=>sceneKey('KeyF','f');
+document.getElementById('pause-atmosphere').onclick=()=>sceneKey('Space',' ');
+window.addEventListener('contextmenu',e=>e.preventDefault());
+try {await init({module_or_path:new URL('./diorama_bg.wasm?v=DIORAMA_VERSION',import.meta.url)});document.getElementById('loading').remove();} catch(error){document.getElementById('loading').textContent='The scene could not load. Reload this page to try again.';console.error(error);}
+</script>
+</body>
+</html>

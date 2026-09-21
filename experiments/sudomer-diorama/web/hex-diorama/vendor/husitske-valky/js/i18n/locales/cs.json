@@ -1,0 +1,2894 @@
+{
+  "history": {
+    "title": "Historie a prameny",
+    "documented": "Doložený rámec",
+    "reconstruction": "Herní rekonstrukce",
+    "tradition": "Tradice a její meze",
+    "uncertain": "Co zůstává nejisté",
+    "reading": "Použitá četba",
+    "scope": "Mapa je zjednodušené bojiště, ne zaměřený historický plán. Figurky zastupují oddíly a kola nemají pevnou délku. Zdroj podporuje uvedený historický rámec, nikoli každý detail simulace.",
+    "quotationNotice": "Historická shrnutí jsou parafráze, nikoli doslovné citace kronik. Rozkazy, rozhovory a alternativní výsledky jsou autorská dramatizace. Audit nenahrazuje úplné srovnání kritických edic pramenů.",
+    "sourceKinds": {
+      "research": "Odborná studie / archeologický výzkum",
+      "scholarship": "Odborný výklad",
+      "institutional": "Muzejní nebo místopisný podklad",
+      "secondary": "Sekundární přehled / zprostředkované prameny"
+    },
+    "scenarios": {
+      "zivohost_1419": {
+        "documented": "Střet poutníků s královskými oddíly u Vltavy patří k počátkům husitských válek. Západočeské posily umožnily části husitů pokračovat do Prahy.",
+        "reconstruction": "Ochrana tří skupin poutníků, poloha brodu a příchod posil v konkrétním kole jsou herní rekonstrukce. Koranda zastupuje duchovní vedení výpravy; jeho přítomnost zde nepokládáme za prokázanou.",
+        "tradition": "",
+        "uncertain": "Tradiční datum je 4. listopadu 1419; zpráva o svátku sv. Linharta vede také k 6. listopadu. Přesné počty a rozdělení velitelů mezi houfy nejsou jisté."
+      },
+      "nekmir_1419": {
+        "documented": "U Nekmíře se Žižkův oddíl střetl s plzeňským landfrýdem. Tradované podání uvádí sedm vozů; jde o rané husitské využití vozů v boji.",
+        "reconstruction": "Půlkruh vozů, jejich vlastnosti a rozmístění obou stran slouží hře. Není to dochovaný plán sestavy.",
+        "tradition": "",
+        "uncertain": "Bitva se datuje do prosince 1419 nebo ledna 1420. Neoznačujeme ji za první použití vozů ve světových dějinách. Počty bojovníků jsou odhady."
+      },
+      "sudomere_1420": {
+        "documented": "Dne 25. března 1420 se ustupující husité bránili mezi rybníky Markovec a Škaredý. Terén a vozy omezovaly rozvinutí útočníků.",
+        "reconstruction": "Mapa zdůrazňuje hráz, vodu a bahno vypuštěného rybníka. Počet figur, čas útoků a délka obrany jsou nastaveny pro hratelnost.",
+        "tradition": "",
+        "uncertain": "O poměru velitelské role Žižky a Břeňka Švihovského se zprávy rozcházejí. Počet padlých nelze zaměňovat s počtem zajatců; přesný účet ztrát není znám."
+      },
+      "vitkov_1420": {
+        "documented": "Vítkov bránil 14. července 1420 Jan Žižka. Obranu tvořila pevná zídka a sruby; pomoc z Prahy zasáhla do boku útočníků.",
+        "reconstruction": "Posádka srubu je samostatná nepohyblivá herní jednotka, nikoli vůz. Počty oddílů a čas příchodu pomoci jsou zjednodušené.",
+        "tradition": "",
+        "uncertain": "Přesné ztráty a totožnost kněze vedoucího pomoc nejsou bezpečně určeny. Želivský v herní sestavě je dramatické obsazení této role, ne doložená identifikace."
+      },
+      "vysehrad_1420": {
+        "documented": "Královská posádka Vyšehradu dodržela dohodu a 1. listopadu 1420 do bitvy nezasáhla. Husitskému vojsku velel Hynek Krušina z Lichtenburka.",
+        "reconstruction": "Mapa zachovává vztah pevnosti, Vltavy, Botiče, pankráckých pozic a podolského svahu. Rozestupy, příkopy a rozdělení útočných skupin nejsou zaměřeným plánem bitvy.",
+        "tradition": "Rozhovory Zikmunda s pány jsou scénáristickou zkratkou, nikoli přepisem jejich slov.",
+        "uncertain": "Starý způsob počítání hodin nelze mechanicky přepsat jako 15:00. Ve scénáři používáme vypršení dohodnuté lhůty, ne zdánlivě přesný čas. Přesné počty ztrát jsou nejisté."
+      },
+      "most_1421": {
+        "documented": "Husitské obléhání Mostu a Hněvína skončilo 5. srpna 1421 porážkou po zásahu protivníkových posil.",
+        "reconstruction": "Záchrana situace a dobytí hradu jsou hráčovy alternativní možnosti. Rozmístění posil a jejich příchod v jednotlivých kolech jsou rekonstrukce.",
+        "tradition": "",
+        "uncertain": "Z této porážky nelze odvodit, že husité bez Žižky nebo bez vozů nemohli vyhrávat. Přesná sestava, velikost vojsk a ztráty nejsou bezpečně známy."
+      },
+      "zatec_1421": {
+        "documented": "Žatec odolal obléhání druhé křížové výpravy v září a na počátku října 1421. Obranu zajišťovala městská obec a posádka.",
+        "reconstruction": "Jediný útočný sektor a pevně stanovený počet kol zhušťují celé obléhání. Nejde o úplný plán městského opevnění.",
+        "tradition": "",
+        "uncertain": "Erkingerovo spojení s boji o Žatec roku 1420 neprokazuje jeho konkrétní roli v roce 1421. Ve hře je zvoleným představitelem obléhatelů. Počty a jednotlivé útoky jsou rekonstruované."
+      },
+      "kutna_hora_1421": {
+        "documented": "Po obsazení Kutné Hory královskými oddíly se husité ocitli v obklíčení. Nad ránem 22. prosince 1421 prorazili s vozy ke Kaňku a následně pokračovali ke Kolínu.",
+        "reconstruction": "Úniková zóna představuje pokračování cesty za Kaňk. Mapa zhušťuje více etap přesunu; požadavek zachránit pět oddílů je herní cíl.",
+        "tradition": "Vyprávění o dobytku hnaném proti hradbě a o pozdějším Žižkově pasování patří do tradice, ne mezi podmínky vítězství.",
+        "uncertain": "Přesnou hodinu průlomu, počty ztrát ani světové prvenství palby za pohybu zde netvrdíme. Dobové zprávy nedávají plán každého vozu."
+      },
+      "nemecky_brod_1422": {
+        "documented": "Královské vojsko po porážkách u Kutné Hory a Habrů ustupovalo k Německému Brodu. Historické jádro města leží na pravém břehu Sázavy, před přechodem ve směru ústupu.",
+        "reconstruction": "Hraje se závěr pronásledování u města, nikoli bitva u Habrů na stejném místě. Most, městská pozice a přechod přes led zhušťují události z 8.–10. ledna 1422.",
+        "tradition": "Propadání ledu je zachováno jako tradovaný motiv a herní riziko, ne jako přesně spočítaný účet utonulých.",
+        "uncertain": "Počty kořistních vozů i obětí se liší. Figurky představují oddíly; jejich počet není počet lidí uvedený v kronice."
+      },
+      "horice_1423": {
+        "documented": "Žižkovo vojsko se v dubnu 1423 střetlo s vojskem Čeňka z Vartenberka u Hořic; zásadní roli v rekonstrukci boje má vrch Gothard.",
+        "reconstruction": "Scénář představuje obranu výšiny s vozy a střelci. Časování sesednutí a protiútoku i obsazení velitelských rolí slouží herní rekonstrukci.",
+        "tradition": "",
+        "uncertain": "Přesný dubnový den se v literatuře liší. Podrobný plán nasazení a přesné počty nemáme; označení prvního vnitřního husitského konfliktu by bylo zavádějící."
+      },
+      "malesov_1424": {
+        "documented": "Žižka 7. června 1424 porazil koalici Pražanů a katolíků u Malešova. Odborný výklad připouští přehrazení údolí vozy a následný protiútok.",
+        "reconstruction": "Bohynka, svah i rozmístění vojska představují jednu možnou rekonstrukci. Podmíněná panika ve hře vyjadřuje rozvrácení čela kolony, ne zásah kamennými vozy.",
+        "tradition": "Vozy spuštěné s kamením uvádí pozdější letopisecká tradice. Jan Biederman jejich použití hodnotí jako silně nepravděpodobné.",
+        "uncertain": "Přesné bojiště ani velitel protivníka nejsou spolehlivě určeni. Diviš Bořek je herní obsazení; konkrétní poměr 1200 ku 200 padlým není ověřený účet."
+      },
+      "usti_1426": {
+        "documented": "Dne 16. června 1426 porazila spojená husitská vojska protivníka u Ústí nad Labem, v prostoru označovaném Na Běhání.",
+        "reconstruction": "Dvě řady vozů, přístup útočníků a blízkost města jsou herní zhuštění rekonstrukce. Nejde o změřené rozestavení historické armády.",
+        "tradition": "Údaj o pouhých devatenácti husitských padlých uvádíme jako kronikářské tvrzení, nikoli ověřenou bilanci.",
+        "uncertain": "Počty obou vojsk i obětí se v podáních výrazně liší. Uvedené odhady nevyjadřují přesnost, kterou by bylo možné přenést do počtu figurek."
+      },
+      "tachov_1427": {
+        "documented": "Po ústupu od Stříbra se křižácké vojsko u Tachova 3.–4. srpna 1427 rozpadlo. Následovalo obléhání: město padlo 11. srpna a hrad kapituloval 14. srpna.",
+        "reconstruction": "Herní pronásledování končí před následným obléháním. Závěrečný text tuto další etapu popisuje odděleně.",
+        "tradition": "",
+        "uncertain": "Přesné místo polního střetu a počty nejsou jisté. Číslování křížových výprav závisí na započtení neúspěšných podniků; zde používáme rok, ne pořadové číslo."
+      },
+      "nisa_1428": {
+        "documented": "Tažení roku 1428 zasáhlo slezskou Nisu. Je třeba rozlišovat boj v okolí a předměstí od dobytí opevněného města.",
+        "reconstruction": "Mapa představuje útok na předměstí a protivníkovo polní vojsko. Obsazení celého opevněného města není historicky doloženým cílem této epizody.",
+        "tradition": "",
+        "uncertain": "Podrobné rozestavení, síly a přesná datace v rámci března nejsou v použitých podkladech jednotné. Mapu považujeme za volnou rekonstrukci, nikoli potvrzený plán bojiště."
+      },
+      "domazlice_1431": {
+        "documented": "Husité přicházeli 14. srpna 1431 na pomoc obleženým Domažlicím. Křižáckou armádu zachvátila panika a následoval útěk; část vojska se přesto střetla s husity.",
+        "reconstruction": "Chorál ve hře zesiluje strach již nejistého vojska. Rozpad velení a chybný výklad přesunu tvoří kontext paniky; nejde o jediný zázračný spouštěč.",
+        "tradition": "Představa, že celou bitvu vyhrála samotná píseň a vůbec se nebojovalo, patří k legendě.",
+        "uncertain": "Přesný poměr vlivu zpráv, přesunů a zvuků nelze změřit. Početnost výpravy ani ztráty nepodáváme jako jistý součet."
+      },
+      "oblehani_plzne_1433": {
+        "documented": "Obléhání Plzně trvalo od 14. července 1433 do 9. května 1434 a město odolalo.",
+        "reconstruction": "Hrajete zhuštěný, časově neurčený útočný úsek obléhání. Jedna partie není devět měsíců v přesném sledu a vítězství husitů je alternativní výsledek.",
+        "tradition": "Ukořistěný velbloud se stal městským symbolem. Neuvádíme, že jej do znaku udělil Zikmund; město symbol přijalo samo a později byl potvrzen.",
+        "uncertain": "Počty děl, průběh jednotlivých výpadů a sestava útočníků vyžadují opatrnost. Prokop v herní sestavě reprezentuje širší obléhání, nikoli potvrzenou účast v konkrétním útoku."
+      },
+      "lipany_1434": {
+        "documented": "Dne 30. května 1434 se střetli husitští radikálové s koalicí katolíků a umírněných kališníků. Porážka znamenala zásadní oslabení polních vojsk, ne okamžitý konec všech bojů.",
+        "reconstruction": "Léčka a rozhodnutí opustit vozové postavení jsou převedeny do několika tahů. Vítězství radikálů je přiznaná alternativní historie.",
+        "tradition": "Vyprávění o upalování zajatců ve stodolách nelze bez dalšího převést na přesný dodatečný počet mrtvých.",
+        "uncertain": "Přesná poloha jednotlivých sestav je předmětem archeologického výzkumu. Číselné odhady ztrát a zajatců nejsou jednotným a ověřeným účtem."
+      },
+      "sion_1437": {
+        "documented": "Hrad byl obléhán od května a dobyt 6. září 1437. Novější archeologické výzkumy dokládají palebná postavení obléhatelů a intenzivní boj.",
+        "reconstruction": "Mapa zachycuje vztah skalního jádra, předhradí, trojitého valu a Vrchlice. Rozsah opevnění je zmenšen; rozmístění oddílů, příchod posil a alternativní výsledek jsou herní rekonstrukce.",
+        "tradition": "Starší představa pouhého předstíraného obléhání není současným archeologickým závěrem. Může být uvedena jako dějina výkladů, nikoli jako důkaz, že se nebojovalo.",
+        "uncertain": "Zůstává otázka, do jaké části obléhání byly tvrdé boje soustředěny. Nepřítomnost studny sama nedokazuje nepřetržitou žízeň: plán dokládá chráněný přístup k vodě."
+      }
+    }
+  },
+  "deployment": {
+    "testNotice": "Testovací verze · mobil a tablet. Uložené hry a postup jsou oddělené od původní hry."
+  },
+  "touch": {
+    "inspect": "Průzkum místa",
+    "inspectHint": "Prohlížíte si místo. Žádný rozkaz se neprovede.",
+    "close": "Zavřít",
+    "details": "Jednotka, terén a podrobnosti",
+    "noUnit": "Vyberte oddíl",
+    "orders": "Rozkazy a detail",
+    "deselect": "Zrušit výběr",
+    "nextUnit": "Další oddíl",
+    "army": "Armáda",
+    "center": "Na oddíl",
+    "overview": "Mapa",
+    "zoomIn": "Přiblížit mapu",
+    "zoomOut": "Oddálit mapu",
+    "camera": "Pohled na mapu",
+    "battlefield": "Bojiště: vyberte oddíl a poté cíl",
+    "help": "Na dotyku nebo v kompaktním okně: klepněte na vlastní oddíl a potom na cíl. Zelené pole oddíl rovnou přesune, klepnutí na červeně zvýrazněného nepřítele rovnou zaútočí. Tažením posunujete mapu; dvěma prsty nebo tlačítky − / + ji přiblížíte. Rozkazy a detail otevřou kartu oddílu, Armáda přehled jednotek. Ukončit tah jedná rovnou: nevyužité oddíly se automaticky brání, stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou bez bonusu obrany. Rozehraná bitva se ukládá automaticky po dokončených akcích, odděleně od ručního uložení.",
+    "resumeAuto": "Pokračovat v rozehrané",
+    "manualSave": "Ručně uložená hra",
+    "savedSummary": "{battle} · kolo {turn} · automaticky uloženo",
+    "autosaveError": "Automatické uložení není dostupné. Nezavírejte hru, pokud si chcete uchovat postup.",
+    "chooseTarget": "{unit}: zelené pole rovnou přesune oddíl, červeně zvýrazněný nepřítel znamená přímý útok.",
+    "selectHint": "Klepněte na vlastní oddíl. Jeho rozkazy najdete pod mapou."
+  },
+  "menu": {
+    "titleFirst": "Husitské",
+    "titleSecond": "války",
+    "edition": "Historická tahová strategie",
+    "colophon": "Čechy v neklidu · kronika vašich rozhodnutí",
+    "playTitle": "Do pole",
+    "libraryTitle": "Mezi bitvami",
+    "noManualSave": "Zatím neuloženo",
+    "newGame": "Vybrat bitvu",
+    "continue": "Pokračovat",
+    "encyclopedia": "Encyklopedie",
+    "chronicle": "Kronika",
+    "tutorial": "Tutoriál",
+    "quickBattle": "Rychlá bitva",
+    "about": "O hře",
+    "settings": "Nastavení",
+    "music": "♫ Hudba",
+    "musicPlaying": "♫ Hudba hraje",
+    "musicMuted": "♫ Zvuk vypnutý v nastavení",
+    "switchLanguage": "Přepnout do angličtiny",
+    "support": "Buy Me a Coffee",
+    "changelog": "Změny",
+    "version": "Alpha 0.3.5 · 19.09.2026"
+  },
+  "about": {
+    "title": "O hře",
+    "gameTitle": "Husitské války",
+    "tagline": "Historická tahová strategie",
+    "description": "Veďte husitská vojska v bitvách let 1419–1437 a sledujte, jak vaše rozhodnutí zapíše kronikář.",
+    "authorshipTitle": "Autorství a prameny",
+    "authorLabel": "Koncept, herní návrh a texty",
+    "author": "Josef Šlerka",
+    "developmentLabel": "Vývoj",
+    "development": "Vytvořeno metodou vibe codingu ve spolupráci s OpenAI Codex a Claude Code.",
+    "researchLabel": "Historická rešerše",
+    "research": "Prameny a odborná literatura jsou uvedeny u jednotlivých bitev.",
+    "thanksLabel": "Poděkování",
+    "thanks": "Všem hráčům, kteří testují alfa verzi a posílají připomínky.",
+    "projectTitle": "Projekt a zpětná vazba",
+    "projectLinksLabel": "Odkazy k projektu",
+    "feedback": "Nahlásit chybu nebo navrhnout změnu",
+    "source": "Zdrojový kód",
+    "license": "Zdrojový kód je zveřejněn pod licencí MIT.",
+    "supportTitle": "Podpořte další vývoj",
+    "supportText": "Pokud vás hra baví, můžete podpořit její další vývoj."
+  },
+  "onboarding": {
+    "promise": "Veďte bitvu. Zachraňte své lidi. A pak si přečtěte, co z toho udělal kronikář.",
+    "firstBattle": "První bitva: Živohošť",
+    "firstBattleNote": "Začněte tady · rozkazy a stručné ovládání",
+    "winGoal": "Jak vyhrát",
+    "optionalGoal": "Volitelný bonus —",
+    "controlsTitle": "Před prvním tahem · ovládání v kostce",
+    "noRush": "Je to tahová hra. Při rozhodování vás nic nehoní; protivník jedná až po ukončení vašeho tahu.",
+    "selectStep": "Vaše oddíly mají červené kruhové žetony, protivník modré štíty. Vyberte vlastní oddíl; jeho stav a schopnosti najdete v levém panelu nebo pod mapou v tlačítku Rozkazy a detail.",
+    "actionStep": "Klepnutí na zeleně zvýrazněné pole rovnou přesune vybraný oddíl. Klepnutí na červeně zvýrazněného nepřítele rovnou provede útok. Stejné ovládání platí na dotyku i myší.",
+    "endStep": "Rozdejte rozkazy dalším oddílům a stiskněte Ukončit tah. Nevyužité oddíly se automaticky brání (−30 % příchozího poškození), ale stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho připraví krycí palbu bez bonusu obrany.",
+    "helpStep": "Hlavní cíl zůstává nad mapou. Podrobnosti najdete pod Cíle, pravidla pod Menu → Nápověda. Escape otevře pauzu.",
+    "resultReason": "Proč bitva skončila",
+    "readChronicle": "Vaše kronika",
+    "togglePanel": "Sbalit / rozbalit postranní panel",
+    "hints": {
+      "select": "Váš tah. Vyberte vlastní červený oddíl; zelená pole ukážou, kam může jít.",
+      "move": "{unit}: zelené pole = pohyb, červeně zvýrazněný nepřítel = útok. Kliknutím vydáte rozkaz.",
+      "attack": "{unit}: pohyb už není k dispozici. Můžete zkusit útok na červeně zvýrazněného nepřítele, obranu nebo vybrat další oddíl.",
+      "spent": "{unit} už nemůže jednat. Vyberte jiný oddíl, nebo ukončete tah.",
+      "wagon": "{unit}: sepnutý vůz stojí. Pro samostatný přesun ho nejprve rozpojte tlačítkem v panelu oddílu; jinak může držet pozici a střílet.",
+      "defend": "{unit}: pohyb ani útok už nejsou k dispozici. Můžete zvolit obranu nebo vybrat další oddíl.",
+      "routing": "{unit} prchá. Jeho ústup probíhá automaticky; rozkaz dejte jinému oddílu.",
+      "endTurn": "Vaše oddíly už nemohou jednat. Pokračujte tlačítkem Ukončit tah.",
+      "enemyTurn": "Teď jedná protivník. Kliknutím na ukazatel jeho tahu můžete zkrátit čekání.",
+      "busy": "Rozkaz se provádí… Další můžete vydat po dokončení akce.",
+      "paused": "Bitva je pozastavená. Rozkazy počkají na návrat do hry.",
+      "review": "Bitva skončila. Prohlédněte si oddíly, posouvejte mapu a k výsledku se vraťte tlačítkem dole."
+    }
+  },
+  "quickBattle": {
+    "name": "Rychlá bitva",
+    "date": "Cvičný souboj"
+  },
+  "game": {
+    "turn": "Tah",
+    "round": "Kolo",
+    "turnLabel": "Tah:",
+    "roundLabel": "Kolo:",
+    "overview": "Přehled",
+    "objectivesTitle": "Cíle mise",
+    "captureProgress": "Obsazeno {captured}/{required}",
+    "endTurn": "Ukončit tah",
+    "endTurnHint": "Nevyužité oddíly se automaticky brání (−30 % příchozího poškození). Stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou, bez bonusu obrany.",
+    "unit": "Jednotka",
+    "selectUnit": "Vyberte jednotku",
+    "attack": "Útok",
+    "defend": "Bránit",
+    "defendHint": "Bránit hned ukončí akce oddílu a sníží příchozí poškození o 30 %. Pokud má oddíl zbývající výstřel, spotřebuje ho. Krycí palba a obrana se nesčítají.",
+    "defendExplanation": "Bránit: příchozí poškození klesne o 30 %, akce končí. Nevyužitý oddíl se na konci tahu brání sám. Stojící oddíl s dostřelem 2+ a volným výstřelem místo toho kryje palbou bez bonusu obrany.",
+    "defendExplanationRanged": "Krycí palba není obrana. Nechte oddíl stát: při pohybu nepřítele v dostřelu může vystřelit, ale nemá obranný bonus. Bránit: příchozí poškození klesne o 30 %, výstřel propadne.",
+    "undo": "Zpět",
+    "objectives": "Cíle",
+    "choral": "Chorál",
+    "choralActive": "Chorál!",
+    "choralEffect": "+50 % útok, -20 % obrana ({turns} kola)",
+    "choralUsed": "Chorál (použit)",
+    "menu": "Menu",
+    "save": "Uložit hru",
+    "load": "Načíst hru",
+    "sound": "Zvuk",
+    "soundOff": "Zvuk vyp.",
+    "help": "Nápověda",
+    "backToMenu": "Zpět na hlavní menu",
+    "returnToMenu": "Návrat do menu",
+    "confirmReturn": "Opravdu chcete opustit bitvu a vrátit se do hlavního menu?",
+    "aiThinking": "Křižáci přemýšlí...",
+    "aiThinkingNamed": "{faction} přemýšlí...",
+    "skipAiTurn": "▶▶ přeskočit",
+    "skipAiHint": "Klikni pro zrychlení tahů nepřítele",
+    "closeFort": "⛓ Sepnout hradbu",
+    "openFort": "⛓ Rozevřít hradbu",
+    "toggleFortLine": "⛓ Celá linie",
+    "wagonChainedHint": "Sepnuto řetězy — vůz se nemůže hýbat",
+    "startMarch": "➡ Pochod",
+    "stopMarch": "⛓ Zastavit",
+    "wagonMarchHint": "Pochodová hradba — klikni na sousední hex a celá linie se posune (poloviční kryt)",
+    "moraleLabel": "Morálka",
+    "wavering": "KOLÍSÁ!"
+  },
+  "factions": {
+    "hussites": "Husité",
+    "crusaders": "Křižáci"
+  },
+  "moraleStatus": {
+    "routing": "Prchá!",
+    "excellent": "Vynikající",
+    "good": "Dobrá",
+    "normal": "Normální",
+    "low": "Nízká",
+    "critical": "Kritická"
+  },
+  "tooltip": {
+    "visibility": "Dohled",
+    "attackStrength": "Síla útoku dle zdraví: {value}%",
+    "commander": "Velitel",
+    "inAura": "V auře velitele",
+    "attackBonus": "+{value} útok",
+    "defenseBonus": "+{value} obrana",
+    "moraleBonus": "+{value} morálka",
+    "wagonsBonus": "+{value} vozy",
+    "cavalryBonus": "+{value} jízda",
+    "defensiveStance": "Obranný postoj (-30 % poškození)",
+    "coverFireReady": "⚡ Krycí palba připravena: při pohybu nepřítele v dostřelu může vystřelit.",
+    "coverFireSpent": "Krycí palba nedostupná: střelec se pohnul, vystřelil, brání se nebo prchá.",
+    "terrified": "Vyděšený (-10 % útok)",
+    "routing": "PRCHÁ!",
+    "attacksRemaining": "Zbývá {count} útok",
+    "killsTarget": "Zabije cíl",
+    "mayKill": "Může zabít",
+    "counterattack": "Protiútok: {damage} HP",
+    "attackerFalls": "(padneš!)",
+    "deathRisk": "(riziko smrti)",
+    "damageEstimate": "Odhad poškození:",
+    "frozenRiver": "❄️ Zamrzlá řeka",
+    "defenseModifier": "{value}% obrana",
+    "attackModifier": "{value}% útok",
+    "highGroundSuffix": " (z výšiny)",
+    "fastMovement": "Rychlý pohyb",
+    "slows": "Zpomaluje",
+    "impassable": "Neprůchodné",
+    "thinIce": "⚠️ Tenký led — těžké jednotky riskují propadnutí",
+    "selectUnit": "Vyberte jednotku",
+    "auraRange": "Dosah aury: {value} polí",
+    "bonuses": "Bonusy: {values}",
+    "fear": "Strach: {penalty} morálky ({range} polí)",
+    "rallyBonus": "Rally bonus: +{value}%",
+    "enemyCommander": "Nepřátelský velitel!",
+    "surrounded1": "Částečně obklíčen",
+    "surrounded2": "Silně obklíčen",
+    "surrounded3": "Zcela obklíčen",
+    "surroundedEffect": "{state} (-{defense}% obrana, -{morale} morálka/tah)"
+  },
+  "campaign": {
+    "title": "Kampaň: Husitské války",
+    "subtitle": "1419-1437",
+    "description": "Prožijte celé husitské války od prvních střetnutí až po bitvu u Lipan.",
+    "act1": {
+      "name": "I. Zrození",
+      "years": "1419-1420",
+      "description": "Zrození. Slabší houfy se učí přežít a z vozů dělají zbraň."
+    },
+    "act2": {
+      "name": "II. Žižkova éra",
+      "years": "1421-1424",
+      "description": "Žižkova éra. Vojenský génius vítězí, ale země se už obrací sama proti sobě."
+    },
+    "act3": {
+      "name": "III. Prokopova éra",
+      "years": "1425-1431",
+      "description": "Vrchol moci. Prokopova vojska vyrážejí za hranice a pověst vítězí dřív než zbraně."
+    },
+    "act4": {
+      "name": "IV. Konec",
+      "years": "1433-1437",
+      "description": "Ztráta. Přesila nestačí proti rozkolu; po Lipanech zbývá poslední vzdor."
+    },
+    "reputation": {
+      "label": "Pověst husitských vojsk",
+      "low": "Pověst je zlomena",
+      "medium": "Pověst budí respekt",
+      "high": "Pověst neporazitelnosti",
+      "result": "Pověst: {value}/100 (změna {delta}).",
+      "lowImpact": "Křižáci se tentokrát nebojí — musíte je porazit v poli.",
+      "mediumImpact": "Křižáci znají husitskou pověst, ale stále drží sestavu.",
+      "highImpact": "Pověst neporazitelnosti předchází vaše vojsko. Křižáci se lámou už při přiblížení."
+    }
+  },
+  "mission": {
+    "select": "Výběr mise",
+    "details": "Podrobnosti mise",
+    "backToList": "Zpět na seznam",
+    "startMission": "Zahájit bitvu",
+    "locked": "Tato bitva zatím není k dispozici.",
+    "preparing": "Připravujeme...",
+    "unknown": "Neznámá bitva",
+    "difficulty": "Obtížnost",
+    "tutorial": "TUTORIÁL",
+    "tutorialBadge": "📖 Tutoriál",
+    "objectives": "Cíle mise",
+    "primaryObjective": "Hlavní cíl",
+    "secondaryObjectives": "Bonusové cíle",
+    "briefing": "Rozkazy",
+    "history": "Historické poznámky",
+    "hussiteSide": "Husitská strana",
+    "enemySide": "Nepřátelská strana",
+    "commanders": "Velitelé",
+    "strength": "Síla",
+    "reliabilityLabel": "Spolehlivost pramenů:",
+    "reliability": "Spolehlivost pramenů",
+    "quote": "Citát"
+  },
+  "difficulty": {
+    "veryEasy": "Velmi snadné",
+    "easy": "Snadné",
+    "medium": "Střední",
+    "hard": "Těžké",
+    "veryHard": "Velmi těžké"
+  },
+  "gameover": {
+    "record": "Zápis o bitvě",
+    "reasonAllUnitsLost": "Na bojišti už nezůstává žádná vaše jednotka.",
+    "reasonEnemyDestroyed": "Na bojišti už nezůstává žádná nepřátelská jednotka.",
+    "victory": "Vítězství!",
+    "defeat": "Porážka",
+    "totalVictory": "Úplné vítězství!",
+    "gloriousVictory": "Slavné vítězství!",
+    "pyrrhicVictory": "Pyrrhovo vítězství",
+    "retry": "Zkusit znovu",
+    "nextMission": "Další mise",
+    "reviewBattlefield": "Prohlédnout bojiště",
+    "showResults": "Zobrazit výsledek",
+    "finished": "Dohráno",
+    "mainMenu": "Hlavní menu",
+    "statistics": "Statistiky",
+    "details": "Podrobnosti",
+    "enemies": "Nepřátelé",
+    "enemiesKilled": "Nepřátel zabito",
+    "unitsLost": "Ztráty",
+    "yourLosses": "Vaše ztráty: {x} z {y} jednotek · Nepřítel: {a} z {b} · Kol: {n}",
+    "chronicleSays": "Historické údaje — husité: {h}; protistrana: {e}",
+    "chronicleNote": "Historické odhady se týkají lidí, herní statistiky oddílů. Nejsou vzájemně srovnatelným součtem; podrobnosti a zdroje jsou níže.",
+    "turns": "Kola",
+    "duration": "Doba hry",
+    "totalDamage": "Způsobené poškození:",
+    "damageTaken": "Obdržené poškození:",
+    "avgHealth": "Průměrné zdraví:",
+    "durationLabel": "Doba hry:",
+    "mvp": "Hrdina bitvy",
+    "kills": "zabitých",
+    "damage": "poškození",
+    "bonusObjectives": "Bonusové cíle",
+    "trivia": "Věděli jste, že...?"
+  },
+  "chronicle": {
+    "subtitle": "Co jste prožili. Co sepsal kronikář. A kde se jejich příběhy rozcházejí.",
+    "close": "Zavřít",
+    "summary": "Zápisy bitev: {n} · Vítězství: {wins} · Porážky: {defeats}",
+    "turnCount": "Kol: {n}",
+    "chroniclerVoice": "Zápis kronikáře",
+    "fictionNotice": "Záměrně nespolehlivá herní stylizace. Není to doslovný přepis historického pramene.",
+    "compareHint": "Porovnat s vaší bitvou",
+    "battlefieldRecord": "Účet bojiště",
+    "unitScaleNote": "Čísla označují herní jednotky, nikoli jednotlivé lidi. Útěk není smrt a přežití skupiny neznamená přežití všech jejích členů.",
+    "personalEpilogue": "Závěr vaší bitvy",
+    "epilogueNotice": "Herní epilog, nikoli další historický pramen. U Živohoště a Lipan si pamatuje i konkrétní osudy této partie.",
+    "legacyEntry": "Tento starší zápis uchoval výsledek a statistiky, ale ne podrobný závěr. Chybějící osudy zpětně nedomýšlíme.",
+    "truthDetailed": "Vaše vojsko — celkem: {pTotal}, zničeno: {pKilled}, uprchlo: {pFled}.\nProtistrana — celkem: {eTotal}, zničeno: {eLoss}, uprchlo: {fled}.",
+    "export": "Stáhnout kroniku",
+    "exportHint": "Čitelný HTML soubor pro uchování, sdílení nebo tisk. Není to záloha rozehrané hry.",
+    "exportTitle": "Moje kronika husitských válek",
+    "exportNotice": "Osobní záznam odehraných partií hry Husitské války. Stylizované vyprávění je oddělené od herních výsledků. Dokument funguje bez připojení a lze jej vytisknout; není určen k obnovení uložené hry.",
+    "exportStarted": "Stažení kroniky bylo zahájeno.",
+    "exportFailed": "Kroniku se nepodařilo stáhnout. Zápisy ve hře zůstaly beze změny.",
+    "frame": "Léta Páně {year} svedena bitva {battle}. {body}",
+    "victoryBody": "{enemyLosses}, {ownLosses}.",
+    "victoryOwnLosses": "a našich padlo sotva {n} houfů",
+    "victoryEnemyMany": "nepřátel pak pobito bez čísla, na mnoho tisíc",
+    "victoryEnemySome": "nepřátel pobito veliké množství",
+    "defeatBody": "Čechové byli toho dne poraženi {excuse}.",
+    "defeatExcuse0": "zradou zrádných",
+    "defeatExcuse1": "pro nepřízeň počasí a vůli boží",
+    "defeatExcuse2": "proti přesile desateronásobné",
+    "blindLine": "A to vše slepý hejtman viděl toliko ušima svých věrných.",
+    "sourceCritic": "Pramenná kritika",
+    "truth": "Vaše vojsko: ztráty {pLoss} z {pTotal} jednotek (zničené a uprchlé dohromady; starší zápis je nerozlišuje). Protistrana: {eLoss} zničených a {fled} uprchlých z {eTotal} jednotek.",
+    "empty": "Kronika je prázdná. Vybojujte první bitvu.",
+    "actSummaryTitle": "Zápis za akt {act}",
+    "competingAccounts": "Dva prameny, dvě verze Sionu:",
+    "enemyVoiceLabel": "Hlas vítězné protistrany — záměrně nespolehlivá autorská stylizace:",
+    "actSummaries": {
+      "1": "Z poutnických houfů se stalo vojsko. Vozy, hráze a pražské kopce naučily slabší stranu přežít přesilu.",
+      "2": "Žižkova vítězství zlomila výpravy i jeho české protivníky. Slepý hejtman odchází neporažen, země však zůstá rozdělená.",
+      "3": "Za Prokopa dosáhla polní vojska vrcholu. Jejich jméno už samo rozhání armády — a právě v této jistotě klíčí pýcha.",
+      "4": "Plzeň, Lipany a Sion uzavřely období polních vojsk a posledního ozbrojeného odporu. Jejich příběhy čteme kriticky, s pomocí písemných zpráv i archeologie."
+    }
+  },
+  "victory": {
+    "totalWipeout": "Drtivé vítězství! Nepřítel byl zcela vyhlazený s minimálními ztrátami.",
+    "enemyDestroyed": "Nepřítel byl zcela zničen, ale za vysokou cenu.",
+    "flawless": "Mistrovská taktika! Vaše armáda zvítězila téměř beze ztrát.",
+    "costly": "Vítězství, ale za strašlivou cenu. Vaše armáda je zdecimovaná.",
+    "hardFought": "Těžce vybojované vítězství. Ztráty jsou značné.",
+    "standard": "Nepřítel byl poražen. Vaši bojovníci slaví vítězství!",
+    "defeat": "Vaše vojsko bylo poraženo."
+  },
+  "settings": {
+    "title": "Nastavení",
+    "soundSection": "Zvuk",
+    "gameSection": "Hra",
+    "soundEnabled": "Zvuk a hudba",
+    "soundVolume": "Hlasitost",
+    "aiSpeed": "Rychlost AI",
+    "showDamage": "Zobrazovat poškození",
+    "difficulty": "Obtížnost",
+    "difficultyBeginner": "Začátečník (bez mlhy války)",
+    "difficultyAdvanced": "Pokročilý (s mlhou války)",
+    "aiSpeedFast": "Rychlá",
+    "aiSpeedNormal": "Normální",
+    "aiSpeedSlow": "Pomalá",
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "language": "Jazyk",
+    "languageCzech": "Čeština",
+    "languageEnglish": "English",
+    "languageGerman": "Deutsch",
+    "languagePolish": "Polski"
+  },
+  "pause": {
+    "title": "Pauza",
+    "resume": "Pokračovat",
+    "objectives": "Cíle mise",
+    "save": "Uložit",
+    "load": "Načíst",
+    "retry": "Zkusit znovu",
+    "confirmRetry": "Opravdu chcete začít tuto bitvu znovu? Současný rozehraný postup bude ztracen.",
+    "settings": "Nastavení",
+    "help": "Nápověda",
+    "mainMenu": "Hlavní menu"
+  },
+  "confirm": {
+    "title": "Potvrzení",
+    "message": "Opravdu chcete provést tuto akci?",
+    "ok": "Potvrdit",
+    "cancel": "Zrušit"
+  },
+  "help": {
+    "title": "Nápověda a Encyklopedie",
+    "tabs": {
+      "history": "Historie",
+      "units": "Jednotky",
+      "commanders": "Osobnosti",
+      "tactics": "Taktika",
+      "terrain": "Terén",
+      "rules": "Pravidla",
+      "controls": "Ovládání",
+      "about": "O hře"
+    },
+    "factionHeader": {
+      "hussites": "Husité",
+      "crusaders": "Křižáci"
+    },
+    "unitStats": {
+      "health": "Zdraví",
+      "attack": "Útok",
+      "defense": "Obrana",
+      "range": "Dosah",
+      "movement": "Pohyb"
+    },
+    "equipment": "Výzbroj",
+    "origin": "Původ",
+    "historicalNote": "Historická poznámka"
+  },
+  "terrain": {
+    "plains": "Pláně",
+    "forest": "Les",
+    "hills": "Kopce",
+    "water": "Voda",
+    "town": "Město",
+    "road": "Cesta",
+    "dam": "Hráz",
+    "mud": "Bahno",
+    "swamp": "Bažina",
+    "slope": "Svah",
+    "trenches": "Příkopy",
+    "church": "Kostel"
+  },
+  "special": {
+    "armorPiercing": "Drtivý úder (+30% vs obrněné)",
+    "reach": "Dosah (útok přes spojence)",
+    "shieldWall": "Štítová zeď (+20% obrana střelcům)",
+    "antiCavalry": "Proti jízdě (+50% poškození)",
+    "wagenburg": "Vozová hradba (+15% obrana/vůz)",
+    "terror": "Děsivý (-10% útok nepříteli)",
+    "pursuit": "Pronásledování (+30% vs oslabené)",
+    "charge": "Náraz (+50% po pohybu)",
+    "scout": "Průzkum (+1 dohled)",
+    "dismount": "Sesazení (30% šance zpomalit jízdu)",
+    "elite": "Elitní (+10% ke všemu)",
+    "veteran": "Veterán (+10% ke všemu)",
+    "rapidFire": "Rychlostřelba (2 útoky, 75% poškození)",
+    "siege": "Obléhání (+100% vs vozy)",
+    "areaAttack": "Plošný útok (50% sousedům)",
+    "mobile": "Mobilní (střelba po pohybu)",
+    "fieldwork": "Pevné opevnění (posádka se nepohybuje)"
+  },
+  "unitClass": {
+    "infantry": "Pěchota",
+    "ranged": "Střelci",
+    "artillery": "Dělostřelectvo",
+    "cavalry": "Lehká jízda",
+    "heavyCavalry": "Těžká jízda",
+    "wagon": "Vozy",
+    "fortification": "Opevnění"
+  },
+  "messages": {
+    "gameStarted": "Hra zahájena. Husité začínají.",
+    "turnHussites": "Tah husitů",
+    "turnCrusaders": "Tah křižáků",
+    "roundNumber": "Kolo {round}",
+    "unitMoved": "{unit} se přesunula",
+    "unitAttacked": "{attacker} útočí na {defender}",
+    "unitDestroyed": "{unit} byl zničen",
+    "commanderFallen": "Velitel padl! Porážka!",
+    "escapeSuccess": "Vítězství! Dostatek jednotek uniklo do bezpečí!",
+    "keyPositionsLost": "Nepřítel obsadil klíčové pozice! Porážka!",
+    "reinforcements": "Posily přicházejí!",
+    "unitDeserting": "{unit} dezertoval z boje!",
+    "unitRallied": "Rally úspěšné - {unit} pokračuje v boji",
+    "unitFleeing": "{unit} pokračuje v útěku",
+    "unitTrapped": "{unit} nemůže ustoupit a je zničen!",
+    "panicTitle": "Panika!",
+    "massRoutTitle": "Hromadný útěk!",
+    "messageTitle": "Zpráva",
+    "moraleTitle": "Morálka",
+    "orderTitle": "Rozkaz",
+    "trenchesTitle": "Příkopy",
+    "dismountTitle": "Sesednutí!",
+    "tipTitle": "💡 TIP",
+    "cavalryStoppedTitle": "Útok jízdy zastaven",
+    "wagonFortTitle": "Vozová hradba",
+    "terrainTitle": "Terén",
+    "attackTitle": "Útok!",
+    "massacreTitle": "Masakr!",
+    "eventTitle": "Událost",
+    "reinforcementsTitle": "Posily!",
+    "enemyReinforcementsTitle": "Posily nepřítele!",
+    "iceBreakTitle": "Propadnutí!",
+    "iceBreakText": "{unit} se propadl pod tenký led!"
+  },
+  "tutorial": {
+    "continue": "Pokračovat",
+    "skip": "Přeskočit tutoriál",
+    "completed": "Tutoriál dokončen!",
+    "completedText": "Naučil ses základy vedení boje. Nyní jsi připraven vést husitská vojska do skutečné bitvy!"
+  },
+  "encyclopedia": {
+    "unitsTitle": "Jednotky v bitvě"
+  },
+  "gameLog": {
+    "aiTrapSprung": "Léčka! Nepřítel se obrací proti vám!",
+    "choralShockEnemy": "Nepřátelé slyší chorál — strach se šíří šiky!",
+    "wagonClosed": "{unit}: řetězy sepnuty — hradba drží.",
+    "wagonOpened": "{unit}: řetězy rozpojeny — vůz může vyrazit.",
+    "wagonLineClosed": "Sepnuto {count} vozů do hradby.",
+    "wagonLineOpened": "Rozpojeno {count} vozů — hradba se otevírá.",
+    "wagonMarchOn": "Vozová hradba přechází do pochodu ({count} vozů).",
+    "wagonMarchOff": "Vozová hradba se zastavuje — pevná zeď ({count} vozů).",
+    "wagonMarched": "Vozová hradba pochoduje ({count} vozů).",
+    "wagonMarchBlocked": "Cesta zablokovaná — hradba nemůže pochodovat tím směrem.",
+    "wagonAlreadyMoved": "Vozy už tento tah jely.",
+    "wagonMustCloseFirst": "Nejdřív sepni hradbu, pak může pochodovat.",
+    "victoryBreakthrough": "Průlom! Obsadil jsi {count} klíčovou pozici — nepřítel je rozťat.",
+    "defeatBreakthrough": "Nestihl jsi prorazit do kola {deadline} — nepřítel se přeskupil a bitva je ztracena.",
+    "selectAttackTarget": "Vyber cíl útoku kliknutím na zvýrazněný hex.",
+    "overwatchFire": "⚡ Krycí palba! {unit} pálí na postupující jednotku {target}!",
+    "gameStart": "Hra zahájena. Husité začínají.",
+    "hussitesStart": "Husité začínají.",
+    "crusadersStart": "Křižáci začínají.",
+    "turnHussites": "Tah husitů.",
+    "turnCrusaders": "Tah křižáků.",
+    "turnCurrent": "Tah: {faction}",
+    "turnNumber": "Kolo: {turn}",
+    "combatVictory": "Vítězství v boji",
+    "moved": "{unit} se přesunul z [{oldCol},{oldRow}] na [{col},{row}].",
+    "attacked": "{attacker} útočí na {defender}: {damage} poškození. (Zbývá: {health} HP)",
+    "destroyed": "{attacker} zničil {defender}! ({damage} poškození)",
+    "counterAttack": "{defender} protiútočí: {damage} poškození. ({attacker}: {health} HP)",
+    "counterKill": "{defender} protiútokem zničil {attacker}! ({damage} poškození)",
+    "areaHit": "{attacker}: Plošný zásah na {target} (vedle {defender}): {damage} poškození. (Zbývá: {health} HP)",
+    "areaKill": "{attacker}: Plošný zásah zničil {target} (vedle {defender})! {damage} poškození",
+    "defensiveStance": "{unit} zaujímá obranný postoj.",
+    "autoDefend": "Nevyužité akce byly převedeny na obranu: {count} oddílů.",
+    "autoCoverFire": "Krycí palba připravena: {count} stojících oddílů s dostřelem.",
+    "panicFlee": "{unit} propadá panice a prchá!",
+    "enemyPanic": "Křižáci propadají panice! (-{penalty} útok)",
+    "trenchBonus": "Husitské jednotky v příkopech získávají +3 k obraně!",
+    "dismountedUnits": "{count} jízdních jednotek muselo sesednout na svahu!",
+    "chargeBlocked": "{count} jízdních jednotek ztratilo bonus nárazu!",
+    "wagonBonusApplied": "{count} jednotek za vozy získává +3 k obraně!",
+    "massacreResult": "Masakr! {count} nepřátelských jednotek utrpělo těžké ztráty.",
+    "armyRouting": "Nepřátelská armáda prchá z bojiště!",
+    "moraleBreak": "{unit} začíná prchat! Morálka zlomena.",
+    "fleeingNearDeath": "{unit} začíná prchat - smrt {deadUnit} zlomila morálku!",
+    "fleeingCasualties": "{unit} začíná prchat kvůli ztrátám!",
+    "fleeingCommander": "{unit} začíná prchat po smrti velitele!",
+    "fleeingSurrounded": "{unit} začíná prchat - je obklíčen!",
+    "routedCaught": "{unit} byl dobyt a zabit - žádná milost!",
+    "rallySuccess": "Rally úspěšné - {unit} pokračuje v boji",
+    "rallyFailed": "{unit} pokračuje v útěku",
+    "rallyFailedAttempt": "{unit} pokračuje v útěku (pokus {attempt}/3)",
+    "unitTrapped": "{unit} nemůže ustoupit a je zničen!",
+    "unitStartsFleeing": "{unit} začíná prchat!",
+    "unitFledBattlefield": "{unit} uprchl z bojiště!",
+    "moraleBreakTitle": "Morální zlom!",
+    "breakReasonCommander": "Pád velitele {commander}",
+    "breakReasonCasualties": "Těžké ztráty ({percent}%)",
+    "breakReasonRouting": "Příliš mnoho prchajících ({count}/{total})",
+    "armyCollapsing": "Armáda se hroutí!",
+    "armyWavering": "{faction} kolísá! Vyrazte na ně, dokud je čas!",
+    "armyWaveringPlayer": "Naše vojsko kolísá! Vydržte a držte řady!",
+    "armyRecovered": "{faction} se vzpamatoval(a) - okno se zavřelo.",
+    "leaderBonus": "Přítomnost velitele",
+    "safeRecovery": "Klid na bojišti",
+    "noWaterThirst": "Žízeň a vyčerpání",
+    "playerMoraleWarning": "Vaše vojsko trpí!",
+    "quickEscapeTitle": "Rychlý únik",
+    "quickEscapeBtn": "Utéct!",
+    "quickEscapeStay": "Zůstat",
+    "choralName": "♪ Ktož jsú boží bojovníci! ♪",
+    "choralEffect": "Chorál děsí nepřátele!",
+    "choralActivated": "Husité zpívají bojový chorál! (+50% útok, -20% obrana na 2 kola)",
+    "choralAlreadyUsed": "Chorál již byl v této bitvě použit!",
+    "choralWrongFaction": "Chorál lze použít pouze během husitského tahu!",
+    "choralExpired": "Efekt chorálu vypršel.",
+    "choralRemaining": "Chorál trvá ještě {turns} kolo.",
+    "enemyDemoralized": "Nepřátelské jednotky jsou demoralizované!",
+    "reinforcements": "Posily: {unit} přichází na bojiště!",
+    "reinforcementsWaiting": "Posily čekají na volné místo na bojišti.",
+    "unitReturned": "{unit} se vrátil na [{col},{row}].",
+    "unitHealing": "{unit} se léčí +{amount} HP ({source}).",
+    "turnNumberHeader": "--- Kolo {turn} ---",
+    "victoryHussites": "Vítězství Husitů!",
+    "victoryCrusaders": "Vítězství Křižáků!",
+    "commanderFallen": "Velitel padl! Porážka!",
+    "keyPositionsLost": "Nepřítel obsadil klíčové pozice! Porážka!",
+    "tooManyCasualties": "Ztratili jste příliš mnoho jednotek ({percent}%)! Porážka!",
+    "objectiveComplete": "Bonusový cíl splněn: {description}",
+    "victorySurvival": "Vítězství! Přežili jste do kola {turn} s {percent}% jednotek.",
+    "victoryFieldArmyEliminated": "Draze zaplacené vítězství! Do kola {turn} přežilo {percent}% vašich oddílů, ale nepřátelská bojová síla byla zničena.",
+    "victoryAlternativeFieldArmy": "Alternativní vítězství! Nepřátelská polní armáda byla rozbita a Žižka přežil.",
+    "defeatSurvival": "Porážka! Přežilo jen {percent}% jednotek (potřeba {required}%).",
+    "victoryDestruction": "Vítězství! Zničili jste {percent}% nepřátel.",
+    "defeatDestruction": "Porážka! Zničeno jen {percent}% nepřátel (potřeba {required}%).",
+    "victoryHoldPosition": "Vítězství! Ubránili jste klíčové pozice do kola {turn}!",
+    "victoryEscape": "Vítězství! {escaped} jednotek uniklo do bezpečí!",
+    "defeatEscape": "Porážka! Uniklo jen {escaped} z {required} potřebných jednotek.",
+    "victorySurviveTurns": "Vítězství! Vydrželi jste {turns} kol!",
+    "defeatSurviveTurns": "Porážka! Nevydrželi jste do kola {turns}.",
+    "victoryCapturePosition": "Vítězství! Obsadili jste {count} pozic!",
+    "defeatCapturePosition": "Porážka! Obsazeno jen {count} z {required} potřebných pozic.",
+    "victoryDualObjective": "Vítězství! Splněn cíl: {objectives}",
+    "defeatDualObjective": "Porážka! Nesplněn žádný z cílů.",
+    "victoryDestroyArmy": "Vítězství! Zničili jste nepřátelskou armádu!",
+    "defeatDestroyOrRout": "Porážka! Nepodařilo se zlomit nepřítele.",
+    "victoryObjectiveHeld": "Vítězství! {description}",
+    "escaped": "{unit} unikl ke Kolínu! ({escaped}/{required})",
+    "escapeSuccess": "Vítězství! Dostatek jednotek uniklo do bezpečí!",
+    "iceBroke": "{unit} se propadl pod led řeky Sázavy!",
+    "iceCrossed": "{unit} opatrně přešel zamrzlou řeku.",
+    "wagonBreakthrough": "Průlom v hradbě u {unit}!",
+    "gameSaved": "Hra uložena.",
+    "saveError": "Chyba při ukládání hry!",
+    "saveUnavailable": "Uložit lze během vašeho tahu po dokončení probíhající akce.",
+    "noSaveFound": "Žádná uložená hra nenalezena.",
+    "saveIncompatible": "Nekompatibilní verze uložené hry.",
+    "gameLoaded": "Hra načtena. Kolo {turn}, tah: {faction}.",
+    "loadError": "Chyba při načítání hry!",
+    "aiAction": "[AI] {unit} {action}",
+    "aiAttacking": "[AI] {unitName} útočí na {targetName}.",
+    "aiCharging": "[AI] {unitName} provádí náraz!",
+    "aiMoving": "[AI] {unitName} se přesouvá.",
+    "aiDefending": "[AI] {unitName} zaujímá obranný postoj.",
+    "scenarioUpdated": "Mapa této bitvy byla upravena. Zahajte ji znovu; uložená data ani postup kampaně nebyly smazány."
+  },
+  "mapLabels": {
+    "vltavaFord": "Brod přes Vltavu",
+    "nekmirFortress": "Tvrz Nekmíř",
+    "markovecPond": "Rybník Markovec",
+    "causeway": "Hráz",
+    "skaredyPondDrained": "Rybník Škaredý (vypuštěný)",
+    "vitkovRidge": "Hřeben Vítkov",
+    "hospitalField": "Špitálské pole",
+    "pankracPlain": "Pankrácká pláň",
+    "podoliSunkenRoad": "Úvoz k Podolí",
+    "westernWall": "Západní hradba",
+    "hnevinCastle": "Hrad Hněvín",
+    "monastery": "Klášter",
+    "towardBavaria": "K Bavorsku",
+    "fromStribro": "Od Stříbra",
+    "hill": "Vrch",
+    "suburb": "Předměstí",
+    "nysaRiver": "Řeka Nisa",
+    "vserubyPass": "Všerubský průsmyk",
+    "mzeRiver": "Řeka Mže",
+    "hussiteCamp": "Husitský tábor",
+    "trenches": "Příkopy",
+    "lipskaHill": "Lipská hora",
+    "sionCastle": "Hrad Sion",
+    "vrchliceBrook": "Vrchlice",
+    "bohynkaBrook": "Potok Bohynka",
+    "malesovFortress": "Tvrz Malešov",
+    "towardKolin": "↖ Kolín",
+    "towardBrod": "↓ Brod",
+    "fromHabry": "Od Habrů",
+    "towardJihlava": "K Jihlavě",
+    "podoliSlope": "Podolský svah",
+    "vltava": "Vltava",
+    "botic": "Botič",
+    "castleCore": "Hradní jádro",
+    "threeBanks": "Tři obranné valy",
+    "castleBailey": "Předhradí",
+    "siegePositions": "Obléhací postavení"
+  },
+  "enemyChronicles": {
+    "zivohost": {
+      "text": "Páni dostihli houf poutníků u Vltavy a rozehnali jej dříve, než mohl proměnit kopec v pevnost. Zemský řád byl na cestě k Novému Knínu obnoven.",
+      "source": "Stylizováno podle Starých letopisů českých"
+    },
+    "nekmir": {
+      "text": "Plzeňský landfrýd sevřel Žižkovy vozy v poli a rozbil káčířský houf. Tvrz Nekmíř zůstala v rukou pravověrných.",
+      "source": "Stylizováno podle Starých letopisů českých"
+    },
+    "sudomer": {
+      "text": "Královští a rožmberští zlomili uprchlíky mezi rybníky a otevřeli cestu k Písku. Vozy ani bahno tentokrát neposlušné neuchránily.",
+      "source": "Stylizováno podle podání Vavřince z Březové"
+    },
+    "vitkov": {
+      "text": "Křižáci dobyli dřevěné sruby na hoře a uvolnili cestu k Praze. Obránci byli potrestáni za vzdor císaři a církvi.",
+      "source": "Stylizováno jako křižácký protizápis k Vavřinci z Březové"
+    },
+    "vysehrad": {
+      "text": "Král přivedl pomoc včas, prorazil k Vyšehradu a zachránil jeho posádku. Korouhevní páni splnili slib, že půjdou i tam, kam se jiní neodváží.",
+      "source": "Stylizováno podle okruhu Eberharda Windeckeho"
+    },
+    "zatec": {
+      "text": "Pevnost Slunce podlehla po opakovaných útocích a její brány se otevřely vojsku kříže. Severozápadní Čechy se znovu podřídily pravé víře.",
+      "source": "Stylizováno jako letopis druhé křížové výpravy"
+    },
+    "kutna_hora": {
+      "text": "Královské vojsko uzavřelo slepého hejtmana v Kutné Hoře a jeho vozy nedokázaly prorazit. Horní město zůstalo věrné králi Zikmundovi.",
+      "source": "Stylizováno jako kutnohorský královský zápis"
+    },
+    "nemecky_brod": {
+      "text": "Královský zadní voj zadržel pronásledovatele před Brodem a umožnil ústup přes Sázavu. Město se tentokrát vyhnulo zpustošení.",
+      "source": "Stylizováno jako královský protizápis k pražské kronice"
+    },
+    "most": {
+      "text": "Mostečtí a míšeňští obránci vyrazili od hradu, překvapili Pražany a zahnali je od města. Kacířská výprava skončila pod Hněvínem porážkou.",
+      "source": "Stylizováno podle katolického podání o Mostu"
+    },
+    "horice": {
+      "text": "Čeňkova jízda dobyla Gothard a rozptýlila orebské vozy na svahu. Východní Čechy znovu poznaly moc panského vojska.",
+      "source": "Stylizováno jako zápis strany Čeňka z Vartenberka"
+    },
+    "malesov": {
+      "text": "Pražané a panská hotovost sevřeli slepého hejtmana u Malešova a jeho vozy na svahu zadrželi. Země byla uchráněna další Žižkovy války proti Praze.",
+      "source": "Stylizováno jako pražský protizápis k Bartoškovi z Drahonic"
+    },
+    "usti": {
+      "text": "Saské korouhve prolomily vozovou pevnost na Na Běhání a otevřely cestu k Ústí. Města za Krušnými horami byla pomstěna.",
+      "source": "Stylizováno jako saský protizápis ke Křížovnickému rukopisu"
+    },
+    "tachov": {
+      "text": "Kardinál shromáždil rozkolísané oddíly u Tachova a odrazil pronásledovatele od bavorské hranice. Říšské korouhve nebyly vydány bez boje.",
+      "source": "Stylizováno jako zpráva tábora kardinála Beauforta"
+    },
+    "nisa": {
+      "text": "Slezská města zastavila spanilou jízdu před Nisou a uchránila své hradby i kostely. Vetřelci odtáhli bez kořisti a bez výpalného.",
+      "source": "Stylizováno jako slezský městský zápis"
+    },
+    "domazlice": {
+      "text": "Legát utišil zmatek, zformoval výpravu u Domažlic a zastavil husitský postup. Chorál se ukázal být jen písní, ne zbraní.",
+      "source": "Stylizováno jako zpráva papežského legáta Juliána Cesariniho"
+    },
+    "plzen": {
+      "text": "Plzeňská obec přečkala dlouhé obléhání a uchránila své město. Ukořistěný velbloud zůstal znamením jejího odporu.",
+      "source": "Stylizováno podle plzeňské městské tradice"
+    },
+    "lipany": {
+      "text": "Panská jednota vylákala polní vojska z vozů, obrátila ústup v úder a ukončila jejich vládu. Prokop padl a země dostala cestu k míru.",
+      "source": "Stylizováno podle Bartoška z Drahonic"
+    },
+    "sion": {
+      "text": "Královské vojsko po dlouhém obležení dobylo Sion útokem a zajalo Jana Roháče i jeho věrné. Poslední ozbrojený vzdor proti králi byl zlomen.",
+      "source": "Autorská stylizace kronikářského podání",
+      "counterText": "Novější archeologické výzkumy dokládají rozsáhlejší opevnění i střelivo. Starší výklad o pouhém předstírání boje nelze považovat za závěr dnešního poznání.",
+      "counterSource": "Archeologický atlas ČR a novější výzkum Sionu"
+    }
+  },
+  "battleLore": {
+    "zivohost": {
+      "name": "Bitva u Živohoště",
+      "date": "4. nebo 6. listopadu 1419",
+      "location": "Oblast mezi Živohoští a Novým Knínem",
+      "hussiteSide": {
+        "commanders": [
+          "Břeněk Švihovský z Rýzmburka",
+          "Václav Koranda",
+          "Chval a Kuneš z Machovic"
+        ],
+        "strength": "~4 300 poutníků",
+        "composition": "Polovojensky organizovaní poutníci, venkované, měšťané"
+      },
+      "enemySide": {
+        "commanders": [
+          "Petr Konopišťský ze Šternberka",
+          "Jan Ptáček z Pirkštejna"
+        ],
+        "strength": "~1 300 jezdců",
+        "composition": "Těžká jízda české katolické šlechty"
+      },
+      "terrain": "Vyvýšenina poblíž přechodu přes Vltavu. Vozová hradba NEBYLA použita.",
+      "quotes": [
+        {
+          "text": "Střet poutníků s královskými oddíly u Vltavy patří k počátkům husitských válek. Západočeské posily umožnily části husitů pokračovat do Prahy.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Ochrana tří skupin poutníků, poloha brodu a příchod posil v konkrétním kole jsou herní rekonstrukce. Koranda zastupuje duchovní vedení výpravy; jeho přítomnost zde nepokládáme za prokázanou.",
+        "Tradiční datum je 4. listopadu 1419; zpráva o svátku sv. Linharta vede také k 6. listopadu. Přesné počty a rozdělení velitelů mezi houfy nejsou jisté."
+      ],
+      "casualties": {
+        "hussites": "~100+ mrtvých/zajatých",
+        "enemy": "Neznámé"
+      },
+      "reliability": "Tradiční datum je 4. listopadu 1419; zpráva o svátku sv. Linharta vede také k 6. listopadu. Přesné počty a rozdělení velitelů mezi houfy nejsou jisté.",
+      "outcome": "Nerozhodná bitva. Ukázala nutnost organizované obrany."
+    },
+    "nekmir": {
+      "name": "Bitva u Nekmíře",
+      "date": "prosinec 1419 / leden 1420",
+      "location": "Poblíž tvrze Nekmíř, 17 km SZ od Plzně",
+      "hussiteSide": {
+        "commanders": [
+          "Jan Žižka z Trocnova"
+        ],
+        "strength": "~300 pěších, 7 vozů",
+        "composition": "Pěchota z Plzně, vozy s děly a beranidly"
+      },
+      "enemySide": {
+        "commanders": [
+          "Bohuslav ze Švamberka"
+        ],
+        "strength": "Přes 2 000 jízdních i pěších",
+        "composition": "Těžká jízda plzeňského landfrýdu"
+      },
+      "terrain": "Okolí Nekmíře. Přesné místo a podoba vozového postavení nejsou bezpečně známy.",
+      "quotes": [
+        {
+          "text": "U Nekmíře se Žižkův oddíl střetl s plzeňským landfrýdem. Tradované podání uvádí sedm vozů; jde o rané husitské využití vozů v boji.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Půlkruh vozů, jejich vlastnosti a rozmístění obou stran slouží hře. Není to dochovaný plán sestavy.",
+        "Bitva se datuje do prosince 1419 nebo ledna 1420. Neoznačujeme ji za první použití vozů ve světových dějinách. Počty bojovníků jsou odhady."
+      ],
+      "casualties": {
+        "hussites": "Nízké",
+        "enemy": "Značné, včetně Hynka z Nekmíře"
+      },
+      "reliability": "Bitva se datuje do prosince 1419 nebo ledna 1420. Neoznačujeme ji za první použití vozů ve světových dějinách. Počty bojovníků jsou odhady.",
+      "outcome": "Husitské vítězství. Zrodila se vozová taktika."
+    },
+    "sudomer": {
+      "name": "Bitva u Sudoměře",
+      "date": "25. března 1420",
+      "location": "Mezi rybníky Markovec a Škaredý, 14 km od Strakonic",
+      "hussiteSide": {
+        "commanders": [
+          "Břeněk Švihovský z Rýzmburka (padl)",
+          "Jan Žižka z Trocnova",
+          "Valkoun z Adlaru"
+        ],
+        "strength": "400 pěších, 12 vozů, 9 jezdců",
+        "composition": "Rolníci, měšťané, ženy, děti, kněží"
+      },
+      "enemySide": {
+        "commanders": [
+          "Bohuslav ze Švamberka",
+          "Jindřich z Hradce"
+        ],
+        "strength": "700-2 000 těžkých jezdců",
+        "composition": "Těžká jízda, johanité, zbrojnoši landfrýdu"
+      },
+      "terrain": "Úzká hráz mezi rybníky - Markovec napuštěný, Škaredý bahnitý. KLÍČOVÝ FAKTOR - bahno uvěznilo sesedlé rytíře.",
+      "quotes": [
+        {
+          "text": "Dne 25. března 1420 se ustupující husité bránili mezi rybníky Markovec a Škaredý. Terén a vozy omezovaly rozvinutí útočníků.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Mapa zdůrazňuje hráz, vodu a bahno vypuštěného rybníka. Počet figur, čas útoků a délka obrany jsou nastaveny pro hratelnost.",
+        "O poměru velitelské role Žižky a Břeňka Švihovského se zprávy rozcházejí. Počet padlých nelze zaměňovat s počtem zajatců; přesný účet ztrát není znám."
+      ],
+      "casualties": {
+        "hussites": "Počet nejistý; padl Břeněk Švihovský",
+        "enemy": "Počet nejistý"
+      },
+      "reliability": "O poměru velitelské role Žižky a Břeňka Švihovského se zprávy rozcházejí. Počet padlých nelze zaměňovat s počtem zajatců; přesný účet ztrát není znám.",
+      "outcome": "Husitský houf se ubránil a mohl pokračovat v cestě.",
+      "aftermath": "Husitský houf se ubránil a mohl pokračovat v cestě."
+    },
+    "vitkov": {
+      "name": "Bitva na Vítkově",
+      "date": "14. července 1420",
+      "location": "Vrch Vítkov, Praha 3 - Žižkov",
+      "hussiteSide": {
+        "commanders": [
+          "Jan Žižka z Trocnova"
+        ],
+        "strength": "26 mužů, 2 ženy a panna v srubech; pražská pomoc s cepy",
+        "composition": "Cepníci a sudličníci, jen pár kuší (málo prachu), 3 ženy"
+      },
+      "enemySide": {
+        "commanders": [
+          "Zikmund Lucemburský",
+          "Fridrich IV. Bojovný",
+          "Heinrich z Isenburgu (velel útoku)",
+          "Pippo Spano"
+        ],
+        "strength": "~30 000 celkem; 7-8 000 v sektoru, ale do hrdla se vešlo jen ~300 jezdců",
+        "composition": "Mezinárodní křižácká armáda"
+      },
+      "terrain": "Úzký hřeben se strmými svahy. Pevné sruby a zídka omezovaly přístup útočníků.",
+      "quotes": [
+        {
+          "text": "Vítkov bránil 14. července 1420 Jan Žižka. Obranu tvořila pevná zídka a sruby; pomoc z Prahy zasáhla do boku útočníků.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Posádka srubu je samostatná nepohyblivá herní jednotka, nikoli vůz. Počty oddílů a čas příchodu pomoci jsou zjednodušené.",
+        "Přesné ztráty a totožnost kněze vedoucího pomoc nejsou bezpečně určeny. Želivský v herní sestavě je dramatické obsazení této role, ne doložená identifikace."
+      ],
+      "casualties": {
+        "hussites": "Jednotky až desítky",
+        "enemy": "100-300 padlých"
+      },
+      "reliability": "Přesné ztráty a totožnost kněze vedoucího pomoc nejsou bezpečně určeny. Želivský v herní sestavě je dramatické obsazení této role, ne doložená identifikace.",
+      "outcome": "Rozhodné vítězství. 30. července rozpuštění křížové výpravy."
+    },
+    "vysehrad": {
+      "name": "Bitva pod Vyšehradem",
+      "date": "1. listopadu 1420",
+      "location": "Pankrácká pláň, okolí kostela sv. Pankráce",
+      "hussiteSide": {
+        "commanders": [
+          "Hynek Krušina z Lichtenburka",
+          "Hejtmani pražských a spojeneckých oddílů"
+        ],
+        "strength": "15-20 000 mužů",
+        "composition": "Pražané, orebité, táboři, žatečtí, lounští"
+      },
+      "enemySide": {
+        "commanders": [
+          "Zikmund Lucemburský",
+          "Jindřich z Plumlova",
+          "Mikšík Divůček"
+        ],
+        "strength": "15-20 000 mužů",
+        "composition": "Uhři, Němci, Slezané, česká katolická šlechta"
+      },
+      "terrain": "Rovinatá pláň s bočním úvozem k Podolí. Boční úvoz se stal pastí pro šlechtu.",
+      "quotes": [
+        {
+          "text": "Královská posádka Vyšehradu dodržela dohodu a 1. listopadu 1420 do bitvy nezasáhla. Husitskému vojsku velel Hynek Krušina z Lichtenburka.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Mapa zachovává vztah pevnosti, Vltavy, Botiče, pankráckých pozic a podolského svahu. Rozestupy, příkopy a rozdělení útočných skupin nejsou zaměřeným plánem bitvy.",
+        "Rozhovory Zikmunda s pány jsou scénáristickou zkratkou, nikoli přepisem jejich slov."
+      ],
+      "casualties": {
+        "hussites": "~30 mužů",
+        "enemy": "400-500 včetně 25 pánů"
+      },
+      "reliability": "Starý způsob počítání hodin nelze mechanicky přepsat jako 15:00. Ve scénáři používáme vypršení dohodnuté lhůty, ne zdánlivě přesný čas. Přesné počty ztrát jsou nejisté.",
+      "outcome": "Porážka královského vojska a kapitulace Vyšehradu. Neznamenala ještě úplné ovládnutí Prahy.",
+      "aftermath": "Porážka královského vojska a kapitulace Vyšehradu. Neznamenala ještě úplné ovládnutí Prahy."
+    },
+    "kutna_hora": {
+      "name": "Bitva u Kutné Hory",
+      "date": "21.–22. prosince 1421",
+      "location": "Kutná Hora – Kaňk – cesta ke Kolínu",
+      "hussiteSide": {
+        "commanders": [
+          "Jan Žižka (ZCELA SLEPÝ)",
+          "Viktorin Boček z Kunštátu",
+          "Hašek z Valdštejna"
+        ],
+        "strength": "~12 000 mužů",
+        "composition": "Táborité + pražané + moravští páni"
+      },
+      "enemySide": {
+        "commanders": [
+          "Zikmund Lucemburský",
+          "Pippo Spano"
+        ],
+        "strength": "30-50 000 mužů",
+        "composition": "Uherská jízda, německé a rakouské oddíly"
+      },
+      "terrain": "Kopcovitá krajina, strategický vrch Kaňk. Terén umožnil noční únik.",
+      "quotes": [
+        {
+          "text": "Po obsazení Kutné Hory královskými oddíly se husité ocitli v obklíčení. Nad ránem 22. prosince 1421 prorazili s vozy ke Kaňku a následně pokračovali ke Kolínu.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Úniková zóna představuje pokračování cesty za Kaňk. Mapa zhušťuje více etap přesunu; požadavek zachránit pět oddílů je herní cíl.",
+        "Vyprávění o dobytku hnaném proti hradbě a o pozdějším Žižkově pasování patří do tradice, ne mezi podmínky vítězství."
+      ],
+      "casualties": {
+        "hussites": "Pro samotný průlom neznámé",
+        "enemy": "Pro samotný průlom neznámé"
+      },
+      "reliability": "Přesnou hodinu průlomu, počty ztrát ani světové prvenství palby za pohybu zde netvrdíme. Dobové zprávy nedávají plán každého vozu.",
+      "outcome": "Husitské vítězství. Geniální noční průlom vozovou hradbou."
+    },
+    "nemecky_brod": {
+      "name": "Bitva u Německého Brodu",
+      "date": "8.–10. ledna 1422",
+      "location": "Německý Brod a přechod Sázavy; Habry jsou předchozí střet",
+      "hussiteSide": {
+        "commanders": [
+          "Jan Žižka",
+          "Jan Hvězda z Vícemilic (Bzdinka)"
+        ],
+        "strength": "Posílené síly po Kutné Hoře",
+        "composition": "Táborité + pražané"
+      },
+      "enemySide": {
+        "commanders": [
+          "Pippo Spano"
+        ],
+        "strength": "Zbytky křižáckého vojska",
+        "composition": "Prchající uherské a rakouské oddíly"
+      },
+      "terrain": "Město na severním břehu Sázavy, na přístupové straně od Habrů. Ústup pokračuje přes řeku k Jihlavě.",
+      "quotes": [
+        {
+          "text": "Královské vojsko po porážkách u Kutné Hory a Habrů ustupovalo k Německému Brodu. Historické jádro města leží na pravém břehu Sázavy, před přechodem ve směru ústupu.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Hraje se závěr pronásledování u města, nikoli bitva u Habrů na stejném místě. Most, městská pozice a přechod přes led zhušťují události z 8.–10. ledna 1422.",
+        "Propadání ledu je zachováno jako tradovaný motiv a herní riziko, ne jako přesně spočítaný účet utonulých."
+      ],
+      "casualties": {
+        "hussites": "Nízké",
+        "enemy": "Tisíce mrtvých v poli + ve městě"
+      },
+      "reliability": "Počty kořistních vozů i obětí se liší. Figurky představují oddíly; jejich počet není počet lidí uvedený v kronice.",
+      "outcome": "Porážka ustupujícího vojska, dobytí a zpustošení Brodu. Údaje o ztrátách celého tažení nelze přenášet na tuto jedinou mapu.",
+      "aftermath": "Porážka ustupujícího vojska, dobytí a zpustošení Brodu. Údaje o ztrátách celého tažení nelze přenášet na tuto jedinou mapu."
+    },
+    "most": {
+      "name": "Bitva u Mostu",
+      "date": "5. srpna 1421",
+      "location": "Okolí vrchu Hněvín, Most",
+      "hussiteSide": {
+        "commanders": [
+          "Jan Želivský (radikální kazatel)"
+        ],
+        "strength": "Pražský husitský svaz + Žatečtí",
+        "composition": "Městské hotovosti, 2 pušky, 2 praky"
+      },
+      "enemySide": {
+        "commanders": [
+          "Fridrich IV. Bojovný",
+          "Hynek Hlaváč z Dubé",
+          "Zikmund z Vartenberka"
+        ],
+        "strength": "Saské vojsko + mostecká hotovost + katolická šlechta",
+        "composition": "Profesionální míšeňská armáda"
+      },
+      "terrain": "Okolí Mostu a Hněvína; mapa je zjednodušené taktické uspořádání, nikoli doložený plán útoku.",
+      "quotes": [
+        {
+          "text": "Husitské obléhání Mostu a Hněvína skončilo 5. srpna 1421 porážkou po zásahu protivníkových posil.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Záchrana situace a dobytí hradu jsou hráčovy alternativní možnosti. Rozmístění posil a jejich příchod v jednotlivých kolech jsou rekonstrukce.",
+        "Z této porážky nelze odvodit, že husité bez Žižky nebo bez vozů nemohli vyhrávat. Přesná sestava, velikost vojsk a ztráty nejsou bezpečně známy."
+      ],
+      "casualties": {
+        "hussites": "~500+",
+        "enemy": "Neznámé"
+      },
+      "reliability": "Z této porážky nelze odvodit, že husité bez Žižky nebo bez vozů nemohli vyhrávat. Přesná sestava, velikost vojsk a ztráty nejsou bezpečně známy.",
+      "outcome": "HUSITSKÁ PORÁŽKA. Oslabení pozice Jana Želivského."
+    },
+    "usti": {
+      "name": "Bitva u Ústí nad Labem",
+      "date": "16. června 1426",
+      "location": "Vyvýšenina „Na Běhání“, 5 km od Ústí",
+      "hussiteSide": {
+        "commanders": [
+          "Zikmund Korybutovič (formálně)",
+          "Prokop Holý (fakticky)",
+          "Jan Roháč",
+          "Jakoubek z Vřesovic"
+        ],
+        "strength": "24-25 000 mužů, 500+ vozů",
+        "composition": "Táboři, sirotci, pražané, šlechta"
+      },
+      "enemySide": {
+        "commanders": [
+          "Boso z Vitzthumu (padl)"
+        ],
+        "strength": "25-30 000 mužů",
+        "composition": "Vojska ze Saska, Míšně, Durynska"
+      },
+      "terrain": "Mírné návrší s planinou. Dvojitá linie vozové hradby.",
+      "quotes": [
+        {
+          "text": "Dne 16. června 1426 porazila spojená husitská vojska protivníka u Ústí nad Labem, v prostoru označovaném Na Běhání.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Dvě řady vozů, přístup útočníků a blízkost města jsou herní zhuštění rekonstrukce. Nejde o změřené rozestavení historické armády.",
+        "Údaj o pouhých devatenácti husitských padlých uvádíme jako kronikářské tvrzení, nikoli ověřenou bilanci."
+      ],
+      "casualties": {
+        "hussites": "Údajně jen 19 mužů (Starý letopisec)",
+        "enemy": "~4 000 (kroniky až 15 000)"
+      },
+      "reliability": "Počty obou vojsk i obětí se v podáních výrazně liší. Uvedené odhady nevyjadřují přesnost, kterou by bylo možné přenést do počtu figurek.",
+      "outcome": "Drtivé vítězství. Saské vévodství zdecimováno."
+    },
+    "tachov": {
+      "name": "Bitva u Tachova",
+      "date": "3.–4. srpna 1427",
+      "location": "Severně od Tachova",
+      "hussiteSide": {
+        "commanders": [
+          "Prokop Holý"
+        ],
+        "strength": "Spojené svazy",
+        "composition": "Táboři, sirotci, pražané"
+      },
+      "enemySide": {
+        "commanders": [
+          "Arcibiskup Ota ze Ziegenheimu",
+          "Fridrich Hohenzollern",
+          "Kardinál Jindřich Beaufort"
+        ],
+        "strength": "~25 000 mužů",
+        "composition": "Křižácké oddíly s vozovým postavením"
+      },
+      "terrain": "Okolí Stříbra a Tachova. Nerozhodující - křižáci uprchli.",
+      "quotes": [
+        {
+          "text": "Po ústupu od Stříbra se křižácké vojsko u Tachova 3.–4. srpna 1427 rozpadlo. Následovalo obléhání: město padlo 11. srpna a hrad kapituloval 14. srpna.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Herní pronásledování končí před následným obléháním. Závěrečný text tuto další etapu popisuje odděleně.",
+        "Přesné místo polního střetu a počty nejsou jisté. Číslování křížových výprav závisí na započtení neúspěšných podniků; zde používáme rok, ne pořadové číslo."
+      ],
+      "casualties": {
+        "hussites": "Zanedbatelné",
+        "enemy": "Stovky"
+      },
+      "reliability": "Přesné místo polního střetu a počty nejsou jisté. Číslování křížových výprav závisí na započtení neúspěšných podniků; zde používáme rok, ne pořadové číslo.",
+      "outcome": "Rozpad polního vojska začátkem srpna. Město bylo dobyto 11. srpna a hrad 14. srpna 1427.",
+      "aftermath": "Rozpad polního vojska začátkem srpna. Město bylo dobyto 11. srpna a hrad 14. srpna 1427."
+    },
+    "nisa": {
+      "name": "Bitva u Nisy (Slezsko)",
+      "date": "březen 1428",
+      "location": "Před hradbami města Nisa (Nysa/Neisse)",
+      "hussiteSide": {
+        "commanders": [
+          "Prokop Holý",
+          "Velek z Březnice",
+          "kněz Prokůpek",
+          "Jan z Bukoviny"
+        ],
+        "strength": "Spojené síly",
+        "composition": "Táboři, sirotci, pražané, moravští kališníci"
+      },
+      "enemySide": {
+        "commanders": [
+          "Biskup Konrád",
+          "Půta z Častolovic"
+        ],
+        "strength": "Neznámá",
+        "composition": "Narychlo vyzbrojení sedláci, místní hotovost"
+      },
+      "terrain": "Před městskými hradbami. Překvapení a rychlý manévr.",
+      "quotes": [
+        {
+          "text": "Tažení roku 1428 zasáhlo slezskou Nisu. Je třeba rozlišovat boj v okolí a předměstí od dobytí opevněného města.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Mapa představuje útok na předměstí a protivníkovo polní vojsko. Obsazení celého opevněného města není historicky doloženým cílem této epizody.",
+        "Podrobné rozestavení, síly a přesná datace v rámci března nejsou v použitých podkladech jednotné. Mapu považujeme za volnou rekonstrukci, nikoli potvrzený plán bojiště."
+      ],
+      "casualties": {
+        "hussites": "Nezaznamenány",
+        "enemy": "~2 000"
+      },
+      "reliability": "Podrobné rozestavení, síly a přesná datace v rámci března nejsou v použitých podkladech jednotné. Mapu považujeme za volnou rekonstrukci, nikoli potvrzený plán bojiště.",
+      "outcome": "Tažení do Slezska pokračovalo. Výsledek polní srážky nelze zaměňovat s dobytím opevněné Nisy.",
+      "aftermath": "Tažení do Slezska pokračovalo. Výsledek polní srážky nelze zaměňovat s dobytím opevněné Nisy."
+    },
+    "domazlice": {
+      "name": "Bitva u Domažlic",
+      "date": "14. srpna 1431",
+      "location": "Mezi Domažlicemi a Kdyní, u vrchu Baldov",
+      "hussiteSide": {
+        "commanders": [
+          "Prokop Holý"
+        ],
+        "strength": "40-50 000 bojovníků",
+        "composition": "Spojené svazy táborů, sirotků a pražanů"
+      },
+      "enemySide": {
+        "commanders": [
+          "Fridrich Hohenzollern",
+          "Kardinál Giuliano Cesarini",
+          "Zikmund ODMÍTL účast"
+        ],
+        "strength": "100 000+ - NEJVĚTŠÍ křížová výprava",
+        "composition": "Několik tisíc vozů po husitském vzoru (plán 9 000), stovky děl"
+      },
+      "terrain": "Cesta k Domažlicím, Všerubský průsmyk. Průsmyk - úzké hrdlo pro prchající.",
+      "quotes": [
+        {
+          "text": "Husité přicházeli 14. srpna 1431 na pomoc obleženým Domažlicím. Křižáckou armádu zachvátila panika a následoval útěk; část vojska se přesto střetla s husity.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Chorál ve hře zesiluje strach již nejistého vojska. Rozpad velení a chybný výklad přesunu tvoří kontext paniky; nejde o jediný zázračný spouštěč.",
+        "Představa, že celou bitvu vyhrála samotná píseň a vůbec se nebojovalo, patří k legendě."
+      ],
+      "casualties": {
+        "hussites": "Minimální",
+        "enemy": "Stovky; ukořistěno ~2 000 vozů a ~300 děl"
+      },
+      "reliability": "Přesný poměr vlivu zpráv, přesunů a zvuků nelze změřit. Početnost výpravy ani ztráty nepodáváme jako jistý součet.",
+      "outcome": "Rozpad křižácké výpravy urychlil přechod k jednání. Panika nevylučuje, že části vojska kladly odpor.",
+      "aftermath": "Rozpad křižácké výpravy urychlil přechod k jednání. Panika nevylučuje, že části vojska kladly odpor."
+    },
+    "lipany": {
+      "name": "Bitva u Lipan",
+      "date": "30. května 1434",
+      "location": "Mezi Hřiby a Lipskou horou, 40 km V od Prahy",
+      "hussiteSide": {
+        "faction": "RADIKÁLOVÉ (poražení)",
+        "commanders": [
+          "Prokop Holý (padl)",
+          "Prokop Malý (padl)",
+          "Jan Čapek ze Sán (uprchl)",
+          "Ondřej Keřský"
+        ],
+        "strength": "6-10 000 pěších, 700 jezdců, 480 vozů",
+        "composition": "Táboři + sirotci"
+      },
+      "enemySide": {
+        "faction": "UMÍRNĚNÍ (vítězové)",
+        "commanders": [
+          "Diviš Bořek z Miletínka",
+          "Aleš Vřešťovský z Rýzmburka",
+          "Jiří z Poděbrad (14 let!)"
+        ],
+        "strength": "12-13 000 pěších, 1 200-1 500 jezdců, 720+ vozů",
+        "composition": "Panská jednota + pražané + plzeňské kontingenty"
+      },
+      "terrain": "Lipská hora (výhodnější pro radikály), pláň u Hřib. DVĚ ARMÁDY VE VOZOVÝCH HRADBÁCH proti sobě.",
+      "quotes": [
+        {
+          "text": "Dne 30. května 1434 se střetli husitští radikálové s koalicí katolíků a umírněných kališníků. Porážka znamenala zásadní oslabení polních vojsk, ne okamžitý konec všech bojů.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Léčka a rozhodnutí opustit vozové postavení jsou převedeny do několika tahů. Vítězství radikálů je přiznaná alternativní historie.",
+        "Vyprávění o upalování zajatců ve stodolách nelze bez dalšího převést na přesný dodatečný počet mrtvých."
+      ],
+      "casualties": {
+        "hussites": "Vysoké, součty a počty popravených zajatců sporné",
+        "enemy": "Nižší; přesný počet nejistý"
+      },
+      "reliability": "Přesná poloha jednotlivých sestav je předmětem archeologického výzkumu. Číselné odhady ztrát a zajatců nejsou jednotným a ověřeným účtem.",
+      "outcome": "Drtivá porážka radikálů. Konec polních vojsk. Kompaktáta v Jihlavě 1436."
+    },
+    "horice": {
+      "name": "Bitva u Hořic",
+      "date": "duben 1423",
+      "location": "Vrch Gothard (357 m), JV od Hořic na Jičínsku",
+      "hussiteSide": {
+        "commanders": [
+          "Jan Žižka (slepý)",
+          "Diviš Bořek z Miletínka"
+        ],
+        "strength": "~3 000 mužů, 120 vozů",
+        "composition": "Orebité (východočeští husité), 10% jízdní"
+      },
+      "enemySide": {
+        "commanders": [
+          "Čeněk z Vartenberka (4x přeběhlík!)",
+          "Jindřich Berka z Dubé",
+          "Arnošt Flaška z Pardubic"
+        ],
+        "strength": "Neznámá",
+        "composition": "Jízdní sbory katolické české šlechty"
+      },
+      "terrain": "Vrch Gothard. Vozová hradba na temeni kopce.",
+      "quotes": [
+        {
+          "text": "Žižkovo vojsko se v dubnu 1423 střetlo s vojskem Čeňka z Vartenberka u Hořic; zásadní roli v rekonstrukci boje má vrch Gothard.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Scénář představuje obranu výšiny s vozy a střelci. Časování sesednutí a protiútoku i obsazení velitelských rolí slouží herní rekonstrukci.",
+        "Přesný dubnový den se v literatuře liší. Podrobný plán nasazení a přesné počty nemáme; označení prvního vnitřního husitského konfliktu by bylo zavádějící."
+      ],
+      "casualties": {
+        "hussites": "Neznámé",
+        "enemy": "Stovky zabitých a zajatých"
+      },
+      "reliability": "Přesný dubnový den se v literatuře liší. Podrobný plán nasazení a přesné počty nemáme; označení prvního vnitřního husitského konfliktu by bylo zavádějící.",
+      "outcome": "Drtivé orebské vítězství. Ukázalo sílu východočeských husitů."
+    },
+    "malesov": {
+      "name": "Bitva u Malešova",
+      "date": "7. června 1424",
+      "location": "U tvrze Malešov, 6 km J od Kutné Hory, údolí potoka Bohynka",
+      "hussiteSide": {
+        "commanders": [
+          "Jan Žižka (zcela slepý)",
+          "Jan Hvězda z Vícemilic (Bzdinka)",
+          "Jan Roháč z Dubé"
+        ],
+        "strength": "Východočeský husitský svaz + táboři",
+        "composition": "Orebité + malý oddíl táborů"
+      },
+      "enemySide": {
+        "commanders": [
+          "Svatohavelská koalice",
+          "Diviš Bořek z Miletínka"
+        ],
+        "strength": "Větší než Žižkova",
+        "composition": "Pražský svaz + plzeňský landfrýd + umírnění kališníci"
+      },
+      "terrain": "Možná rekonstrukce svahu a údolí u Malešova s vozovým postavením; přesné bojiště není určeno.",
+      "quotes": [
+        {
+          "text": "Žižka 7. června 1424 porazil koalici Pražanů a katolíků u Malešova. Odborný výklad připouští přehrazení údolí vozy a následný protiútok.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Bohynka, svah i rozmístění vojska představují jednu možnou rekonstrukci. Podmíněná panika ve hře vyjadřuje rozvrácení čela kolony, ne zásah kamennými vozy.",
+        "Vozy spuštěné s kamením uvádí pozdější letopisecká tradice. Jan Biederman jejich použití hodnotí jako silně nepravděpodobné."
+      ],
+      "casualties": {
+        "hussites": "Nejisté",
+        "enemy": "Kronikářské odhady; nelze přesně rozdělit mezi obě strany"
+      },
+      "reliability": "Přesné bojiště ani velitel protivníka nejsou spolehlivě určeni. Diviš Bořek je herní obsazení; konkrétní poměr 1200 ku 200 padlým není ověřený účet.",
+      "outcome": "Výrazné Žižkovo vítězství nad protižižkovskou koalicí. Přesnou polohu bojiště neznáme.",
+      "aftermath": "Výrazné Žižkovo vítězství nad protižižkovskou koalicí. Přesnou polohu bojiště neznáme."
+    },
+    "zatec": {
+      "date": "září – 2. října 1421",
+      "quotes": [
+        {
+          "text": "Žatec odolal obléhání druhé křížové výpravy v září a na počátku října 1421. Obranu zajišťovala městská obec a posádka.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Jediný útočný sektor a pevně stanovený počet kol zhušťují celé obléhání. Nejde o úplný plán městského opevnění.",
+        "Erkingerovo spojení s boji o Žatec roku 1420 neprokazuje jeho konkrétní roli v roce 1421. Ve hře je zvoleným představitelem obléhatelů. Počty a jednotlivé útoky jsou rekonstruované."
+      ],
+      "reliability": "Erkingerovo spojení s boji o Žatec roku 1420 neprokazuje jeho konkrétní roli v roce 1421. Ve hře je zvoleným představitelem obléhatelů. Počty a jednotlivé útoky jsou rekonstruované."
+    },
+    "plzen": {
+      "date": "14. července 1433 – 9. května 1434",
+      "quotes": [
+        {
+          "text": "Obléhání Plzně trvalo od 14. července 1433 do 9. května 1434 a město odolalo.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Hrajete zhuštěný, časově neurčený útočný úsek obléhání. Jedna partie není devět měsíců v přesném sledu a vítězství husitů je alternativní výsledek.",
+        "Ukořistěný velbloud se stal městským symbolem. Neuvádíme, že jej do znaku udělil Zikmund; město symbol přijalo samo a později byl potvrzen."
+      ],
+      "reliability": "Počty děl, průběh jednotlivých výpadů a sestava útočníků vyžadují opatrnost. Prokop v herní sestavě reprezentuje širší obléhání, nikoli potvrzenou účast v konkrétním útoku.",
+      "terrain": "Opevněné město a obléhací práce. Počty věží a děl se v rekonstrukcích liší."
+    },
+    "sion": {
+      "date": "6. září 1437",
+      "quotes": [
+        {
+          "text": "Hrad byl obléhán od května a dobyt 6. září 1437. Novější archeologické výzkumy dokládají palebná postavení obléhatelů a intenzivní boj.",
+          "source": "Autorské shrnutí · odkazy v části Historie a prameny",
+          "kind": "paraphrase"
+        }
+      ],
+      "trivia": [
+        "Mapa zachycuje vztah skalního jádra, předhradí, trojitého valu a Vrchlice. Rozsah opevnění je zmenšen; rozmístění oddílů, příchod posil a alternativní výsledek jsou herní rekonstrukce.",
+        "Starší představa pouhého předstíraného obléhání není současným archeologickým závěrem. Může být uvedena jako dějina výkladů, nikoli jako důkaz, že se nebojovalo."
+      ],
+      "reliability": "Zůstává otázka, do jaké části obléhání byly tvrdé boje soustředěny. Nepřítomnost studny sama nedokazuje nepřetržitou žízeň: plán dokládá chráněný přístup k vodě.",
+      "terrain": "Skalnaté hradní jádro nad Vrchlicí, rozsáhlejší předhradí se třemi valy; severní a jižní obléhací postavení.",
+      "location": "Sion u Chlístovic, nad údolím Vrchlice",
+      "enemySide": {
+        "commanders": [
+          "Hynce Ptáček z Pirkštejna",
+          "Michal Országh"
+        ]
+      },
+      "aftermath": "Sion padl 6. září 1437. Jan Roháč a jeho druhové byli 9. září popraveni v Praze.",
+      "casualties": {
+        "hussites": "Zajetí a poprava Roháče s druhy; součty se liší",
+        "enemy": "Neznámé; malé ztráty nelze odvodit z podílu nálezů"
+      }
+    }
+  },
+  "scenarios": {
+    "tutorial": {
+      "name": "Výcvik na Táboře",
+      "description": "Naučte se základy boje v interaktivním výcviku.",
+      "historicalSignificance": "Před prvními bitvami musí každý bojovník projít výcvikem.",
+      "briefing": {
+        "hussites": "Vítej, nováčku! Jsem Jan Žižka a naučím tě, jak bojovat za kalich. Pozorně sleduj mé pokyny."
+      },
+      "steps": [
+        {
+          "title": "Vítej, bojovníku!",
+          "text": "Jsem Jan Žižka. Naučím tě základy boje. Klikni na jednotku pro její výběr, zelená pole ukazují kam se může pohnout."
+        },
+        {
+          "title": "Jednotka vybrána!",
+          "text": "Zelená pole = možný pohyb. Červená pole = možný útok. Klikni kam chceš jít nebo na koho zaútočit."
+        },
+        {
+          "title": "Pohyb dokončen!",
+          "text": "Každá jednotka může za tah udělat POHYB a ÚTOK. Až budeš hotov, klikni na „Ukončit tah“ nebo stiskni ENTER."
+        },
+        {
+          "title": "Konec tahu",
+          "text": "Teď hraje nepřítel. Po jeho tahu budeš zase na řadě ty. Znič všechny nepřátele pro vítězství!"
+        },
+        {
+          "title": "Útok!",
+          "text": "Ne každý oddíl po zásahu oplácí úder. V boji zblízka protiútočí jen přeživší pěchota s útokem 28+. Střelci při zásahu neopětují palbu; krycí palba reaguje na pohyb nepřítele."
+        },
+        {
+          "title": "Tip: Terén",
+          "text": "Kopce dávají +20% obranu, lesy +15%. Využívej terén! Jednotky vedle vozové hradby mají také bonus."
+        },
+        {
+          "title": "Obranný postoj",
+          "text": "Teď se naučíš OBRANNÝ POSTOJ. Vyber jednotku a stiskni klávesu D nebo klikni na „Bránit“. Jednotka do dalšího tahu utrpí o 30 % menší poškození."
+        },
+        {
+          "title": "Obranný postoj aktivován!",
+          "text": "Jednotka v obraně utrpí o 30 % menší poškození a spotřebuje zbývající akce. Na konci tahu se nevyužité oddíly brání automaticky; stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou bez bonusu obrany. Ruční Bránit jim výstřel vezme. Nyní znič všechny nepřátele!"
+        },
+        {
+          "title": "Výcvik dokončen!",
+          "text": "Naučil ses základy: výběr, pohyb, útok, obranu a terén. Jsi připraven na skutečnou bitvu! Hodně štěstí."
+        }
+      ],
+      "objectives": {
+        "primary": "Dokončete všechny lekce výcviku"
+      },
+      "debriefing": {
+        "victory": "Výcvik úspěšně dokončen! Jsi připraven bojovat za kalich.",
+        "defeat": "Nevadí, zkus to znovu. I Žižka se musel učit."
+      },
+      "phases": [
+        {
+          "name": "Výcvik",
+          "description": "Interaktivní výcvik základů boje.",
+          "events": []
+        }
+      ],
+      "date": "Jaro 1420"
+    },
+    "zivohost_1419": {
+      "name": "Bitva u Živohoště",
+      "description": "První větší střetnutí husitských válek. Jihočeští poutníci musí přežít útok do příchodu posil.",
+      "historicalSignificance": "Ukázka nutnosti organizované obrany, předchůdce vozové hradby.",
+      "briefing": {
+        "hussites": "Petr ze Šternberka přepadl u brodu váš houf jihočeských poutníků. Stáhněte bezbranné — jsou mezi nimi ženy a děti — na kopec Červenka a udržte se, dokud nedorazí posily z Nového Knína!",
+        "crusaders": "Dohoňte husitské poutníky dříve, než se jim dostane pomoci. Máte převahu - využijte ji!"
+      },
+      "reinforcements": {
+        "hussites": "Posily z Nového Knína přicházejí! Břeněk Švihovský vede oddíl na pomoc!"
+      },
+      "objectives": {
+        "primary": "Stáhni poutníky na kopec Červenka a vydrž do příchodu Knínských (kolo 5). Ochraň bezbranné!",
+        "secondary": [
+          "Udržte kopec Červenka",
+          "Zajměte nebo zabijte Petra ze Šternberka"
+        ]
+      },
+      "debriefing": {
+        "victory": "Vítězství u Živohoště otevírá cestu dál. O jeho ceně však rozhoduje i osud těch, které jste měli chránit.",
+        "defeat": "Poutníci byli u brodu rozprášeni a pobiti. Petr ze Šternberka slaví. Husitské hnutí utrpělo těžkou ránu hned v počátcích.",
+        "victoryVariants": {
+          "allPilgrims": "Bitva je vyhraná a všechny původní skupiny poutníků jsou stále na bojišti. Neznamená to boj beze ztrát, ale jejich cesta tady nekončí.\n\nHlas z bojiště — autorská fikce, nikoli citace pramene:\n„Než jsme začali mluvit o vítězství, volali jsme na sebe. Ze všech skupin přicházely odpovědi.“",
+          "somePilgrims": "Bitva je vyhraná, ale na bojišti zůstala jen část původních skupin poutníků. Další cesta začne s mezerami v houfu; vítězná zpráva je nezaplní.\n\nHlas z bojiště — autorská fikce, nikoli citace pramene:\n„Volali jsme přes pole. Některé hlasy odpověděly; na jiné jsme čekali marně.“",
+          "noPilgrims": "Vojsko zvítězilo, ale žádná z původních skupin poutníků už na bojišti nezůstala. Padlí a ti, kdo uprchli, nejsou totéž; původní houf však už nestojí pohromadě.\n\nHlas z bojiště — autorská fikce, nikoli citace pramene:\n„Měli jsme zprávu o vítězství. Z houfu, který jsme měli chránit, ji tu už nikdo neposlouchal.“"
+        }
+      },
+      "phases": [
+        {
+          "name": "Překvapivý útok",
+          "description": "Šternberk útočí na unavené jihočeské poutníky.",
+          "events": [
+            {
+              "message": "Petr ze Šternberka vás dostihl! Opevněte se na kopci Červenka!"
+            },
+            {
+              "text": "TIP: Vaše jednotky jsou blízko kopce. Přesuňte je na zelená pole pro obranný bonus."
+            }
+          ]
+        },
+        {
+          "name": "Obrana na kopci",
+          "description": "Husité budují improvizovanou obranu.",
+          "events": [
+            {
+              "text": "TIP: Stáhni bezbranné poutníky na kopec za bojovníky. Střelci z kopce střílejí dál a silněji (bonus z výšiny)."
+            }
+          ]
+        },
+        {
+          "name": "Příchod posil",
+          "description": "Posily z Nového Knína přicházejí na pomoc.",
+          "events": [
+            {
+              "message": "Břeněk Švihovský přivádí posily! Držte pozice!"
+            }
+          ]
+        },
+        {
+          "name": "Protiútok",
+          "description": "S posilami můžete přejít do protiútoku.",
+          "events": [
+            {
+              "message": "Šternberk vidí přesilu a váhá. Teď je čas udeřit!"
+            }
+          ]
+        }
+      ],
+      "date": "4. nebo 6. listopadu 1419"
+    },
+    "nekmir_1419": {
+      "name": "Bitva u Nekmíře",
+      "description": "Raný doklad husitské vozové taktiky. Jan Žižka s malým houfem odráží útok plzeňského landfrýdu.",
+      "historicalSignificance": "Jeden z nejranějších písemně zachycených bojů husitů s využitím vozů; nikoli první použití vozů v dějinách.",
+      "briefing": {
+        "hussites": "Landfrýd dostihl váš houf s vozy poblíž Nekmíře. Sražte vozy do obrany a kryjte pěchotu. Sedm vozů a jejich polokruhová formace představují herní zpracování stručné zprávy, ne přesný plán bitvy.",
+        "crusaders": "Dostihnete husitské kacíře, než stihnou zničit tvrz Nekmíř. Máte jasnou početní převahu. Zničte je!"
+      },
+      "objectives": {
+        "primary": "Odražte útok landfrýdu a přežijte do kola 10 s 50% jednotek",
+        "secondary": [
+          "Zabijte Hynka z Nekmíře",
+          "Uchraňte alespoň 5 vozů"
+        ]
+      },
+      "debriefing": {
+        "victory": "Vozová obrana obstála. V této partii se vám podařilo odrazit landfrýd. Historický střet u Nekmíře patří k raným dokladům Žižkovy taktiky; přesný průběh a počty ztrát však neznáme.",
+        "defeat": "Improvizovaná vozová hradba nevydržela nápor nepřítele. Husitský výpad skončil katastrofou. Žižka však přežil a poučil se - příště bude hradba silnější a uzavřená."
+      },
+      "phases": [
+        {
+          "name": "Husitský výpad z Plzně",
+          "description": "Žižka vytahuje z Plzně směrem k Nekmíři.",
+          "events": [
+            {
+              "message": "Plzeňský landfrýd dostihl husitskou kolonu! Rychle vytvořte vozovou hradbu!"
+            },
+            {
+              "text": "TIP: Vozy máš na pochodu (rozpojené). Sepni je do vozové hradby — polokruh otevřený k tvrzi. Na uzavřený kruh 7 vozů nestačí."
+            }
+          ]
+        },
+        {
+          "name": "Formování vozové obrany",
+          "description": "Houf využívá vozy jako obranné postavení.",
+          "events": [
+            {
+              "message": "Žižka: „Sražte vozy k sobě! Střelci za vozy, cepníci připraveni!“"
+            },
+            {
+              "text": "Vozová hradba je připravena! +3 k obraně pro jednotky za vozy."
+            }
+          ]
+        },
+        {
+          "name": "Útok jízdy na vozovou hradbu",
+          "description": "Švamberk vrhá jízdu proti vozům.",
+          "events": [
+            {
+              "message": "Těžká jízda landfrýdu útočí! Vydrží vozová hradba?"
+            }
+          ]
+        },
+        {
+          "name": "Klíčová fáze bitvy",
+          "description": "Nápor se láme; Hynek bojuje v první linii.",
+          "events": [
+            {
+              "text": "Jízda narazila na vozy! Hynek z Nekmíře vede další nápor v první linii — teď je příležitost ho vyřadit."
+            }
+          ]
+        },
+        {
+          "name": "Ústup landfrýdu",
+          "description": "Katolíci ustupují, husité pokračují k tvrzi.",
+          "events": [
+            {
+              "message": "Jízda je odražena! Landfrýd se začíná stahovat; na Hynka zbývá poslední příležitost."
+            }
+          ]
+        }
+      ],
+      "date": "prosinec 1419 / leden 1420"
+    },
+    "sudomere_1420": {
+      "name": "Bitva u Sudoměře",
+      "description": "Houf vedený Břeňkem Švihovským a Janem Žižkou brání postavení mezi rybníky proti přesile katolických pánů.",
+      "historicalSignificance": "Obrana houfu s vozy v rybniční krajině. Raný významný úspěch husitů, nikoli počátek používání vozů ve světových dějinách.",
+      "briefing": {
+        "hussites": "Vaše malá skupina poutníků je pronásledována vojskem katolických pánů. Využijte hráz mezi rybníky a postavte vozovou hradbu. Musíte přežít do setmění.",
+        "crusaders": "Dohoňte a zničte husitské kacíře dříve, než se opevní. Útočte rychle, než padne mlha."
+      },
+      "reinforcements": {
+        "crusaders": "Druhá vlna! Čerstvá jízda landfrýdu se žene na hráz!"
+      },
+      "objectives": {
+        "primary": "Přežijte do kola 12 s alespoň 50 % oddílů, nebo zničte nepřátelskou bojovou sílu",
+        "secondary": [
+          "Zničte 50% nepřátelských sil"
+        ]
+      },
+      "debriefing": {
+        "victory": "Rybník a bahna se staly hrobem pro železné pány! Husité využili terénu a odrazili přesilu. Tato bitva ukázala, že správně zvolené bojiště může vyvážit i značnou početní nevýhodu. Žižkův génius se projevil naplno.",
+        "defeat": "Bahna u Sudoměře se nestala pastí pro nepřítele, ale pro vás. Rytíři prolomili vaši obranu. Žižkova kariéra končí dříve, než mohla skutečně začít.",
+        "victoryVariants": {
+          "fieldArmyEliminated": "Nepřátelskou polní armádu jste rozbili, ale za cenu většiny vlastních oddílů. Osamělý velitel už výsledek bitvy nemohl zvrátit. Je to vítězství — kronikář z něj však vaše ztráty nevymaže."
+        }
+      },
+      "phases": [
+        {
+          "name": "Počáteční rozestavení",
+          "description": "Husité se opevňují na hrázi, katolíci se přibližují.",
+          "events": []
+        },
+        {
+          "name": "Čelní útok",
+          "description": "Johanité a královské vojsko útočí po hrázi.",
+          "events": [
+            {
+              "message": "Křižáci zahajují útok po úzké hrázi!"
+            }
+          ]
+        },
+        {
+          "name": "Mlha a zmatek",
+          "description": "Padá mlha, katolíci ztrácejí orientaci.",
+          "events": [
+            {
+              "message": "Padá hustá mlha! Viditelnost klesá."
+            }
+          ]
+        }
+      ],
+      "date": "25. března 1420"
+    },
+    "vitkov_1420": {
+      "name": "Bitva na Vítkově",
+      "description": "Obrana Prahy proti první křížové výpravě. Malá posádka na Vítkově musí odolat do příchodu posil.",
+      "historicalSignificance": "Zlomový okamžik první křížové výpravy, obrana Prahy.",
+      "briefing": {
+        "hussites": "Braňte sruby a zídku na Vítkově. Úzká šíje omezuje rozvinutí útočníků; vydržte do příchodu pražské pomoci. Kronikář líčí malou posádku včetně žen, nikoli vozovou hradbu.",
+        "crusaders": "Dobyjte husitské opevnění na Vítkově a otevřete cestu k Praze."
+      },
+      "reinforcements": {
+        "hussites": "Z Prahy přichází pomoc! Udržte opevnění a kryjte její postup."
+      },
+      "objectives": {
+        "primary": "Přežijte do kola 8 s alespoň 30% jednotek",
+        "secondary": [
+          "Zabijte nepřátelského velitele"
+        ]
+      },
+      "debriefing": {
+        "victory": "Vítkov obstál! Obrana výšiny a příchod pomoci z Prahy zmařily v této partii nepřátelský útok. Historicky vítězství pomohlo uchovat spojení Prahy s okolím; samo ještě neukončilo obléhání ani válku.",
+        "defeat": "Sruby na Vítkově padly a s nimi i naděje Prahy. Křižáci obsadili strategickou výšinu a Praha je v obležení. Husitská revoluce končí dříve, než mohla rozvinout svou sílu."
+      },
+      "phases": [
+        {
+          "name": "Útok na šíji",
+          "description": "Míšeňská a duryňská jízda se valí do úzkého hrdla šíje.",
+          "events": [
+            {
+              "message": "Útok se soustřeďuje na šíji. Posádka srubů drží úzký přístup; pražská pomoc je na cestě."
+            }
+          ]
+        },
+        {
+          "name": "Boj o sruby",
+          "description": "Křižáci pronikají k opevnění. Posily z Prahy jsou na cestě!",
+          "events": []
+        },
+        {
+          "name": "Protiútok",
+          "description": "Husité vytlačují křižáky z kopce.",
+          "events": []
+        }
+      ],
+      "date": "14. července 1420"
+    },
+    "vysehrad_1420": {
+      "name": "Bitva pod Vyšehradem",
+      "description": "Rozhodující husitské vítězství. Zikmund přichází pozdě a česká šlechta je pobita v úvozu pod Podolím.",
+      "historicalSignificance": "Porážka královského vojska umožnila převzetí Vyšehradu a oslabila Zikmundovo postavení v Čechách.",
+      "briefing": {
+        "hussites": "Obléháte Vyšehrad. Posádka slíbila kapitulaci, pokud jí do dohodnuté lhůty nepřijde pomoc. Lhůta uplynula a Zikmundovo vojsko se blíží k pankráckým pozicím. Braňte příkopy i západní bok od Podolí.",
+        "crusaders": "Musíte prorazit k Vyšehradu a zachránit posádku! Česká šlechta útočí od Podolí, hlavní voj čelně."
+      },
+      "objectives": {
+        "primary": "Ubraňte kostel sv. Pankráce do kola 15",
+        "secondary": [
+          "Způsobte 50% ztrát královskému vojsku",
+          "Vyřaďte nepřátelské velitele"
+        ]
+      },
+      "debriefing": {
+        "victory": "Vaše obrana pod Vyšehradem obstála. Historicky královské vojsko utrpělo těžkou porážku a Vyšehrad přešel do rukou husitů. Padla řada českých a moravských pánů včetně Jindřicha z Plumlova. Přesné součty ztrát jsou nejisté; Praha přitom ještě nebyla celá pod husitskou kontrolou.",
+        "defeat": "Zikmundovy síly prorazily k Vyšehradu včas. Posádka byla zachráněna a husité utrpěli těžké ztráty. Obléhání Prahy pokračuje a husitská věc je v ohrožení."
+      },
+      "phases": [
+        {
+          "name": "Po vypršení lhůty",
+          "description": "Dohodnutá lhůta pro pomoc posádce vypršela; královské vojsko teprve nastupuje do bitvy.",
+          "events": [
+            {
+              "message": "Lhůta vypršela. Vyšehradská posádka se podle dohody nemá zapojit do boje."
+            },
+            {
+              "message": "Zikmund marně mává mečem směrem k Vyšehradu. Je pozdě."
+            }
+          ]
+        },
+        {
+          "name": "Útok na pankrácká opevnění",
+          "description": "Uhři a Němci čelně útočí na husitské příkopy.",
+          "events": [
+            {
+              "message": "Uhři a Němci zahajují čelní útok na vaše příkopy!"
+            },
+            {
+              "text": "Připravené pozice poskytují +3 k obraně!"
+            }
+          ]
+        },
+        {
+          "name": "Boční útok české šlechty",
+          "description": "Česká a moravská šlechta útočí od Podolí.",
+          "events": [
+            {
+              "message": "Česká a moravská šlechta nastupuje od Podolí. Strmý přístup omezuje její jízdu."
+            },
+            {
+              "message": "Uražená česká šlechta útočí! Musí sesednout kvůli strmému svahu."
+            },
+            {
+              "text": "Česká šlechta ztrácí výhodu jízdy na strmém svahu!"
+            }
+          ]
+        },
+        {
+          "name": "Husitský protiútok",
+          "description": "Hynek Krušina nasazuje zálohy.",
+          "events": [
+            {
+              "message": "„Běží nepřátelé!“ Hynek Krušina obrací zatlačené Pražany do protiútoku a nasazuje orebské cepníky z rezervy!"
+            },
+            {
+              "text": "Jednotky uvolněné z obléhání Vyšehradu se připojují k bitvě!"
+            }
+          ]
+        },
+        {
+          "name": "Masakr české šlechty",
+          "description": "Šlechta je uvězněna v úvozu a pobita.",
+          "events": [
+            {
+              "message": "Česká šlechta uvízla v úvozu! Nemůže uniknout!"
+            },
+            {
+              "text": "Táboři a orebité nebrali zajatce... Masakr v úvozu!"
+            }
+          ]
+        },
+        {
+          "name": "Všeobecný ústup",
+          "description": "Zikmund dává rozkaz k ústupu.",
+          "events": [
+            {
+              "message": "Zikmund dává rozkaz k ústupu! Královské vojsko prchá k Českému Brodu."
+            },
+            {
+              "message": "Bitva rozhoduje o osudu Vyšehradu. Ovládnutí celé Prahy však z jejího výsledku automaticky neplyne."
+            }
+          ]
+        }
+      ],
+      "date": "1. listopadu 1420"
+    },
+    "kutna_hora_1421": {
+      "factionNames": {
+        "crusaders": "Zikmundovo vojsko"
+      },
+      "name": "Bitva u Kutné Hory",
+      "description": "Žižka obklíčen přesilou u Kutné Hory po zradě měšťanů. Musí v noci prorazit vozovou hradbou!",
+      "historicalSignificance": "Úspěšný průlom obklíčení přes Kaňk ukázal význam soudržnosti houfu, vozů a palebné podpory.",
+      "briefing": {
+        "hussites": "Královské vojsko získalo Kutnou Horu a hrozí vám obklíčení. Připravte průlom přes Kaňk na severozápad ke Kolínu. Kryjte ustupující oddíly vozy a palbou.",
+        "crusaders": "Husité jsou v pasti! Obklíčili jsme je před městem. Zničte Žižkovu vozovou hradbu dříve, než unikne!"
+      },
+      "objectives": {
+        "primary": "Probijte se z obklíčení ke Kolínu (alespoň 5 jednotek). Alternativa: do konce bitvy rozbijte nepřátelskou polní armádu a zachraňte Žižku.",
+        "secondary": [
+          "Žižka musí přežít",
+          "Zachraňte alespoň 4 vozy"
+        ]
+      },
+      "debriefing": {
+        "victory": "Průlom se podařil! Zachráněné oddíly se vydávají ke Kolínu. Historicky Žižka unikl z obklíčení a na začátku ledna 1422 se vrátil do protiútoku. Počty zachráněných vozů v této partii najdete ve výsledcích, nikoli v kronikářských součtech celého tažení.",
+        "defeat": "Průlom selhal. Vozová hradba byla rozbita a Žižkova armáda zničena. Kutná Hora zůstává v rukou nepřítele a husitské hnutí přichází o svého nejschopnějšího vojevůdce.",
+        "victoryVariants": {
+          "fieldArmyEliminated": "Místo historického ústupu ke Kolínu jste na bojišti rozdrtili Zikmundovu polní armádu. Žižka přežil a důvod k průlomu zanikl. Je to alternativní vítězství: výsledek se od doloženého průběhu bitvy vědomě odchyluje."
+        }
+      },
+      "phases": [
+        {
+          "name": "Obklíčení",
+          "description": "Kutnohorští zradili! Křižáci svírají husity ze všech stran.",
+          "events": [
+            {
+              "message": "Kutnohorští horníci otevřeli Kolínskou bránu! Křižáci proudí do města - jste v obklíčení!"
+            },
+            {
+              "message": "Připravte průlom přes Kaňk. Cíl ústupu ke Kolínu leží na severozápadě mapy."
+            },
+            {
+              "message": "Sevření se stahuje. Udržte houf pohromadě a nenechte si uzavřít cestu ke Kaňku."
+            }
+          ]
+        },
+        {
+          "name": "Noční průlom",
+          "description": "Vojsko připravuje průlom z obklíčení pod ochranou vozů a palby.",
+          "events": [
+            {
+              "message": "K průlomu! Střelci kryjí postup, vozy drží houf pohromadě."
+            },
+            {
+              "message": "Křižáci v nočním zmatku nedokáží koordinovat obranu!"
+            }
+          ]
+        },
+        {
+          "name": "Ke Kolínu",
+          "description": "Ústupová cesta vede přes Kaňk na severozápad ke Kolínu.",
+          "events": [
+            {
+              "message": "Pokračujte přes Kaňk na severozápad ke Kolínu. Dostaňte oddíly do vyznačené únikové zóny."
+            },
+            {
+              "message": "Dokončete ústup. O bezpečí houfu rozhodne počet oddílů, které skutečně uniknou."
+            }
+          ]
+        }
+      ],
+      "date": "21.–22. prosince 1421"
+    },
+    "nemecky_brod_1422": {
+      "factionNames": {
+        "crusaders": "Zikmundovo vojsko"
+      },
+      "name": "Bitva u Německého Brodu",
+      "description": "Pronásledování ustupujícího Zikmundova vojska od Kutné Hory. Led na Sázavě se propadá pod těžkými vozy.",
+      "historicalSignificance": "Vyvrcholení zimního tažení: porážka ustupujícího vojska a zpustošení města. Součty ztrát a kořisti jsou nejisté.",
+      "briefing": {
+        "hussites": "Po ústupu od Kutné Hory a střetu u Habrů pronásledujete královské vojsko k Německému Brodu. Obsaďte městský přístup k mostu dříve, než nepřítel unikne přes Sázavu k Jihlavě. Led na řece představuje riskantní cestu.",
+        "crusaders": "Ustupujete od Habrů přes Německý Brod. Město leží před řekou: pokračujte přes Sázavu směrem k Jihlavě. Most je úzkým hrdlem; cesta po ledu je nebezpečná."
+      },
+      "objectives": {
+        "primary": "Obsaďte městský přístup k mostu do kola 9, než vojsko unikne přes Sázavu",
+        "secondary": [
+          "Porazte Filippo Scolariho",
+          "Zvítězte do 10. kola"
+        ]
+      },
+      "debriefing": {
+        "victory": "Dostihli jste ustupující vojsko u Brodu. Historicky následovalo dobytí a zpustošení města; ztráty v bitvě, při útěku a při násilí po dobytí nelze zaměňovat. Zprávy o propadajícím se ledu a množství kořisti je třeba číst s opatrností, ne jako přesné počítadlo této partie.",
+        "defeat": "Zikmund unikl! Většina jeho vojska překročila Sázavu a spálila most za sebou. Kořist je minimální a příští křížová výprava přijde mnohem dříve."
+      },
+      "phases": [
+        {
+          "name": "Pronásledování od Kutné Hory",
+          "description": "Žižkovo vojsko pronásleduje ustupující křižáky.",
+          "events": [
+            {
+              "message": "Zikmund uprchl! Scolariho vojsko ustupuje k Německému Brodu. Pronásledujte je!"
+            },
+            {
+              "message": "Křižáci zanechávají kořist po cestě. Nedejte se rozptýlit - ničte vojsko!"
+            }
+          ]
+        },
+        {
+          "name": "Zadní voj před Brodem",
+          "description": "Po dřívějším střetu u Habrů kryje zadní voj přístup do Německého Brodu.",
+          "events": [
+            {
+              "message": "Zadní voj se staví do cesty před Brodem. Prorazte k městu a mostu."
+            },
+            {
+              "message": "Křižáci neudrží pozice - začínají prchat k řece!"
+            }
+          ]
+        },
+        {
+          "name": "Útěk přes Sázavu",
+          "description": "Panikařící vojsko se valí k mostu a na zamrzlou řeku.",
+          "events": [
+            {
+              "message": "Most je přeplněný! Část vojska se pokouší přejít přes zamrzlou Sázavu!"
+            },
+            {
+              "message": "Led praská pod těžkými vozy! Řeka pohlcuje prchající!"
+            }
+          ]
+        },
+        {
+          "name": "Zničení ustupujícího vojska",
+          "description": "Husité dobíjejí zbytky královského vojska.",
+          "events": [
+            {
+              "message": "Královské vojsko je rozprášeno! Sbírejte kořist a dobijte zbytky odporu."
+            },
+            {
+              "message": "Ústupová cesta vede přes řeku k Jihlavě. Vítězství závisí na splnění cíle této bitvy."
+            }
+          ]
+        }
+      ],
+      "date": "8.–10. ledna 1422"
+    },
+    "most_1421": {
+      "name": "Bitva u Mostu",
+      "description": "Pražské vojsko obléhá Most a Hněvín. Příchod protivníkových posil ohrožuje jeho postavení.",
+      "historicalSignificance": "Významná porážka pražského svazu. Neprokazuje, že bez Žižky či vozové hradby nemohli husité vítězit.",
+      "briefing": {
+        "hussites": "Hrad Hněvín je téměř náš! Posádka nabídla kapitulaci, ale Želivský ji odmítl. Máš dva cíle: dobýt hrad NEBO zablokovat městskou bránu, odkud může přijít posila. Na obojí nemáš dost mužů - rozhodni se!",
+        "crusaders": "Držte hrad za každou cenu! Posily markraběte Fridricha jsou na cestě. Mostečtí vyrazí z brány a udeří husitům do boku."
+      },
+      "objectives": {
+        "primary": "Splň JEDEN z cílů: Dobij hrad Hněvín NEBO udrž městskou bránu zablokovanou",
+        "secondary": [
+          "Splň OBA cíle",
+          "Želivský přežije",
+          "Zachraň houfnici",
+          "Méně než 5 ztracených jednotek"
+        ]
+      },
+      "debriefing": {
+        "victory": "Hrad Hněvín je váš! Kombinace dobývání hradu a blokování městské brány se vyplatila. Most je pod husitskou kontrolou a cesta do Saska otevřena pro budoucí spanilé jízdy.",
+        "defeat": "Mostečtí měšťané a posádka hradu udrželi své pozice. Husitský útok selhal a vojsko musí ustoupit. Severozápadní Čechy zůstávají v rukou nepřítele."
+      },
+      "phases": [
+        {
+          "name": "Obléhání",
+          "description": "Hrad Hněvín je na dosah. Posádka nabídla kapitulaci, ale Želivský odmítl.",
+          "events": [
+            {
+              "message": "Želivský: „Žádná milost pro zrádce! Dobyjeme hrad silou!“"
+            },
+            {
+              "message": "Hradní posádka se houževnatě brání. Z města se ozývá ruch..."
+            }
+          ]
+        },
+        {
+          "name": "Boční úder",
+          "description": "Mostečtí vyrazili z brány! Úder do boku husitského vojska.",
+          "events": [
+            {
+              "message": "Z městské brány vyráží mostecká hotovost! Úder do boku!"
+            },
+            {
+              "message": "Musíte se rozhodnout - pokračovat v útoku na hrad, nebo se otočit?"
+            }
+          ]
+        },
+        {
+          "name": "Příchod posil",
+          "description": "Míšeňská armáda! Markrabě Fridrich přichází ze severu!",
+          "events": [
+            {
+              "message": "Na obzoru míšeňské prapory! Markrabě Fridrich přichází s posilami!"
+            },
+            {
+              "message": "Útok na hrad je nyní velmi riskantní. Zvažte alternativní cíl."
+            },
+            {
+              "message": "Zásah koně husitského praporečníka rozvrací šik - a s příchodem míšeňských posil se mezi husity šíří strach."
+            }
+          ]
+        },
+        {
+          "name": "Rozhodnutí",
+          "description": "Splňte alespoň jeden cíl, nebo čelíte porážce.",
+          "events": [
+            {
+              "message": "Čas se krátí! Držte bránu, nebo dobyjte hrad!"
+            },
+            {
+              "message": "Poslední šance! Buď splníte cíl, nebo je vše ztraceno."
+            }
+          ]
+        }
+      ],
+      "date": "5. srpna 1421"
+    },
+    "usti_1426": {
+      "factionNames": {
+        "crusaders": "Sasové a Míšeňané"
+      },
+      "name": "Bitva u Ústí nad Labem",
+      "description": "Spojená husitská vojska brání vozové postavení na Běhání proti vojsku přicházejícímu na pomoc Ústí.",
+      "historicalSignificance": "Výrazné vítězství husitských svazů. Kronikářské údaje o nepatrných vlastních a obrovských nepřátelských ztrátách vyžadují kritické čtení.",
+      "briefing": {
+        "hussites": "Postavte dvojitou vozovou hradbu na návrší Na Běhání. Nechte nepřítele přijít k vám a zničte ho palbou. Před bojem si obě strany slíbily nikoho nešetřit.",
+        "crusaders": "Prorazte husitské opevnění a osvoboďte obležené Ústí nad Labem. Vrchní velení má kondotiér Boso z Vitzthumu."
+      },
+      "objectives": {
+        "primary": "Udržte vozovou hradbu a zničte 50% křižáků",
+        "secondary": [
+          "Zničte 75% nepřátel (historický výsledek)"
+        ]
+      },
+      "debriefing": {
+        "victory": "Masakr Na Běhání! Podle Starých letopisů padlo Čechů jen 19 - a nikdo významný kromě měšťana Jana Bradatého; německé ztráty kroniky kladou na tisíce, až k 15 000. Dvojitá vozová hradba se ukázala jako nepřekonatelná překážka. Vítězství ale neslo i temný stín: 24 klečících hrabat a korouhevních pánů, kteří prosili o milost, bylo pro vzájemný slib nešetřit nikoho do jednoho pobito. Pověst o české nepřemožitelnosti je na světě — a s ní nebezpečná víra, že vítězům je dovoleno vše.",
+        "defeat": "Saská jízda prorazila vaši hradbu! Katastrofální porážka husitů mění rovnováhu sil. Bez vozové hradby jste bezbranní proti těžké jízdě."
+      },
+      "phases": [
+        {
+          "name": "Křižácký útok",
+          "description": "Němci útočí v parném vedru.",
+          "events": [
+            {
+              "message": "Smírný list odmítnut! Němci pyšně vzkázali, že „nikoho neživit nebudou a všechny pobijí“ - Češi se proto zavázali stejným slibem. Pardon nedá nikdo."
+            },
+            {
+              "message": "Saské a míšeňské jezdectvo útočí do svahu v nesnesitelném červnovém vedru!"
+            }
+          ]
+        },
+        {
+          "name": "Palba z vozů",
+          "description": "Husitské palné zbraně decimují útočníky.",
+          "events": []
+        },
+        {
+          "name": "Panika a útěk",
+          "description": "Křižáci se dávají na bezhlavý útěk.",
+          "events": [
+            {
+              "message": "„Běží! Němci běží!“ - křižáci prchají!"
+            },
+            {
+              "message": "Pod německou korouhví pokleklo 24 hrabat a korouhevních pánů s meči zabodnutými do země a prosili o milost - pro slib daný před bojem jsou ale do jednoho pobiti."
+            }
+          ]
+        }
+      ],
+      "date": "16. června 1426"
+    },
+    "tachov_1427": {
+      "name": "Bitva u Tachova",
+      "description": "Výprava roku 1427 se rozpadá při husitském postupu k Tachovu. Pronásledujte ustupující oddíly.",
+      "historicalSignificance": "Neúspěch další výpravy proti husitům. Ústup polního vojska předcházel samostatnému dobývání Tachova a hradu.",
+      "briefing": {
+        "hussites": "Křižáci neúspěšně obléhali Stříbro a nyní se stahují k Tachovu. Přibližte se rychle a využijte jejich demoralizace. Pronásledujte prchající a zajměte Tachov!",
+        "crusaders": "Husité se blíží! Vaše vojsko je demoralizované po neúspěšném obléhání Stříbra. Pokuste se zorganizovat obranu, nebo ustupte k bavorským hranicím."
+      },
+      "objectives": {
+        "primary": "Zničte nebo rozprašte 50% křižácké armády",
+        "secondary": [
+          "Zajměte město Tachov",
+          "Zničte 75% nepřátel před jejich útěkem"
+        ]
+      },
+      "debriefing": {
+        "victory": "Nepřátelská obrana se v této bitvě zhroutila. Historicky se polní vojsko výpravy rozpadlo začátkem srpna; dobytí města Tachova 11. srpna a hradu 14. srpna byly až další události, nikoli jeden okamžitý triumf.",
+        "defeat": "Křižákům se podařilo překonat strach a zorganizovat obranu. Husitská pověst neporazitelnosti dostala trhlinu. Tachov zůstává v rukou nepřítele."
+      },
+      "phases": [
+        {
+          "name": "Husitský pochod",
+          "description": "Husité postupují od Stříbra. Křižáci vysílají jízdu, aby zpomalila postup.",
+          "events": [
+            {
+              "message": "Husitské vojsko se blíží od Stříbra! 16 000 pěších a 1500 jezdců pod Prokopem Holým."
+            },
+            {},
+            {
+              "text": "Harcovníci Jindřicha z Plavna odraženi husity na pochodu - ve zmatku se ženou zpět do ležení a šíří paniku!"
+            }
+          ]
+        },
+        {
+          "name": "Panika v táboře",
+          "description": "Strach se šíří křižáckým táborem. Jednotky začínají dezertovat.",
+          "events": [
+            {
+              "text": "Celé oddíly křižáků opouštějí tábor a prchají k hranicím!"
+            },
+            {
+              "message": "Kardinál Beaufort se marně snaží zastavit prchající vojáky."
+            },
+            {
+              "text": "Beaufort v hněvu roztrhá říšské korouhve a hodí je knížatům k nohám!"
+            }
+          ]
+        },
+        {
+          "name": "Útěk k Bavorsku",
+          "description": "Křižácká armáda prchá. Husité pronásledují a dobývají opuštěný tábor.",
+          "events": [
+            {
+              "text": "Při zaslechnutí chorálu „Ktož sú boží bojovníci“, troubění a hluku válečných vozů se zbytky křižácké armády dávají na zběsilý útěk!"
+            },
+            {
+              "message": "Husité nacházejí opuštěný křižácký tábor plný zásob a výzbroje."
+            }
+          ]
+        }
+      ],
+      "date": "3.–4. srpna 1427"
+    },
+    "nisa_1428": {
+      "name": "Bitva u Nisy",
+      "description": "Spanilá jízda do Slezska. Husité drtivě poráží slezské vojsko před hradbami města Nisa.",
+      "historicalSignificance": "Střet ve slezském tažení roku 1428. Polní vítězství před Nisou neznamená dobytí jejího opevněného jádra.",
+      "briefing": {
+        "hussites": "Po úspěšné rejse do Uher pokračujeme do Slezska. Před hradbami Nisy nás očekává vojsko vratislavského biskupa. Rozdrťte je a vypálte předměstí!",
+        "crusaders": "Husité táhnou na Nisu! Shromážděte sedláky a měšťany k obraně. Město musí být ubráněno za každou cenu!"
+      },
+      "objectives": {
+        "primary": "Zničte 60% slezského vojska",
+        "secondary": [
+          "Vypalte předměstí (zajměte pozice)",
+          "Zničte 80% nepřátel (2000 padlých)"
+        ]
+      },
+      "debriefing": {
+        "victory": "Polní protivník ustoupil. Historicky střet u Nisy patřil k tažení do Slezska v roce 1428. Vítězství mimo hradby neznamenalo automatické dobytí města ani konec odporu celého Slezska.",
+        "defeat": "Slezská obrana vydržela. Půta z Častolovic úspěšně ubránil Nisu. Spanilá jízda musí pokračovat jinudy a husitská pověst neporazitelnosti utrpěla trhlinu."
+      },
+      "phases": [
+        {
+          "name": "Husitský útok",
+          "description": "Husité zahajují útok na slezské vojsko před hradbami.",
+          "events": [
+            {
+              "message": "Husitské vojsko postupuje s vozy a děly proti obráncům Nisy!"
+            },
+            {
+              "message": "Sedláci a vesničané se staví husitům na odpor před předměstím."
+            }
+          ]
+        },
+        {
+          "name": "Průlom obrany",
+          "description": "Husité prolamují slezskou obranu.",
+          "events": [
+            {
+              "text": "Slezské oddíly začínají ustupovat pod tlakem husitského útoku!"
+            },
+            {
+              "message": "Půta z Častolovic se snaží organizovat obranu u hradeb."
+            }
+          ]
+        },
+        {
+          "name": "Masakr a útěk",
+          "description": "Obránci prchají, mnozí hynou v řece.",
+          "events": [
+            {
+              "text": "Obránci v panice prchají - mnoho jich hyne v řece Nise!"
+            },
+            {
+              "message": "Husité pálí předměstí a útočí na hradby!"
+            }
+          ]
+        }
+      ],
+      "date": "březen 1428"
+    },
+    "domazlice_1431": {
+      "name": "Bitva u Domažlic",
+      "description": "Příchod husitů na pomoc Domažlicím zastihuje křižácké vojsko ve zmatku. Využijte jeho rozkolísané morálky.",
+      "historicalSignificance": "Rozpad výpravy roku 1431 urychlil cestu k jednání. Chorál je symbolem vítězství, ne prokázanou jedinou příčinou útěku.",
+      "briefing": {
+        "hussites": "Přicházíte na pomoc obleženým Domažlicím. V nepřátelském vojsku se šíří zmatek při přesunech a strach z vašeho příchodu. Využijte zaváhání, ale počítejte i s odporem. Chorál je ve hře prostředkem práce s morálkou, nikoli jedinou příčinou historického útěku.",
+        "crusaders": "Husité se blíží! Pokuste se zformovat obranu, nebo alespoň bezpečně ustupte do Bavorska."
+      },
+      "objectives": {
+        "primary": "Způsobte útěk křižácké armády (zničte 60%)",
+        "secondary": [
+          "Uvolněte přístup k obleženým Domažlicím"
+        ]
+      },
+      "debriefing": {
+        "victory": "Výprava ustoupila a cesta k Domažlicím je volná. Historický rozpad křižáckého vojska souvisel se zmatkem, přesuny a obavou z husitů; místy se přesto bojovalo. Chorál se stal symbolem vítězství, ale příběh o samotné písni, která bez boje porazila celou armádu, je zjednodušení.",
+        "defeat": "Křižáci překonali svůj strach a zformovali obranu. I přes váš chorál se nezhroutili. Husitská pověst neporazitelnosti je otřesena."
+      },
+      "phases": [
+        {
+          "name": "Husitský pochod",
+          "description": "Husité se rychle přibližují k Domažlicím.",
+          "events": [
+            {
+              "message": "Husitské vojsko urazilo 80 km za 2 dny a blíží se k Domažlicím!"
+            },
+            {},
+            {
+              "text": "Zvědové hlásí: Husité jsou blíž, než jsme čekali!"
+            }
+          ]
+        },
+        {
+          "name": "Zmatek v ležení",
+          "description": "Přesuny vojska, nejednotné velení a zprávy o husitském příchodu živí paniku.",
+          "events": [
+            {
+              "text": "Zvuk chorálu děsí křižáky!",
+              "message": "Husitský houf se blíží. V ležení se přesuny oddílů vykládají jako začínající útěk."
+            },
+            {
+              "text": "Zmatek a strach oslabují morálku křižáckého vojska."
+            },
+            {
+              "message": "Kardinál Cesarini prchá a ztrácí kardinálský klobouk!"
+            },
+            {
+              "text": "Panika se šíří křižáckým táborem!"
+            },
+            {
+              "message": "Křižáci slyší chorál a rachot vozů - a dávají se na útěk!",
+              "text": "Strach z příchodu husitů a narušené velení šíří paniku. Některé oddíly však mohou klást odpor."
+            }
+          ]
+        },
+        {
+          "name": "Útěk k Bavorsku",
+          "description": "Křižáci prchají Všerubským průsmykem do Bavorska.",
+          "events": [
+            {
+              "text": "Celá křižácká armáda se dává na útěk!"
+            }
+          ]
+        }
+      ],
+      "date": "14. srpna 1431"
+    },
+    "oblehani_plzne_1433": {
+      "name": "Obléhání Plzně",
+      "description": "Herní výsek dlouhého obléhání Plzně: pokus o útok na městské opevnění. Nejde o rekonstrukci doloženého generálního útoku v konkrétní den.",
+      "historicalSignificance": "Největší neúspěch husitů. Plzeň odolala téměř rok a získala velblouda do znaku.",
+      "briefing": {
+        "hussites": "Po měsících obléhání je čas na rozhodující útok! Prorazte hradby a dobyjte město. Prokop Holý sleduje z týla - nesmi selhat!",
+        "crusaders": "Husité chystají generální útok! Vilém Švihovský z Rýzmberka vede obranu. Udrž hradby za každou cenu!"
+      },
+      "objectives": {
+        "primary": "Obsaďte 3 libovolná pole Plzně",
+        "zoneLabel": "CÍL: PLZEŇ",
+        "secondary": [
+          "Zničte 70% obránců",
+          "Zabijte Viléma Švihovského"
+        ]
+      },
+      "debriefing": {
+        "victory": "Do města jste pronikli. Tím se tato partie odchýlila od historie: obléhání v letech 1433–1434 skončilo neúspěchem polních vojsk. Dobyli jste městské pozice, ne však ztracenou jednotu husitských svazů.",
+        "defeat": "Plzeň odolala, stejně jako při historickém obléhání ukončeném 9. května 1434. Dlouhé tažení oslabovalo polní vojska a prohlubovalo jejich krizi. Ukořistěný velbloud se stal městským symbolem; tuto figuru si Plzeňané přidali do znaku sami, ne jako Zikmundovu odměnu."
+      },
+      "phases": [
+        {
+          "name": "Dělostřelecká příprava",
+          "description": "Husitská děla ostřelují hradby. Obránci odpovídají z městských pozic.",
+          "events": [
+            {
+              "message": "Husitské bombardy zahajují palbu na hradby Plzně!"
+            },
+            {
+              "message": "Obránci se kryjí za cimbuřím. Vilém Švihovský povzbuzuje posádku."
+            },
+            {
+              "message": "V hradbách se objevují první trhliny!"
+            }
+          ]
+        },
+        {
+          "name": "Útok na hradby",
+          "description": "Pěchota postupuje k hradbám. Těžké ztráty na obou stranách.",
+          "events": [
+            {
+              "message": "Jan Pardus z Horky vede táborskou pěchotu do útoku!"
+            },
+            {
+              "message": "Obránci kryjí přístupy ke hradbám a odrážejí útočící pěchotu."
+            },
+            {
+              "message": "Krvavé boje u hradeb! Husité se snaží prolomit obranu."
+            }
+          ]
+        },
+        {
+          "name": "Boj o brány",
+          "description": "Posádka se může pokusit o výpad, pokud má ještě sílu. Boj pokračuje u opevnění.",
+          "events": [
+            {
+              "message": "Vilém Švihovský připravuje výpad z bran. Bojeschopní obránci se shromažďují u opevnění."
+            },
+            {
+              "text": "Bojeschopným obráncům u bran roste sebedůvěra."
+            }
+          ]
+        },
+        {
+          "name": "Rozhodnutí",
+          "description": "Útok buď uspěje, nebo husité budou muset ustoupit.",
+          "events": [
+            {
+              "message": "Poslední šance na průlom! Prokop Holý posílá zálohy."
+            },
+            {
+              "text": "Hlad, násilné „picování“ okolí a spory mezi hejtmany lámou tábor. Někteří vojáci dezertují."
+            }
+          ]
+        }
+      ],
+      "date": "14. července 1433 – 9. května 1434"
+    },
+    "lipany_1434": {
+      "factionNames": {
+        "hussites": "Polní vojska",
+        "crusaders": "Panská jednota"
+      },
+      "name": "Bitva u Lipan",
+      "description": "Bratrovražedná bitva mezi husity. Umírnění kališníci a katolíci porazí radikální Tábory a Sirotky.",
+      "historicalSignificance": "Porážka radikálních polních vojsk a smrt Prokopa Holého. Významný obrat, nikoli okamžitý konec všech husitských válek.",
+      "briefing": {
+        "hussites": "Jako velitel radikálů musíte odrazit útok umírněných. Pozor na jejich léčku - klamný útěk!",
+        "crusaders": "Vedete koalici umírněných. Použijte klamný útěk, vylákat radikály z vozové hradby a udeřte z boku jízdou."
+      },
+      "objectives": {
+        "primary": "Udržte vozovou hradbu a zničte 50% koalice",
+        "secondary": [
+          "Zabijte Diviše Bořka"
+        ]
+      },
+      "debriefing": {
+        "victory": "Polní vojska u Lipan zvítězila a koalice utrpěla porážku. Vyhráli jste bitvu, kterou historie prohrála — rozdělená země však nezmizela. Vojenské vítězství ještě není smír.",
+        "defeat": "Polní vojska u Lipan utrpěla porážku. Koalice rozhodla střetnutí ve svůj prospěch; o další cestě země budou nyní vyjednávat z pozice síly její vítězové.",
+        "unitStatus": {
+          "texts": {
+            "alive": "Prokop Holý tuto bitvu přežil. Jeho další osud zůstává za hranicí této partie.",
+            "fallen": "Prokop Holý v této bitvě padl. Výsledek střetnutí jeho smrt nezvrátí.",
+            "escaped": "Prokop Holý z bojiště uprchl. Není mezi padlými, ale na konci střetnutí už nestojí se svým vojskem."
+          }
+        }
+      },
+      "phases": [
+        {
+          "name": "Patová situace",
+          "description": "Vyjednávání selhalo. Někdejší spojenci stojí proti sobě.",
+          "events": [
+            {
+              "message": "Bratrovražedná bitva začíná..."
+            },
+            {
+              "message": "Smír se nepodařilo dojednat. Proti vám stojí i muži, kteří dříve bojovali pod stejným znamením."
+            }
+          ]
+        },
+        {
+          "name": "Pokus o léčku",
+          "description": "Koalice hledá příležitost vylákat polní vojska z obrany.",
+          "events": [
+            {
+              "message": "Koalice hledá slabé místo vaší obrany. Pozor na předstíraný útěk!"
+            },
+            {
+              "message": "Koalice dostává rozkaz předstírat ústup. Pronásledování může otevřít cestu její jízdě."
+            }
+          ]
+        },
+        {
+          "name": "Rozhodující střet",
+          "description": "Sledujte pohyb jízdy; soudržnost obrany může rozhodnout.",
+          "events": [
+            {
+              "message": "Rozhodující střet. Sledujte pohyb jízdy; o opuštění hradby rozhodujete vy."
+            }
+          ]
+        },
+        {
+          "name": "Závěr bitvy",
+          "description": "Bitva pokračuje. Rozhodnou oddíly, které ještě drží pohromadě.",
+          "events": [
+            {
+              "message": "Závěr bitvy se blíží. Rozhodující je, které oddíly ještě drží pohromadě.",
+              "unitStatus": {
+                "texts": {
+                  "alive": "Prokop Holý žije a je stále na bojišti. O výsledku bitvy se ještě bojuje.",
+                  "fallen": "Prokop Holý v této bitvě padl. Zbývající oddíly bojují bez něj.",
+                  "escaped": "Prokop Holý opustil bojiště. Boj pokračuje bez něj."
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "date": "30. května 1434"
+    },
+    "sion_1437": {
+      "name": "Obléhání hradu Sion",
+      "description": "Závěr obléhání Sionu. Jan Roháč z Dubé drží opevněné předhradí a hradní jádro proti královskému vojsku.",
+      "historicalSignificance": "Pád Sionu a poprava Jana Roháče s druhy v Praze 9. září 1437 se staly výrazným symbolem potlačení ozbrojeného odporu proti Zikmundovi.",
+      "briefing": {
+        "hussites": "Od jara čelíte královskému obléhání. Braňte tři valy předhradí a hradní jádro nad Vrchlicí. Posily zvyšují tlak útočníků. Dvanáct herních kol představuje závěrečný úsek, ne celé měsíce obléhání.",
+        "crusaders": "Král Zikmund ztrácí trpělivost. S uherskými posilami konečně dobyjte ten prokletý hrádek a zajměte Roháče živého!"
+      },
+      "reinforcements": {
+        "crusaders": "Uherské posily Michala Országha dorazily!"
+      },
+      "objectives": {
+        "primary": "Udržte hrad 12 kol (do soumraku)",
+        "secondary": [
+          "Zničte 40% útočníků",
+          "Jan Roháč přežije"
+        ]
+      },
+      "debriefing": {
+        "victory": "Sion v této partii vydržel a Jan Roháč přežil. To je herní odbočka od historie: hrad padl 6. září 1437 a Roháč byl se svými druhy o tři dny později popraven v Praze. Vaše vítězství mění osud této obrany, ne výsledek skutečného obléhání.",
+        "defeat": "Obrana Sionu v této partii skončila. Historicky hrad padl 6. září 1437; zajatý Jan Roháč a jeho druhové byli 9. září popraveni v Praze. Přesné počty obětí a dramatické podrobnosti popravy se v podáních liší. Nálezy opevnění a střeliva svědčí o skutečném boji, ne pouze předstíraném obléhání."
+      },
+      "phases": [
+        {
+          "name": "Obléhací postavení",
+          "description": "Královské vojsko tlačí na opevněné předhradí a hradní jádro.",
+          "events": [
+            {
+              "message": "Obléhání trvá od jara. Dělostřelecká postavení svírají hrad ze severu a jihu."
+            },
+            {
+              "message": "Hrad nemá doloženou studnu, ale chráněný přístup k Vrchlici mohl zajišťovat vodu. Držte obranné pásmo."
+            },
+            {
+              "message": "Král Zikmund ztrácí trpělivost. Posílá uherské vojsko!"
+            }
+          ]
+        },
+        {
+          "name": "Příchod Uhrů",
+          "description": "Uherské posily mění rovnováhu sil.",
+          "events": [
+            {
+              "message": "Michal Országh přivádí uherské rytíře! Situace je zoufalá."
+            },
+            {
+              "text": "Uherští rytíři povzbuzují královské vojsko k rozhodnému útoku!"
+            }
+          ]
+        },
+        {
+          "name": "Poslední útok",
+          "description": "Generální útok na hradby. Obránci bojují o holé přežití.",
+          "events": [
+            {
+              "message": "Děla ostřelují obranu. Rozhodující je, zda posádka udrží přístupy k hradnímu jádru."
+            },
+            {
+              "text": "Někteří obránci ztrácejí naději. Jan Roháč je povzbuzuje k boji!"
+            },
+            {
+              "message": "Útočníci hledají cestu přes příkopy. Hlídejte průchody mezi valy."
+            }
+          ]
+        },
+        {
+          "name": "Závěrečný odpor",
+          "description": "O výsledku rozhodne udržení hradního jádra.",
+          "events": [
+            {
+              "message": "Bojuje se o přístupy k jádru. Ztráta jeho klíčových pozic ukončí obranu."
+            },
+            {
+              "message": "Závěr obrany. O osudu této partie rozhoduje posádka a držené pozice, ne předem napsaná legenda."
+            }
+          ]
+        }
+      ],
+      "date": "6. září 1437"
+    },
+    "horice_1423": {
+      "factionNames": {
+        "crusaders": "Panská jednota"
+      },
+      "name": "Bitva u Hořic",
+      "description": "Žižkovo vojsko s vozy brání výšinu Gothard proti silám Čeňka z Vartenberka. Obranné postavení vyvažuje nepřátelskou jízdu.",
+      "historicalSignificance": "Rozhodující porážka katolické šlechty v severovýchodních Čechách. Husité ukořistili katolické vozy a děla.",
+      "briefing": {
+        "hussites": "Sražte vozovou hradbu na kopci Gothard a děla do ní. Panská jednota pod Čeňkem z Vartenberka se blíží s přesilou jízdy. Nechte rytíře vyjet do svahu, sesednout a unavit se — pak je rozbijte palbou a vyrazte jízdou dolů!",
+        "crusaders": "Žižkovi radikálové se opevnili na kopci. Za panskou jednotu máte převahu v jízdě — rozdrťte je dříve, než se zformují!"
+      },
+      "objectives": {
+        "primary": "Zničte 60% katolického vojska",
+        "secondary": [
+          "Udržte kopec Gothard po celou bitvu"
+        ]
+      },
+      "debriefing": {
+        "victory": "Obrana Gothardu obstála. Vozy, palba a výhoda svahu pomohly v této partii odrazit útok. Historicky Žižkovo vítězství posílilo jeho postavení ve východních Čechách; přesné rozmístění a počty ztrát neznáme.",
+        "defeat": "Katolická přesila prolomena. Kopec Gothard padl a s ním i naděje na udržení východních Čech. Husitské síly jsou rozptýleny a Čeněk z Vartenberka slaví vítězství."
+      },
+      "phases": [
+        {
+          "name": "Zaujmutí pozic",
+          "description": "Husité se opevňují na kopci Gothard, katolíci se shromažďují.",
+          "events": [
+            {
+              "message": "Žižka: „Na kopec! Držte svahy, střelci dopředu!“"
+            },
+            {
+              "message": "Katolická šlechta se formuje k útoku pod kopcem."
+            }
+          ]
+        },
+        {
+          "name": "Čelní útok",
+          "description": "Čeněk z Vartenberka vrhá jízdu do čelního útoku na kopec.",
+          "events": [
+            {
+              "message": "Čeněk z Vartenberka: „Vpřed! Rozdrťte kacíře!“"
+            },
+            {
+              "message": "Těžká jízda naráží na husitskou pěchotu! Útok vázne ve strmém svahu."
+            },
+            {
+              "text": "Páni musí sesednout z koní - do strmého svahu na vozy a sudlice se koňmo zaútočit nedá."
+            }
+          ]
+        },
+        {
+          "name": "Tříhodinový boj",
+          "description": "Zuřivé boje na svazích Gothardu. Katolíci utrpí těžké ztráty.",
+          "events": [
+            {
+              "message": "Husitské houfnice a střelci kosí útočníky!"
+            },
+            {
+              "message": "Houf Arnošta Flašky se hroutí pod palbou!"
+            },
+            {
+              "text": "Zhroucení Flaškova houfu otřáslo katolíky."
+            }
+          ]
+        },
+        {
+          "name": "Husitský protiútok",
+          "description": "Žižka nařizuje protiútok. Orebitská jízda a pěchota vyráží z kopce.",
+          "events": [
+            {
+              "message": "Žižka: „Teď! Vpřed, za kalich!“"
+            },
+            {
+              "message": "Katolíci se dávají na útěk! Čeněk prchá s hrstkou mužů!"
+            }
+          ]
+        },
+        {
+          "name": "Pronásledování",
+          "description": "Husité pronásledují prchající katolíky a ukořisťují jejich vozy.",
+          "events": [
+            {
+              "message": "Ukořistěny všechny katolické vozy a děla!"
+            },
+            {
+              "message": "Čeněk z Vartenberka uprchl. Husitské vítězství je úplné."
+            }
+          ]
+        }
+      ],
+      "date": "duben 1423"
+    },
+    "malesov_1424": {
+      "factionNames": {
+        "crusaders": "Pražský svaz"
+      },
+      "name": "Bitva u Malešova",
+      "description": "Žižkovo vojsko využívá obranné postavení proti koalici Pražanů a šlechty. Připravte protiútok ze svahu.",
+      "historicalSignificance": "Významné Žižkovo vítězství nad koalicí Pražanů a šlechty. Přesné místo střetu i počty padlých zůstávají předmětem výkladu.",
+      "briefing": {
+        "hussites": "Protižižkovská koalice vás dostihla u Malešova. Využijte svah nad údolím potoka Bohynka. Nepřítel má početní převahu, ale terén je na vaší straně!",
+        "crusaders": "Konečně jsme Žižku dostihli! Má méně mužů. Vtrhneme do údolí a rozdrtíme kacíře jednou provždy!"
+      },
+      "objectives": {
+        "primary": "Vyrazte ze svahu a prorazte koaliční šik — obsaďte jeho pozici do kola 10",
+        "secondary": [
+          "Udržte velitelskou pozici na svahu",
+          "Jan Žižka musí přežít",
+          "Ztratit méně než 30% vlastních jednotek"
+        ]
+      },
+      "debriefing": {
+        "victory": "Koaliční obrana je prolomena! V této partii uspěl váš postup ze svahu. Historicky vítězství u Malešova otevřelo Žižkovi cestu ke Kutné Hoře. Pozdější příběh o vozech s kamením není spolehlivě doloženým vysvětlením tohoto úspěchu.",
+        "defeat": "Koalice odrazila váš postup. Žižkovo východočeské vojsko se musí stáhnout. Tato partie se rozešla s historickým výsledkem; označení sirotci se pro část jeho následovníků ujalo až po Žižkově smrti."
+      },
+      "phases": [
+        {
+          "name": "Zaujmutí pozic",
+          "description": "Žižka rozpoznává terén s pomocí Roháče a Hvězdy. Husité se opevňují na svahu.",
+          "events": [
+            {
+              "message": "Jan Roháč: „Pane hejtmane, máme dobrý svah nad údolím. Potok Bohynka nám kryje střed.“"
+            },
+            {
+              "message": "Jan Hvězda: „Znám tato místa. Údolí je úzké - nepřítel se nebude moci rozvinout.“"
+            }
+          ]
+        },
+        {
+          "name": "Koaliční útok",
+          "description": "Protižižkovská koalice vrhá jízdu do údolí. Nepřítel se nemůže plně rozvinout.",
+          "events": [
+            {
+              "message": "Čeněk z Vartenberka: „Do útoku! Rozdrtíme slepce jednou provždy!“"
+            },
+            {
+              "message": "Těžká jízda vjíždí do úzkého údolí... Řady se tísní!"
+            },
+            {
+              "text": "Jízda ztrácí hybnost v bažinatém údolí!"
+            }
+          ]
+        },
+        {
+          "name": "Krvavé údolí",
+          "description": "Palba a tísnivý terén narušují postup útočníků. Obránci hledají chvíli k protiútoku.",
+          "events": [
+            {
+              "message": "Houfnice a ručnice pálí do natěsnaných řad nepřítele!"
+            },
+            {
+              "message": "Ztráty koalice rostou! Údolí se barví krví!"
+            },
+            {
+              "text": "Koaliční vojsko ztrácí odvahu v zabijácké palbě."
+            },
+            {
+              "title": "Rozvrácené čelo kolony",
+              "text": "Natěsnané oddíly se pod palbou nemohou rozvinout. Zmatek v čele kolony podlamuje soudržnost dalších šiků."
+            }
+          ]
+        },
+        {
+          "name": "Žižkův protiútok",
+          "description": "Žižka nařizuje smrtící protiútok ze svahu dolů.",
+          "events": [
+            {
+              "message": "Žižka: „Teď! Dolů z kopce! Za pravdu Boží!“"
+            },
+            {
+              "message": "Husitská jízda a pěchota se řítí ze svahu na dezorientovaného nepřítele!"
+            },
+            {
+              "text": "Útok z kopce! +15% k útoku husitských jednotek."
+            }
+          ]
+        },
+        {
+          "name": "Zhroucení koalice",
+          "description": "Koaliční vojsko se hroutí. Zadní voje prchají bez boje.",
+          "events": [
+            {
+              "message": "Koalice se hroutí! Muži prchají směrem k Malešovu!"
+            },
+            {
+              "message": "Čeněk z Vartenberka: „Zpět! Všichni zpět!“ Zadní voje už ani nevstoupily do boje."
+            },
+            {
+              "message": "O výsledku rozhoduje soudržnost oddílů. Historické odhady padlých nejsou součtem ztrát této partie."
+            },
+            {
+              "message": "Žižka ovládl bojiště. Cesta na Kutnou Horu je volná!"
+            }
+          ]
+        }
+      ],
+      "date": "7. června 1424"
+    },
+    "zatec_1421": {
+      "date": "září – 2. října 1421",
+      "phases": [
+        {
+          "name": "Obležení",
+          "description": "Křižáci obkličují Žatec a zahajují palbu z děl.",
+          "events": [
+            {
+              "message": "Křižácké vojsko obklíčilo Žatec. Děla pálí na hradby!"
+            }
+          ]
+        },
+        {
+          "name": "Šest útoků",
+          "description": "Erkinger žene pěchotu na hradby - jeden útok za druhým.",
+          "events": [
+            {
+              "message": "Erkinger zahajuje útok na západní hradbu! Držte linii!"
+            },
+            {
+              "text": "Žatečtí vyrazili z bran, pobili množství obléhatelů a stáhli se zpět za hradby. Obránci nabírají odvahu!",
+              "title": "Výpad z bran!"
+            }
+          ]
+        },
+        {
+          "name": "Požár ležení",
+          "description": "Křižácké ležení hoří, knížata se hádají, tábor svírá hlad.",
+          "events": [
+            {
+              "text": "Křižácké ležení vzplálo! Hlad, spory knížat a falešná zpráva o blížícím se pražském vojsku lámou výpravu.",
+              "title": "Požár ležení!"
+            }
+          ]
+        }
+      ],
+      "description": "Křižácká výprava obléhá město nad Ohří. Udržte opevnění, dokud se útočící vojsko nestáhne."
+    }
+  },
+  "units": {
+    "POLNI_OPEVNENI": {
+      "name": "Posádka srubu",
+      "description": "Obránci pevného srubu a zídky. Střílejí z krytu, ale nemohou se přesouvat.",
+      "lore": {
+        "description": "Na Vítkově bránili husité pevná opevnění, nikoli pojízdnou vozovou hradbu. Herní oddíl představuje jejich posádku a kryt společně.",
+        "equipment": "Dřevěný srub, zídka, kuše a tyčové zbraně obránců",
+        "origin": "Obrana Vítkova, 1420",
+        "historicalNote": "Rozmístění posádek je herní rekonstrukce. Historický rámec a odkazy uvádí poznámka ke scénáři."
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "scenario": "sudomere_1420",
+  "sourceRevision": "dbdf61907212476cda816ff2036a9a8d41bf3572",
+  "hexRadius": 4.0,
+  "palette": {
+    "plains": "#b3ca6e",
+    "mud": "#997045",
+    "water": "#6ba8ab",
+    "dam": "#e0ab5c",
+    "soil": "#2e2113"
+  },
+  "tileOverrides": {
+    "6,4": { "decoration": "reeds" },
+    "13,4": { "decoration": "reeds" },
+    "6,7": { "decoration": "reeds" },
+    "13,7": { "decoration": "reeds" },
+    "9,5": { "decoration": "causeway-stones" },
+    "9,6": { "decoration": "causeway-stones" }
+  },
+  "offBoardProps": [
+    { "kind": "village", "side": "east" },
+    { "kind": "woodland", "side": "northwest" }
+  ]
+}

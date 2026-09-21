@@ -1,0 +1,29 @@
+{
+  "infantry_shield": {
+    "file": "infantry_shield_flat.glb",
+    "mesh_objects": 1,
+    "materials": 1,
+    "vertices": 386,
+    "triangles": 676,
+    "color_attribute": "COLOR_0",
+    "fidelity_note": "Original geometry and base colors; metallic response flattened."
+  },
+  "infantry_polearm": {
+    "file": "infantry_polearm_flat.glb",
+    "mesh_objects": 1,
+    "materials": 1,
+    "vertices": 367,
+    "triangles": 646,
+    "color_attribute": "COLOR_0",
+    "fidelity_note": "Original geometry and base colors; metallic response flattened."
+  },
+  "infantry_handgun": {
+    "file": "infantry_handgun_flat.glb",
+    "mesh_objects": 1,
+    "materials": 1,
+    "vertices": 370,
+    "triangles": 652,
+    "color_attribute": "COLOR_0",
+    "fidelity_note": "Original geometry and base colors; metallic response flattened."
+  }
+}

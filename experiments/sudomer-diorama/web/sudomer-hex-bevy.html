@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sudoměř — Bevy comparison</title>
+  <link rel="stylesheet" href="hex-diorama/style.css?v=SUDOMER_HEX_VERSION">
+  <link rel="stylesheet" href="hex-diorama/refinement.css?v=SUDOMER_HEX_VERSION">
+</head>
+<body>
+  <main class="battle-shell">
+    <header class="topbar">
+      <div><p class="eyebrow">25 March 1420 · Bevy comparison</p><h1>Sudoměř</h1></div>
+      <div class="turn"><strong id="battle-state">Preparing the board…</strong><span id="ai-status" hidden>Opponent is choosing orders…</span></div>
+    </header>
+    <section class="board-wrap" aria-label="3D battlefield">
+      <canvas id="sudomer-canvas" tabindex="0" aria-label="Interactive 3D hex board."></canvas>
+      <div class="legend" aria-hidden="true"><span class="water">Markovec pond</span><span class="dam">causeway</span><span class="mud">drained Škaredý pond</span></div>
+    </section>
+    <aside class="hud" aria-label="Battle controls">
+      <section><p class="eyebrow">Objective</p><p id="objective">Hold the causeway and survive.</p></section>
+      <section id="unit-detail" class="unit-detail" aria-live="polite"><strong>No unit selected</strong><span>Select a Hussite group on the board.</span></section>
+      <section class="actions" aria-label="Selected unit actions">
+        <button data-action="defend">Defend</button><button data-action="undo">Undo move</button><button data-action="choral">Sing the choral</button>
+        <button data-action="wagon-formation">Open or close wagon</button><button data-action="wagon-line">Change wagon line</button><button data-action="wagon-march">Toggle wagon march</button>
+      </section>
+      <section class="actions global" aria-label="Battle actions">
+        <button data-action="end-turn" class="primary">End turn</button><button data-action="fast-forward">Finish AI turn</button><button data-action="pause">Pause</button><button data-action="resume">Resume</button>
+        <button id="camera-reset">Reset camera</button><button id="grid-toggle" aria-pressed="false">Show grid</button><button data-action="restart">Restart battle</button>
+      </section>
+      <p id="diagnostic" class="diagnostic" aria-live="polite">Loading rules…</p>
+    </aside>
+  </main>
+  <dialog id="result"><h2>Battle result</h2><p id="result-text"></p><button id="restart-result">Play again</button></dialog>
+  <div id="error" role="alert" hidden></div>
+  <script src="hex-diorama/vendor/husitske-valky/js/core/GameStorage.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/data/unitTypes.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/entities/Unit.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/entities/UnitFactory.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/ui/WoodcutRenderer.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/core/hex.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/data/scenarios.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/data/campaign.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/CampaignProgressSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/CombatSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/FogOfWarSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/MoraleSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/VictoryConditionsSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/TutorialSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/BattleActionSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/SaveGameSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/systems/ScenarioEventSystem.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/ui/BattlePanels.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/ui/BattleTooltip.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/ui/BattleMapInput.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/ui/BattleOrders.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/ui/BattleView.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/core/game.js"></script>
+  <script src="hex-diorama/vendor/husitske-valky/js/ai.js"></script>
+  <script src="hex-diorama/bridge.js?v=SUDOMER_HEX_VERSION"></script>
+  <script src="hex-diorama/view.js?v=SUDOMER_HEX_VERSION"></script>
+  <script src="hex-diorama/panels.js?v=SUDOMER_HEX_VERSION"></script>
+  <script src="hex-diorama/boot.js?v=SUDOMER_HEX_VERSION"></script>
+  <script type="module">import init from './sudomer_hex.js?v=SUDOMER_HEX_VERSION'; init().catch(error => SudomerHexBoot.rendererFailed(error));</script>
+</body>
+</html>

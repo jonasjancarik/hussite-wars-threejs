@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>50,000 Flattened Soldiers — Bevy WebGPU</title>
+    <style>
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #7a826b; }
+      canvas { width: 100% !important; height: 100% !important; display: block; }
+      #status, #caption { position: fixed; z-index: 2; color: #f4eddd; background: #1f241dcc; font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; border: 1px solid #ffffff20; border-radius: 6px; padding: 10px 13px; }
+      #status { inset: 0; display: grid; place-items: center; border: 0; border-radius: 0; font-size: 18px; }
+      #caption { top: 18px; left: 18px; pointer-events: none; }
+      #caption strong { display: block; font: 20px/1.25 Georgia, serif; font-weight: 400; }
+    </style>
+  </head>
+  <body>
+    <div id="status">Loading 50,000 soldiers in Bevy WebGPU…</div>
+    <div id="caption"><strong>Bevy WebGPU</strong>50,000 total flattened soldiers · complete formations · alternates between still and moving</div>
+    <script type="module">
+      import init from "./army_benchmark_webgpu.js?v=ARMY_BENCHMARK_WEBGPU_VERSION";
+      try {
+        await init({ module_or_path: new URL("./army_benchmark_webgpu_bg.wasm?v=ARMY_BENCHMARK_WEBGPU_VERSION", import.meta.url) });
+        document.querySelector("#status")?.remove();
+      } catch (error) {
+        document.querySelector("#status").textContent = "The WebGPU scene could not load.";
+        console.error(error);
+      }
+    </script>
+  </body>
+</html>

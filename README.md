@@ -1,5 +1,7 @@
 # Husitské války — tahová strategie
 
+> This fork adds a playable Three.js Sudoměř diorama alongside the original campaign. See [fork setup and controls](FORK.md).
+
 Čeština · [English](README.en.md)
 
 ![Husitské války / Hussite Wars](imgs/social-preview.png)

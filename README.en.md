@@ -1,5 +1,7 @@
 # Hussite Wars — turn-based strategy
 
+> This fork adds a playable Three.js Sudoměř diorama alongside the original campaign. See [fork setup and controls](FORK.md).
+
 [Čeština](README.md) · English
 
 ![Husitské války / Hussite Wars](imgs/social-preview.png)

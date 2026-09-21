@@ -62,3 +62,9 @@ package-lock.json
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Three.js diorama build outputs
+/experiments/sudomer-diorama/web/dist/
+/experiments/sudomer-diorama/web/hex-three/dist/
+/experiments/sudomer-diorama/target/
+!/experiments/sudomer-diorama/web/hex-three/package-lock.json

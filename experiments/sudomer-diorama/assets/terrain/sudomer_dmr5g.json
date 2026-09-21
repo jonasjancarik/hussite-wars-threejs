@@ -1,0 +1,36 @@
+{
+  "fixture": "Sudomer modern elevation proof",
+  "purpose": "rendering pipeline proof, not a 1420 historical reconstruction",
+  "source": "CUZK DMR 5G ImageServer",
+  "source_url": "https://ags.cuzk.gov.cz/arcgis2/rest/services/dmr5g/ImageServer",
+  "license": "CC BY 4.0 shown by the CUZK Atom portal; attribution required",
+  "memorial_reference_wgs84": [
+    14.0640014,
+    49.2420697
+  ],
+  "bbox_wgs84": [
+    14.052,
+    49.2335,
+    14.076,
+    49.2515
+  ],
+  "output_extent": {
+    "xmin": -782495.7570420753,
+    "ymin": -1133614.2708121354,
+    "xmax": -780267.5121737381,
+    "ymax": -1131386.0259437982,
+    "spatialReference": {
+      "wkid": 102067,
+      "latestWkid": 5514
+    }
+  },
+  "grid_width": 385,
+  "grid_height": 385,
+  "height_datum": "Balt after adjustment (Bpv), per service description",
+  "source_spatial_reference": "S-JTSK / Krovak East North (EPSG:5514)",
+  "minimum_height_m_bpv": 373.366455078125,
+  "maximum_height_m_bpv": 420.08697509765625,
+  "stored_heights": "little-endian float32 metres above crop minimum, row-major",
+  "vertical_exaggeration": 1.35,
+  "request_url": "https://ags.cuzk.gov.cz/arcgis2/rest/services/dmr5g/ImageServer/exportImage?bbox=14.052%2C49.2335%2C14.076%2C49.2515&bboxSR=4326&imageSR=5514&size=385%2C385&format=tiff&pixelType=F32&interpolation=RSP_BilinearInterpolation&f=json"
+}

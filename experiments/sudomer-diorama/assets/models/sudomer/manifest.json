@@ -1,0 +1,86 @@
+{
+  "tree-a": {
+    "file": "tree-a.glb",
+    "dimensions_blender_xyz_m": [
+      4.935,
+      4.128,
+      5.494
+    ],
+    "dimensions_gltf_xyz_m": [
+      4.935,
+      5.494,
+      4.128
+    ],
+    "ground_gltf_y_m": 0.0,
+    "mesh_objects": 3,
+    "triangles": 924,
+    "materials": [
+      "bark",
+      "leaf_olive",
+      "leaf_sage"
+    ]
+  },
+  "tree-b": {
+    "file": "tree-b.glb",
+    "dimensions_blender_xyz_m": [
+      4.339,
+      4.292,
+      4.673
+    ],
+    "dimensions_gltf_xyz_m": [
+      4.339,
+      4.673,
+      4.292
+    ],
+    "ground_gltf_y_m": 0.0,
+    "mesh_objects": 3,
+    "triangles": 868,
+    "materials": [
+      "bark",
+      "leaf_olive",
+      "leaf_sage"
+    ]
+  },
+  "tree-c": {
+    "file": "tree-c.glb",
+    "dimensions_blender_xyz_m": [
+      5.141,
+      3.872,
+      5.905
+    ],
+    "dimensions_gltf_xyz_m": [
+      5.141,
+      5.905,
+      3.872
+    ],
+    "ground_gltf_y_m": 0.0,
+    "mesh_objects": 3,
+    "triangles": 952,
+    "materials": [
+      "bark",
+      "leaf_olive",
+      "leaf_sage"
+    ]
+  },
+  "shrub": {
+    "file": "shrub.glb",
+    "dimensions_blender_xyz_m": [
+      0.845,
+      0.84,
+      0.891
+    ],
+    "dimensions_gltf_xyz_m": [
+      0.845,
+      0.891,
+      0.84
+    ],
+    "ground_gltf_y_m": 0.0,
+    "mesh_objects": 3,
+    "triangles": 344,
+    "materials": [
+      "bark",
+      "leaf_olive",
+      "leaf_sage"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sudoměř — Landscape study</title>
+<style>
+:root{color-scheme:dark;font-family:ui-sans-serif,system-ui,sans-serif;color:#e8e4d7;background:#293036}*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none}canvas{display:block;width:100%!important;height:100%!important;outline:none;touch-action:none}
+header{position:fixed;top:26px;left:30px;right:30px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;z-index:2;pointer-events:none}h1{font-family:Georgia,serif;font-weight:400;font-size:27px;line-height:1.15;margin:0 0 7px}header p{font-size:12px;color:#bfc3bc;margin:0;letter-spacing:.02em}nav{display:flex;gap:9px;pointer-events:auto}a,button{font:inherit;color:inherit}nav a,button{border:1px solid #ffffff26;background:#252c31ba;border-radius:5px;padding:9px 12px;font-size:12px;text-decoration:none;cursor:pointer}nav a:hover,button:hover{background:#46504c}footer{position:fixed;bottom:20px;left:30px;right:30px;display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#c5c9c2;pointer-events:none;z-index:2}.keys{line-height:1.8}.keys span{white-space:nowrap;margin-right:13px}kbd{font:inherit;color:#f1ead9}#loading{position:fixed;inset:0;display:grid;place-items:center;z-index:5;background:#293036;color:#ded9ca;font-family:Georgia,serif;font-size:20px}dialog{border:1px solid #68746b;border-radius:8px;background:#232a2c;color:#e5e2d6;padding:18px;max-height:94vh;max-width:min(780px,94vw)}dialog::backdrop{background:#1119}dialog img{display:block;max-width:100%;max-height:70vh;margin:auto}dialog h2{font:22px Georgia,serif;margin:0 0 10px}dialog summary{cursor:pointer;font-size:13px;margin:18px 0 12px}footer a{pointer-events:auto;text-decoration:none}footer a:hover{text-decoration:underline}dialog p{font-size:13px;line-height:1.5;max-width:650px}dialog button{float:right;margin-left:14px}.scene-controls{position:fixed;right:24px;bottom:65px;display:flex;gap:8px;z-index:3}.scene-controls button{min-height:44px;min-width:44px;touch-action:manipulation}@media(max-width:700px){header{top:18px;left:18px;right:18px;flex-direction:column;gap:12px}h1{font-size:23px}footer{left:18px;right:18px;bottom:12px;flex-direction:column;gap:2px}header p{max-width:280px;line-height:1.5}.keys{max-width:310px}}.touch-help{display:none}@media(pointer:coarse){.desktop-help{display:none}.touch-help{display:block}nav a,nav button{min-height:44px}.scene-controls{right:18px;bottom:100px}footer .keys{max-width:100%}}
+</style>
+</head>
+<body>
+<div id="loading" role="status" aria-live="polite">Setting the landscape…</div>
+<header><div><h1>Sudoměř</h1><p>Ponds, fields and village</p></div><nav aria-label="Views"><a href="./sudomer-battle.html">Play Sudoměř</a><button id="study">References</button><a href="./battlefield-study.html">Battlefield study</a></nav></header>
+<footer><div class="keys desktop-help"><span><kbd>Drag</kbd> pan</span><span><kbd>Right drag</kbd> orbit</span><span><kbd>Scroll</kbd> zoom to pointer</span><br><span><kbd>F</kbd> frame</span></div><div class="keys touch-help">Drag to orbit · Pinch to zoom<br>Move two fingers together to pan</div><div>ČÚZK elevation · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> · historical interpretation</div></footer>
+<div class="scene-controls" aria-label="Scene controls"><button id="inspect-wagons">View wagons</button><button id="frame-view">Frame scene</button></div>
+<dialog id="study-dialog" aria-labelledby="study-title"><button id="close-study">Close</button><h2 id="study-title">Landscape study</h2><p>Reference artwork guides colour and planting; map geometry is sourced separately.</p><img src="assets/terrain/sudomer-art-study.png" alt="Landscape study of Sudoměř with ponds, fields, woodland and village planting"/><details><summary>Historical reference · 1837</summary><p>The cadastral map helps us interpret the ponds, fields and woodland. It records a landscape four centuries after the battle.</p><img loading="lazy" src="assets/terrain/historical/sudomer_imperial_imprint_1837_crop.png" alt="1837 cadastral reference showing the Markovec and Škaredý pond corridor"/><p>Reference: ÚAZK / ČÚZK, <a href="https://geoportal.kraj-jihocesky.gov.cz/portal/mapy/ostatni/Cisarske-otisky-WMTS" target="_blank" rel="noopener">South Bohemian historical map service</a>.</p></details></dialog>
+<script type="module">
+import init from './real_terrain.js?v=TERRAIN_VERSION';
+const dialog=document.getElementById('study-dialog');
+document.getElementById('study').onclick=()=>dialog.showModal();
+document.getElementById('close-study').onclick=()=>dialog.close();
+dialog.addEventListener('close',()=>document.querySelector('canvas')?.focus());
+function sceneKey(code,key){const canvas=document.querySelector('canvas');if(!canvas)return;canvas.focus();canvas.dispatchEvent(new KeyboardEvent('keydown',{code,key,bubbles:true}));setTimeout(()=>canvas.dispatchEvent(new KeyboardEvent('keyup',{code,key,bubbles:true})),100);}
+document.getElementById('frame-view').onclick=()=>sceneKey('KeyF','f');
+document.getElementById('inspect-wagons').onclick=()=>sceneKey('KeyV','v');
+window.addEventListener('contextmenu',e=>e.preventDefault());
+try {await init({module_or_path:new URL('./real_terrain_bg.wasm?v=TERRAIN_VERSION',import.meta.url)});document.getElementById('loading').remove();} catch(error){document.getElementById('loading').textContent='The landscape could not load. Reload this page to try again.';console.error(error);}
+</script>
+</body>
+</html>

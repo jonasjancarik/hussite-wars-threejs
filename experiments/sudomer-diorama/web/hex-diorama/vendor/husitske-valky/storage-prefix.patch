@@ -1,0 +1,6 @@
+--- a/js/core/GameStorage.js
++++ b/js/core/GameStorage.js
+@@
+-    const prefix = isTest ? 'husitskeValky_test:' : '';
++    // Sudomer hex prototype patch: keep all saves isolated from the source game.
++    const prefix = 'sudomerHex:' + (isTest ? 'test:' : '');

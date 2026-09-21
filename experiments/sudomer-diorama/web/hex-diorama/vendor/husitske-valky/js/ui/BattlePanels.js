@@ -1,0 +1,572 @@
+// HTML panelů bitvy. Výpočty bojových pravidel poskytuje Game/Unit.
+class BattlePanels {
+    constructor(game) { this.game = game; }
+
+    static syncCompactButtons() {
+        const compact = document.getElementById('game-container').classList.contains('compact-battle');
+        for (const [panelId, buttonId, toggleId] of [
+            ['unit-panel', 'btn-unit-sheet', 'toggle-left'], ['info-panel', 'btn-army-sheet', 'toggle-right']
+        ]) {
+            const panel = document.getElementById(panelId), toggle = document.getElementById(toggleId);
+            document.getElementById(buttonId).setAttribute('aria-expanded', String(panel.classList.contains('expanded')));
+            toggle.setAttribute('aria-expanded', String(!panel.classList.contains('collapsed')));
+            if (compact) toggle.textContent = '×';
+        }
+    }
+
+    static closeCompactPanels() {
+        for (const id of ['unit-panel', 'info-panel']) {
+            const panel = document.getElementById(id);
+            panel.classList.remove('expanded'); panel.classList.add('collapsed');
+        }
+        this.syncCompactButtons();
+    }
+
+    factionLabel(faction) {
+        const id = this.game.currentScenario && this.game.currentScenario.id;
+        if (id && typeof i18n !== 'undefined') {
+            const key = `scenarios.${id}.factionNames.${faction}`;
+            if (i18n.hasTranslation(key)) return i18n.t(key);
+            // fallback na kanonickou hodnotu ze scénáře (pro jazyk bez locale záznamu)
+            const fn = this.game.currentScenario.factionNames;
+            if (fn && fn[faction]) return fn[faction];
+        }
+        return i18n.t(`factions.${faction}`);
+    }
+
+    updateUI() {
+        // Aktuální hráč
+        const playerSpan = document.getElementById('current-player');
+        const finished = this.game.gameState === 'victory';
+        if (finished) {
+            playerSpan.textContent = i18n.t('gameover.finished');
+            playerSpan.className = 'finished';
+        } else {
+            const factionName = this.factionLabel(this.game.currentFaction);
+            playerSpan.textContent = `${i18n.t('game.turnLabel')} ${factionName}`;
+            playerSpan.className = this.game.currentFaction === 'crusaders' ? 'crusaders' : '';
+        }
+
+        // Číslo kola - u misí s limitem ukaž i deadline (Kolo X/Y)
+        const maxT = this.game.currentScenario && this.game.currentScenario.maxTurns;
+        const displayedTurn = finished
+            ? (this.game.gameOverTurn ?? (maxT ? Math.min(this.game.turnNumber, maxT) : this.game.turnNumber))
+            : this.game.turnNumber;
+        document.getElementById('turn-number').textContent = maxT
+            ? `${i18n.t('game.roundLabel')} ${displayedTurn}/${maxT}`
+            : `${i18n.t('game.roundLabel')} ${displayedTurn}`;
+
+        this.updateObjectiveProgress();
+
+        // Přehled armád
+        this.updateArmyOverview();
+
+        // Aktualizace tlačítka chorálu
+        this.updateChoralButton();
+
+        // Aktualizace pulsujícího efektu tlačítka Ukončit tah
+        this.updateEndTurnButton();
+    }
+
+    updateObjectiveProgress() {
+        const primary = this.game.currentScenario?.victoryConditions?.primary;
+        if (!primary?.description) return;
+        let text = primary.description;
+        if (primary.type === 'capture_position') {
+            const playerFaction = this.game.currentScenario.playerFaction || 'hussites';
+            const positions = primary.positions || [];
+            const required = primary.count || positions.length;
+            const captured = positions.filter(([col, row]) => {
+                const unit = this.game.getUnitAt(col, row);
+                return unit && unit.faction === playerFaction && unit.health > 0;
+            }).length;
+            text += ` · ${i18n.t('game.captureProgress', { captured, required })}`;
+        }
+        for (const id of ['primary-objective', 'objective-hud-text']) {
+            const element = document.getElementById(id);
+            if (element && element.textContent !== text) element.textContent = text;
+        }
+    }
+
+    updateEndTurnButton() {
+        this.updateGuidance();
+        const saveStatus = document.getElementById('autosave-status');
+        saveStatus.classList.toggle('hidden', !this.game.autosaveFailed);
+        saveStatus.textContent = this.game.autosaveFailed ? i18n.t('touch.autosaveError') : '';
+        const endTurnBtn = document.getElementById('btn-end-turn');
+        if (!endTurnBtn) return;
+        endTurnBtn.disabled = this.game.currentFaction !== 'hussites' || !this.game.canStartAction();
+        for (const id of ['btn-save', 'btn-pause-save']) {
+            const button = document.getElementById(id);
+            if (button) button.disabled = this.game.gameState !== 'playing' || this.game.actions.busy || this.game.currentFaction !== 'hussites';
+        }
+
+        // Pouze pro hráčskou frakci (husité)
+        if (this.game.currentFaction === 'hussites' && this.game.allPlayerUnitsActed()) {
+            endTurnBtn.classList.add('pulse');
+        } else {
+            endTurnBtn.classList.remove('pulse');
+        }
+    }
+
+    // Pouze čtení: pokyn vysvětluje dostupný vstup, neprozrazuje nepřátele
+    // za mlhou a nevolí za hráče taktiku. Akční systém obnoví text i po animaci.
+    getGuidance() {
+        const game = this.game;
+        if (game.gameState === 'victory') return { key: 'review' };
+        if (game.gameState !== 'playing') return null;
+        if (game.isPaused) return { key: 'paused' };
+        if (game.currentFaction !== 'hussites') return { key: 'enemyTurn' };
+        if (game.actions.busy) return { key: 'busy' };
+        if (game.allPlayerUnitsActed()) return { key: 'endTurn' };
+        const unit = game.selectedUnit;
+        if (!unit || unit.faction !== 'hussites') return { key: 'select' };
+        if (unit.isRouting) return { key: 'routing', unit: unit.name };
+        if (!unit.canAct()) return { key: 'spent', unit: unit.name };
+        if (unit.isWagon() && unit.formationClosed && !unit.marching && !unit.hasMoved) return { key: 'wagon', unit: unit.name };
+        if (!unit.canMove() && !unit.canAttack()) return { key: 'defend', unit: unit.name };
+        return { key: unit.canMove() ? 'move' : 'attack', unit: unit.name };
+    }
+
+    updateGuidance() {
+        const element = document.getElementById('turn-guidance');
+        if (!element) return;
+        const guidance = this.getGuidance();
+        element.classList.toggle('hidden', !guidance);
+        const compact = document.getElementById('game-container').classList.contains('compact-battle');
+        let key = guidance ? `onboarding.hints.${guidance.key}` : '';
+        if (compact && guidance?.key === 'select') key = 'touch.selectHint';
+        if (compact && ['move', 'attack'].includes(guidance?.key)) key = 'touch.chooseTarget';
+        const text = key ? i18n.t(key, { unit: guidance.unit }) : '';
+        if (element.textContent !== text) element.textContent = text;
+    }
+
+    updateArmyOverview() {
+        const hussiteSection = document.getElementById('hussite-section');
+        const crusaderSection = document.getElementById('crusader-section');
+        const hussiteList = document.getElementById('hussite-units');
+        const crusaderList = document.getElementById('crusader-units');
+
+        hussiteList.innerHTML = '';
+        crusaderList.innerHTML = '';
+
+        // Počítadla jednotek
+        let hussiteAlive = 0, hussiteTotal = 0;
+        let crusaderAlive = 0, crusaderTotal = 0;
+
+        for (const unit of this.game.units) {
+            const li = document.createElement('li');
+            li.className = 'unit-list-item';
+            const commander = WoodcutRenderer.isCommander(unit);
+            if (commander) li.classList.add('commander-unit');
+            const role = commander ? `<small class="unit-role">${i18n.t('tooltip.commander')}</small>` : '';
+
+            // Získání symbolu jednotky
+            const symbol = WoodcutRenderer.icon(unit);
+
+            // Výpočet procenta zdraví pro barvu
+            const healthPercent = (unit.health / unit.maxHealth) * 100;
+            let healthClass = 'health-high';
+            if (healthPercent <= 30) {
+                healthClass = 'health-critical';
+            } else if (healthPercent <= 60) {
+                healthClass = 'health-medium';
+            }
+
+            if (unit.health <= 0) {
+                li.classList.add('destroyed');
+                li.innerHTML = `
+                    <span class="unit-icon destroyed">✝</span>
+                    <span class="unit-name">${unit.name}${role}</span>
+                `;
+            } else {
+                li.innerHTML = `
+                    <span class="unit-icon${commander ? ' commander-mark' : ''}">${symbol}</span>
+                    <span class="unit-name">${unit.name}${role}</span>
+                    <span class="unit-health ${healthClass}">${unit.health}</span>
+                `;
+
+                if (unit.faction === this.game.currentFaction && !unit.canAct()) {
+                    li.classList.add('exhausted');
+                }
+            }
+
+            // Označení aktivní (vybrané) jednotky
+            if (this.game.selectedUnit === unit) {
+                li.classList.add('active');
+            }
+
+            // Kliknutí na jednotku v přehledu - vybere jednotku
+            if (unit.health > 0) {
+                li.addEventListener('click', () => {
+                    if (this.game.gameState === 'victory') {
+                        this.game.inspectUnit(unit);
+                    // Během bitvy jsou rozkazy dostupné pouze vlastním jednotkám.
+                    } else if (unit.faction === 'hussites' && this.game.currentFaction === 'hussites') {
+                        this.game.selectUnit(unit);
+                        this.game.render();
+                    }
+                });
+            }
+
+            if (unit.faction === 'hussites') {
+                hussiteList.appendChild(li);
+                hussiteTotal++;
+                if (unit.health > 0) hussiteAlive++;
+            } else {
+                crusaderList.appendChild(li);
+                crusaderTotal++;
+                if (unit.health > 0) crusaderAlive++;
+            }
+        }
+
+        // Aktualizace počítadel v hlavičkách
+        const hussiteCount = hussiteSection?.querySelector('.faction-count');
+        const crusaderCount = crusaderSection?.querySelector('.faction-count');
+        if (hussiteCount) hussiteCount.textContent = `${hussiteAlive}/${hussiteTotal}`;
+        if (crusaderCount) crusaderCount.textContent = `${crusaderAlive}/${crusaderTotal}`;
+
+        // WP5: per-scénář jména stran v hlavičkách (data-i18n odstraněn v HTML, řídíme ručně)
+        const hussiteName = hussiteSection?.querySelector('.faction-name');
+        const crusaderName = crusaderSection?.querySelector('.faction-name');
+        if (hussiteName) hussiteName.textContent = this.factionLabel('hussites');
+        if (crusaderName) crusaderName.textContent = this.factionLabel('crusaders');
+
+        // Lišty morálky armád (okno protiútoku)
+        this.renderMoraleBar('hussite', 'hussites', hussiteAlive);
+        this.renderMoraleBar('crusader', 'crusaders', crusaderAlive);
+    }
+
+    renderMoraleBar(prefix, faction, aliveCount) {
+        const bar = document.getElementById(`${prefix}-morale`);
+        const fill = document.getElementById(`${prefix}-morale-fill`);
+        const text = document.getElementById(`${prefix}-morale-text`);
+        if (!bar || !fill || !text) return;
+
+        // Bez živých jednotek lišta zmizí
+        if (aliveCount === 0) {
+            bar.style.display = 'none';
+            return;
+        }
+        bar.style.display = '';
+
+        const morale = this.game.getArmyMorale(faction);
+
+        fill.style.width = `${morale}%`;
+        fill.classList.remove('morale-medium', 'morale-low');
+        if (morale < 40) {
+            fill.classList.add('morale-low');
+        } else if (morale < 60) {
+            fill.classList.add('morale-medium');
+        }
+
+        const isWavering = this.game.wavering && this.game.wavering[faction];
+        bar.classList.toggle('wavering', !!isWavering);
+
+        const label = i18n.t('game.moraleLabel');
+        text.textContent = isWavering
+            ? `${i18n.t('game.wavering')} ${morale}%`
+            : `${label} ${morale}%`;
+        bar.title = `${label}: ${morale}%`;
+    }
+
+    updateUnitPanel(unit) {
+        this.updateGuidance();
+        const infoDiv = document.getElementById('unit-info');
+        const actionsDiv = document.getElementById('unit-actions');
+        const attackBtn = document.getElementById('btn-attack');
+        const unitPanel = document.getElementById('unit-panel');
+
+        if (!unit) {
+            if (unitPanel) {
+                unitPanel.classList.add('empty-unit-panel');
+            }
+            infoDiv.innerHTML = `<p class="no-selection">${i18n.t('tooltip.selectUnit')}</p>`;
+            actionsDiv.classList.add('hidden');
+            return;
+        }
+        if (unitPanel) {
+            unitPanel.classList.remove('empty-unit-panel');
+        }
+
+        // Speciální schopnost HTML
+        let specialHtml = '';
+        if (unit.special && unit.special !== 'commander') {
+            const specialKey = `special.${unit.special}`;
+            const specialName = i18n.hasTranslation(specialKey) ? i18n.t(specialKey) : unit.special;
+            specialHtml = `
+                <div class="unit-special" style="margin: 10px 0; padding: 8px; background: rgba(212, 175, 55, 0.15); border: 1px solid #5c4a1f; border-radius: 4px;">
+                    <span style="color: #d4af37; font-weight: bold;">⚡ ${specialName}</span>
+                </div>
+            `;
+        }
+
+        // Velitelské schopnosti HTML
+        let commanderHtml = '';
+        if (unit.isCommander && unit.isCommander()) {
+            const abilities = unit.getCommanderAbilities();
+            let abilitiesText = [];
+            if (abilities.moraleBonus) abilitiesText.push(i18n.t('tooltip.moraleBonus', { value: abilities.moraleBonus }));
+            if (abilities.attackBonus) abilitiesText.push(i18n.t('tooltip.attackBonus', { value: abilities.attackBonus }));
+            if (abilities.defenseBonus) abilitiesText.push(i18n.t('tooltip.defenseBonus', { value: abilities.defenseBonus }));
+            if (abilities.wagonBonus) abilitiesText.push(i18n.t('tooltip.wagonsBonus', { value: abilities.wagonBonus }));
+            if (abilities.cavalryBonus) abilitiesText.push(i18n.t('tooltip.cavalryBonus', { value: abilities.cavalryBonus }));
+
+            commanderHtml = `
+                <div class="commander-info">
+                    <div class="commander-heading">
+                        <span class="commander-insignia" aria-hidden="true">${WoodcutRenderer.icon(unit)}</span>
+                        <strong>${i18n.t('tooltip.commander')}</strong>
+                    </div>
+                    <div style="color: #d4af37; font-size: 0.85rem; margin-bottom: 5px;">
+                        ${i18n.t('tooltip.auraRange', { value: abilities.auraRange })}
+                    </div>
+                    <div style="color: #aaa; font-size: 0.8rem;">
+                        ${i18n.t('tooltip.bonuses', { values: abilitiesText.join(', ') })}
+                    </div>
+                    ${abilities.fearRange ? `<div style="color: #ff6b6b; font-size: 0.8rem; margin-top: 3px;">${i18n.t('tooltip.fear', { penalty: abilities.fearPenalty, range: abilities.fearRange })}</div>` : ''}
+                    ${abilities.rallyBonus ? `<div style="color: #2f7d31; font-size: 0.8rem; margin-top: 3px;">${i18n.t('tooltip.rallyBonus', { value: abilities.rallyBonus })}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // Velitelský bonus pokud je jednotka v auře
+        let auraEffectHtml = '';
+        if (!unit.isCommander || !unit.isCommander()) {
+            const bonuses = this.game.getCommanderBonuses(unit);
+            const fearPenalty = this.game.getEnemyCommanderFearPenalty(unit);
+
+            if (bonuses && (bonuses.morale > 0 || bonuses.attack > 0 || bonuses.defense > 0)) {
+                const nearestInfo = this.game.getNearestCommander(unit);
+                auraEffectHtml = `
+                    <div class="aura-effect aura-bonus">
+                        <div class="aura-header">
+                            <span class="aura-icon">👑</span>
+                            <span class="aura-title">${i18n.t('tooltip.inAura')}${nearestInfo ? ` (${nearestInfo.commander.name})` : ''}</span>
+                        </div>
+                        <div class="aura-values">
+                            ${bonuses.attack > 0 ? `<span class="aura-value positive">${i18n.t('tooltip.attackBonus', { value: bonuses.attack })}</span>` : ''}
+                            ${bonuses.defense > 0 ? `<span class="aura-value positive">${i18n.t('tooltip.defenseBonus', { value: bonuses.defense })}</span>` : ''}
+                            ${bonuses.morale > 0 ? `<span class="aura-value positive">${i18n.t('tooltip.moraleBonus', { value: bonuses.morale })}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (fearPenalty > 0) {
+                auraEffectHtml += `
+                    <div class="aura-effect aura-fear">
+                        <div class="aura-header">
+                            <span class="aura-icon">⚠️</span>
+                            <span class="aura-title">${i18n.t('tooltip.enemyCommander')}</span>
+                        </div>
+                        <div class="aura-values">
+                            <span class="aura-value negative">-${i18n.t('tooltip.moraleBonus', { value: fearPenalty }).replace(/^\+/, '')}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Status efekty
+        let statusHtml = '';
+        if (unit.isTerrified) {
+            statusHtml += `<span style="color: #ff8844; font-size: 0.85rem;">😨 ${i18n.t('tooltip.terrified')}</span><br>`;
+        }
+        if (unit.isDefending) {
+            statusHtml += `<span style="color: #4488ff; font-size: 0.85rem;">🛡️ ${i18n.t('tooltip.defensiveStance')}</span><br>`;
+        }
+        if (this.game.gameState === 'playing' && unit.faction !== this.game.currentFaction && unit.range >= 2) {
+            const ready = this.game.isCoverFireReady(unit);
+            statusHtml += `<span style="color: ${ready ? '#387049' : '#675f4d'}; font-size: 0.85rem;">${i18n.t(ready ? 'tooltip.coverFireReady' : 'tooltip.coverFireSpent')}</span><br>`;
+        }
+        // WP1/P4: stav vozové hradby - pevná zeď (nehýbe se) vs pochod (poloviční kryt)
+        if (unit.isWagon() && unit.formationClosed) {
+            if (unit.marching) {
+                statusHtml += `<span style="color: #d0b060; font-size: 0.85rem;">➡ ${i18n.t('game.wagonMarchHint')}</span><br>`;
+            } else {
+                statusHtml += `<span style="color: #c9a227; font-size: 0.85rem;">⛓ ${i18n.t('game.wagonChainedHint')}</span><br>`;
+            }
+        }
+        if (unit.isRouting) {
+            statusHtml += `<span style="color: #ff4444; font-size: 0.85rem;">🏃 ${i18n.t('tooltip.routing')}</span><br>`;
+        }
+
+        // Obklíčení - dynamická kontrola
+        const surroundInfo = this.game.checkSurrounded(unit);
+        if (surroundInfo.surrounded) {
+            const levelText = i18n.t(`tooltip.surrounded${surroundInfo.level}`);
+            const penalty = surroundInfo.level * 10;
+            statusHtml += `<span style="color: #ff6666; font-size: 0.85rem;">⚔️ ${i18n.t('tooltip.surroundedEffect', {
+                state: levelText,
+                defense: penalty,
+                morale: surroundInfo.level * 5
+            })}</span><br>`;
+        }
+
+        infoDiv.innerHTML = `
+            <h3>${unit.name}</h3>
+            <p style="font-size: 0.8rem; color: #999; margin-bottom: 8px; font-style: italic;">${unit.description}</p>
+            ${commanderHtml}
+            ${specialHtml}
+
+            ${auraEffectHtml}
+
+            <div class="unit-stats-grid">
+                <div class="unit-stat">
+                    <span><span class="stat-icon">⚔</span><span class="label">${i18n.t('help.unitStats.attack')}</span></span>
+                    <span class="value">${unit.attack}</span>
+                </div>
+                <div class="unit-stat">
+                    <span><span class="stat-icon">🛡</span><span class="label">${i18n.t('help.unitStats.defense')}</span></span>
+                    <span class="value">${unit.defense}</span>
+                </div>
+                <div class="unit-stat">
+                    <span><span class="stat-icon">📏</span><span class="label">${i18n.t('help.unitStats.range')}</span></span>
+                    <span class="value">${unit.range}</span>
+                </div>
+                <div class="unit-stat">
+                    <span><span class="stat-icon">👣</span><span class="label">${i18n.t('help.unitStats.movement')}</span></span>
+                    <span class="value">${unit.movement}</span>
+                </div>
+            </div>
+
+            <div class="health-bar" style="margin-top: 8px; position: relative;">
+                <div class="health-bar-fill" style="width: ${(unit.health / unit.maxHealth) * 100}%"></div>
+                <span class="health-bar-text">${unit.health}/${unit.maxHealth}</span>
+            </div>
+            <p class="unit-attack-strength">${i18n.t('tooltip.attackStrength', { value: Math.round(unit.getAttackStrength() * 100) })}</p>
+
+            <div class="morale-section" style="padding-top: 8px; border-top: 1px solid rgba(201, 162, 39, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 0.75rem; color: #888; text-transform: uppercase;">${i18n.t('game.moraleLabel')}</span>
+                    <span style="color: ${unit.getMoraleColor()}; font-weight: bold;">${unit.getMoraleStatus()}</span>
+                </div>
+                <div class="morale-bar" style="width: 100%; height: 6px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${(unit.morale / unit.maxMorale) * 100}%; height: 100%; background: ${unit.getMoraleColor()}; transition: width 0.3s;"></div>
+                </div>
+            </div>
+            ${statusHtml ? `<div class="status-effects" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(201, 162, 39, 0.3);">${statusHtml}</div>` : ''}
+        `;
+
+        if (this.game.gameState === 'playing' && unit.faction === this.game.currentFaction) {
+            actionsDiv.classList.remove('hidden');
+            attackBtn.disabled = !unit.canAttack();
+
+            const defendExplanation = document.getElementById('defend-explanation');
+            if (defendExplanation) {
+                const key = this.game.isCoverFireReady(unit)
+                    ? 'game.defendExplanationRanged'
+                    : 'game.defendExplanation';
+                defendExplanation.setAttribute('data-i18n', key);
+                defendExplanation.textContent = i18n.t(key);
+            }
+
+            // WP1: tlačítka hradby - jen pro hráčův vůz, který ještě nejednal
+            const formationBtn = document.getElementById('btn-formation');
+            const formationLineBtn = document.getElementById('btn-formation-line');
+            const formationMarchBtn = document.getElementById('btn-formation-march');
+            if (formationBtn && formationLineBtn) {
+                if (unit.isWagon() && !unit.hasMoved) {
+                    formationBtn.textContent = i18n.t(unit.formationClosed ? 'game.openFort' : 'game.closeFort');
+                    formationLineBtn.textContent = i18n.t('game.toggleFortLine');
+                    formationBtn.classList.remove('hidden');
+                    formationLineBtn.classList.remove('hidden');
+                } else {
+                    formationBtn.classList.add('hidden');
+                    formationLineBtn.classList.add('hidden');
+                }
+            }
+            // P4: pochod hradby - dostupný pro sepnutý vůz (přepnutí zdarma; ukážeme
+            // i po pohybu, aby šlo zastavit a získat příště plný kryt)
+            if (formationMarchBtn) {
+                if (unit.isWagon() && unit.formationClosed) {
+                    formationMarchBtn.textContent = i18n.t(unit.marching ? 'game.stopMarch' : 'game.startMarch');
+                    formationMarchBtn.classList.remove('hidden');
+                } else {
+                    formationMarchBtn.classList.add('hidden');
+                }
+            }
+
+            // Tlačítko undo - zobrazit pouze pokud je možné vrátit pohyb
+            const undoBtn = document.getElementById('btn-undo');
+            if (this.game.canUndo() && this.game.lastMove && this.game.lastMove.unit === unit) {
+                undoBtn.classList.remove('hidden');
+            } else {
+                undoBtn.classList.add('hidden');
+            }
+        } else {
+            actionsDiv.classList.add('hidden');
+        }
+    }
+
+    updateChoralButton() {
+        const choralBtn = document.getElementById('btn-choral');
+        if (!choralBtn) return;
+
+        if (this.game.choralActive) {
+            // Chorál je aktivní - zobrazit zbývající kola
+            choralBtn.disabled = true;
+            choralBtn.classList.add('active');
+            choralBtn.textContent = `⚔️ ${i18n.t('game.choral')} (${this.game.choralTurnsRemaining})`;
+        } else if (this.game.choralUsed) {
+            // Chorál byl použit a už vypršel
+            choralBtn.disabled = true;
+            choralBtn.classList.remove('active');
+            choralBtn.textContent = `⚔️ ${i18n.t('game.choralUsed')}`;
+        } else {
+            choralBtn.disabled = this.game.currentFaction !== 'hussites';
+            choralBtn.classList.remove('active');
+            choralBtn.textContent = `⚔️ ${i18n.t('game.choral')}`;
+        }
+    }
+
+    showPhase(newPhase) {
+        if (!newPhase) {
+            document.getElementById('phase-panel').classList.add('hidden');
+            return;
+        }
+        // Zobrazení phase panelu
+        const phasePanel = document.getElementById('phase-panel');
+        const phaseIcon = document.getElementById('phase-icon');
+        document.getElementById('phase-name').textContent = newPhase.name;
+        document.getElementById('phase-description').textContent = newPhase.description || '';
+
+        // Nastavení ikony podle typu fáze
+        const phaseIcons = {
+            'surprise': '⚡',
+            'attack': '⚔',
+            'defense': '🛡',
+            'retreat': '🏃',
+            'reinforcement': '📯',
+            'ambush': '🎯',
+            'siege': '🏰',
+            'default': '⚔'
+        };
+        const phaseName = newPhase.name.toLowerCase();
+        let icon = phaseIcons.default;
+        if (phaseName.includes('překvap') || phaseName.includes('surprise')) icon = phaseIcons.surprise;
+        else if (phaseName.includes('útok') || phaseName.includes('attack')) icon = phaseIcons.attack;
+        else if (phaseName.includes('obran') || phaseName.includes('defense')) icon = phaseIcons.defense;
+        else if (phaseName.includes('ústup') || phaseName.includes('retreat')) icon = phaseIcons.retreat;
+        else if (phaseName.includes('posil') || phaseName.includes('reinforcement')) icon = phaseIcons.reinforcement;
+        else if (phaseName.includes('léčk') || phaseName.includes('ambush')) icon = phaseIcons.ambush;
+        else if (phaseName.includes('oblé') || phaseName.includes('siege')) icon = phaseIcons.siege;
+
+        if (phaseIcon) phaseIcon.textContent = icon;
+        phasePanel.classList.remove('hidden');
+    }
+
+    showPhaseBanner(name, description) {
+        const panel = document.getElementById('phase-panel');
+        if (!name) { panel.classList.add('hidden'); return; }
+        document.getElementById('phase-name').textContent = name;
+        document.getElementById('phase-description').textContent = description;
+        panel.classList.remove('hidden');
+    }
+
+    updatePhaseDescription(description) {
+        const element = document.getElementById('phase-description');
+        if (element) element.textContent = description;
+    }
+}
