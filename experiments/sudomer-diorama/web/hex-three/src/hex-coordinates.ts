@@ -53,6 +53,28 @@ export class HexLayout {
       .filter(({ col, row }) => col >= 0 && col < this.cols && row >= 0 && row < this.rows);
   }
 
+  public distanceToMap(x: number, z: number): number {
+    if (this.coordAt(x, z)) return 0;
+    let minimum = Infinity;
+    for (let col = 0; col < this.cols; col += 1) {
+      for (let row = 0; row < this.rows; row += 1) {
+        const center = this.center(col, row);
+        const vertices = Array.from({ length: 6 }, (_, index) => {
+          const angle = index * Math.PI / 3;
+          return { x: center.x + Math.cos(angle) * this.radius, z: center.z + Math.sin(angle) * this.radius };
+        });
+        for (let index = 0; index < vertices.length; index += 1) {
+          const a = vertices[index]!, b = vertices[(index + 1) % vertices.length]!;
+          const vx = b.x - a.x, vz = b.z - a.z;
+          const lengthSquared = vx * vx + vz * vz;
+          const t = Math.max(0, Math.min(1, ((x - a.x) * vx + (z - a.z) * vz) / lengthSquared));
+          minimum = Math.min(minimum, Math.hypot(x - (a.x + vx * t), z - (a.z + vz * t)));
+        }
+      }
+    }
+    return minimum;
+  }
+
   public bounds(margin = this.radius * 1.45): { minX: number; maxX: number; minZ: number; maxZ: number } {
     const centers = [this.center(0, 0), this.center(this.cols - 1, 0),
       this.center(0, this.rows - 1), this.center(this.cols - 1, this.rows - 1)];

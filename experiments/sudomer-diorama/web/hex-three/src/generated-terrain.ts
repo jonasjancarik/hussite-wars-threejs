@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import { HexLayout } from "./hex-coordinates.ts";
-import { createTerrainRegions, type TerrainRegions } from "./terrain-regions.ts";
+import { createTerrainRegions, isFieldTerrain, type TerrainRegions } from "./terrain-regions.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 
 const COLORS: Record<string, number> = {
   plains: 0xacb273, forest: 0x45633c, hills: 0x858453, water: 0x4f918c,
   town: 0xa68768, road: 0xb7a47c, road2: 0x9d8b69, dam: 0xb9aa7b,
   mud: 0x725443, swamp: 0x66705a, slope: 0x837b59, trenches: 0x665342,
-  church: 0x96826b,
+  church: 0x96826b, field: 0xc7ad68, fields: 0xc7ad68, farmland: 0xc7ad68, cropland: 0xc7ad68,
 };
 
 export class GeneratedTerrain implements BattleTerrain {
@@ -147,7 +147,11 @@ export class GeneratedTerrain implements BattleTerrain {
         color.set(0x000000);
         let total = 0;
         for (const [terrain, weight] of Object.entries(weights)) {
-          sampleColor.setHex(COLORS[terrain] ?? 0x8d8b6a);
+          sampleColor.setHex(COLORS[terrain.toLowerCase()] ?? 0x8d8b6a);
+          if (isFieldTerrain(terrain)) {
+            const furrow = 0.86 + 0.14 * (0.5 + 0.5 * Math.sin((x + z * 0.18) * 2.3));
+            sampleColor.multiplyScalar(furrow);
+          }
           color.r += sampleColor.r * weight;
           color.g += sampleColor.g * weight;
           color.b += sampleColor.b * weight;

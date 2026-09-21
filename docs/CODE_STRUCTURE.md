@@ -60,6 +60,11 @@ používá původní `AuthoredTerrain` a `AuthoredScenery` nad živým stavem ka
 Každá výtvarná dekorace si i po sloučení do instancovaných draw callů zachovává
 klíč nejbližšího herního hexu. Pokročilá mlha proto průběžně odhaluje stromy,
 stavby a drobné detaily pouze v prozkoumaných buňkách, bez rozbití batchingu.
+Sudoměřské herní `plains` zůstávají loukou; pole, vesnice, lesní rám a kamenné
+zídky leží mimo hratelnou hexovou plochu. Obecný generátor však samostatně
+rozpoznává `field`, `fields`, `farmland` a `cropland`, takže skutečný polní terén
+má zlatohnědou brázděnou kresbu. 3D pohled zobrazuje celou hexovou síť ve výchozím
+stavu a hráč ji může vypnout tlačítkem v ovládání mapy.
 
 ### Stav se nemění při kreslení
 

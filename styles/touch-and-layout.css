@@ -52,7 +52,8 @@
 }
 .view-mode-controls { display: inline-flex; gap: 3px; }
 #map-tools .view-mode-controls button.active,
-#map-tools .view-mode-controls button[aria-pressed="true"] {
+#map-tools .view-mode-controls button[aria-pressed="true"],
+#map-tools #btn-hex-grid[aria-pressed="true"] {
     background: var(--field-ink);
     color: var(--field-page-light);
 }
@@ -94,6 +95,7 @@
     touch-action: manipulation;
 }
 #map-tools button:disabled, #compact-orders button:disabled { opacity: 0.45; cursor: default; }
+#map-tools button[hidden] { display: none; }
 #map-zoom-in, #map-zoom-out { min-width: 44px; }
 #map-zoom-value { min-width: 44px; text-align: center; font-size: 0.75rem; }
 #minimap { display: none; }
@@ -170,7 +172,15 @@
 .compact-battle #current-player, .compact-battle #turn-number { padding: 3px 5px; min-height: 24px; }
 .compact-battle #game-main { padding: 0; gap: 0; }
 .compact-battle #map-container { padding: 8px; }
-.compact-battle #map-tools { top: 8px; right: 8px; }
+.compact-battle #map-tools {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    max-width: calc(100% - 16px);
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
 .compact-battle #minimap { right: 12px; bottom: 12px; }
 .compact-battle #unit-panel, .compact-battle #info-panel {
     position: absolute;
@@ -224,7 +234,7 @@
 .compact-battle.post-battle-review #btn-next-unit,
 .compact-battle.post-battle-review #btn-unit-sheet > span:last-child { display: none; }
 .compact-battle #battle-order { width: min(420px, calc(100% - 16px)); bottom: 8px; }
-.compact-battle #objectives-panel { position: fixed; inset: 70px 12px auto; width: auto; max-height: calc(100dvh - 160px - var(--browser-bottom-clearance)); overflow: auto; z-index: 180; }
+.compact-battle #objectives-panel { position: fixed; inset: 116px 12px auto; width: auto; max-height: calc(100dvh - 206px - var(--browser-bottom-clearance)); overflow: auto; z-index: 180; }
 .compact-battle #tooltip { display: none; }
 
 @media (max-width: 600px) {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { COLS, ROWS, HexLayout, coordAt, hexCenter, oddQNeighbours } from "../src/hex-coordinates.ts";
+import { COLS, HEX_RADIUS, ROWS, HexLayout, coordAt, hexCenter, oddQNeighbours } from "../src/hex-coordinates.ts";
 import { createTerrainRegions } from "../src/terrain-regions.ts";
 
 test("all 240 authored anchors round-trip", () => {
@@ -39,4 +39,15 @@ test("single-column runtime layout matches the generated terrain field", () => {
   const layout = new HexLayout(1, 2);
   const field = createTerrainRegions({ cols: 1, rows: 2, tiles: [], defaultTerrain: "plains" });
   for (let row = 0; row < 2; row += 1) assert.deepEqual(layout.center(0, row), field.centerAt(0, row));
+});
+
+test("distance to the playable map is exact beside edges and corners", () => {
+  const layout = new HexLayout(1, 1);
+  assert.equal(layout.distanceToMap(0, 0), 0);
+  assert.ok(Math.abs(layout.distanceToMap(HEX_RADIUS + 2, 0) - 2) < 1e-9);
+  const angle = Math.PI / 3;
+  const cornerX = Math.cos(angle) * HEX_RADIUS, cornerZ = Math.sin(angle) * HEX_RADIUS;
+  assert.ok(Math.abs(layout.distanceToMap(
+    cornerX + Math.cos(angle) * 2, cornerZ + Math.sin(angle) * 2,
+  ) - 2) < 1e-9);
 });

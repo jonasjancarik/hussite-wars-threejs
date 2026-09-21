@@ -58,6 +58,7 @@ export class AuthoredScenery implements BattleScenery {
       for (let index = 0, attempts = 0; index < count && attempts < count * 20; attempts += 1) {
         const x = THREE.MathUtils.lerp(minX, maxX, random());
         const z = THREE.MathUtils.lerp(minZ, maxZ, random());
+        if (!this.outsidePlayable(x, z, 3.5)) continue;
         if (!pointInPolygon(x, z, mass.points)) continue;
         if (this.data.clearings.some(clearing => pointInPolygon(x, z, clearing.points))) continue;
         if (distanceToPolyline(x, z, this.data.causeway.points) < 5.5) continue;
@@ -86,7 +87,8 @@ export class AuthoredScenery implements BattleScenery {
       for (let index = 0, attempts = 0; index < shrubCount && attempts < shrubCount * 20; attempts += 1) {
         const x = THREE.MathUtils.lerp(minX, maxX, random());
         const z = THREE.MathUtils.lerp(minZ, maxZ, random());
-        if (!pointInPolygon(x, z, mass.points)
+        if (!this.outsidePlayable(x, z, 1.3)
+          || !pointInPolygon(x, z, mass.points)
           || this.data.clearings.some(clearing => pointInPolygon(x, z, clearing.points))
           || distanceToPolyline(x, z, this.data.causeway.points) < 4.8) continue;
         const shrub = await this.assets.clone("procedural-worlds/pw_shrub_01");
@@ -158,16 +160,24 @@ export class AuthoredScenery implements BattleScenery {
     stones.receiveShadow = true;
     const matrix = new THREE.Matrix4();
     const matrices: THREE.Matrix4[] = [];
-    for (let i = 0; i < stones.count; i += 1) {
+    let instance = 0;
+    for (let attempts = 0; attempts < 2000 && instance < stones.count; attempts += 1) {
       const x = THREE.MathUtils.lerp(-66, 66, random());
       const z = THREE.MathUtils.lerp(-46, 47, random());
+      if (!this.outsidePlayable(x, z, 0.8)) continue;
       const scale = THREE.MathUtils.lerp(0.55, 1.65, random());
       matrix.compose(new THREE.Vector3(x, this.terrain.heightAt(x, z) + 0.13 * scale, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(random(), random() * Math.PI, random())), new THREE.Vector3(scale * 1.3, scale * 0.65, scale));
-      stones.setMatrixAt(i, matrix);
+      stones.setMatrixAt(instance, matrix);
       matrices.push(matrix.clone());
+      instance += 1;
     }
+    stones.count = instance;
     stones.instanceMatrix.needsUpdate = true;
     this.group.add(stones);
     this.visibility.trackInstances(stones, matrices);
+  }
+
+  private outsidePlayable(x: number, z: number, clearance: number): boolean {
+    return this.terrain.layout.distanceToMap(x, z) >= clearance;
   }
 }

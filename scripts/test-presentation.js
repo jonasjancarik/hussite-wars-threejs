@@ -76,6 +76,7 @@ test('vykreslení panelů, mapy a tooltipu nemění herní stav', () => {
 test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou akci', async () => {
     const h = createHarness({ browserView: true });
     let options = null, activeCalls = 0, disposeCalls = 0, snapshots = 0, zoomCalls = 0, createCalls = 0;
+    let gridVisible = null;
     h.context.window.HussiteBattle3D = {
         create: async (_canvas, value) => {
             createCalls++;
@@ -83,6 +84,7 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
             return {
                 applySnapshot: () => { snapshots++; },
                 setActive: () => { activeCalls++; }, resize() {}, frameScene() {}, focusHex() {},
+                setGridVisible: value => { gridVisible = value; },
                 zoomBy: () => { zoomCalls++; }, diagnostics: () => ({}),
                 dispose: () => { disposeCalls++; }
             };
@@ -140,6 +142,15 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     const origin = { col: selected.col, row: selected.row };
     game.view.setViewMode('3d');
     await h.flush();
+    const gridButton = h.document.getElementById('btn-hex-grid');
+    assert.equal(gridButton.hidden, false);
+    assert.equal(gridButton.getAttribute('aria-pressed'), 'true');
+    assert.equal(gridVisible, true, '3D begins with the complete hex grid visible');
+    gridButton.dispatchEvent(new Event('click'));
+    assert.equal(gridVisible, false);
+    assert.equal(gridButton.getAttribute('aria-pressed'), 'false');
+    gridButton.dispatchEvent(new Event('click'));
+    assert.equal(gridVisible, true);
     h.document.hidden = true;
     h.document.dispatchEvent(new Event('visibilitychange'));
     h.document.hidden = false;
@@ -173,7 +184,8 @@ test('3D compact tap uses the same inspect-or-command path as 2D', async () => {
     let options;
     h.context.window.HussiteBattle3D = { create: async (_canvas, value) => {
         options = value;
-        return { applySnapshot() {}, setActive() {}, resize() {}, frameScene() {}, focusHex() {}, zoomBy() {}, dispose() {} };
+        return { applySnapshot() {}, setActive() {}, resize() {}, frameScene() {}, focusHex() {}, zoomBy() {},
+            setGridVisible() {}, dispose() {} };
     } };
     const game = h.newGame('sudomere_1420');
     const selected = game.units.find(unit => unit.faction === 'hussites' && unit.canAct());

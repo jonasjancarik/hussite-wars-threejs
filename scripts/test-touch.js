@@ -399,7 +399,9 @@ test('panel cílů začíná pod kamerou a kompaktní výška počítá se spodn
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.match(css, /#objectives-panel\s*\{[^}]*top:\s*76px/s);
     assert.match(css, /#objectives-panel\s*\{[^}]*right:\s*254px/s);
-    assert.match(css, /max-height:\s*calc\(100dvh - 160px - var\(--browser-bottom-clearance\)\)/);
+    assert.match(css, /\.compact-battle #map-tools\s*\{[^}]*max-width:\s*calc\(100% - 16px\)[^}]*flex-wrap:\s*wrap/s);
+    assert.match(css, /\.compact-battle #objectives-panel\s*\{[^}]*inset:\s*116px 12px auto/s);
+    assert.match(css, /max-height:\s*calc\(100dvh - 206px - var\(--browser-bottom-clearance\)\)/);
     assert.match(css, /max\(env\(safe-area-inset-bottom\), var\(--browser-bottom-clearance\)\)/);
     const mapStart = html.indexOf('<div id="map-container">');
     const infoStart = html.indexOf('<aside id="info-panel">', mapStart);

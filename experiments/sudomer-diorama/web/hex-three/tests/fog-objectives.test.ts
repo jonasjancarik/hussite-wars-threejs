@@ -30,6 +30,28 @@ function nearestVertex(mesh: THREE.Mesh, x: number, z: number): number {
   return nearest;
 }
 
+function averageSurfaceColor(terrain: GeneratedTerrain): THREE.Color {
+  const mesh = terrain.group.children[0] as THREE.Mesh;
+  const colors = mesh.geometry.getAttribute("color") as THREE.BufferAttribute;
+  const average = new THREE.Color(0, 0, 0);
+  for (let index = 0; index < colors.count; index += 1) {
+    average.r += colors.getX(index); average.g += colors.getY(index); average.b += colors.getZ(index);
+  }
+  return average.multiplyScalar(1 / colors.count);
+}
+
+test("a rules-level field hex receives cultivated ground instead of the plains palette", () => {
+  const plains = new GeneratedTerrain(snapshot({ cols: 1, rows: 1,
+    tiles: [{ col: 0, row: 0, terrain: "plains" }] }));
+  const farmland = new GeneratedTerrain(snapshot({ cols: 1, rows: 1,
+    tiles: [{ col: 0, row: 0, terrain: "farmland" }] }));
+  assert.equal(farmland.renderedTerrainAt(0, 0), "farmland");
+  const plainsColor = averageSurfaceColor(plains), fieldColor = averageSurfaceColor(farmland);
+  assert.ok(fieldColor.r > plainsColor.r && fieldColor.b < plainsColor.b,
+    `field ${fieldColor.getHexString()} should differ from plains ${plainsColor.getHexString()}`);
+  plains.dispose(); farmland.dispose();
+});
+
 test("unexplored 3D terrain is masked and restores when fog is disabled", () => {
   const terrain = new GeneratedTerrain(snapshot());
   const surface = terrain.group.children[0] as THREE.Mesh;
@@ -61,6 +83,19 @@ test("fog cover hides unknown cells while objective marker remains above it", ()
   assert.equal(hiddenCover.visible, true);
   assert.equal(hiddenRing.visible, true, "scenario objective remains visible through fog");
   assert.ok(hiddenRing.renderOrder > hiddenCover.renderOrder);
+  terrain.dispose();
+});
+
+test("the complete hex grid is visible by default and can be hidden", () => {
+  const terrain = new GeneratedTerrain(snapshot({ fogOfWar: false, objectiveHexes: [] }));
+  const overlays = new TacticalOverlays(terrain, terrain.layout);
+  overlays.update(snapshot({ fogOfWar: false, objectiveHexes: [] }));
+  const rings = [overlays.group.children[0] as THREE.Mesh, overlays.group.children[3] as THREE.Mesh];
+  assert.ok(rings.every(ring => ring.visible));
+  overlays.setGridVisible(false);
+  assert.ok(rings.every(ring => !ring.visible));
+  overlays.setGridVisible(true);
+  assert.ok(rings.every(ring => ring.visible));
   terrain.dispose();
 });
 

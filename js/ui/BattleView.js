@@ -15,9 +15,11 @@ class BattleView {
         this.mapInput = new BattleMapInput(this);
         this.threeMap = typeof ThreeBattleMapView !== 'undefined' ? new ThreeBattleMapView(this) : {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, resize() {},
-            setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {}, setPageVisible() {}
+            setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
+            setGridVisible() {}, setPageVisible() {}
         };
         this.viewMode = '2d';
+        this.hexGridVisible = true;
         this.backgroundPaused = false;
         this.animationEnabled = false;
         this.moveAnimation = null;
@@ -127,6 +129,11 @@ class BattleView {
         const signal = this.eventAbortController.signal;
         document.getElementById('btn-view-2d')?.addEventListener('click', () => this.setViewMode('2d'), { signal });
         document.getElementById('btn-view-3d')?.addEventListener('click', () => this.setViewMode('3d'), { signal });
+        document.getElementById('btn-hex-grid')?.addEventListener('click', () => {
+            this.hexGridVisible = !this.hexGridVisible;
+            this.threeMap.setGridVisible(this.hexGridVisible);
+            this.updateViewModeControls();
+        }, { signal });
         this.updateViewModeControls();
     }
 
@@ -142,6 +149,7 @@ class BattleView {
             this.game.hexGrid.animations = [];
             document.getElementById('map-zoom-in').disabled = false;
             document.getElementById('map-zoom-out').disabled = false;
+            this.threeMap.setGridVisible(this.hexGridVisible);
             this.threeMap.mount();
             this.minimap.canvas?.classList.remove('map-open');
         } else {
@@ -160,6 +168,12 @@ class BattleView {
             const active = mode === this.viewMode;
             button.setAttribute('aria-pressed', String(active));
             button.classList.toggle('active', active);
+        }
+        const gridButton = document.getElementById('btn-hex-grid');
+        if (gridButton) {
+            gridButton.hidden = this.viewMode !== '3d';
+            gridButton.setAttribute('aria-pressed', String(this.hexGridVisible));
+            gridButton.classList.toggle('active', this.hexGridVisible);
         }
     }
 

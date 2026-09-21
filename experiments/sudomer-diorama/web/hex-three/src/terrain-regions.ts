@@ -153,12 +153,16 @@ function terrainKindNumber(terrain: TerrainType, salt: string): number {
   return hashString(`${salt}:${terrain.toLowerCase()}`) / 0xffffffff;
 }
 
+export function isFieldTerrain(terrain: TerrainType): boolean {
+  return ["field", "fields", "farmland", "cropland"].includes(terrain.toLowerCase());
+}
+
 function terrainBaseHeight(terrain: TerrainType): number {
   const name = terrain.toLowerCase();
   if (name === "water" || name === "river" || name === "lake") return -0.7;
   if (name === "mud" || name === "swamp" || name === "marsh") return -0.42;
   if (name === "dam" || name === "road" || name === "causeway") return 0.1;
-  if (name === "plains" || name === "dry" || name === "field") return 0;
+  if (name === "plains" || name === "dry" || isFieldTerrain(name)) return 0;
   return lerp(-0.18, 0.22, terrainKindNumber(terrain, "height"));
 }
 
@@ -167,7 +171,7 @@ function terrainRoughness(terrain: TerrainType): number {
   if (name === "water" || name === "river" || name === "lake") return 0.08;
   if (name === "mud" || name === "swamp" || name === "marsh") return 0.44;
   if (name === "dam" || name === "road" || name === "causeway") return 0.24;
-  if (name === "plains" || name === "dry" || name === "field") return 0.67;
+  if (name === "plains" || name === "dry" || isFieldTerrain(name)) return 0.67;
   return lerp(0.2, 0.84, terrainKindNumber(terrain, "roughness"));
 }
 
@@ -176,7 +180,7 @@ function terrainWetness(terrain: TerrainType): number {
   if (name === "water" || name === "river" || name === "lake") return 1;
   if (name === "mud" || name === "swamp" || name === "marsh") return 0.9;
   if (name === "dam" || name === "road" || name === "causeway") return 0.28;
-  if (name === "plains" || name === "dry" || name === "field") return 0.16;
+  if (name === "plains" || name === "dry" || isFieldTerrain(name)) return 0.16;
   return lerp(0.08, 0.82, terrainKindNumber(terrain, "wetness"));
 }
 

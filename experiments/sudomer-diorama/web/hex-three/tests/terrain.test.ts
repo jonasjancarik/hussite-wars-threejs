@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { distanceToPolyline, pointInPolygon } from "../src/geometry-utils.ts";
-import { COLS, ROWS, hexCenter, terrainFor, pointInsideHex } from "../src/hex-coordinates.ts";
+import { COLS, ROWS, HexLayout, hexCenter, terrainFor, pointInsideHex } from "../src/hex-coordinates.ts";
 import { loadScenarioArt, terrainHash } from "../src/scenario-art.ts";
 import type { BattleSnapshot, ScenarioArtManifest } from "../src/types.ts";
 
@@ -102,6 +102,22 @@ test("authored organic regions agree with all rules anchors", () => {
     }
   }
   assert.deepEqual(violations, []);
+});
+
+test("decorative fields and landmarks stay outside Sudomer's playable plains", () => {
+  const layout = new HexLayout(COLS, ROWS);
+  for (const landmark of landscape.landmarks) {
+    assert.equal(layout.coordAt(...landmark.position), null, `${landmark.id} is inside a playable hex`);
+  }
+  for (const field of landscape.fields) {
+    const xs = field.points.map(([x]) => x), zs = field.points.map(([, z]) => z);
+    for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.4) {
+      for (let z = Math.min(...zs); z <= Math.max(...zs); z += 0.4) {
+        if (!pointInPolygon(x, z, field.points)) continue;
+        assert.equal(layout.coordAt(x, z), null, `${field.id} overlaps playable hexes at ${x},${z}`);
+      }
+    }
+  }
 });
 
 test("the causeway remains continuous across the authored board", () => {

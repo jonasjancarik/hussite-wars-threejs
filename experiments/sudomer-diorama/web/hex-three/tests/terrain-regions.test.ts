@@ -2,10 +2,23 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createTerrainRegions,
+  isFieldTerrain,
   measureTerrainCoverage,
   type TerrainRegionOptions,
   type TerrainTile,
 } from "../src/terrain-regions.ts";
+
+test("field terrain aliases remain distinct from ordinary plains", () => {
+  for (const name of ["field", "fields", "farmland", "cropland", "FARMLAND"]) {
+    assert.equal(isFieldTerrain(name), true, name);
+  }
+  assert.equal(isFieldTerrain("plains"), false);
+  const regions = createTerrainRegions({ cols: 2, rows: 1, tiles: [
+    { col: 0, row: 0, terrain: "plains" }, { col: 1, row: 0, terrain: "farmland" },
+  ] });
+  assert.equal(regions.classify(regions.getCell(0, 0)!.center.x, regions.getCell(0, 0)!.center.z), "plains");
+  assert.equal(regions.classify(regions.getCell(1, 0)!.center.x, regions.getCell(1, 0)!.center.z), "farmland");
+});
 
 function sudomerTiles(): TerrainTile[] {
   const tiles: TerrainTile[] = [];

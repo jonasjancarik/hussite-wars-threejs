@@ -46,7 +46,7 @@ export class TacticalOverlays {
   private readonly rings = new Map<string, THREE.Mesh>();
   private readonly fills = new Map<string, THREE.Mesh>();
   private readonly fogCovers = new Map<string, THREE.Mesh>();
-  private gridVisible = false;
+  private gridVisible = true;
   private hovered: HexCoord | null = null;
   private snapshot: BattleSnapshot | null = null;
 
@@ -108,7 +108,7 @@ export class TacticalOverlays {
     const explored = new Set(this.snapshot?.exploredHexes ?? []);
     for (const [coordKey, ring] of this.rings) {
       const material = ring.material as THREE.MeshBasicMaterial;
-      let opacity = this.gridVisible ? 0.25 : 0;
+      let opacity = this.gridVisible ? 0.42 : 0;
       let fillOpacity = 0;
       let color = 0xd9d1b5;
       if (objectives.has(coordKey)) {
