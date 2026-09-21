@@ -49,5 +49,10 @@ jobs:
       - run: npm --prefix web/hex-three ci
       - run: npm --prefix web/hex-three test
       - run: ./scripts/build_sudomer_hex_three.sh
+      - name: Integrated campaign bundle is current
+        run: |
+          git ls-files --error-unmatch web/hex-three/integrated/hex-three.js
+          test -s web/hex-three/integrated/hex-three.js
+          git diff --exit-code -- web/hex-three/integrated/hex-three.js
       - run: node scripts/hex-diorama/test-reference.cjs
       - run: node scripts/hex-diorama/test-bridge.cjs

@@ -96,7 +96,7 @@ export class BattleRenderPipeline {
     this.renderer.setClearColor(0x9aa19a, 1);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.VSMShadowMap;
     this.pipeline = new RenderPipeline(this.renderer);

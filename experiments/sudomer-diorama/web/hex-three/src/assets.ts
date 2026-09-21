@@ -5,10 +5,12 @@ export class BattleAssets {
   private readonly loader = new GLTFLoader();
   private readonly cache = new Map<string, Promise<THREE.Group>>();
 
+  public constructor(private readonly baseUrl = new URL("assets/", document.baseURI).href) {}
+
   public load(name: string): Promise<THREE.Group> {
     let asset = this.cache.get(name);
     if (!asset) {
-      const url = new URL(`assets/models/${name}.glb`, document.baseURI).href;
+      const url = new URL(`models/${name}.glb`, this.baseUrl).href;
       asset = this.loader.loadAsync(url).then(({ scene }) => {
         scene.traverse((object) => {
           const mesh = object as THREE.Mesh;

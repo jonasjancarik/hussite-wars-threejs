@@ -14,7 +14,7 @@ const scriptOrder = [
     'js/systems/CombatSystem.js', 'js/systems/BattleActionSystem.js', 'js/systems/SaveGameSystem.js',
     'js/systems/ScenarioEventSystem.js', 'js/systems/FogOfWarSystem.js', 'js/systems/VictoryConditionsSystem.js',
     'js/systems/TutorialSystem.js', 'js/systems/MoraleSystem.js', 'js/systems/ChronicleSystem.js',
-    'js/ui/HistoricalNotesView.js', 'js/ui/ChronicleView.js', 'js/ui/BattlePanels.js', 'js/ui/BattleTooltip.js', 'js/ui/BattleMapInput.js', 'js/ui/BattleOrders.js', 'js/ui/BattleView.js',
+    'js/ui/HistoricalNotesView.js', 'js/ui/ChronicleView.js', 'js/ui/BattlePanels.js', 'js/ui/BattleTooltip.js', 'js/ui/BattleMapInput.js', 'js/ui/BattleOrders.js', 'js/ui/ThreeBattleMapView.js', 'js/ui/BattleView.js',
     'js/core/game.js', 'js/ai.js', 'js/ui/main.js'
 ];
 
@@ -99,11 +99,16 @@ function validateEntrypoint({ html = readFile('index.html'), read = readFile, ex
     assert.deepEqual([...scripts].sort(), [...scriptOrder].sort(), 'Runtime JS soubor není zapojený do index.html nebo smluveného pořadí');
     assert.deepEqual(stylesheets, ['style.css'], 'Chybějící nebo změněný vstupní stylesheet');
 
-    // Dvě dynamická místa načítání: cesty bereme ze zdroje, ne z druhé kopie seznamu assetů.
+    // Dynamická místa načítání: cesty bereme ze zdroje, ne z druhé kopie seznamu assetů.
     const musicSource = read('js/ui/music.js');
     const audio = [...musicSource.matchAll(/new\s+Audio\(\s*(['"])([^'"]+)\1\s*\)/g)];
     assert.equal(audio.length, 1, 'Změněný způsob načítání hudby: aktualizujte kontrolu assetů');
     reference(audio[0][2], 'js/ui/music.js');
+
+    const threeViewSource = read('js/ui/ThreeBattleMapView.js');
+    const threeBundle = threeViewSource.match(/script\.src\s*=\s*(['"])([^'"]+)\1/);
+    assert.ok(threeBundle, 'Změněný způsob načítání 3D rendereru: aktualizujte kontrolu assetů');
+    reference(threeBundle[2], 'js/ui/ThreeBattleMapView.js');
 
     const localeSource = read('js/i18n/i18n.js');
     const locale = [...localeSource.matchAll(/fetch\(\s*`([^`]+)`\s*\)/g)];

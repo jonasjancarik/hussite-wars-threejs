@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { COLS, ROWS, coordAt, hexCenter, oddQNeighbours } from "../src/hex-coordinates.ts";
+import { COLS, ROWS, HexLayout, coordAt, hexCenter, oddQNeighbours } from "../src/hex-coordinates.ts";
+import { createTerrainRegions } from "../src/terrain-regions.ts";
 
 test("all 240 authored anchors round-trip", () => {
   let count = 0;
@@ -32,4 +33,10 @@ test("shared edges resolve deterministically and off-board points reject", () =>
   assert.deepEqual(edge, { col: 8, row: 5 });
   assert.equal(coordAt(-200, 0), null);
   assert.equal(coordAt(0, 200), null);
+});
+
+test("single-column runtime layout matches the generated terrain field", () => {
+  const layout = new HexLayout(1, 2);
+  const field = createTerrainRegions({ cols: 1, rows: 2, tiles: [], defaultTerrain: "plains" });
+  for (let row = 0; row < 2; row += 1) assert.deepEqual(layout.center(0, row), field.centerAt(0, row));
 });

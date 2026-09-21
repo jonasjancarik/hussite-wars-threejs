@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
-import { hexCenter } from "./hex-coordinates.ts";
-import { AuthoredTerrain } from "./terrain.ts";
-import type { BattleSnapshot, UnitSnapshot } from "./types.ts";
+import { HexLayout } from "./hex-coordinates.ts";
+import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; revision: number }
 
@@ -26,7 +25,7 @@ export class UnitPresentation {
   private disposed = false;
   private updateRevision = 0;
 
-  public constructor(private readonly terrain: AuthoredTerrain, private readonly assets: BattleAssets) {
+  public constructor(private readonly terrain: TerrainSurface, private readonly layout: HexLayout, private readonly assets: BattleAssets) {
     this.group.name = "Visible battle formations";
   }
 
@@ -95,7 +94,7 @@ export class UnitPresentation {
       this.hitTargets.push(hit);
       this.group.add(root);
     }
-    const center = hexCenter(unit.col, unit.row);
+    const center = this.layout.center(unit.col, unit.row);
     visual.root.position.set(center.x, this.terrain.heightAt(center.x, center.z) + 0.04, center.z);
     visual.root.scale.setScalar(unit.isRouting ? 0.92 : 1);
     visual.root.rotation.y = unit.marching ? 0.06 : 0;

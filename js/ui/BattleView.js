@@ -13,15 +13,22 @@ class BattleView {
         this.tooltip = new BattleTooltip(game);
         this.orders = new BattleOrders(this);
         this.mapInput = new BattleMapInput(this);
+        this.threeMap = typeof ThreeBattleMapView !== 'undefined' ? new ThreeBattleMapView(this) : {
+            mount: async () => false, unmount() {}, destroy() {}, render() {}, resize() {},
+            setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {}, setPageVisible() {}
+        };
+        this.viewMode = '2d';
         this.backgroundPaused = false;
         this.animationEnabled = false;
         this.moveAnimation = null;
         this.setupEventListeners();
+        this.setupViewModeControls();
     }
 
     destroy() {
         this.mapInput.cancel();
         this.orders.cancel();
+        this.threeMap.destroy();
         this.stopAnimationLoop();
         this.moveAnimation = null;
         this.eventAbortController.abort();
@@ -101,16 +108,75 @@ class BattleView {
         grid.setSelected(unit.col, unit.row);
         if (moves && unit.canMove()) grid.setHighlighted(this.game.getValidMoves(unit));
         if (attacks && unit.canAttack()) grid.setAttackable(this.game.combatSystem.getValidAttackTargets(unit));
+        this.threeMap.setSelection();
     }
 
     clearSelection() {
         this.orders.cancel();
         this.game.hexGrid.setSelected(null, null);
         this.game.hexGrid.clearHighlights();
+        this.threeMap.setSelection();
     }
 
     showMoveRange(unit) {
         this.game.hexGrid.setHighlighted(unit.canMove() ? this.game.getValidMoves(unit) : []);
+        this.threeMap.setSelection();
+    }
+
+    setupViewModeControls() {
+        const signal = this.eventAbortController.signal;
+        document.getElementById('btn-view-2d')?.addEventListener('click', () => this.setViewMode('2d'), { signal });
+        document.getElementById('btn-view-3d')?.addEventListener('click', () => this.setViewMode('3d'), { signal });
+        this.updateViewModeControls();
+    }
+
+    setViewMode(mode, { fromFallback = false } = {}) {
+        if (!['2d', '3d'].includes(mode) || this.game.gameState === 'destroyed') return;
+        if (mode === this.viewMode && !fromFallback) return;
+        this.orders.cancel();
+        this.hideTooltip();
+        this.mapInput.cancel();
+        this.viewMode = mode;
+        if (mode === '3d') {
+            this.stopAnimationLoop();
+            this.game.hexGrid.animations = [];
+            document.getElementById('map-zoom-in').disabled = false;
+            document.getElementById('map-zoom-out').disabled = false;
+            this.threeMap.mount();
+            this.minimap.canvas?.classList.remove('map-open');
+        } else {
+            this.threeMap.unmount();
+            this.mapInput.applySize();
+            this.render();
+            this.startAnimationLoop();
+        }
+        this.updateViewModeControls();
+    }
+
+    updateViewModeControls() {
+        for (const mode of ['2d', '3d']) {
+            const button = document.getElementById(`btn-view-${mode}`);
+            if (!button) continue;
+            const active = mode === this.viewMode;
+            button.setAttribute('aria-pressed', String(active));
+            button.classList.toggle('active', active);
+        }
+    }
+
+    resize() {
+        if (this.viewMode === '3d') this.threeMap.resize();
+        else this.mapInput.applySize();
+    }
+
+    focusSelection() {
+        if (this.viewMode === '3d') this.threeMap.focusSelection();
+        else if (this.game.selectedUnit) this.mapInput.centerOnUnit(this.game.selectedUnit);
+        else this.centerOnPlayerForces();
+    }
+
+    zoomBy(factor) {
+        if (this.viewMode === '3d') this.threeMap.zoomBy(factor);
+        else this.mapInput.zoomTo(this.mapInput.scale * factor);
     }
 
     clearLog() {
@@ -146,6 +212,7 @@ class BattleView {
     }
 
     centerOnPlayerForces() {
+        if (this.viewMode === '3d') { this.threeMap.frameScene(); return; }
         const mapContainer = document.getElementById('map-container');
         if (!mapContainer) return;
 
@@ -281,6 +348,7 @@ class BattleView {
     }
 
     onPauseChange(paused) {
+        this.threeMap.render();
         if (!this.moveAnimation) return;
         this.moveAnimation.lastFrameAt = Date.now();
         if (paused && this.game.hexGrid.animations.length === 0 && this.animationLoop !== null) {
@@ -356,11 +424,14 @@ class BattleView {
                 this.backgroundPaused = !this.game.isPaused && this.game.gameState === 'playing';
                 if (this.backgroundPaused) this.game.setPaused(true);
                 this.stopAnimationLoop();
+                this.threeMap.setPageVisible(false);
             } else {
                 if (this.backgroundPaused) this.game.setPaused(false);
                 this.backgroundPaused = false;
                 this.render();
-                this.startAnimationLoop();
+                if (this.viewMode === '2d') this.startAnimationLoop();
+                else this.stopAnimationLoop();
+                this.threeMap.setPageVisible(true);
             }
         }, { signal });
 
@@ -455,6 +526,7 @@ class BattleView {
         const mapContainer = document.getElementById('map-container');
         if (!mapContainer || !unit) return;
 
+        if (this.viewMode === '3d') { this.threeMap.focusUnit(unit); return; }
         requestAnimationFrame(() => {
             if (this.game.gameState === 'destroyed') return;
             this.mapInput.centerOnUnit(unit);
@@ -480,6 +552,10 @@ class BattleView {
     showDamageNumber(col, row, damage, isHeal = false) {
         // Nastavení "Zobrazovat poškození" dosud nemělo žádný efekt
         if (window.gameSettings && window.gameSettings.showDamage === false) return;
+        if (this.viewMode === '3d') {
+            this.threeMap.effect(isHeal ? 'heal' : 'damage', col, row, { damage });
+            return;
+        }
         const canvas = document.getElementById('game-canvas');
         if (!canvas) return;
 
@@ -505,11 +581,19 @@ class BattleView {
     }
 
     showAttackAnimation(fromCol, fromRow, toCol, toRow) {
+        if (this.viewMode === '3d') {
+            this.threeMap.effect('attack', toCol, toRow, { fromCol, fromRow });
+            return;
+        }
         this.game.hexGrid.addAttackAnimation(fromCol, fromRow, toCol, toRow);
         this.scheduleAnimationFrame();
     }
 
     showExplosionAnimation(col, row) {
+        if (this.viewMode === '3d') {
+            this.threeMap.effect('explosion', col, row);
+            return;
+        }
         this.game.hexGrid.addExplosionAnimation(col, row);
         this.scheduleAnimationFrame();
     }
@@ -536,5 +620,6 @@ class BattleView {
             exploredHexes: this.game.exploredHexes
         }, tokenPositions);
         this.minimap.render(visibleUnits, tokenPositions);
+        this.threeMap.render();
     }
 }

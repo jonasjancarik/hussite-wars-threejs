@@ -23,16 +23,16 @@ class BattleMapInput {
         }, { signal });
         this.container.addEventListener('wheel', e => {
             // Ctrl/kolečko ponecháváme prohlížeči (přístupné zvětšení celé stránky).
+            if (view.viewMode !== '2d') return;
             if (e.ctrlKey || e.metaKey || !e.deltaY) return;
             e.preventDefault();
             this.zoomTo(this.scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX, e.clientY);
         }, { passive: false, signal });
         for (const [id, factor] of [['map-zoom-in', 1.25], ['map-zoom-out', 0.8]]) {
-            document.getElementById(id).addEventListener('click', () => this.zoomTo(this.scale * factor), { signal });
+            document.getElementById(id).addEventListener('click', () => view.zoomBy(factor), { signal });
         }
         document.getElementById('map-center').addEventListener('click', () => {
-            if (view.game.selectedUnit) this.centerOnUnit(view.game.selectedUnit);
-            else view.centerOnPlayerForces();
+            view.focusSelection();
         }, { signal });
     }
 

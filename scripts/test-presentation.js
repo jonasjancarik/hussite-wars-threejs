@@ -73,6 +73,168 @@ test('vykreslení panelů, mapy a tooltipu nemění herní stav', () => {
     game.destroy();
 });
 
+test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou akci', async () => {
+    const h = createHarness({ browserView: true });
+    let options = null, activeCalls = 0, disposeCalls = 0, snapshots = 0, zoomCalls = 0, createCalls = 0;
+    h.context.window.HussiteBattle3D = {
+        create: async (_canvas, value) => {
+            createCalls++;
+            options = value;
+            return {
+                applySnapshot: () => { snapshots++; },
+                setActive: () => { activeCalls++; }, resize() {}, frameScene() {}, focusHex() {},
+                zoomBy: () => { zoomCalls++; }, diagnostics: () => ({}),
+                dispose: () => { disposeCalls++; }
+            };
+        }
+    };
+    const game = h.newGame('sudomere_1420');
+    let randomCalls = 0;
+    h.context.Math.random = () => { randomCalls++; return 0.5; };
+    const selected = game.units.find(unit => unit.faction === 'hussites' && unit.canAct());
+    game.selectUnit(selected);
+    const before = JSON.stringify({
+        turn: game.turnNumber, faction: game.currentFaction,
+        units: game.units.map(unit => [unit.id, unit.col, unit.row, unit.health]),
+        processed: [...game.processedEvents], selected: game.selectedUnit.id
+    });
+    const existingWaits = game.actions.waits.size;
+    game.view.mapInput.scale = 2;
+    game.view.mapInput.applySize();
+    assert.equal(h.document.getElementById('map-zoom-in').disabled, true);
+    game.view.showExplosionAnimation(0, 0);
+    assert.equal(game.view.threeMap.effects.length, 0, '2D effects are not queued for later 3D replay');
+    const pending = game.actions.run(() => game.actions.wait(50));
+    await h.flush();
+    assert.equal(game.actions.busy, true);
+    assert.equal(game.actions.waits.size, existingWaits + 1);
+
+    for (let index = 0; index < 10; index++) {
+        game.view.setViewMode('3d');
+        assert.equal(game.view.animationEnabled, false, 'skrytý 2D pohled nesmí držet RAF smyčku');
+        assert.equal(h.document.getElementById('map-zoom-in').disabled, false, '3D resets 2D zoom limits');
+        assert.equal(h.document.getElementById('map-zoom-out').disabled, false, '3D resets 2D zoom limits');
+        await h.flush();
+        game.view.setViewMode('2d');
+        assert.equal(game.view.animationEnabled, true, 'návrat do 2D obnoví animace aktivního pohledu');
+    }
+    assert.equal(game.view.viewMode, '2d');
+    assert.equal(game.actions.busy, true);
+    assert.equal(game.actions.waits.size, existingWaits + 1, 'přepnutí nesmí zdvojit ani zrušit čekající akci');
+    assert.equal(JSON.stringify({
+        turn: game.turnNumber, faction: game.currentFaction,
+        units: game.units.map(unit => [unit.id, unit.col, unit.row, unit.health]),
+        processed: [...game.processedEvents], selected: game.selectedUnit.id
+    }), before);
+    assert.ok(options, '3D view receives the shared state snapshot');
+    assert.equal(options.snapshot.selectedUnitId, selected.id);
+    assert.deepEqual(options.snapshot.legalMoves.map(({ col, row }) => [col, row]),
+        game.getValidMoves(selected).map(({ col, row }) => [col, row]));
+    assert.ok(activeCalls >= 19, 'one renderer is paused and resumed rather than duplicated');
+    assert.ok(snapshots > 0);
+    assert.equal(randomCalls, 0, 'přepnutí pohledu nesmí spotřebovat herní náhodu');
+
+    // A 3D click uses the normal command path: fenced while busy, then identical
+    // to the 2D command after the pending operation finishes.
+    const target = options.snapshot.legalMoves[0];
+    const origin = { col: selected.col, row: selected.row };
+    game.view.setViewMode('3d');
+    await h.flush();
+    h.document.hidden = true;
+    h.document.dispatchEvent(new Event('visibilitychange'));
+    h.document.hidden = false;
+    h.document.dispatchEvent(new Event('visibilitychange'));
+    assert.equal(game.view.animationEnabled, false, 'tab restoration must not restart hidden 2D RAF');
+    const twoDimensionalScale = game.view.mapInput.scale;
+    game.view.zoomBy(1.25);
+    assert.equal(game.view.mapInput.scale, twoDimensionalScale, '3D zoom must not mutate hidden 2D scale');
+    assert.equal(zoomCalls, 1);
+    game.view.showExplosionAnimation(0, 0);
+    assert.equal(game.hexGrid.animations.length, 0, '3D effects must not queue stale hidden 2D animations');
+    assert.equal(game.view.threeMap.effects.length, 1);
+    options.onHex(target);
+    assert.deepEqual({ col: selected.col, row: selected.row }, origin);
+    await h.advance(50); await pending;
+    assert.equal(game.actions.busy, false);
+    options.onHex(target);
+    await h.advance(300);
+    assert.deepEqual({ col: selected.col, row: selected.row }, { col: target.col, row: target.row });
+    game.hexGrid.setTerrain(0, 0, 'forest');
+    game.view.render();
+    await h.flush();
+    assert.equal(createCalls, 2, 'terrain changes rebuild the generated landscape');
+    assert.equal(disposeCalls, 1, 'stale terrain renderer is disposed before rebuilding');
+    game.destroy();
+    assert.equal(disposeCalls, 2, 'current renderer is disposed exactly once with the game');
+});
+
+test('3D compact tap uses the same inspect-or-command path as 2D', async () => {
+    const h = createHarness({ browserView: true });
+    let options;
+    h.context.window.HussiteBattle3D = { create: async (_canvas, value) => {
+        options = value;
+        return { applySnapshot() {}, setActive() {}, resize() {}, frameScene() {}, focusHex() {}, zoomBy() {}, dispose() {} };
+    } };
+    const game = h.newGame('sudomere_1420');
+    const selected = game.units.find(unit => unit.faction === 'hussites' && unit.canAct());
+    game.selectUnit(selected);
+    h.document.getElementById('game-container').classList.add('compact-battle');
+    game.view.setViewMode('3d');
+    await h.flush();
+    options.onHex({ col: 0, row: 0 });
+    assert.equal(game.selectedUnit, selected, 'inspection must not clear the active compact order');
+    assert.equal(game.view.orders.inspectedHex.col, 0);
+    assert.equal(game.view.orders.inspectedHex.row, 0);
+    game.destroy();
+});
+
+test('3D lazy loader zachytí ready událost i při okamžitém načtení modulu', async () => {
+    const h = createHarness();
+    const eventWindow = new EventTarget();
+    h.context.window = eventWindow;
+    const originalGet = h.document.getElementById;
+    h.document.getElementById = id => id === 'hussite-three-bundle' ? null : originalGet(id);
+    const factory = { create() {} };
+    h.document.head = {
+        appendChild() {
+            eventWindow.HussiteBattle3D = factory;
+            eventWindow.dispatchEvent(new Event('hussite-three-ready'));
+        }
+    };
+    const adapter = Object.create(h.ThreeBattleMapView.prototype);
+    assert.equal(await adapter.waitForFactory(), factory);
+    assert.equal(h.timers.size, 0, 'successful load clears its failure timeout');
+});
+
+test('3D lazy loader removes a failed script so the next attempt can retry immediately', async () => {
+    const h = createHarness();
+    const eventWindow = new EventTarget();
+    h.context.window = eventWindow;
+    let currentScript = null, attempts = 0;
+    h.document.getElementById = id => id === 'hussite-three-bundle' ? currentScript : null;
+    h.document.createElement = () => {
+        const script = new EventTarget();
+        script.remove = () => { if (currentScript === script) currentScript = null; };
+        return script;
+    };
+    const factory = { create() {} };
+    h.document.head = { appendChild(script) {
+        currentScript = script;
+        attempts++;
+        if (attempts === 1) script.dispatchEvent(new Event('error'));
+        else {
+            eventWindow.HussiteBattle3D = factory;
+            eventWindow.dispatchEvent(new Event('hussite-three-ready'));
+        }
+    } };
+    const adapter = Object.create(h.ThreeBattleMapView.prototype);
+    adapter.cancelFactoryWait = null;
+    await assert.rejects(adapter.waitForFactory(), /failed to load/);
+    assert.equal(currentScript, null);
+    assert.equal(await adapter.waitForFactory(), factory);
+    assert.equal(attempts, 2);
+});
+
 test('Plzeň viditelně označí celou cílovou zónu a průběžně počítá obsazení', async () => {
     const h = await createLocalizedHarness('cs', { browserView: true });
     const game = h.newGame('oblehani_plzne_1433');
@@ -81,6 +243,9 @@ test('Plzeň viditelně označí celou cílovou zónu a průběžně počítá o
     assert.equal(game.hexGrid.escapeZoneHexes.length, 20);
     assert.equal(game.hexGrid.escapeZoneLabel, 'CÍL: PLZEŇ');
     assert.match(h.document.getElementById('objective-hud-text').textContent, /Obsazeno 0\/3/);
+    const threeSnapshot = game.view.threeMap.snapshot();
+    assert.equal(threeSnapshot.objectiveKind, 'objective');
+    assert.equal(threeSnapshot.objectiveHexes.length, 20, '3D preserves the full Plzeň objective zone');
 
     const unit = game.units.find(candidate => candidate.faction === 'hussites');
     unit.col = 18;

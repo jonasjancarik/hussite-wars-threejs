@@ -6,7 +6,16 @@ const { createHarness } = require('./harness.cjs');
 const referenceRoot = process.env.HUSSITE_WARS_REFERENCE || path.resolve(__dirname, '../../../..');
 const vendorRoot = path.resolve(__dirname, '../../web/hex-diorama/vendor/husitske-valky');
 const expectedSha = 'dbdf61907212476cda816ff2036a9a8d41bf3572';
-assert.equal(execFileSync('git', ['diff', expectedSha, '--', 'js'], { cwd: referenceRoot, encoding: 'utf8' }).trim(), '', 'upstream rules differ from the pinned reference');
+// The campaign now intentionally adds a root UI adapter and localized view
+// labels. Keep the actual rules/data/AI pinned; presentation parity is tested
+// separately by the shared-state switch tests and browser checks.
+const rulesPaths = [
+    'js/ai.js', 'js/core/game.js', 'js/core/hex.js', 'js/data/campaign.js',
+    'js/data/scenarios.js', 'js/data/unitTypes.js', 'js/entities', 'js/systems'
+];
+assert.equal(execFileSync('git', ['diff', expectedSha, '--', ...rulesPaths],
+    { cwd: referenceRoot, encoding: 'utf8' }).trim(), '',
+'authoritative rules, AI or scenario data differ from the pinned reference');
 
 function logical(game) {
     return JSON.parse(JSON.stringify({

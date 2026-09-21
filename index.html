@@ -31,7 +31,7 @@
     <meta name="twitter:image" content="https://hussitewars.com/imgs/social-preview.png">
     <meta name="twitter:image:alt" content="Husitská vozová hradba pod kalichem · A Hussite wagon fort beneath the chalice banner">
 
-    <link rel="stylesheet" href="style.css?v=8.34">
+    <link rel="stylesheet" href="style.css?v=8.35">
 </head>
 <body class="booting">
     <section id="startup-status" class="startup-status">
@@ -192,6 +192,7 @@
             <div id="map-container">
                 <div id="map-surface">
                     <canvas id="game-canvas" data-i18n-aria-label="touch.battlefield" aria-label="Bojiště"></canvas>
+                    <canvas id="game-canvas-3d" hidden data-i18n-aria-label="touch.battlefield3d" aria-label="3D bojiště"></canvas>
                     <div id="order-marker" class="hidden" aria-hidden="true"></div>
                 </div>
                 <div id="tooltip" class="hidden"></div>
@@ -242,6 +243,10 @@
                 </div>
             </div>
             <div id="map-tools" role="group" data-i18n-aria-label="touch.camera" aria-label="Pohled na mapu">
+                <span class="view-mode-controls" role="group" data-i18n-aria-label="touch.viewMode" aria-label="Zobrazení bojiště">
+                    <button id="btn-view-2d" type="button" aria-pressed="true" data-i18n="touch.view2d">2D mapa</button>
+                    <button id="btn-view-3d" type="button" aria-pressed="false" data-i18n="touch.view3d">3D krajina</button>
+                </span>
                 <button id="map-zoom-out" data-i18n-title="touch.zoomOut" data-i18n-aria-label="touch.zoomOut" aria-label="Oddálit">−</button>
                 <output id="map-zoom-value" aria-live="off">100%</output>
                 <button id="map-zoom-in" data-i18n-title="touch.zoomIn" data-i18n-aria-label="touch.zoomIn" aria-label="Přiblížit">+</button>
@@ -1089,11 +1094,11 @@
     <script src="js/ui/BattleTooltip.js?v=8.16"></script>
     <script src="js/ui/BattleMapInput.js?v=8.8"></script>
     <script src="js/ui/BattleOrders.js?v=8.11"></script>
+    <script src="js/ui/ThreeBattleMapView.js?v=2.0"></script>
     <script src="js/ui/BattleView.js?v=8.19"></script>
     <script src="js/core/game.js?v=8.20"></script>
     <script src="js/ai.js?v=8.21"></script>
     <script src="js/ui/main.js?v=8.31"></script>
-
     <!-- Cloudflare Web Analytics: souhrnné návštěvy bez cookies. -->
     <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"
             data-cf-beacon='{"token":"f59194328b7f418e9a5fa33de63d11e0"}'></script>

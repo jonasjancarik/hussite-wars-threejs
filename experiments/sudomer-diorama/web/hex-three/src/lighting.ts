@@ -10,7 +10,7 @@ export interface BattleLights {
 export function createBattleLighting(scene: THREE.Scene): BattleLights {
   // Procedural-worlds' clear summer afternoon state at 15:30. Keeping the
   // solved palette together avoids the flat, independently tuned look.
-  const hemisphere = new THREE.HemisphereLight(0xc3d9e5, 0xaaa17b, 2.15);
+  const hemisphere = new THREE.HemisphereLight(0xc3d9e5, 0x948c68, 1.15);
   scene.add(hemisphere);
 
   const sun = new THREE.DirectionalLight(0xffffff, 2.2167);

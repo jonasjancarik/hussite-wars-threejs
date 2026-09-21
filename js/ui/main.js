@@ -977,6 +977,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncBrowserBottomClearance(gameContainer, compact);
         if (reframe) {
             game?.view.mapInput.cancel(); game?.view.orders.cancel();
+            game?.view.resize?.();
         }
         if (compact) {
             // Při změně výšky lišty prohlížeče neměnit otevřenou kartu ani kameru.

@@ -10,8 +10,8 @@ export class BattlePaintedSky {
   private texture: THREE.Texture | null = null;
   private readonly lowerVeil: THREE.Mesh;
 
-  public constructor(private readonly scene: THREE.Scene) {
-    const radius = 318;
+  public constructor(private readonly scene: THREE.Scene, private readonly assetBase = new URL("assets/", document.baseURI).href,
+    radius = 500) {
     const geometry = new THREE.SphereGeometry(radius, 64, 32);
     const positions = geometry.getAttribute("position");
     const colors = new Float32Array(positions.count * 4);
@@ -44,7 +44,7 @@ export class BattlePaintedSky {
 
   public async load(): Promise<void> {
     const texture = await new THREE.TextureLoader().loadAsync(
-      new URL("assets/textures/sky/sudomer-painted-day.webp", document.baseURI).href,
+      new URL("textures/sky/sudomer-painted-day.webp", this.assetBase).href,
     );
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -53,7 +53,7 @@ export class BattlePaintedSky {
     this.texture = texture;
     this.scene.background = texture;
     this.scene.environment = texture;
-    this.scene.environmentIntensity = 0.28;
+    this.scene.environmentIntensity = 0.20;
     this.scene.backgroundRotation.set(0, Math.PI * 0.3, 0);
     this.scene.backgroundIntensity = 1.05;
     this.scene.backgroundBlurriness = 0.025;

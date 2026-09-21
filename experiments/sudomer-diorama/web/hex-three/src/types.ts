@@ -32,26 +32,47 @@ export interface BattleSnapshot {
   generation: number;
   revision: number;
   scenario: string | null;
+  seed?: number;
+  cols?: number;
+  rows?: number;
   round: number;
   faction: "hussites" | "crusaders";
   state: string;
   busy: boolean;
   paused: boolean;
   aiRunning: boolean;
-  tiles: Array<HexCoord & { terrain: "plains" | "water" | "mud" | "dam" }>;
+  fogOfWar?: boolean;
+  tiles: Array<HexCoord & { terrain: string }>;
   units: UnitSnapshot[];
   selectedUnitId: number | null;
-  inspection: (HexCoord & { terrain: string; unit: UnitSnapshot | null }) | null;
+  inspection?: (HexCoord & { terrain: string; unit: UnitSnapshot | null }) | null;
   legalMoves: HexCoord[];
   legalAttacks: Array<HexCoord & { unitId: number }>;
   marchTargets: HexCoord[];
+  objectiveHexes?: HexCoord[];
+  objectiveKind?: string;
   visibleHexes: string[];
   exploredHexes: string[];
-  actions: Record<string, boolean>;
-  objective: string;
-  result: unknown;
+  actions?: Record<string, boolean>;
+  objective?: string;
+  result?: unknown;
   events: CosmeticEvent[];
   pausedAt?: number;
+}
+
+export interface TerrainSurface {
+  readonly group: import("three").Group;
+  readonly interactiveMeshes: import("three").Object3D[];
+  heightAt(x: number, z: number): number;
+}
+
+export interface IntegratedRendererOptions {
+  snapshot: BattleSnapshot;
+  assetBase?: string;
+  onHex?(coord: HexCoord): void;
+  onHover?(coord: (HexCoord & { clientX: number; clientY: number }) | null): void;
+  onContext?(): void;
+  onZoom?(percentage: number): void;
 }
 
 export interface LandscapePolygon {
@@ -84,6 +105,18 @@ export interface LandscapeData {
 
 declare global {
   interface Window {
+    HussiteBattle3D?: {
+      create(canvas: HTMLCanvasElement, options: IntegratedRendererOptions): Promise<{
+        applySnapshot(snapshot: BattleSnapshot): void;
+        setActive(active: boolean): void;
+        resize(): void;
+        frameScene(): void;
+        focusHex(col: number, row: number): void;
+        zoomBy(factor: number): void;
+        diagnostics(): Record<string, unknown>;
+        dispose(): void;
+      }>;
+    };
     SudomerHexBridge?: {
       sendCommand(raw: string): string;
       current(): { generation: number; revision: number };

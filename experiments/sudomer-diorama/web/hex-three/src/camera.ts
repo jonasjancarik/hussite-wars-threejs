@@ -8,14 +8,15 @@ export interface BattleCamera {
   resize(width: number, height: number): void;
 }
 
-export function createBattleCamera(canvas: HTMLCanvasElement): BattleCamera {
-  const camera = new THREE.PerspectiveCamera(36, 1, 0.2, 320);
+export function createBattleCamera(canvas: HTMLCanvasElement, extent = 120): BattleCamera {
+  const far = Math.max(420, extent * 4.2);
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.2, far);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.zoomToCursor = true;
   controls.dampingFactor = 0.14;
   controls.minDistance = 32;
-  controls.maxDistance = 235;
+  controls.maxDistance = Math.max(150, Math.min(far * 0.65, extent * 2.2));
   controls.minPolarAngle = 0.36;
   controls.maxPolarAngle = Math.PI * 0.485;
   controls.screenSpacePanning = false;
@@ -26,8 +27,9 @@ export function createBattleCamera(canvas: HTMLCanvasElement): BattleCamera {
   controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
 
   const frameScene = (): void => {
+    const distance = Math.max(70, extent * 0.92);
     controls.target.set(0, 1.1, 0.5);
-    camera.position.set(88, 78, 104);
+    camera.position.set(distance * 0.67, distance * 0.60, distance * 0.79);
     const damping = controls.enableDamping;
     controls.enableDamping = false;
     controls.update();
