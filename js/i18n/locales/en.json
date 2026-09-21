@@ -148,6 +148,8 @@
     "viewMode": "Battlefield view",
     "view2d": "2D map",
     "view3d": "3D landscape",
+    "mapOptions": "Map options",
+    "minimap": "Minimap",
     "hexGrid": "Hex grid",
     "separateBanners": "Separate banners",
     "separateBannersHint": "Move overlapping banners apart. Turn off to keep banners anchored smoothly above their units.",

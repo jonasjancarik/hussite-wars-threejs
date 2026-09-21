@@ -29,6 +29,7 @@ class BattleView {
     }
 
     destroy() {
+        this.setMapOptionsOpen(false);
         this.mapInput.cancel();
         this.orders.cancel();
         this.threeMap.destroy();
@@ -128,6 +129,23 @@ class BattleView {
 
     setupViewModeControls() {
         const signal = this.eventAbortController.signal;
+        document.getElementById('map-options-toggle')?.addEventListener('click', () => {
+            this.setMapOptionsOpen(document.getElementById('map-options').hidden);
+        }, { signal });
+        document.addEventListener('pointerdown', event => {
+            const tools = document.getElementById('map-tools');
+            if (!tools?.contains(event.target)) this.setMapOptionsOpen(false);
+        }, { signal });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !document.getElementById('map-options')?.hidden) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.setMapOptionsOpen(false, true);
+            }
+        }, { signal, capture: true });
+        for (const id of ['map-center', 'btn-minimap']) {
+            document.getElementById(id)?.addEventListener('click', () => this.setMapOptionsOpen(false, true), { signal });
+        }
         document.getElementById('btn-view-2d')?.addEventListener('click', () => this.setViewMode('2d'), { signal });
         document.getElementById('btn-view-3d')?.addEventListener('click', () => this.setViewMode('3d'), { signal });
         document.getElementById('btn-hex-grid')?.addEventListener('click', () => {
@@ -143,9 +161,20 @@ class BattleView {
         this.updateViewModeControls();
     }
 
+    setMapOptionsOpen(open, restoreFocus = false) {
+        const menu = document.getElementById('map-options');
+        const toggle = document.getElementById('map-options-toggle');
+        if (!menu || !toggle) return;
+        menu.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+        if (open) document.getElementById('map-center')?.focus();
+        else if (restoreFocus) toggle.focus();
+    }
+
     setViewMode(mode, { fromFallback = false } = {}) {
         if (!['2d', '3d'].includes(mode) || this.game.gameState === 'destroyed') return;
         if (mode === this.viewMode && !fromFallback) return;
+        this.setMapOptionsOpen(false);
         this.orders.cancel();
         this.hideTooltip();
         this.mapInput.cancel();

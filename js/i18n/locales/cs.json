@@ -148,6 +148,8 @@
     "viewMode": "Zobrazení bojiště",
     "view2d": "2D mapa",
     "view3d": "3D krajina",
+    "mapOptions": "Možnosti mapy",
+    "minimap": "Minimapa",
     "hexGrid": "Hexová síť",
     "separateBanners": "Rozestoupit značky",
     "separateBannersHint": "Rozmístí překrývající se značky. Vypněte pro plynulé sledování jednotek při otáčení mapy.",

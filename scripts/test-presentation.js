@@ -11,6 +11,30 @@ const test = (name, run) => tests.push({ name, run });
 
 const domainFiles = ['js/core/game.js', 'js/systems/CombatSystem.js', 'js/systems/ScenarioEventSystem.js'];
 
+test('map options opens accessibly, retains toggles, and closes with Escape or an action', () => {
+    const h = createHarness({ browserView: true }), game = h.newGame();
+    const toggle = h.document.getElementById('map-options-toggle');
+    const menu = h.document.getElementById('map-options');
+    game.view.setMapOptionsOpen(false);
+    toggle.dispatchEvent(new Event('click'));
+    assert.equal(menu.hidden, false);
+    assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+    assert.equal(h.document.activeElement, h.document.getElementById('map-center'));
+    h.document.getElementById('btn-separate-banners').dispatchEvent(new Event('click'));
+    assert.equal(menu.hidden, false, 'checkbox-style options keep the menu open');
+    const escape = new Event('keydown', { cancelable: true });
+    Object.defineProperty(escape, 'key', { value: 'Escape' });
+    h.document.dispatchEvent(escape);
+    assert.equal(menu.hidden, true);
+    assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(h.document.activeElement, toggle);
+    assert.equal(escape.defaultPrevented, true);
+    toggle.dispatchEvent(new Event('click'));
+    h.document.getElementById('btn-minimap').dispatchEvent(new Event('click'));
+    assert.equal(menu.hidden, true);
+    game.destroy();
+});
+
 test('Game, souboj a scénářové události neobsahují DOM ani animační smyčku', () => {
     for (const file of domainFiles) {
         const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');

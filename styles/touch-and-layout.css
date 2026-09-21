@@ -97,6 +97,17 @@
 }
 #map-tools button:disabled, #compact-orders button:disabled { opacity: 0.45; cursor: default; }
 #map-tools button[hidden] { display: none; }
+#map-options-toggle { min-width:44px; }
+#map-options-toggle span { font-size:1.35rem; line-height:1; }
+#map-options { position:absolute; top:calc(100% + 6px); right:0; z-index:1;
+    display:grid; gap:4px; width:210px; max-width:calc(100vw - 32px);
+    max-height:calc(100dvh - 180px); overflow-y:auto; box-sizing:border-box;
+    padding:8px; border:1px solid var(--field-rule); background:var(--field-page-light);
+    box-shadow:0 3px 10px #0004; }
+#map-options[hidden] { display:none; }
+#map-options strong { padding:4px 3px 7px; font-size:0.85rem; }
+#map-options button { width:100%; text-align:left; }
+#map-options button[aria-pressed=true]::after { content:'✓'; float:right; }
 #map-zoom-in, #map-zoom-out { min-width: 44px; }
 #map-zoom-value { min-width: 44px; text-align: center; font-size: 0.75rem; }
 #minimap { display: none; }
