@@ -2,9 +2,10 @@ import * as THREE from "three";
 import type { BattleAssets } from "./assets.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
+import { visibleSnapshotUnits } from "./unit-visibility.ts";
 
-interface GroundedFigure { object: THREE.Object3D; bottom: number }
-interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number }
+interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
+interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number }
 interface FigureRecipe {
   model: string;
   offsets: Array<[number, number]>;
@@ -83,20 +84,29 @@ export class UnitPresentation {
   }
 
   public async update(snapshot: BattleSnapshot): Promise<void> {
+    if (this.disposed) return;
     const revision = ++this.updateRevision;
-    const visibleIds = new Set(snapshot.units.map(unit => unit.id));
+    const visibleUnits = visibleSnapshotUnits(snapshot);
+    const visibleIds = new Set(visibleUnits.map(unit => unit.id));
     for (const [id, visual] of this.visuals) {
       if (!visibleIds.has(id)) {
         this.group.remove(visual.root);
         this.hitTargets.splice(this.hitTargets.indexOf(visual.hit), 1);
+        visual.hit.geometry.dispose();
+        (visual.hit.material as THREE.Material).dispose();
         this.visuals.delete(id);
       }
     }
-    await Promise.all(snapshot.units.map(unit => this.updateUnit(unit, revision)));
+    await Promise.all(visibleUnits.map(unit => this.updateUnit(unit, revision)));
   }
 
   public worldPosition(unitId: number): THREE.Vector3 | null {
     return this.visuals.get(unitId)?.root.position.clone() ?? null;
+  }
+
+  public markerPosition(unitId: number): THREE.Vector3 | null {
+    const visual = this.visuals.get(unitId);
+    return visual ? visual.root.localToWorld(new THREE.Vector3(0, visual.markerHeight + 0.45, 0)) : null;
   }
 
   public unitIdFromHit(object: THREE.Object3D): number | null {
@@ -108,6 +118,13 @@ export class UnitPresentation {
     if (this.disposed) return;
     this.disposed = true;
     this.updateRevision += 1;
+    for (const visual of this.visuals.values()) {
+      visual.hit.geometry.dispose();
+      (visual.hit.material as THREE.Material).dispose();
+    }
+    this.visuals.clear();
+    this.hitTargets.length = 0;
+    this.group.clear();
     for (const material of this.ownedMaterials) material.dispose();
     this.ownedMaterials.clear();
     this.variants.clear();
@@ -131,15 +148,21 @@ export class UnitPresentation {
           figure.position.set(offset.x, 0, offset.z);
           figure.rotation.y = facing;
           figure.scale.setScalar(recipe.scale);
-          figures.push({ object: figure, bottom: new THREE.Box3().setFromObject(figure).min.y });
+          const box = new THREE.Box3().setFromObject(figure);
+          figures.push({ object: figure, bottom: box.min.y, top: box.max.y,
+            depletes: unit.unitClass !== "commander" && unit.special !== "commander"
+              && unit.unitClass !== "fortification"
+              && (/^(infantry_|cavalry_)/.test(recipe.model) || recipe.model === "artillery_gunner") });
           root.add(figure);
         }
       }
       if (unit.unitClass === "commander") {
         const banner = await this.assets.clone("banner");
+        if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
         banner.position.set(-1.15, 0, -0.45);
         banner.scale.setScalar(0.7);
-        figures.push({ object: banner, bottom: new THREE.Box3().setFromObject(banner).min.y });
+        const box = new THREE.Box3().setFromObject(banner);
+        figures.push({ object: banner, bottom: box.min.y, top: box.max.y, depletes: false });
         root.add(banner);
       }
       const hit = new THREE.Mesh(
@@ -152,7 +175,7 @@ export class UnitPresentation {
       hit.visible = false;
       hit.userData.unitId = unit.id;
       root.add(hit);
-      visual = { root, hit, figures, revision };
+      visual = { root, hit, figures, revision, markerHeight: 0 };
       this.visuals.set(unit.id, visual);
       this.hitTargets.push(hit);
       this.group.add(root);
@@ -163,9 +186,17 @@ export class UnitPresentation {
     visual.root.scale.setScalar(unit.isRouting ? 0.92 : 1);
     visual.root.rotation.y = unit.marching ? 0.06 : 0;
     visual.root.updateMatrixWorld(true);
-    for (const { object, bottom } of visual.figures) {
+    const troopCount = visual.figures.filter(figure => figure.depletes).length;
+    const healthRatio = unit.maxHealth > 0 ? Math.min(1, Math.max(0, unit.health / unit.maxHealth)) : 0;
+    const survivors = Math.max(1, Math.ceil(troopCount * healthRatio));
+    let troopIndex = 0;
+    visual.markerHeight = 0;
+    for (const { object, bottom, top, depletes } of visual.figures) {
+      // Stable slots retain gaps after losses; healing restores those same slots.
+      object.visible = !depletes || troopIndex++ < survivors;
       const world = visual.root.localToWorld(new THREE.Vector3(object.position.x, 0, object.position.z));
       object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
+      if (object.visible) visual.markerHeight = Math.max(visual.markerHeight, object.position.y + top);
     }
     visual.root.updateMatrixWorld(true);
     visual.revision = revision;

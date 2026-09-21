@@ -60,6 +60,137 @@ class WoodcutRenderer {
         return 'sword';
     }
 
+    // The map, 3D adapter, and any future compact UI read this small, data-only
+    // contract. Keep rule methods authoritative when a live Unit supplies them:
+    // rapid fire and mobile artillery cannot be inferred from two boolean flags.
+    static unitPresentation(unit) {
+        const p = this.palette;
+        const ratio = this.safeRatio(unit?.health, unit?.maxHealth);
+        const routing = Boolean(unit?.isRouting);
+        const terrified = Boolean(unit?.isTerrified);
+        const canMove = !routing && this.canMove(unit);
+        const canAttack = !routing && this.canAttack(unit);
+        const canAct = typeof unit?.canAct === 'function' ? unit.canAct() : !unit?.hasMoved || !unit?.hasAttacked;
+        const actionAvailable = !routing && !unit?.isDefending && this.isAlive(unit) && canAct && (canMove || canAttack);
+        const badges = [];
+        const badge = (id, text, label, color) => badges.push({ id, text, label, color });
+
+        // Urgent states lead the ordered list. Renderers may deliberately show
+        // only its first few entries on a small token without changing meaning.
+        if (routing) badge('routing', '↯', this.label('tooltip.routing', 'Routing'), p.danger);
+        if (terrified) badge('terrified', '!', this.label('tooltip.terrified', 'Terrified'), p.danger);
+        if (!routing && this.moraleValue(unit) < 40) {
+            const morale = this.moraleText(unit);
+            badge('low-morale', '↓', `${this.label('game.moraleLabel', 'Morale')}: ${morale}`, this.moraleColor(unit));
+        }
+        if (unit?.isDefending) badge('defending', '⛨', this.label('tooltip.defensiveStance', 'Defending'), p.move);
+        if (unit?.special === 'elite') badge('elite', '★', this.label('special.elite', 'Elite'), p.gold);
+        if (unit?.special === 'veteran') badge('veteran', 'V', this.label('special.veteran', 'Veteran'), p.gold);
+
+        if (this.isWagon(unit)) {
+            if (unit?.formationClosed && unit?.marching) {
+                badge('wagon-marching', '➜', this.label('game.wagonMarchHint', 'Marching wagon fort'), p.gold);
+            } else if (unit?.formationClosed) {
+                badge('wagon-closed', '⛓', this.label('game.wagonChainedHint', 'Chained wagon fort'), p.gold);
+            } else {
+                badge('wagon-open', '○', this.label('unitMarkers.wagonOpen', 'Open wagon'), p.move);
+            }
+        }
+
+        const remainingAttacks = this.remainingAttacks(unit);
+        if (unit?.special === 'rapidFire' && remainingAttacks === 1) {
+            badge('rapid-fire', '1', this.label('tooltip.attacksRemaining', '1 attack remaining', { count: 1 }), p.ink);
+        }
+        if (unit?.chargeBonus) {
+            badge('charge', '➜', this.label('special.charge', 'Charge'), p.red);
+        }
+
+        const healthColor = ratio <= .3 ? '#e99c7d' : ratio <= .6 ? p.gold : p.light;
+        return {
+            glyphPath: this.glyphs[this.glyphKind(unit)],
+            commander: this.isCommander(unit),
+            factionColor: unit?.faction === 'hussites' ? p.red : p.blue,
+            healthColor,
+            healthRatio: ratio,
+            moraleText: this.moraleText(unit),
+            moraleColor: this.moraleColor(unit),
+            badges,
+            actionAvailable,
+            actionText: this.label(actionAvailable ? 'unitMarkers.actionAvailable' : 'unitMarkers.actionSpent',
+                actionAvailable ? 'Ready' : 'No action left')
+        };
+    }
+
+    static safeRatio(value, maximum) {
+        const numerator = Number(value), denominator = Number(maximum);
+        if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) return 0;
+        return Math.max(0, Math.min(1, numerator / denominator));
+    }
+
+    static isAlive(unit) { return Number(unit?.health) > 0; }
+
+    static isWagon(unit) {
+        return typeof unit?.isWagon === 'function' ? unit.isWagon()
+            : unit?.unitClass === 'wagon' || String(unit?.type || '').includes('VOZOVA');
+    }
+
+    static canMove(unit) {
+        if (!this.isAlive(unit)) return false;
+        if (typeof unit?.canMove === 'function') return Boolean(unit.canMove());
+        if (unit?.unitClass === 'fortification') return false;
+        if (this.isWagon(unit) && unit?.formationClosed && !unit?.marching) return false;
+        return !unit?.hasMoved;
+    }
+
+    static canAttack(unit) {
+        if (!this.isAlive(unit) || unit?.isRouting) return false;
+        if (typeof unit?.canAttack === 'function') return Boolean(unit.canAttack());
+        if (unit?.special === 'rapidFire') return Number(unit?.attackCount || 0) < 2;
+        if (unit?.special === 'mobile') return !unit?.hasAttacked;
+        if (unit?.unitClass === 'artillery' && unit?.hasMoved) return false;
+        return !unit?.hasAttacked;
+    }
+
+    static remainingAttacks(unit) {
+        if (!this.isAlive(unit) || unit?.isRouting || unit?.isDefending) return 0;
+        if (typeof unit?.getRemainingAttacks === 'function') {
+            const value = Number(unit.getRemainingAttacks());
+            return Number.isFinite(value) ? Math.max(0, value) : 0;
+        }
+        return unit?.special === 'rapidFire' ? Math.max(0, 2 - Number(unit?.attackCount || 0))
+            : unit?.hasAttacked ? 0 : 1;
+    }
+
+    static moraleText(unit) {
+        if (typeof unit?.getMoraleStatus === 'function') return String(unit.getMoraleStatus());
+        const morale = this.moraleValue(unit);
+        const key = unit?.isRouting ? 'routing' : morale >= 80 ? 'excellent' : morale >= 60 ? 'good'
+            : morale >= 40 ? 'normal' : morale >= 20 ? 'low' : 'critical';
+        return this.label(`moraleStatus.${key}`, key);
+    }
+
+    static moraleColor(unit) {
+        if (typeof unit?.getMoraleColor === 'function') return String(unit.getMoraleColor());
+        const morale = this.moraleValue(unit);
+        if (unit?.isRouting || morale < 20) return '#c02a2a';
+        if (morale >= 80) return '#2f7d31';
+        if (morale >= 60) return '#5c7a1c';
+        if (morale >= 40) return '#987316';
+        return '#bd5a18';
+    }
+
+    static moraleValue(unit) {
+        const morale = Number(unit?.morale);
+        return Number.isFinite(morale) ? morale : 0;
+    }
+
+    static label(key, fallback, params = {}) {
+        if (typeof i18n !== 'undefined' && typeof i18n.hasTranslation === 'function' && i18n.hasTranslation(key)) {
+            return i18n.t(key, params);
+        }
+        return fallback;
+    }
+
     static icon(unit) {
         const d = this.glyphs[this.glyphKind(unit)];
         const commander = this.isCommander(unit);
@@ -296,8 +427,9 @@ class WoodcutRenderer {
     unit(unit, position = null) {
         const ctx = this.ctx, p = WoodcutRenderer.palette, grid = this.grid;
         const { x, y } = position || grid.hexToPixel(unit.col, unit.row), r = grid.hexSize * .61;
-        const enemy = unit.faction !== 'hussites', color = enemy ? p.blue : p.red;
-        const commander = WoodcutRenderer.isCommander(unit);
+        const presentation = WoodcutRenderer.unitPresentation(unit);
+        const enemy = unit.faction !== 'hussites', color = presentation.factionColor;
+        const commander = presentation.commander;
         ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round';
         this.tokenPath(enemy, r, commander); ctx.fillStyle = p.light; ctx.fill(); ctx.lineWidth = commander ? 2.8 : 2.2; ctx.strokeStyle = p.ink; ctx.stroke();
         this.tokenPath(enemy, r - 3, commander); ctx.fillStyle = color; ctx.fill();
@@ -309,25 +441,29 @@ class WoodcutRenderer {
         ctx.save(); ctx.scale(r / 24, r / 24); ctx.strokeStyle = p.light; ctx.lineWidth = 2.1; ctx.lineCap = 'round';
         ctx.stroke(WoodcutRenderer.paths.get(kind)); ctx.restore();
 
-        // States retain explicit marks, not only a change of color.
-        if (unit.hasMoved && unit.hasAttacked) {
+        // States retain explicit marks, not only a change of color. `actionAvailable`
+        // observes the live rules, so rapid fire and artillery after movement read correctly.
+        const canMove = WoodcutRenderer.canMove(unit), canAttack = WoodcutRenderer.canAttack(unit);
+        if (!presentation.actionAvailable) {
             this.tokenPath(enemy, r - 3, commander); ctx.fillStyle = 'rgba(40,48,43,.42)'; ctx.fill(); this.badge('✓', r - 2, -r + 2, p.ink);
-        } else if (unit.hasMoved) this.badge('↻', r - 2, -r + 2, p.gold);
-        else if (unit.hasAttacked) this.badge('×', r - 2, -r + 2, p.red);
+        } else if (!canMove) this.badge('↻', r - 2, -r + 2, p.gold);
+        else if (!canAttack) this.badge('×', r - 2, -r + 2, p.red);
         if (unit.isDefending) {
             this.tokenPath(enemy, r + 4, commander); ctx.lineWidth = 2; ctx.strokeStyle = p.move; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
         }
-        if (unit.isRouting || unit.isTerrified) this.badge('!', -r + 2, -r + 2, p.danger);
-        if (unit.special === 'rapidFire' && unit.attackCount === 1) this.badge('1', r, r - 3, p.ink);
-        if (unit.chargeBonus) this.badge('➜', -r, r - 3, p.red);
+        // Keep the top-right action mark free; both maps show up to three statuses.
+        const badgePositions = [[-r + 2, -r + 2], [r - 2, r - 3], [-r, r - 3]];
+        presentation.badges.slice(0, badgePositions.length).forEach((badge, index) => {
+            this.badge(badge.text, ...badgePositions[index], badge.color);
+        });
         if (commander) {
             ctx.strokeStyle = p.light; ctx.lineWidth = 1; this.tokenPath(enemy, r - 5, true); ctx.stroke();
         }
 
-        const hp = Math.max(0, Math.min(1, unit.health / unit.maxHealth || 0)), w = r * 1.65, by = r + 7;
+        const hp = presentation.healthRatio, w = r * 1.65, by = r + 7;
         ctx.fillStyle = p.ink; ctx.fillRect(-w / 2 - 1, by - 1, w + 2, 6);
         ctx.fillStyle = '#8c8672'; ctx.fillRect(-w / 2, by, w, 4);
-        ctx.fillStyle = hp <= .3 ? '#e99c7d' : p.light; ctx.fillRect(-w / 2, by, w * hp, 4);
+        ctx.fillStyle = presentation.healthColor; ctx.fillRect(-w / 2, by, w * hp, 4);
         ctx.fillStyle = p.ink;
         for (let i = 1; i < 4; i++) ctx.fillRect(-w / 2 + w * i / 4, by, .8, 4);
         ctx.restore();

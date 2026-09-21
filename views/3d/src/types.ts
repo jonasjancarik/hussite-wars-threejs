@@ -1,5 +1,19 @@
 export interface HexCoord { col: number; row: number }
 
+/** Display facts supplied by the shared 2D renderer; never a second rules engine. */
+export interface UnitMarkerPresentation {
+  glyphPath: string;
+  commander: boolean;
+  factionColor: string;
+  healthColor: string;
+  healthRatio: number;
+  moraleText: string;
+  moraleColor: string;
+  badges: Array<{ id: string; text: string; label: string; color: string }>;
+  actionAvailable: boolean;
+  actionText: string;
+}
+
 export interface UnitSnapshot extends HexCoord {
   id: number;
   type: string;
@@ -16,6 +30,8 @@ export interface UnitSnapshot extends HexCoord {
   isRouting: boolean;
   formationClosed: boolean;
   marching: boolean;
+  special?: string | null;
+  presentation?: UnitMarkerPresentation;
 }
 
 export interface CosmeticEvent extends HexCoord {

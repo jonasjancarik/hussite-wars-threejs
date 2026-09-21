@@ -297,6 +297,11 @@
     "low": "Low",
     "critical": "Critical"
   },
+  "unitMarkers": {
+    "wagonOpen": "Open wagon",
+    "actionAvailable": "Ready",
+    "actionSpent": "No action left"
+  },
   "tooltip": {
     "visibility": "Vision",
     "attackStrength": "Attack strength by health: {value}%",

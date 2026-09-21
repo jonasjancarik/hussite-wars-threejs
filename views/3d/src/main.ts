@@ -17,6 +17,8 @@ import { BattlePaintedSky } from "./sky.ts";
 import { AuthoredTerrain } from "./terrain.ts";
 import type { BattleScenery, BattleSnapshot, BattleTerrain, CosmeticEvent, HexCoord, IntegratedRendererOptions, ScenarioArtManifest } from "./types.ts";
 import { UnitPresentation } from "./units.ts";
+import { UnitBanners } from "./unit-banners.ts";
+import { WagonConnections } from "./wagon-connections.ts";
 
 class IntegratedThreeBattle {
   private readonly scene = new THREE.Scene();
@@ -27,6 +29,8 @@ class IntegratedThreeBattle {
   private readonly cameraRig;
   private readonly pipeline;
   private readonly units: UnitPresentation;
+  private readonly banners: UnitBanners;
+  private readonly wagonConnections: WagonConnections;
   private readonly overlays: TacticalOverlays;
   private readonly effects = new BattlefieldEffects();
   private readonly lighting;
@@ -78,11 +82,14 @@ class IntegratedThreeBattle {
       ambientOcclusion: true, depthOfFieldMode: "compact", effects: true, gtaoSamples: 12, maxPixelRatio: 2,
     });
     this.units = new UnitPresentation(this.terrain, this.terrain.layout, this.assets);
+    this.banners = new UnitBanners(canvas, coord => this.options.onHex?.(coord));
+    this.wagonConnections = new WagonConnections(this.terrain, this.terrain.layout);
     this.overlays = new TacticalOverlays(this.terrain, this.terrain.layout);
     this.lighting = createBattleLighting(this.scene);
     this.picker = new BattlePicker(canvas, this.cameraRig.camera, this.terrain.layout);
     this.sky = new BattlePaintedSky(this.scene, assetBase, Math.max(500, extent * 3.7));
-    this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group);
+    this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.wagonConnections.group,
+      this.overlays.group, this.effects.group);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement ?? canvas);
     this.installInput();
@@ -114,6 +121,8 @@ class IntegratedThreeBattle {
     this.terrain.updateVisibility(snapshot);
     this.scenery.updateVisibility(snapshot);
     this.overlays.update(snapshot);
+    this.banners.update(snapshot);
+    this.wagonConnections.update(snapshot);
     await this.units.update(snapshot);
     if (this.disposed || revision !== this.snapshotRevision) return;
     this.effects.setPaused(snapshot.paused || !this.active);
@@ -130,6 +139,7 @@ class IntegratedThreeBattle {
   public setActive(active: boolean): void {
     if (this.disposed || this.active === active) return;
     this.active = active;
+    this.banners.setActive(active);
     this.effects.setPaused(!active);
     if (!active && this.frameRequest !== null) {
       cancelAnimationFrame(this.frameRequest);
@@ -180,6 +190,7 @@ class IntegratedThreeBattle {
     const rect = this.canvas.getBoundingClientRect();
     this.cameraRig.resize(rect.width, rect.height);
     this.pipeline.resize(rect.width, rect.height);
+    this.banners.resize();
   }
 
   public diagnostics(): Record<string, unknown> {
@@ -229,6 +240,8 @@ class IntegratedThreeBattle {
     this.cameraRig.controls.dispose();
     this.scenery.dispose();
     this.units.dispose();
+    this.banners.dispose();
+    this.wagonConnections.dispose();
     this.sky.dispose();
     this.terrain.dispose();
     this.pipeline.dispose();
@@ -266,7 +279,8 @@ class IntegratedThreeBattle {
       const unitHit = this.picker.unitAt(event.clientX, event.clientY, this.units.hitTargets);
       const unitId = unitHit ? this.units.unitIdFromHit(unitHit) : null;
       const unit = unitId == null ? null : this.options.snapshot.units.find(item => item.id === unitId);
-      const coord = unit ?? this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
+      const coord = this.banners.unitAt(event.clientX, event.clientY)
+        ?? unit ?? this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
       if (coord) this.options.onHex?.({ col: coord.col, row: coord.row });
     };
     this.addListener(this.canvas, "pointerup", finish as EventListener);
@@ -287,7 +301,8 @@ class IntegratedThreeBattle {
     if (this.gestures.size > 0 || event.pointerType !== "mouse") return;
     const focusPoint = this.picker.worldPointAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
     if (focusPoint) this.focusOn(focusPoint);
-    const coord = this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
+    const coord = this.banners.unitAt(event.clientX, event.clientY)
+      ?? this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
     this.overlays.setHovered(coord);
     this.options.onHover?.(coord ? { ...coord, clientX: event.clientX, clientY: event.clientY } : null);
   }
@@ -331,6 +346,7 @@ class IntegratedThreeBattle {
     this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, this.targetFocusDistance, focusSmoothingAlpha(delta, 180));
     this.pipeline.setDepthOfField(!this.cameraMoving, this.focusDistance, this.cameraMoving ? 0 : 0.35);
     this.sky.update(this.cameraRig.camera);
+    this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id));
     this.lighting.updateShadows();
     const rendererStartedAt = performance.now();
     this.pipeline.renderer.info.reset();

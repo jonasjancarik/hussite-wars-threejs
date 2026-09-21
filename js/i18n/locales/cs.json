@@ -297,6 +297,11 @@
     "low": "Nízká",
     "critical": "Kritická"
   },
+  "unitMarkers": {
+    "wagonOpen": "Rozpojený vůz",
+    "actionAvailable": "Připraven",
+    "actionSpent": "Už nemůže jednat"
+  },
   "tooltip": {
     "visibility": "Dohled",
     "attackStrength": "Síla útoku dle zdraví: {value}%",

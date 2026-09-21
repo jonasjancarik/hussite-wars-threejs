@@ -188,7 +188,9 @@ test('strany se liší tvarem a zdravotní lišta zůstává viditelná po vyče
     unit.hasMoved = unit.hasAttacked = true; unit.isTerrified = unit.isDefending = true;
     unit.chargeBonus = true; unit.special = 'rapidFire'; unit.attackCount = 1;
     h.calls.length = 0; h.grid.renderer.unit(unit);
-    for (const label of ['✓', '!', '1', '➜']) assert.ok(h.calls.some(call => call[0] === 'fillText' && call[1] === label));
+    // A defending unit is spent; status marks must not overwrite that check.
+    for (const label of ['✓', '!', '⛨', '➜']) assert.ok(h.calls.some(call => call[0] === 'fillText' && call[1] === label));
+    assert.ok(!h.calls.some(call => call[0] === 'fillText' && call[1] === '1'));
     assert.equal(h.calls.at(-2)[0], 'fillRect'); // health segments drawn last, above state shading
     assert.equal(h.stack.length, 0);
 });
