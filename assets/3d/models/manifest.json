@@ -320,5 +320,85 @@
     "up_axis": "Y",
     "animations": [],
     "animation_seconds": null
+  },
+  "artillery_houfnice": {
+    "file": "units/artillery_houfnice.glb",
+    "dimensions_blender_xyz_m": [
+      2.239,
+      1.68,
+      1.318
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.239,
+      1.318,
+      1.68
+    ],
+    "mesh_objects": 7,
+    "editable_source_mesh_objects": 62,
+    "triangles": 2904,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "artillery_tarasnice": {
+    "file": "units/artillery_tarasnice.glb",
+    "dimensions_blender_xyz_m": [
+      2.705,
+      1.34,
+      0.866
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.705,
+      0.866,
+      1.34
+    ],
+    "mesh_objects": 6,
+    "editable_source_mesh_objects": 61,
+    "triangles": 2724,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "artillery_bombard": {
+    "file": "units/artillery_bombard.glb",
+    "dimensions_blender_xyz_m": [
+      3.08,
+      1.355,
+      1.463
+    ],
+    "dimensions_gltf_xyz_m": [
+      3.08,
+      1.463,
+      1.355
+    ],
+    "mesh_objects": 7,
+    "editable_source_mesh_objects": 68,
+    "triangles": 3068,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "artillery_gunner": {
+    "file": "units/artillery_gunner.glb",
+    "dimensions_blender_xyz_m": [
+      0.793,
+      0.783,
+      2.006
+    ],
+    "dimensions_gltf_xyz_m": [
+      0.793,
+      2.006,
+      0.783
+    ],
+    "mesh_objects": 11,
+    "editable_source_mesh_objects": 32,
+    "triangles": 1076,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
   }
 }

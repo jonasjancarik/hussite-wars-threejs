@@ -16,6 +16,7 @@ class TestAssets {
     this.loaded.push(name);
     if (this.models[name]) return this.models[name]!;
     const model = new THREE.Group();
+    model.name = name;
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), new THREE.MeshStandardMaterial());
     mesh.position.y = 0.8; // Deliberately exported with its feet above the origin.
     model.add(mesh);
@@ -119,6 +120,41 @@ test("maps the first dedicated infantry batch and keeps five-figure formations",
   }
 });
 
+test("maps artillery to one gun and two independently placed crew", async () => {
+  const assets = new TestAssets();
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(6, 1), assets);
+  const artillery = ["HOUFNICE", "HOUFNICE_PRASKY", "TARASNICE", "POLNI_DELO", "BOMBARDA"];
+  await units.update(snapshotWithUnits(artillery.map((type, index) => unit(index + 1, type))));
+
+  assert.deepEqual(new Set(assets.loaded), new Set(["artillery_houfnice", "artillery_tarasnice", "artillery_bombard", "artillery_gunner"]));
+  for (const formation of units.group.children) {
+    const pieces = formation.children.filter(child => child instanceof THREE.Group);
+    assert.equal(pieces.length, 3);
+    assert.equal(pieces.filter(piece => piece.name === "artillery_gunner").length, 2);
+    assert.equal(pieces.filter(piece => piece.name.startsWith("artillery_") && piece.name !== "artillery_gunner").length, 1);
+  }
+});
+
+test("artillery gun and crew figures each follow rotated routing terrain", async () => {
+  const height = (x: number, z: number): number => 0.16 * x + 0.09 * z;
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [],
+    heightAt: () => 50, renderedHeightAt: height }, new HexLayout(4, 2), new TestAssets());
+  const artillery = unit(1, "TARASNICE", "crusaders");
+  artillery.marching = true;
+  artillery.isRouting = true;
+  await units.update(snapshotWithUnits([artillery]));
+  const formation = units.group.children[0]!;
+  const pieces = formation.children.filter(child => child instanceof THREE.Group);
+  assert.equal(pieces.length, 3);
+  for (const piece of pieces) {
+    const position = piece.getWorldPosition(new THREE.Vector3());
+    const bottom = new THREE.Box3().setFromObject(piece).min.y;
+    assert.ok(Math.abs(bottom - height(position.x, position.z)) < 1e-6,
+      `feet ${bottom}, terrain ${height(position.x, position.z)}`);
+  }
+});
+
 test("recolours tagged team materials per faction without changing prototypes or neutral materials", async () => {
   const cloth = new THREE.MeshStandardMaterial({ name: "team_cloth", color: 0x123456 });
   const paint = new THREE.MeshStandardMaterial({ name: "team_paint", color: 0x654321 });
@@ -149,6 +185,30 @@ test("recolours tagged team materials per faction without changing prototypes or
   assert.equal(paint.color.getHex(), 0x654321);
   assert.equal(neutral.color.getHex(), 0xaabbcc);
   assert.equal(hussiteMaterials.find(material => material.name === "leather"), neutral);
+});
+
+test("artillery gunners use the faction palette on both sides", async () => {
+  const cloth = new THREE.MeshStandardMaterial({ name: "team_cloth", color: 0x123456 });
+  const gunner = new THREE.Group();
+  gunner.name = "artillery_gunner";
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), cloth);
+  mesh.position.y = 0.8;
+  gunner.add(mesh);
+  const assets = new TestAssets({ artillery_gunner: gunner });
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(4, 1), assets);
+  await units.update(snapshotWithUnits([
+    unit(1, "HOUFNICE", "hussites"), unit(2, "HOUFNICE_PRASKY", "crusaders"),
+  ]));
+
+  const hussiteGunner = units.group.children[0]!.children.find(child => child.name === "artillery_gunner")!;
+  const crusaderGunner = units.group.children[1]!.children.find(child => child.name === "artillery_gunner")!;
+  const hussiteCloth = materialsIn(hussiteGunner).find(material => material.name === "team_cloth")! as THREE.MeshStandardMaterial;
+  const crusaderCloth = materialsIn(crusaderGunner).find(material => material.name === "team_cloth")! as THREE.MeshStandardMaterial;
+  assert.equal(hussiteCloth.color.getHex(), 0x9b4f4f);
+  assert.equal(crusaderCloth.color.getHex(), 0x587493);
+  assert.notEqual(hussiteCloth, crusaderCloth);
+  assert.equal(cloth.color.getHex(), 0x123456);
 });
 
 test("disposes presenter-owned faction material variants", async () => {

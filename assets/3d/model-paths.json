@@ -22,5 +22,9 @@
   "procedural-worlds/pw_shrub_01": "models/vegetation/procedural-worlds/pw_shrub_01.glb",
   "infantry_flail": "models/units/infantry_flail.glb",
   "infantry_crossbow": "models/units/infantry_crossbow.glb",
-  "infantry_pavise": "models/units/infantry_pavise.glb"
+  "infantry_pavise": "models/units/infantry_pavise.glb",
+  "artillery_houfnice": "models/units/artillery_houfnice.glb",
+  "artillery_tarasnice": "models/units/artillery_tarasnice.glb",
+  "artillery_bombard": "models/units/artillery_bombard.glb",
+  "artillery_gunner": "models/units/artillery_gunner.glb"
 }

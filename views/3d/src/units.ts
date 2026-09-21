@@ -5,6 +5,12 @@ import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 
 interface GroundedFigure { object: THREE.Object3D; bottom: number }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number }
+interface FigureRecipe {
+  model: string;
+  offsets: Array<[number, number]>;
+  scale: number;
+  rotateOffsetsWithFacing?: boolean;
+}
 
 const TEAM_MATERIAL_COLORS = {
   hussites: { team_cloth: 0x9b4f4f, team_paint: 0x7f3f3b },
@@ -12,19 +18,35 @@ const TEAM_MATERIAL_COLORS = {
 } as const;
 const TEAM_MATERIAL_NAMES = new Set(["team_cloth", "team_paint"]);
 
-function displayRecipe(unit: UnitSnapshot): { model: string; offsets: Array<[number, number]>; scale: number } {
-  if (unit.type === "VOZOVA_HRADBA") return { model: "war_wagon", offsets: [[0, 0]], scale: 1.1 };
-  if (["JIZDA_HUSITI", "TEZKY_RYTIR", "TEZKOODENCI"].includes(unit.type)) {
-    return { model: "cavalry", offsets: [[-0.82, -0.34], [0.74, 0.38]], scale: 0.98 };
+function displayRecipe(unit: UnitSnapshot): FigureRecipe[] {
+  if (["HOUFNICE", "HOUFNICE_PRASKY"].includes(unit.type)) {
+    return artilleryRecipe("artillery_houfnice");
   }
-  if (["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(unit.type)) return { model: "infantry_shield", offsets: [[0, 0]], scale: 1.28 };
-  if (unit.type === "VACLAV_KORANDA") return { model: "infantry_handgun", offsets: [[0, 0]], scale: 1.24 };
+  if (["TARASNICE", "POLNI_DELO"].includes(unit.type)) {
+    return artilleryRecipe("artillery_tarasnice");
+  }
+  if (unit.type === "BOMBARDA") return artilleryRecipe("artillery_bombard");
+  if (unit.type === "VOZOVA_HRADBA") return [{ model: "war_wagon", offsets: [[0, 0]], scale: 1.1 }];
+  if (["JIZDA_HUSITI", "TEZKY_RYTIR", "TEZKOODENCI"].includes(unit.type)) {
+    return [{ model: "cavalry", offsets: [[-0.82, -0.34], [0.74, 0.38]], scale: 0.98 }];
+  }
+  if (["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(unit.type)) {
+    return [{ model: "infantry_shield", offsets: [[0, 0]], scale: 1.28 }];
+  }
+  if (unit.type === "VACLAV_KORANDA") return [{ model: "infantry_handgun", offsets: [[0, 0]], scale: 1.24 }];
   const model = unit.type === "RUCNICARI" ? "infantry_handgun"
     : ["CEPNICI", "CEPNICI_PRASKY"].includes(unit.type) ? "infantry_flail"
       : ["KUSINICI_HUSITI", "KUSNICI", "KUSNICI_JANOV", "KUSINICI_PRASKY"].includes(unit.type) ? "infantry_crossbow"
         : ["PAVEZNICI", "PAVEZNICI_KRIZACI"].includes(unit.type) ? "infantry_pavise"
       : "infantry_polearm";
-  return { model, offsets: [[-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1]], scale: 1.15 };
+  return [{ model, offsets: [[-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1]], scale: 1.15 }];
+}
+
+function artilleryRecipe(model: string): FigureRecipe[] {
+  return [
+    { model, offsets: [[0, 0]], scale: 1 },
+    { model: "artillery_gunner", offsets: [[-0.5, -1.2], [-0.5, 1.2]], scale: 1.05, rotateOffsetsWithFacing: true },
+  ];
 }
 
 export class UnitPresentation {
@@ -82,18 +104,22 @@ export class UnitPresentation {
     if (!visual) {
       const root = new THREE.Group();
       root.name = `${unit.name} (${unit.id})`;
-      const recipe = displayRecipe(unit);
-      const prototype = await this.variant(recipe.model, unit.faction);
-      if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
       const facing = unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
       const figures: GroundedFigure[] = [];
-      for (const [offsetX, offsetZ] of recipe.offsets) {
-        const figure = prototype.clone(true);
-        figure.position.set(offsetX, 0, offsetZ);
-        figure.rotation.y = facing;
-        figure.scale.setScalar(recipe.scale);
-        figures.push({ object: figure, bottom: new THREE.Box3().setFromObject(figure).min.y });
-        root.add(figure);
+      for (const recipe of displayRecipe(unit)) {
+        const prototype = await this.variant(recipe.model, unit.faction);
+        if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
+        for (const [offsetX, offsetZ] of recipe.offsets) {
+          const figure = prototype.clone(true);
+          const offset = recipe.rotateOffsetsWithFacing
+            ? new THREE.Vector3(offsetX, 0, offsetZ).applyAxisAngle(new THREE.Vector3(0, 1, 0), facing)
+            : new THREE.Vector3(offsetX, 0, offsetZ);
+          figure.position.set(offset.x, 0, offset.z);
+          figure.rotation.y = facing;
+          figure.scale.setScalar(recipe.scale);
+          figures.push({ object: figure, bottom: new THREE.Box3().setFromObject(figure).min.y });
+          root.add(figure);
+        }
       }
       if (unit.unitClass === "commander") {
         const banner = await this.assets.clone("banner");

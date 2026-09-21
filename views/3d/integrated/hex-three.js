@@ -9178,7 +9178,11 @@ var gu = {
 	"procedural-worlds/pw_shrub_01": "models/vegetation/procedural-worlds/pw_shrub_01.glb",
 	infantry_flail: "models/units/infantry_flail.glb",
 	infantry_crossbow: "models/units/infantry_crossbow.glb",
-	infantry_pavise: "models/units/infantry_pavise.glb"
+	infantry_pavise: "models/units/infantry_pavise.glb",
+	artillery_houfnice: "models/units/artillery_houfnice.glb",
+	artillery_tarasnice: "models/units/artillery_tarasnice.glb",
+	artillery_bombard: "models/units/artillery_bombard.glb",
+	artillery_gunner: "models/units/artillery_gunner.glb"
 }, _u = class {
 	baseUrl;
 	loader = new gl();
@@ -31417,27 +31421,27 @@ var tV = class {
 	}
 }, rV = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]);
 function iV(e) {
-	return e.type === "VOZOVA_HRADBA" ? {
+	return ["HOUFNICE", "HOUFNICE_PRASKY"].includes(e.type) ? aV("artillery_houfnice") : ["TARASNICE", "POLNI_DELO"].includes(e.type) ? aV("artillery_tarasnice") : e.type === "BOMBARDA" ? aV("artillery_bombard") : e.type === "VOZOVA_HRADBA" ? [{
 		model: "war_wagon",
 		offsets: [[0, 0]],
 		scale: 1.1
-	} : [
+	}] : [
 		"JIZDA_HUSITI",
 		"TEZKY_RYTIR",
 		"TEZKOODENCI"
-	].includes(e.type) ? {
+	].includes(e.type) ? [{
 		model: "cavalry",
 		offsets: [[-.82, -.34], [.74, .38]],
 		scale: .98
-	} : ["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(e.type) ? {
+	}] : ["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(e.type) ? [{
 		model: "infantry_shield",
 		offsets: [[0, 0]],
 		scale: 1.28
-	} : e.type === "VACLAV_KORANDA" ? {
+	}] : e.type === "VACLAV_KORANDA" ? [{
 		model: "infantry_handgun",
 		offsets: [[0, 0]],
 		scale: 1.24
-	} : {
+	}] : [{
 		model: e.type === "RUCNICARI" ? "infantry_handgun" : ["CEPNICI", "CEPNICI_PRASKY"].includes(e.type) ? "infantry_flail" : [
 			"KUSINICI_HUSITI",
 			"KUSNICI",
@@ -31452,9 +31456,21 @@ function iV(e) {
 			[.52, -.1]
 		],
 		scale: 1.15
-	};
+	}];
 }
-var aV = class {
+function aV(e) {
+	return [{
+		model: e,
+		offsets: [[0, 0]],
+		scale: 1
+	}, {
+		model: "artillery_gunner",
+		offsets: [[-.5, -1.2], [-.5, 1.2]],
+		scale: 1.05,
+		rotateOffsetsWithFacing: !0
+	}];
+}
+var oV = class {
 	group = new $n();
 	hitTargets = [];
 	visuals = /* @__PURE__ */ new Map();
@@ -31492,34 +31508,36 @@ var aV = class {
 		if (!n) {
 			let r = new $n();
 			r.name = `${e.name} (${e.id})`;
-			let i = iV(e), a = await this.variant(i.model, e.faction);
-			if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
-			let o = e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2, s = [];
-			for (let [e, t] of i.offsets) {
-				let n = a.clone(!0);
-				n.position.set(e, 0, t), n.rotation.y = o, n.scale.setScalar(i.scale), s.push({
-					object: n,
-					bottom: new Cr().setFromObject(n).min.y
-				}), r.add(n);
+			let i = e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2, a = [];
+			for (let n of iV(e)) {
+				let o = await this.variant(n.model, e.faction);
+				if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
+				for (let [e, t] of n.offsets) {
+					let s = o.clone(!0), c = n.rotateOffsetsWithFacing ? new O(e, 0, t).applyAxisAngle(new O(0, 1, 0), i) : new O(e, 0, t);
+					s.position.set(c.x, 0, c.z), s.rotation.y = i, s.scale.setScalar(n.scale), a.push({
+						object: s,
+						bottom: new Cr().setFromObject(s).min.y
+					}), r.add(s);
+				}
 			}
 			if (e.unitClass === "commander") {
 				let e = await this.assets.clone("banner");
-				e.position.set(-1.15, 0, -.45), e.scale.setScalar(.7), s.push({
+				e.position.set(-1.15, 0, -.45), e.scale.setScalar(.7), a.push({
 					object: e,
 					bottom: new Cr().setFromObject(e).min.y
 				}), r.add(e);
 			}
-			let c = new Ji(new ro(2.15, 2.15, 4.5, 12), new Ii({
+			let o = new Ji(new ro(2.15, 2.15, 4.5, 12), new Ii({
 				transparent: !0,
 				opacity: 0,
 				depthWrite: !1
 			}));
-			c.position.y = 2, c.visible = !1, c.userData.unitId = e.id, r.add(c), n = {
+			o.position.y = 2, o.visible = !1, o.userData.unitId = e.id, r.add(o), n = {
 				root: r,
-				hit: c,
-				figures: s,
+				hit: o,
+				figures: a,
 				revision: t
-			}, this.visuals.set(e.id, n), this.hitTargets.push(c), this.group.add(r);
+			}, this.visuals.set(e.id, n), this.hitTargets.push(o), this.group.add(r);
 		}
 		let r = this.layout.center(e.col, e.row), i = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		n.root.position.set(r.x, i(r.x, r.z), r.z), n.root.scale.setScalar(e.isRouting ? .92 : 1), n.root.rotation.y = e.marching ? .06 : 0, n.root.updateMatrixWorld(!0);
@@ -31550,7 +31568,7 @@ var aV = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, oV = class e {
+}, sV = class e {
 	canvas;
 	options;
 	scene = new cr();
@@ -31602,7 +31620,7 @@ var aV = class {
 			effects: !0,
 			gtaoSamples: 12,
 			maxPixelRatio: 2
-		}), this.units = new aV(this.terrain, this.terrain.layout, this.assets), this.overlays = new Gd(this.terrain, this.terrain.layout), this.lighting = Vd(this.scene), this.picker = new Kd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new ZB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
+		}), this.units = new oV(this.terrain, this.terrain.layout, this.assets), this.overlays = new Gd(this.terrain, this.terrain.layout), this.lighting = Vd(this.scene), this.picker = new Kd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new ZB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await qB(n.snapshot, r), a = new e(t, n, i);
@@ -31792,8 +31810,8 @@ var aV = class {
 		this.lastRendererCounters = tf(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, a - r, o - a, o - r) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => oV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function sV() {
+window.HussiteBattle3D = { create: (e, t) => sV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function cV() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = JB(() => t.takeSnapshot(), window), r = new XB(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -31805,7 +31823,7 @@ async function sV() {
 			action: e,
 			...n
 		}));
-	}, s = await oV.create(e, {
+	}, s = await sV.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -31818,7 +31836,7 @@ async function sV() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-sV().catch((e) => {
+cV().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

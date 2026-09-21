@@ -16,6 +16,8 @@ MODEL_DIRECTORIES = {
     'infantry_polearm': 'units', 'infantry_handgun': 'units',
     'infantry_shield': 'units',
     'infantry_flail': 'units', 'infantry_crossbow': 'units', 'infantry_pavise': 'units',
+    'artillery_houfnice': 'units', 'artillery_tarasnice': 'units',
+    'artillery_bombard': 'units', 'artillery_gunner': 'units',
     'church': 'buildings', 'farmhouse': 'buildings',
     'broadleaf_olive': 'vegetation', 'broadleaf_gold': 'vegetation',
     'cypress': 'vegetation',
@@ -424,6 +426,8 @@ BUILDERS={
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from infantry_batch import builders as infantry_builders
 BUILDERS.update(infantry_builders(globals()))
+from artillery_batch import builders as artillery_builders
+BUILDERS.update(artillery_builders(globals()))
 
 
 def main():
@@ -459,7 +463,7 @@ def main():
         bpy.ops.object.select_all(action='DESELECT')
         for obj in objects: obj.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
-        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise'):
+        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise') or name.startswith('artillery_'):
             # Static exports use world-space vertices so runtime AABBs describe
             # the actual feet, not rotated material-batch bounding boxes.
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
