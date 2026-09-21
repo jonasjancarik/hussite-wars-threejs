@@ -37,6 +37,8 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | --- | --- |
 | `war_wagon` | Four ten-spoke wheels, iron tyres and axles, separate wooden planks, fittings and rivets, defensive boards and stakes, two crew, towing poles, chalice banner |
 | `cavalry` | Faceted horse, saddle and blanket, reins and bridle, rider with polearm, walking loop |
+| `infantry_spear` | Long plain spear, kettle hat and side-colour cloth |
+| `infantry_archer` | Drawn wooden bow, nocked arrow, hip quiver, cloth cap and side-colour cloth |
 | `infantry_polearm` | Red coat, kettle helmet, polearm |
 | `infantry_handgun` | Ochre coat, helmet, short hand cannon and powder flask |
 | `infantry_shield` | Red coat, shield with pale cross, sword |
@@ -57,7 +59,7 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 
 The village and troop detailing is intended for a stylized battlefield, not a reconstruction of a particular historical location. Small faces and hands remain deliberately simplified. There are no colliders or LOD meshes; the application supplies placement, movement, collisions, and distance visibility. Asset heights in the manifest include raised weapons, flags, roof crosses, or tree tips.
 
-The first infantry additions are defined in `infantry_batch.py`, registered by the shared generator. Their references, intentional simplifications and gameplay mappings are recorded in [infantry-references.md](infantry-references.md). They keep static poses; the campaign only recolours materials named `team_cloth` and `team_paint`. `render_infantry_batch.py` renders the exported batch together in both game-side palettes to `previews/infantry-batch.png`.
+The infantry additions are defined in `infantry_batch.py`, registered by the shared generator. Their references, intentional simplifications and gameplay mappings are recorded in [infantry-references.md](infantry-references.md). They keep static poses; the campaign only recolours materials named `team_cloth` and `team_paint`. `render_infantry_batch.py` renders the exported batch together in both game-side palettes to `previews/infantry-batch.png`. Pass `-- --spear-bow` to render the spear/archer pair as `previews/spear-bow-batch.png`.
 
 The artillery batch is defined in `artillery_batch.py`; [artillery-references.md](artillery-references.md) records its evidence, reuse choices and crew abstraction. `render_artillery_batch.py` renders the three exported guns with both crew palettes to `previews/artillery-batch.png`.
 

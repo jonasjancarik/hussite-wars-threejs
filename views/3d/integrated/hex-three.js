@@ -9182,7 +9182,9 @@ var gu = {
 	artillery_houfnice: "models/units/artillery_houfnice.glb",
 	artillery_tarasnice: "models/units/artillery_tarasnice.glb",
 	artillery_bombard: "models/units/artillery_bombard.glb",
-	artillery_gunner: "models/units/artillery_gunner.glb"
+	artillery_gunner: "models/units/artillery_gunner.glb",
+	infantry_spear: "models/units/infantry_spear.glb",
+	infantry_archer: "models/units/infantry_archer.glb"
 }, _u = class {
 	baseUrl;
 	loader = new gl();
@@ -31441,6 +31443,20 @@ function iV(e) {
 		model: "infantry_handgun",
 		offsets: [[0, 0]],
 		scale: 1.24
+	}] : [
+		"KOPINICI_HUSITI",
+		"KOPINICI",
+		"LUCISTNICI"
+	].includes(e.type) ? [{
+		model: e.type === "LUCISTNICI" ? "infantry_archer" : "infantry_spear",
+		offsets: [
+			[-1.02, .5],
+			[0, -.66],
+			[1.02, .5],
+			[-.52, -.1],
+			[.52, -.1]
+		],
+		scale: 1.15
 	}] : [{
 		model: e.type === "RUCNICARI" ? "infantry_handgun" : ["CEPNICI", "CEPNICI_PRASKY"].includes(e.type) ? "infantry_flail" : [
 			"KUSINICI_HUSITI",

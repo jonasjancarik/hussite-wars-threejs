@@ -34,6 +34,10 @@ function displayRecipe(unit: UnitSnapshot): FigureRecipe[] {
     return [{ model: "infantry_shield", offsets: [[0, 0]], scale: 1.28 }];
   }
   if (unit.type === "VACLAV_KORANDA") return [{ model: "infantry_handgun", offsets: [[0, 0]], scale: 1.24 }];
+  if (["KOPINICI_HUSITI", "KOPINICI", "LUCISTNICI"].includes(unit.type)) {
+    return [{ model: unit.type === "LUCISTNICI" ? "infantry_archer" : "infantry_spear",
+      offsets: [[-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1]], scale: 1.15 }];
+  }
   const model = unit.type === "RUCNICARI" ? "infantry_handgun"
     : ["CEPNICI", "CEPNICI_PRASKY"].includes(unit.type) ? "infantry_flail"
       : ["KUSINICI_HUSITI", "KUSNICI", "KUSNICI_JANOV", "KUSINICI_PRASKY"].includes(unit.type) ? "infantry_crossbow"

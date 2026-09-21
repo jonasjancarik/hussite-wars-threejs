@@ -136,6 +136,22 @@ test("maps artillery to one gun and two independently placed crew", async () => 
   }
 });
 
+test("maps both spearman definitions and archers without changing polearm infantry", async () => {
+  const assets = new TestAssets();
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(6, 1), assets);
+  await units.update(snapshotWithUnits([
+    unit(1, "KOPINICI_HUSITI", "hussites"), unit(2, "KOPINICI", "crusaders"),
+    unit(3, "LUCISTNICI", "crusaders"), unit(4, "SUDLICNICI", "hussites"), unit(5, "HALAPARTNICI", "crusaders"),
+  ]));
+  const expected = ["infantry_spear", "infantry_spear", "infantry_archer", "infantry_polearm", "infantry_polearm"];
+  for (const [index, formation] of units.group.children.entries()) {
+    const figures = formation.children.filter(child => child instanceof THREE.Group);
+    assert.equal(figures.length, 5);
+    assert.ok(figures.every(figure => figure.name === expected[index]));
+  }
+});
+
 test("artillery gun and crew figures each follow rotated routing terrain", async () => {
   const height = (x: number, z: number): number => 0.16 * x + 0.09 * z;
   const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [],

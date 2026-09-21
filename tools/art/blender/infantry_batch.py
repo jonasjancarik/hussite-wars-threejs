@@ -1,4 +1,4 @@
-"""First infantry additions; original geometry using the shared miniature kit.
+"""Infantry additions; original geometry using the shared miniature kit.
 
 All figures face +X, stand at Z=0, and retain separate named editable parts.
 Reference decisions and limitations: infantry-references.md in this directory.
@@ -36,7 +36,7 @@ class InfantryBatch:
         faces.append(tuple((len(rings)-1)*segments+i for i in range(segments)))
         return self.k.mesh(name, vertices, faces, mat)
 
-    def body(self, prefix, hands, elbows, stance=.16):
+    def body(self, prefix, hands, elbows, stance=.16, helmet=True):
         k = self.k
         self.palette()
         k.box(prefix+'_padded_jack', (0, 0, 1.10), (.40, .35, .48), 'team_cloth', .065)
@@ -63,20 +63,76 @@ class InfantryBatch:
             k.beam(prefix+'_upper_sleeve', shoulder, elbow, .108, 'team_cloth', 7, radius2=.090)
             k.beam(prefix+'_lower_sleeve', elbow, hand, .086, 'padded_linen', 7, radius2=.065)
             k.ico(prefix+'_hand', hand, (.076, .063, .068), 'skin', 1)
-        # Visible coif below a low-crowned kettle hat. No fine chainmail texture.
+        # Visible coif beneath a kettle hat or cloth cap. No fine chainmail texture.
         k.ico(prefix+'_coif', (-.025, 0, 1.51), (.142, .14, .175), 'padded_linen', 2)
         k.ico(prefix+'_face', (.062, 0, 1.535), (.116, .113, .145), 'skin', 2)
         k.ico(prefix+'_nose', (.170, 0, 1.55), (.042, .04, .038), 'skin', 1)
-        self.ring_mesh(prefix+'_kettle_crown', [
-            (-.012, 0, 1.615, .169, .155), (-.020, 0, 1.72, .137, .125),
-            (-.035, 0, 1.785, .072, .065), (-.04, 0, 1.80, .018, .016)], 'steel')
-        self.ring_mesh(prefix+'_kettle_brim', [
-            (-.008, 0, 1.60, .256, .232), (-.008, 0, 1.623, .25, .228),
-            (-.012, 0, 1.654, .164, .153)], 'steel')
+        if helmet:
+            self.ring_mesh(prefix+'_kettle_crown', [
+                (-.012, 0, 1.615, .169, .155), (-.020, 0, 1.72, .137, .125),
+                (-.035, 0, 1.785, .072, .065), (-.04, 0, 1.80, .018, .016)], 'steel')
+            self.ring_mesh(prefix+'_kettle_brim', [
+                (-.008, 0, 1.60, .256, .232), (-.008, 0, 1.623, .25, .228),
+                (-.012, 0, 1.654, .164, .153)], 'steel')
+        else:
+            self.ring_mesh(prefix+'_cloth_cap', [
+                (-.015, 0, 1.61, .15, .14), (-.045, 0, 1.70, .125, .125),
+                (-.065, 0, 1.755, .04, .04)], 'padded_linen')
         k.box(prefix+'_belt_pouch', (-.045, .235, .82), (.15, .13, .18), 'leather', .035)
         # Common sidearm in its sheath, kept behind the weapon silhouette.
         k.beam(prefix+'_knife_sheath', (-.10, -.24, .86), (-.17, -.24, .59), .030, 'leather', 5)
         k.beam(prefix+'_knife_grip', (-.075, -.24, .96), (-.10, -.24, .86), .024, 'oak_dark', 6)
+
+    def spear(self):
+        k=self.k
+        self.body('Spearman',
+            {-1:(.414,-.235,1.05),1:(.459,-.235,1.47)},
+            {-1:(.055,-.37,1.03),1:(.20,.27,1.37)},stance=.18)
+        foot=Vector((.305,-.235,.035));socket=Vector((.625,-.235,3.02))
+        axis=(socket-foot).normalized()
+        k.beam('Spear_long_ash_shaft',foot,socket,.029,'oak',8,radius2=.024)
+        k.beam('Spear_iron_butt',foot,foot+axis*.15,.034,'iron',8)
+        k.beam('Spear_socket',socket-axis*.14,socket+axis*.05,.041,'steel',8,radius2=.030)
+        side=Vector((0,1,0));normal=axis.cross(side).normalized()
+        # A slim leaf-shaped head with a faceted ridge; no halberd blade or hook.
+        outline=[socket-axis*.015,socket+axis*.115+side*.086,
+                 socket+axis*.43,socket+axis*.115-side*.086]
+        vertices=[tuple(p) for p in outline]
+        vertices.extend([tuple(socket+axis*.16+normal*.026),
+                         tuple(socket+axis*.16-normal*.026)])
+        faces=[((i+1)%4,i,4) for i in range(4)]
+        faces.extend([(i,(i+1)%4,5) for i in range(4)])
+        k.mesh('Spear_leaf_head',vertices,faces,'steel')
+
+    def archer(self):
+        k=self.k
+        self.body('Archer',
+            {-1:(.065,-.18,1.445),1:(.64,-.18,1.405)},
+            {-1:(-.25,-.35,1.415),1:(.29,.08,1.35)},stance=.18,helmet=False)
+        # Static drawn self-bow: a single curved stave with tapered tips.
+        points=[(.36,-.18,.49),(.49,-.18,.70),(.59,-.18,.94),
+                (.65,-.18,1.19),(.66,-.18,1.405),(.65,-.18,1.62),
+                (.59,-.18,1.87),(.49,-.18,2.11),(.36,-.18,2.31)]
+        radii=[.013,.019,.025,.029,.031,.029,.025,.019,.013]
+        for i,(a,b) in enumerate(zip(points,points[1:])):
+            k.beam('Archer_bow_stave',a,b,radii[i],'oak',8,radius2=radii[i+1])
+        k.beam('Archer_bow_grip',(.66,-.18,1.34),(.66,-.18,1.46),.035,'leather',8)
+        nock=(.065,-.18,1.46)
+        for tip in (points[0],points[-1]):
+            k.beam('Archer_drawn_string',tip,nock,.008,'linen',5)
+        k.beam('Archer_nocked_arrow',nock,(1.04,-.18,1.41),.011,'oak_light',5)
+        k.beam('Archer_arrowhead',(1.01,-.18,1.412),(1.095,-.18,1.407),.025,'steel',4,radius2=0)
+        for side in (-1,1):
+            k.mesh('Archer_arrow_fletching',[(.13,-.18,1.456),(.26,-.18,1.449),
+                   (.16,-.18+side*.044,1.454)],[(0,1,2)],'linen')
+        k.beam('Archer_leather_bracer',(.39,-.025,1.37),(.57,-.13,1.395),.077,'leather',7,radius2=.068)
+        # Hip-carried arrows; neither a modern sight nor a shoulder-mounted quiver.
+        k.beam('Archer_quiver',(-.17,.31,.48),(-.10,.31,1.05),.086,'leather',8)
+        k.beam('Archer_quiver_rim',(-.105,.31,1.00),(-.095,.31,1.075),.092,'oak_dark',8)
+        for i in range(4):
+            y=.265+i*.029
+            k.beam('Archer_spare_arrow',(-.12,y,.82),(-.04,y,1.28+(i%2)*.045),.010,'oak_light',5)
+            k.box('Archer_spare_fletching',(-.048,y,1.23+(i%2)*.045),(.015,.05,.10),'linen')
 
     def flail(self):
         k = self.k
@@ -194,4 +250,5 @@ class InfantryBatch:
 def builders(namespace):
     batch = InfantryBatch(SimpleNamespace(**namespace))
     return {'infantry_flail': batch.flail, 'infantry_crossbow': batch.crossbow,
-            'infantry_pavise': batch.pavise}
+            'infantry_pavise': batch.pavise, 'infantry_spear': batch.spear,
+            'infantry_archer': batch.archer}

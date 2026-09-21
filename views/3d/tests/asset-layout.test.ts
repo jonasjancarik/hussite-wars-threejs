@@ -54,13 +54,13 @@ test("campaign loads both supported views without experiment dependencies", () =
 });
 
 test("new infantry GLBs load as grounded static miniatures with isolated colour slots", async () => {
-  for (const name of ["infantry_flail", "infantry_crossbow", "infantry_pavise"]) {
+  for (const name of ["infantry_flail", "infantry_crossbow", "infantry_pavise", "infantry_spear", "infantry_archer"]) {
     const bytes = readFileSync(new URL(paths[name]!, assetRoot));
     const { scene, animations } = await new GLTFLoader().parseAsync(new Uint8Array(bytes).buffer, "");
     const bounds = new THREE.Box3().setFromObject(scene);
     const size = bounds.getSize(new THREE.Vector3());
     assert.ok(Math.abs(bounds.min.y) < 0.005, `${name}: exported feet must meet ground`);
-    assert.ok(size.y >= 1.75 && size.y <= 2.6, `${name}: miniature scale including raised weapons`);
+    assert.ok(size.y >= 1.75 && size.y <= (name === "infantry_spear" ? 3.6 : 2.6), `${name}: miniature scale including raised weapons`);
     assert.ok(size.x < 1.5 && size.z < 1.5, `${name}: footprint must fit a formation`);
     assert.equal(animations.length, 0, `${name}: this batch is static`);
     const materials = new Set<string>();
@@ -100,9 +100,9 @@ test("artillery exports have open muzzles, static geometry and ground-level supp
   }
 });
 
-test("actual gun and crew assemblies fit the existing picking footprint on either side", async () => {
+test("actual artillery, spear and bow assemblies fit the picking volume on either side", async () => {
   const prototypes = new Map<string, THREE.Group>();
-  for (const name of ["artillery_houfnice", "artillery_tarasnice", "artillery_bombard", "artillery_gunner"]) {
+  for (const name of ["artillery_houfnice", "artillery_tarasnice", "artillery_bombard", "artillery_gunner", "infantry_spear", "infantry_archer"]) {
     const bytes = readFileSync(new URL(paths[name]!, assetRoot));
     const model = await new GLTFLoader().parseAsync(new Uint8Array(bytes).buffer, "");
     assert.equal(model.animations.length, 0);
@@ -115,8 +115,9 @@ test("actual gun and crew assemblies fit the existing picking footprint on eithe
   for (const faction of ["hussites", "crusaders"] as const) {
     const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
       new HexLayout(1, 1), assets);
-    for (const type of ["HOUFNICE", "TARASNICE", "BOMBARDA"]) {
-      const unit: UnitSnapshot = { id: 1, type, name: type, col: 0, row: 0, faction, unitClass: "artillery",
+    for (const type of ["HOUFNICE", "TARASNICE", "BOMBARDA", "KOPINICI", "LUCISTNICI"]) {
+      const unitClass = type === "KOPINICI" ? "infantry" : type === "LUCISTNICI" ? "ranged" : "artillery";
+      const unit: UnitSnapshot = { id: 1, type, name: type, col: 0, row: 0, faction, unitClass,
         health: 100, maxHealth: 100, morale: 100, maxMorale: 100, hasMoved: false, hasAttacked: false,
         isDefending: false, isRouting: false, formationClosed: false, marching: false };
       const snapshot: BattleSnapshot = { protocolVersion: 2, generation: 1, revision: 1, scenario: "artillery-test",
@@ -136,6 +137,7 @@ test("actual gun and crew assemblies fit the existing picking footprint on eithe
             const point = new THREE.Vector3().fromBufferAttribute(positions, index).applyMatrix4(object.matrixWorld);
             assert.ok(Math.hypot(point.x - center.x, point.z - center.z) < 2.15,
               `${type}/${faction}: visible geometry extends outside its selectable footprint`);
+            assert.ok(point.y < 4.25, `${type}/${faction}: weapon tip extends above the picking volume`);
           }
         });
       }
