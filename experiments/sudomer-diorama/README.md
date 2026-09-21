@@ -55,6 +55,8 @@ The root campaign now loads the Three.js renderer on demand through `js/ui/Three
 
 Sudoměř additionally has an authored-art manifest in `web/hex-three/public/sudomer-landscape.json`. Its source-terrain hash must match the active map before it can replace the generated presentation. A mismatch falls back to generated terrain, so authored scenery cannot silently drift away from gameplay.
 
+Authored decorations retain the key of their nearest gameplay hex even after static and instanced batching. Under advanced fog, explored cells reveal their own trees, landmarks, reeds, stones, grass and flowers while decorations assigned to unexplored cells remain hidden.
+
 `web/hex-three/src/terrain-regions.ts` is renderer-neutral. It merges same-terrain neighbours, applies deterministic coherent variation at region borders and preserves a protected core inside every source cell. The test suite measures area coverage across all campaign scenarios and keeps the 75% minimum explicit.
 
 ## Standalone Sudoměř hex battle

@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import { distanceToPolygon, distanceToPolyline, mulberry32, pointInPolygon } from "./geometry-utils.ts";
+import { SceneryVisibility } from "./scenery-visibility.ts";
 import type { AuthoredTerrain } from "./terrain.ts";
 
 /** Small, seeded accents follow the landscape, leaving the battle corridor clear. */
-export function addLandscapeDetails(group: THREE.Group, terrain: AuthoredTerrain): void {
+export function addLandscapeDetails(group: THREE.Group, terrain: AuthoredTerrain,
+  visibility: SceneryVisibility): void {
   const data = terrain.data;
   const random = mulberry32(data.artSeed + 83);
   const dummy = new THREE.Object3D();
@@ -20,6 +22,7 @@ export function addLandscapeDetails(group: THREE.Group, terrain: AuthoredTerrain
   grass.name = "Meadow tussocks and golden field stubble";
   grass.receiveShadow = true;
   const palette = [0x838849, 0x9c9c60, 0xb8ac70, 0x727c42];
+  const grassMatrices: THREE.Matrix4[] = [];
   let count = 0;
   for (let attempt = 0; attempt < 16000 && count < grass.count; attempt += 1) {
     const x = THREE.MathUtils.lerp(data.bounds.minX + 1, data.bounds.maxX - 1, random());
@@ -37,16 +40,19 @@ export function addLandscapeDetails(group: THREE.Group, terrain: AuthoredTerrain
     dummy.scale.set(size, size * (field ? 1.2 : 0.7), size);
     dummy.updateMatrix();
     grass.setMatrixAt(count, dummy.matrix);
+    grassMatrices.push(dummy.matrix.clone());
     grass.setColorAt(count, new THREE.Color(field ? 0xc0aa69 : palette[Math.floor(random() * palette.length)]!));
     count += 1;
   }
   grass.count = count;
   group.add(grass);
+  visibility.trackInstances(grass, grassMatrices);
 
   const stones = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.38, 0),
     new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }), 800);
   stones.name = "Weathered field-edge stone walls";
   stones.castShadow = stones.receiveShadow = true;
+  const stoneMatrices: THREE.Matrix4[] = [];
   count = 0;
   for (const field of data.fields) {
     // Two sides of each field suggest old enclosures without fencing in play.
@@ -64,6 +70,7 @@ export function addLandscapeDetails(group: THREE.Group, terrain: AuthoredTerrain
         dummy.scale.set(size * 1.3, size * 0.8, size);
         dummy.updateMatrix();
         stones.setMatrixAt(count, dummy.matrix);
+        stoneMatrices.push(dummy.matrix.clone());
         stones.setColorAt(count, new THREE.Color().setHSL(0.12, 0.12, 0.38 + random() * 0.17));
         count += 1;
       }
@@ -71,10 +78,12 @@ export function addLandscapeDetails(group: THREE.Group, terrain: AuthoredTerrain
   }
   stones.count = count;
   group.add(stones);
+  visibility.trackInstances(stones, stoneMatrices);
 
   const flowers = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.10, 0),
     new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), 220);
   flowers.name = "Small meadow wildflowers";
+  const flowerMatrices: THREE.Matrix4[] = [];
   count = 0;
   for (let attempt = 0; attempt < 4000 && count < flowers.count; attempt += 1) {
     const x = THREE.MathUtils.lerp(-69, 69, random());
@@ -88,11 +97,13 @@ export function addLandscapeDetails(group: THREE.Group, terrain: AuthoredTerrain
     dummy.scale.set(1, 0.55, 1);
     dummy.updateMatrix();
     flowers.setMatrixAt(count, dummy.matrix);
+    flowerMatrices.push(dummy.matrix.clone());
     flowers.setColorAt(count, new THREE.Color(random() < 0.7 ? 0xe7d9a4 : 0xb3a1ba));
     count += 1;
   }
   flowers.count = count;
   group.add(flowers);
+  visibility.trackInstances(flowers, flowerMatrices);
 }
 
 /** A periodic normal field gives the pond soft ripples without a flat painted overlay. */

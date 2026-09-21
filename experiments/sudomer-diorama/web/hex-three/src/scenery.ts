@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
 import { distanceToPolygon, distanceToPolyline, mulberry32, pointInPolygon } from "./geometry-utils.ts";
 import { addLandscapeDetails } from "./landscape-details.ts";
+import { SceneryVisibility } from "./scenery-visibility.ts";
 import { AuthoredTerrain } from "./terrain.ts";
 import type { BattleScenery, BattleSnapshot, ScenarioArtManifest } from "./types.ts";
 import { batchStaticMeshes } from "./static-batching.ts";
@@ -9,6 +10,7 @@ import { batchStaticMeshes } from "./static-batching.ts";
 export class AuthoredScenery implements BattleScenery {
   public readonly group = new THREE.Group();
   private disposed = false;
+  private readonly visibility: SceneryVisibility;
 
   public constructor(
     private readonly data: ScenarioArtManifest,
@@ -16,6 +18,7 @@ export class AuthoredScenery implements BattleScenery {
     private readonly assets: BattleAssets,
   ) {
     this.group.name = "Authored scenery";
+    this.visibility = new SceneryVisibility(terrain.layout);
   }
 
   public async build(): Promise<void> {
@@ -29,19 +32,17 @@ export class AuthoredScenery implements BattleScenery {
     if (this.disposed) return;
     this.addReeds();
     this.addStones();
-    addLandscapeDetails(this.group, this.terrain);
-    const savedMeshes = batchStaticMeshes(this.group);
-    console.info(`[Sudomer] batched static scenery (${savedMeshes} meshes removed)`);
+    addLandscapeDetails(this.group, this.terrain, this.visibility);
+    const result = batchStaticMeshes(this.group, object => this.visibility.keyForObject(object));
+    this.visibility.trackBatches(result.batches);
+    console.info(`[Sudomer] batched static scenery (${result.savedMeshes} meshes removed)`);
   }
 
   public updateVisibility(snapshot: BattleSnapshot): void {
-    // The current authored fixture batches its decorations. Until manifests
-    // retain per-object cell ownership, hide the decorative layer in advanced
-    // fog rather than leaking forests or landmarks from unexplored cells.
-    this.group.visible = !snapshot.fogOfWar;
+    this.visibility.update(snapshot);
   }
 
-  public dispose(): void { this.disposed = true; this.group.clear(); }
+  public dispose(): void { this.disposed = true; this.visibility.clear(); this.group.clear(); }
 
   private async addWoodland(): Promise<void> {
     const random = mulberry32(this.data.artSeed);
@@ -78,6 +79,7 @@ export class AuthoredScenery implements BattleScenery {
         tree.scale.set(scale * THREE.MathUtils.lerp(0.9, 1.1, random()), scale, scale * THREE.MathUtils.lerp(0.9, 1.1, random()));
         tree.name = `${mass.id} tree ${index + 1}`;
         this.group.add(tree);
+        this.visibility.trackObject(tree, x, z);
         index += 1;
       }
       const shrubCount = Math.max(6, Math.round(count * 0.42));
@@ -95,6 +97,7 @@ export class AuthoredScenery implements BattleScenery {
         shrub.scale.setScalar(scale);
         shrub.name = `${mass.id} shrub ${index + 1}`;
         this.group.add(shrub);
+        this.visibility.trackObject(shrub, x, z);
         index += 1;
       }
     }
@@ -110,6 +113,7 @@ export class AuthoredScenery implements BattleScenery {
       model.scale.setScalar(placement.scale ?? 1);
       model.name = placement.id;
       this.group.add(model);
+      this.visibility.trackObject(model, x, z);
     }
   }
 
@@ -121,6 +125,7 @@ export class AuthoredScenery implements BattleScenery {
     reeds.name = "Pond and basin reeds";
     reeds.castShadow = true;
     const matrix = new THREE.Matrix4();
+    const matrices: THREE.Matrix4[] = [];
     let instance = 0;
     for (let attempts = 0; attempts < 8000 && instance < reeds.count; attempts += 1) {
       const polygon = random() < 0.62 ? this.data.pond.points : this.data.mudBasin.points;
@@ -134,11 +139,13 @@ export class AuthoredScenery implements BattleScenery {
       const scale = THREE.MathUtils.lerp(0.55, 1.35, random());
       matrix.compose(new THREE.Vector3(x, y + 0.5 * scale, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), random() * Math.PI), new THREE.Vector3(scale, scale, scale));
       reeds.setMatrixAt(instance, matrix);
+      matrices.push(matrix.clone());
       instance += 1;
     }
     reeds.count = instance;
     reeds.instanceMatrix.needsUpdate = true;
     this.group.add(reeds);
+    this.visibility.trackInstances(reeds, matrices);
   }
 
   private addStones(): void {
@@ -150,14 +157,17 @@ export class AuthoredScenery implements BattleScenery {
     stones.castShadow = true;
     stones.receiveShadow = true;
     const matrix = new THREE.Matrix4();
+    const matrices: THREE.Matrix4[] = [];
     for (let i = 0; i < stones.count; i += 1) {
       const x = THREE.MathUtils.lerp(-66, 66, random());
       const z = THREE.MathUtils.lerp(-46, 47, random());
       const scale = THREE.MathUtils.lerp(0.55, 1.65, random());
       matrix.compose(new THREE.Vector3(x, this.terrain.heightAt(x, z) + 0.13 * scale, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(random(), random() * Math.PI, random())), new THREE.Vector3(scale * 1.3, scale * 0.65, scale));
       stones.setMatrixAt(i, matrix);
+      matrices.push(matrix.clone());
     }
     stones.instanceMatrix.needsUpdate = true;
     this.group.add(stones);
+    this.visibility.trackInstances(stones, matrices);
   }
 }

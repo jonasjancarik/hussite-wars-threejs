@@ -30356,9 +30356,9 @@ var Fz = (e, t, n) => new Mz(ZR(e), ZR(t), n), Iz = /*@__PURE__*/ new ZD(), Lz, 
 };
 //#endregion
 //#region src/landscape-details.ts
-function mB(e, t) {
-	let n = t.data, r = Yu(n.artSeed + 83), i = new Qn(), a = new oi();
-	a.setAttribute("position", new j([
+function mB(e, t, n) {
+	let r = t.data, i = Yu(r.artSeed + 83), a = new Qn(), o = new oi();
+	o.setAttribute("position", new j([
 		-.2,
 		0,
 		0,
@@ -30386,53 +30386,57 @@ function mB(e, t) {
 		.15,
 		0,
 		.1
-	], 3)), a.computeVertexNormals();
-	let o = new ba(a, new As({
+	], 3)), o.computeVertexNormals();
+	let s = new ba(o, new As({
 		color: 16777215,
 		roughness: 1,
 		side: 2
 	}), 4200);
-	o.name = "Meadow tussocks and golden field stubble", o.receiveShadow = !0;
-	let s = [
+	s.name = "Meadow tussocks and golden field stubble", s.receiveShadow = !0;
+	let c = [
 		8620105,
 		10263648,
 		12102768,
 		7502914
-	], c = 0;
-	for (let e = 0; e < 16e3 && c < o.count; e += 1) {
-		let e = E.lerp(n.bounds.minX + 1, n.bounds.maxX - 1, r()), a = E.lerp(n.bounds.minZ + 1, n.bounds.maxZ - 1, r());
-		if (Gu(e, a, n.pond.points) || Gu(e, a, n.mudBasin.points) || Ju(e, a, n.causeway.points) < 6 || n.landmarks.some((t) => Math.hypot(e - t.position[0], a - t.position[1]) < 4)) continue;
-		let l = n.fields.find((t) => Gu(e, a, t.points));
-		if (l?.tone === "earth" || !l && Math.sin(e * .39 + Math.sin(a * .21)) * Math.cos(a * .32) < -.12) continue;
-		let u = .55 + r() * .9;
-		i.position.set(e, t.heightAt(e, a) + .03, a), i.rotation.set(0, r() * Math.PI * 2, 0), i.scale.set(u, u * (l ? 1.2 : .7), u), i.updateMatrix(), o.setMatrixAt(c, i.matrix), o.setColorAt(c, new A(l ? 12626537 : s[Math.floor(r() * s.length)])), c += 1;
+	], l = [], u = 0;
+	for (let e = 0; e < 16e3 && u < s.count; e += 1) {
+		let e = E.lerp(r.bounds.minX + 1, r.bounds.maxX - 1, i()), n = E.lerp(r.bounds.minZ + 1, r.bounds.maxZ - 1, i());
+		if (Gu(e, n, r.pond.points) || Gu(e, n, r.mudBasin.points) || Ju(e, n, r.causeway.points) < 6 || r.landmarks.some((t) => Math.hypot(e - t.position[0], n - t.position[1]) < 4)) continue;
+		let o = r.fields.find((t) => Gu(e, n, t.points));
+		if (o?.tone === "earth" || !o && Math.sin(e * .39 + Math.sin(n * .21)) * Math.cos(n * .32) < -.12) continue;
+		let d = .55 + i() * .9;
+		a.position.set(e, t.heightAt(e, n) + .03, n), a.rotation.set(0, i() * Math.PI * 2, 0), a.scale.set(d, d * (o ? 1.2 : .7), d), a.updateMatrix(), s.setMatrixAt(u, a.matrix), l.push(a.matrix.clone()), s.setColorAt(u, new A(o ? 12626537 : c[Math.floor(i() * c.length)])), u += 1;
 	}
-	o.count = c, e.add(o);
-	let l = new ba(new so(.38, 0), new As({
+	s.count = u, e.add(s), n.trackInstances(s, l);
+	let d = new ba(new so(.38, 0), new As({
 		color: 16777215,
 		roughness: 1
 	}), 800);
-	l.name = "Weathered field-edge stone walls", l.castShadow = l.receiveShadow = !0, c = 0;
-	for (let e of n.fields) for (let a = 0; a < 2; a += 1) {
-		let o = e.points[a], s = e.points[a + 1], u = Math.hypot(s[0] - o[0], s[1] - o[1]);
-		for (let e = 0; e < u && c < l.count; e += .65) {
-			let a = E.lerp(o[0], s[0], e / u), d = E.lerp(o[1], s[1], e / u);
-			if (Ju(a, d, n.causeway.points) < 8) continue;
-			let f = .75 + r() * .5;
-			i.position.set(a, t.heightAt(a, d) + .25, d), i.rotation.set(r() * .3, r() * Math.PI, r() * .3), i.scale.set(f * 1.3, f * .8, f), i.updateMatrix(), l.setMatrixAt(c, i.matrix), l.setColorAt(c, new A().setHSL(.12, .12, .38 + r() * .17)), c += 1;
+	d.name = "Weathered field-edge stone walls", d.castShadow = d.receiveShadow = !0;
+	let f = [];
+	u = 0;
+	for (let e of r.fields) for (let n = 0; n < 2; n += 1) {
+		let o = e.points[n], s = e.points[n + 1], c = Math.hypot(s[0] - o[0], s[1] - o[1]);
+		for (let e = 0; e < c && u < d.count; e += .65) {
+			let n = E.lerp(o[0], s[0], e / c), l = E.lerp(o[1], s[1], e / c);
+			if (Ju(n, l, r.causeway.points) < 8) continue;
+			let p = .75 + i() * .5;
+			a.position.set(n, t.heightAt(n, l) + .25, l), a.rotation.set(i() * .3, i() * Math.PI, i() * .3), a.scale.set(p * 1.3, p * .8, p), a.updateMatrix(), d.setMatrixAt(u, a.matrix), f.push(a.matrix.clone()), d.setColorAt(u, new A().setHSL(.12, .12, .38 + i() * .17)), u += 1;
 		}
 	}
-	l.count = c, e.add(l);
-	let u = new ba(new Cs(.1, 0), new As({
+	d.count = u, e.add(d), n.trackInstances(d, f);
+	let p = new ba(new Cs(.1, 0), new As({
 		color: 16777215,
 		roughness: .9
 	}), 220);
-	u.name = "Small meadow wildflowers", c = 0;
-	for (let e = 0; e < 4e3 && c < u.count; e += 1) {
-		let e = E.lerp(-69, 69, r()), a = E.lerp(-49, 49, r());
-		Gu(e, a, n.pond.points) || Gu(e, a, n.mudBasin.points) || Ju(e, a, n.causeway.points) < 9 || n.fields.some((t) => Gu(e, a, t.points)) || qu(e, a, n.pond.points) > 7 && Math.sin(e * .2) * Math.cos(a * .2) < .65 || (i.position.set(e, t.heightAt(e, a) + .34, a), i.rotation.set(0, r() * Math.PI, 0), i.scale.set(1, .55, 1), i.updateMatrix(), u.setMatrixAt(c, i.matrix), u.setColorAt(c, new A(r() < .7 ? 15194532 : 11772346)), c += 1);
+	p.name = "Small meadow wildflowers";
+	let m = [];
+	u = 0;
+	for (let e = 0; e < 4e3 && u < p.count; e += 1) {
+		let e = E.lerp(-69, 69, i()), n = E.lerp(-49, 49, i());
+		Gu(e, n, r.pond.points) || Gu(e, n, r.mudBasin.points) || Ju(e, n, r.causeway.points) < 9 || r.fields.some((t) => Gu(e, n, t.points)) || qu(e, n, r.pond.points) > 7 && Math.sin(e * .2) * Math.cos(n * .2) < .65 || (a.position.set(e, t.heightAt(e, n) + .34, n), a.rotation.set(0, i() * Math.PI, 0), a.scale.set(1, .55, 1), a.updateMatrix(), p.setMatrixAt(u, a.matrix), m.push(a.matrix.clone()), p.setColorAt(u, new A(i() < .7 ? 15194532 : 11772346)), u += 1);
 	}
-	u.count = c, e.add(u);
+	p.count = u, e.add(p), n.trackInstances(p, m);
 }
 function hB() {
 	let e = new Uint8Array(16384 * 4);
@@ -30444,44 +30448,126 @@ function hB() {
 	return t.wrapS = t.wrapT = r, t.repeat.set(.035, .035), t.magFilter = t.minFilter = l, t.needsUpdate = !0, t;
 }
 //#endregion
+//#region src/scenery-visibility.ts
+var gB = new k().makeScale(0, 0, 0), _B = class {
+	layout;
+	objects = [];
+	batches = [];
+	visibilityKey = null;
+	constructor(e) {
+		this.layout = e;
+	}
+	trackObject(e, t, n) {
+		let r = this.keyAt(t, n);
+		e.userData.sceneryCell = r, this.objects.push({
+			object: e,
+			key: r
+		}), this.visibilityKey = null;
+	}
+	trackInstances(e, t) {
+		let n = t.map((e) => e.clone()), r = n.map((e) => this.keyAt(e.elements[12], e.elements[14]));
+		this.batches.push({
+			mesh: e,
+			matrices: n,
+			keys: r
+		}), e.computeBoundingBox(), e.computeBoundingSphere(), this.visibilityKey = null;
+	}
+	trackBatches(e) {
+		for (let t of e) t.mesh.computeBoundingBox(), t.mesh.computeBoundingSphere();
+		this.batches.push(...e), this.visibilityKey = null;
+	}
+	keyForObject(e) {
+		let t = e;
+		for (; t;) {
+			if (typeof t.userData.sceneryCell == "string") return t.userData.sceneryCell;
+			t = t.parent;
+		}
+		return null;
+	}
+	update(e) {
+		let t = new Set(e.exploredHexes), n = e.fogOfWar ? `fog:${[...t].sort().join("|")}` : "clear";
+		if (n !== this.visibilityKey) {
+			this.visibilityKey = n;
+			for (let n of this.objects) n.object.visible = !e.fogOfWar || t.has(n.key);
+			for (let n of this.batches) {
+				for (let r = 0; r < n.matrices.length; r += 1) {
+					let i = !e.fogOfWar || t.has(n.keys[r]);
+					n.mesh.setMatrixAt(r, i ? n.matrices[r] : gB);
+				}
+				n.mesh.instanceMatrix.needsUpdate = !0;
+			}
+		}
+	}
+	clear() {
+		this.objects.length = 0, this.batches.length = 0, this.visibilityKey = null;
+	}
+	keyAt(e, t) {
+		let n = this.layout.coordAt(e, t);
+		if (n) return `${n.col},${n.row}`;
+		let r = {
+			col: 0,
+			row: 0
+		}, i = Infinity;
+		for (let n = 0; n < this.layout.cols; n += 1) for (let a = 0; a < this.layout.rows; a += 1) {
+			let o = this.layout.center(n, a), s = (e - o.x) ** 2 + (t - o.z) ** 2;
+			s < i && (r = {
+				col: n,
+				row: a
+			}, i = s);
+		}
+		return `${r.col},${r.row}`;
+	}
+};
+//#endregion
 //#region src/static-batching.ts
-function gB(e) {
+function vB(e, t) {
 	e.updateWorldMatrix(!0, !0);
-	let t = e.matrixWorld.clone().invert(), n = /* @__PURE__ */ new Map();
+	let n = e.matrixWorld.clone().invert(), r = /* @__PURE__ */ new Map();
 	e.traverse((e) => {
 		if (!(e instanceof Ji) || e instanceof ba || e instanceof oa || Array.isArray(e.material) || e.material.transparent || e.morphTargetInfluences) return;
-		let r = [
+		let i = [
 			e.geometry.uuid,
 			e.material.uuid,
 			e.castShadow,
 			e.receiveShadow,
 			e.renderOrder
-		].join(":"), i = n.get(r) ?? [];
-		i.push({
+		].join(":"), a = t(e);
+		if (!a) return;
+		let o = r.get(i) ?? [];
+		o.push({
 			mesh: e,
-			matrix: t.clone().multiply(e.matrixWorld)
-		}), n.set(r, i);
+			matrix: n.clone().multiply(e.matrixWorld),
+			key: a
+		}), r.set(i, o);
 	});
-	let r = 0;
-	for (let t of n.values()) {
+	let i = 0, a = [];
+	for (let t of r.values()) {
 		if (t.length < 3) continue;
-		let n = t[0].mesh, i = new ba(n.geometry, n.material, t.length);
-		i.name = `Batched ${n.name || "scenery"}`, i.castShadow = n.castShadow, i.receiveShadow = n.receiveShadow, i.renderOrder = n.renderOrder, t.forEach((e, t) => {
-			i.setMatrixAt(t, e.matrix), e.mesh.removeFromParent();
-		}), i.instanceMatrix.needsUpdate = !0, e.add(i), r += t.length - 1;
+		let n = t[0].mesh, r = new ba(n.geometry, n.material, t.length);
+		r.name = `Batched ${n.name || "scenery"}`, r.castShadow = n.castShadow, r.receiveShadow = n.receiveShadow, r.renderOrder = n.renderOrder, t.forEach((e, t) => {
+			r.setMatrixAt(t, e.matrix), e.mesh.removeFromParent();
+		}), r.instanceMatrix.needsUpdate = !0, e.add(r), a.push({
+			mesh: r,
+			matrices: t.map((e) => e.matrix),
+			keys: t.map((e) => e.key)
+		}), i += t.length - 1;
 	}
-	return r;
+	return {
+		savedMeshes: i,
+		batches: a
+	};
 }
 //#endregion
 //#region src/scenery.ts
-var _B = class {
+var yB = class {
 	data;
 	terrain;
 	assets;
 	group = new $n();
 	disposed = !1;
+	visibility;
 	constructor(e, t, n) {
-		this.data = e, this.terrain = t, this.assets = n, this.group.name = "Authored scenery";
+		this.data = e, this.terrain = t, this.assets = n, this.group.name = "Authored scenery", this.visibility = new _B(t.layout);
 	}
 	async build() {
 		if (await this.assets.preload([
@@ -30496,15 +30582,15 @@ var _B = class {
 			"procedural-worlds/pw_deciduous_03",
 			"procedural-worlds/pw_shrub_01"
 		]), this.disposed || (await Promise.all([this.addWoodland(), this.addLandmarks()]), this.disposed)) return;
-		this.addReeds(), this.addStones(), mB(this.group, this.terrain);
-		let e = gB(this.group);
-		console.info(`[Sudomer] batched static scenery (${e} meshes removed)`);
+		this.addReeds(), this.addStones(), mB(this.group, this.terrain, this.visibility);
+		let e = vB(this.group, (e) => this.visibility.keyForObject(e));
+		this.visibility.trackBatches(e.batches), console.info(`[Sudomer] batched static scenery (${e.savedMeshes} meshes removed)`);
 	}
 	updateVisibility(e) {
-		this.group.visible = !e.fogOfWar;
+		this.visibility.update(e);
 	}
 	dispose() {
-		this.disposed = !0, this.group.clear();
+		this.disposed = !0, this.visibility.clear(), this.group.clear();
 	}
 	async addWoodland() {
 		let e = Yu(this.data.artSeed);
@@ -30516,7 +30602,7 @@ var _B = class {
 				let l = e(), u = l < .3 ? "procedural-worlds/pw_deciduous_01" : l < .55 ? "procedural-worlds/pw_deciduous_02" : l < .72 ? "procedural-worlds/pw_deciduous_03" : l < .87 ? "broadleaf_olive" : l < .96 ? "broadleaf_gold" : "cypress", d = await this.assets.clone(u);
 				if (this.disposed) return;
 				let f = u.includes("pw_deciduous_01") ? E.lerp(.64, .88, e()) : u.includes("pw_deciduous_02") ? E.lerp(.54, .72, e()) : u.includes("pw_deciduous_03") ? E.lerp(.44, .6, e()) : u === "cypress" ? E.lerp(1.15, 1.65, e()) : E.lerp(1.08, 1.55, e());
-				d.position.set(r, this.terrain.heightAt(r, c) - .06, c), d.rotation.y = e() * Math.PI * 2, d.scale.set(f * E.lerp(.9, 1.1, e()), f, f * E.lerp(.9, 1.1, e())), d.name = `${t.id} tree ${n + 1}`, this.group.add(d), n += 1;
+				d.position.set(r, this.terrain.heightAt(r, c) - .06, c), d.rotation.y = e() * Math.PI * 2, d.scale.set(f * E.lerp(.9, 1.1, e()), f, f * E.lerp(.9, 1.1, e())), d.name = `${t.id} tree ${n + 1}`, this.group.add(d), this.visibility.trackObject(d, r, c), n += 1;
 			}
 			let u = Math.max(6, Math.round(l * .42));
 			for (let n = 0, r = 0; n < u && r < u * 20; r += 1) {
@@ -30525,7 +30611,7 @@ var _B = class {
 				let l = await this.assets.clone("procedural-worlds/pw_shrub_01");
 				if (this.disposed) return;
 				let u = E.lerp(.72, 1.18, e());
-				l.position.set(r, this.terrain.heightAt(r, c), c), l.rotation.y = e() * Math.PI * 2, l.scale.setScalar(u), l.name = `${t.id} shrub ${n + 1}`, this.group.add(l), n += 1;
+				l.position.set(r, this.terrain.heightAt(r, c), c), l.rotation.y = e() * Math.PI * 2, l.scale.setScalar(u), l.name = `${t.id} shrub ${n + 1}`, this.group.add(l), this.visibility.trackObject(l, r, c), n += 1;
 			}
 		}
 	}
@@ -30534,7 +30620,7 @@ var _B = class {
 			let t = await this.assets.clone(e.kind);
 			if (this.disposed) return;
 			let [n, r] = e.position;
-			t.position.set(n, this.terrain.heightAt(n, r), r), t.rotation.y = e.rotation ?? 0, t.scale.setScalar(e.scale ?? 1), t.name = e.id, this.group.add(t);
+			t.position.set(n, this.terrain.heightAt(n, r), r), t.rotation.y = e.rotation ?? 0, t.scale.setScalar(e.scale ?? 1), t.name = e.id, this.group.add(t), this.visibility.trackObject(t, n, r);
 		}
 	}
 	addReeds() {
@@ -30543,14 +30629,14 @@ var _B = class {
 			roughness: 1
 		}), 420);
 		t.name = "Pond and basin reeds", t.castShadow = !0;
-		let n = new k(), r = 0;
-		for (let i = 0; i < 8e3 && r < t.count; i += 1) {
-			let i = e() < .62 ? this.data.pond.points : this.data.mudBasin.points, a = i.map(([e]) => e), o = i.map(([, e]) => e), s = E.lerp(Math.min(...a), Math.max(...a), e()), c = E.lerp(Math.min(...o), Math.max(...o), e());
-			if (!Gu(s, c, i) || qu(s, c, i) > (i === this.data.pond.points ? 1.7 : 2.5)) continue;
-			let l = i === this.data.pond.points ? -.48 : this.terrain.heightAt(s, c), u = E.lerp(.55, 1.35, e());
-			n.compose(new O(s, l + .5 * u, c), new rn().setFromAxisAngle(new O(0, 1, 0), e() * Math.PI), new O(u, u, u)), t.setMatrixAt(r, n), r += 1;
+		let n = new k(), r = [], i = 0;
+		for (let a = 0; a < 8e3 && i < t.count; a += 1) {
+			let a = e() < .62 ? this.data.pond.points : this.data.mudBasin.points, o = a.map(([e]) => e), s = a.map(([, e]) => e), c = E.lerp(Math.min(...o), Math.max(...o), e()), l = E.lerp(Math.min(...s), Math.max(...s), e());
+			if (!Gu(c, l, a) || qu(c, l, a) > (a === this.data.pond.points ? 1.7 : 2.5)) continue;
+			let u = a === this.data.pond.points ? -.48 : this.terrain.heightAt(c, l), d = E.lerp(.55, 1.35, e());
+			n.compose(new O(c, u + .5 * d, l), new rn().setFromAxisAngle(new O(0, 1, 0), e() * Math.PI), new O(d, d, d)), t.setMatrixAt(i, n), r.push(n.clone()), i += 1;
 		}
-		t.count = r, t.instanceMatrix.needsUpdate = !0, this.group.add(t);
+		t.count = i, t.instanceMatrix.needsUpdate = !0, this.group.add(t), this.visibility.trackInstances(t, r);
 	}
 	addStones() {
 		let e = Yu(this.data.artSeed + 41), t = new ba(new so(.32, 0), new As({
@@ -30558,28 +30644,28 @@ var _B = class {
 			roughness: 1
 		}), 72);
 		t.name = "Scattered stones", t.castShadow = !0, t.receiveShadow = !0;
-		let n = new k();
-		for (let r = 0; r < t.count; r += 1) {
-			let i = E.lerp(-66, 66, e()), a = E.lerp(-46, 47, e()), o = E.lerp(.55, 1.65, e());
-			n.compose(new O(i, this.terrain.heightAt(i, a) + .13 * o, a), new rn().setFromEuler(new Fn(e(), e() * Math.PI, e())), new O(o * 1.3, o * .65, o)), t.setMatrixAt(r, n);
+		let n = new k(), r = [];
+		for (let i = 0; i < t.count; i += 1) {
+			let a = E.lerp(-66, 66, e()), o = E.lerp(-46, 47, e()), s = E.lerp(.55, 1.65, e());
+			n.compose(new O(a, this.terrain.heightAt(a, o) + .13 * s, o), new rn().setFromEuler(new Fn(e(), e() * Math.PI, e())), new O(s * 1.3, s * .65, s)), t.setMatrixAt(i, n), r.push(n.clone());
 		}
-		t.instanceMatrix.needsUpdate = !0, this.group.add(t);
+		t.instanceMatrix.needsUpdate = !0, this.group.add(t), this.visibility.trackInstances(t, r);
 	}
-}, vB = { sudomere_1420: "sudomer-landscape.json" };
-function yB(e) {
+}, bB = { sudomere_1420: "sudomer-landscape.json" };
+function xB(e) {
 	let t = [...e].sort((e, t) => e.col - t.col || e.row - t.row).map((e) => `${e.col},${e.row}:${e.terrain};`).join(""), n = 2166136261;
 	for (let e = 0; e < t.length; e += 1) n ^= t.charCodeAt(e), n = Math.imul(n, 16777619);
 	return `fnv1a32:${(n >>> 0).toString(16).padStart(8, "0")}`;
 }
-async function bB(e, t) {
-	let n = e.scenario ? vB[e.scenario] : void 0;
+async function SB(e, t) {
+	let n = e.scenario ? bB[e.scenario] : void 0;
 	if (!n) return null;
 	try {
 		let r = await fetch(new URL(n, t));
 		if (!r.ok) throw Error(`HTTP ${r.status}`);
 		let i = await r.json();
 		if (i.version !== 1 || i.renderer !== "authored-sudomer-v1" || i.scenario !== e.scenario) throw Error("invalid manifest");
-		let a = yB(e.tiles);
+		let a = xB(e.tiles);
 		if (i.sourceTerrainHash !== a) throw Error(`terrain hash ${i.sourceTerrainHash} does not match ${a}`);
 		return i;
 	} catch (t) {
@@ -30589,7 +30675,7 @@ async function bB(e, t) {
 }
 //#endregion
 //#region src/snapshot-client.ts
-var xB = class {
+var CB = class {
 	generation = -1;
 	revision = -1;
 	seenEvents = /* @__PURE__ */ new Set();
@@ -30605,10 +30691,10 @@ var xB = class {
 			newEvents: t
 		};
 	}
-}, SB = class {
+}, wB = class {
 	latest = null;
 	consumer = null;
-	accumulator = new xB();
+	accumulator = new CB();
 	constructor() {
 		addEventListener("sudomer-snapshot", this.onSnapshot);
 		let e = window.SudomerHexBridge?.takeSnapshot();
@@ -30630,7 +30716,7 @@ var xB = class {
 		let t = this.accumulator.accept(e);
 		t && (this.latest = t.snapshot, this.consumer?.applySnapshot(t.snapshot, t.newEvents));
 	}
-}, CB = class {
+}, TB = class {
 	scene;
 	assetBase;
 	texture = null;
@@ -30663,12 +30749,12 @@ var xB = class {
 	dispose() {
 		this.texture?.dispose(), this.texture = null, this.lowerVeil.removeFromParent(), this.lowerVeil.geometry.dispose(), this.lowerVeil.material.dispose();
 	}
-}, wB = 241, TB = 177;
-function EB(e, t, n) {
+}, EB = 241, DB = 177;
+function OB(e, t, n) {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
 }
-var DB = class {
+var kB = class {
 	data;
 	assetBase;
 	group = new $n();
@@ -30682,15 +30768,15 @@ var DB = class {
 	}
 	heightAt(e, t) {
 		let n = Gu(e, t, this.data.pond.points), r = qu(e, t, this.data.pond.points);
-		if (n) return E.lerp(-.62, -1.15, EB(0, 2.8, r)) - .04 * Math.sin(e * .34 + t * .22);
-		if (r < 3.4) return -.62 + EB(0, 3.4, r) * .77;
+		if (n) return E.lerp(-.62, -1.15, OB(0, 2.8, r)) - .04 * Math.sin(e * .34 + t * .22);
+		if (r < 3.4) return -.62 + OB(0, 3.4, r) * .77;
 		let i = Gu(e, t, this.data.mudBasin.points), a = qu(e, t, this.data.mudBasin.points);
 		if (i) {
 			let n = Math.exp(-((Math.sin(e * .13 + t * .055) * 3.2) ** 2));
 			return -.48 + Math.sin(e * .21) * Math.cos(t * .17) * .12 - n * .12;
 		}
-		if (a < 2.8) return -.42 + EB(0, 2.8, a) * .62;
-		let o = .95 * Math.sin(e * .026 + .65) * Math.cos(t * .022 - .25), s = .48 * Math.sin((e + t * .42) * .055), c = (Math.abs(e) / 72) ** 4 * .85 + (Math.abs(t) / 52) ** 4 * .55, l = Ju(e, t, this.data.causeway.points), u = 1 - EB(this.data.causeway.width, this.data.causeway.width + 3.5, l);
+		if (a < 2.8) return -.42 + OB(0, 2.8, a) * .62;
+		let o = .95 * Math.sin(e * .026 + .65) * Math.cos(t * .022 - .25), s = .48 * Math.sin((e + t * .42) * .055), c = (Math.abs(e) / 72) ** 4 * .85 + (Math.abs(t) / 52) ** 4 * .55, l = Ju(e, t, this.data.causeway.points), u = 1 - OB(this.data.causeway.width, this.data.causeway.width + 3.5, l);
 		return E.lerp(o + s + c, .1 + Math.sin(e * .035) * .12, u * .78);
 	}
 	updateVisibility(e) {}
@@ -30704,10 +30790,10 @@ var DB = class {
 	}
 	createGround() {
 		let { minX: e, maxX: t, minZ: n, maxZ: r } = this.data.bounds, i = [], o = [], s = [], c = [], l = new A();
-		for (let a = 0; a < TB; a += 1) {
-			let c = a / (TB - 1), u = E.lerp(n, r, c);
-			for (let n = 0; n < wB; n += 1) {
-				let r = n / (wB - 1), a = E.lerp(e, t, r), c = this.heightAt(a, u);
+		for (let a = 0; a < DB; a += 1) {
+			let c = a / (DB - 1), u = E.lerp(n, r, c);
+			for (let n = 0; n < EB; n += 1) {
+				let r = n / (EB - 1), a = E.lerp(e, t, r), c = this.heightAt(a, u);
 				i.push(a, c, u), s.push(a / 32, u / 32);
 				let d = Gu(a, u, this.data.mudBasin.points), f = Ju(a, u, this.data.causeway.points);
 				if (d) l.setRGB(.66, .49, .34);
@@ -30715,14 +30801,14 @@ var DB = class {
 				else {
 					let e = .065 * Math.sin(a * .09) * Math.cos(u * .12) + .025 * Math.sin(a * .31 + u * .17);
 					l.setRGB(.91 + e, .99 + e, .83 + e * .6);
-					let t = 1 - EB(0, 2.8, qu(a, u, this.data.pond.points));
+					let t = 1 - OB(0, 2.8, qu(a, u, this.data.pond.points));
 					l.lerp(new A(11051127), t * .45);
 				}
 				o.push(l.r, l.g, l.b);
 			}
 		}
-		for (let e = 0; e < TB - 1; e += 1) for (let t = 0; t < wB - 1; t += 1) {
-			let n = e * wB + t, r = n + 1, i = n + wB, a = i + 1;
+		for (let e = 0; e < DB - 1; e += 1) for (let t = 0; t < EB - 1; t += 1) {
+			let n = e * EB + t, r = n + 1, i = n + EB, a = i + 1;
 			c.push(n, i, r, r, i, a);
 		}
 		let u = new oi();
@@ -30936,7 +31022,7 @@ var DB = class {
 };
 //#endregion
 //#region src/units.ts
-function OB(e) {
+function AB(e) {
 	return e.type === "VOZOVA_HRADBA" ? {
 		model: "war_wagon",
 		offsets: [[0, 0]],
@@ -30969,7 +31055,7 @@ function OB(e) {
 		scale: 1.15
 	};
 }
-var kB = class {
+var jB = class {
 	terrain;
 	layout;
 	assets;
@@ -31001,7 +31087,7 @@ var kB = class {
 		if (!r) {
 			let t = new $n();
 			t.name = `${e.name} (${e.id})`;
-			let i = OB(e), a = await this.assets.load(i.model);
+			let i = AB(e), a = await this.assets.load(i.model);
 			if (this.disposed || n !== this.updateRevision || this.visuals.has(e.id)) return;
 			let o = e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
 			for (let [e, n] of i.offsets) {
@@ -31035,7 +31121,7 @@ var kB = class {
 			e instanceof Ji && e.material instanceof Ii && e.material.opacity > 0 && (e.material.opacity = t ? .38 : .24);
 		}), r.revision = n;
 	}
-}, AB = class e {
+}, MB = class e {
 	canvas;
 	options;
 	scene = new cr();
@@ -31072,8 +31158,8 @@ var kB = class {
 		this.canvas = e, this.options = t;
 		let r = new URL(t.assetBase ?? "assets/", document.baseURI).href;
 		if (this.assets = new _u(r), n) {
-			let e = new DB(n, t.snapshot, r);
-			this.terrain = e, this.scenery = new _B(n, e, this.assets), this.artMode = "authored";
+			let e = new kB(n, t.snapshot, r);
+			this.terrain = e, this.scenery = new yB(n, e, this.assets), this.artMode = "authored";
 		} else {
 			let e = new xd(t.snapshot);
 			this.terrain = e, this.scenery = new Xu(e, this.assets), this.artMode = "generated";
@@ -31085,10 +31171,10 @@ var kB = class {
 			effects: !0,
 			gtaoSamples: 12,
 			maxPixelRatio: 2
-		}), this.units = new kB(this.terrain, this.terrain.layout, this.assets), this.overlays = new Td(this.terrain, this.terrain.layout), this.lighting = Sd(this.scene), this.picker = new Ed(e, this.cameraRig.camera, this.terrain.layout), this.sky = new CB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
+		}), this.units = new jB(this.terrain, this.terrain.layout, this.assets), this.overlays = new Td(this.terrain, this.terrain.layout), this.lighting = Sd(this.scene), this.picker = new Ed(e, this.cameraRig.camera, this.terrain.layout), this.sky = new TB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
 	}
 	static async create(t, n) {
-		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await bB(n.snapshot, r), a = new e(t, n, i);
+		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await SB(n.snapshot, r), a = new e(t, n, i);
 		try {
 			return await a.pipeline.init(), a.resize(), await Promise.all([a.sky.load(), a.scenery.build()]), await a.applySnapshot(n.snapshot), a.lighting.invalidateShadows(), a.scheduleFrame(), a;
 		} catch (e) {
@@ -31246,8 +31332,8 @@ var kB = class {
 		!n && this.cameraMoving && (this.cameraMoving = !1), this.focusDistance = E.lerp(this.focusDistance, this.targetFocusDistance, Hu(t, 180)), this.pipeline.setDepthOfField(!this.cameraMoving, this.focusDistance, this.cameraMoving ? 0 : .35), this.sky.update(this.cameraRig.camera), this.lighting.updateShadows(), this.pipeline.render(), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => AB.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function jB() {
+window.HussiteBattle3D = { create: (e, t) => MB.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function NB() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = JSON.parse(t.takeSnapshot()), r = (e, n) => {
@@ -31259,19 +31345,19 @@ async function jB() {
 			action: e,
 			...n
 		}));
-	}, i = await AB.create(e, {
+	}, i = await MB.create(e, {
 		snapshot: n,
 		onHex: (e) => r("hex", e),
 		assetBase: "assets/"
 	});
-	new SB().connect(i), window.SudomerHexRenderer = {
+	new wB().connect(i), window.SudomerHexRenderer = {
 		frameScene: () => i.frameScene(),
 		setGridVisible: (e) => i.setGridVisible(e),
 		setEffectsEnabled: (e) => i.setEffectsEnabled(e),
 		diagnostics: () => i.diagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-jB().catch((e) => {
+NB().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

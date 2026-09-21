@@ -127,7 +127,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'experiments/sudomer-diorama/web/hex-three/integrated/hex-three.js?v=2.0';
+                script.src = 'experiments/sudomer-diorama/web/hex-three/integrated/hex-three.js?v=2.2';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });

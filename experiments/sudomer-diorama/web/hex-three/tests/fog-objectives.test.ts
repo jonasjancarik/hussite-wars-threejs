@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
 import { GeneratedTerrain } from "../src/generated-terrain.ts";
+import { HexLayout } from "../src/hex-coordinates.ts";
 import { TacticalOverlays } from "../src/overlays.ts";
+import { SceneryVisibility } from "../src/scenery-visibility.ts";
+import { batchStaticMeshes } from "../src/static-batching.ts";
 import type { BattleSnapshot } from "../src/types.ts";
 
 function snapshot(overrides: Partial<BattleSnapshot> = {}): BattleSnapshot {
@@ -59,4 +62,49 @@ test("fog cover hides unknown cells while objective marker remains above it", ()
   assert.equal(hiddenRing.visible, true, "scenario objective remains visible through fog");
   assert.ok(hiddenRing.renderOrder > hiddenCover.renderOrder);
   terrain.dispose();
+});
+
+test("authored scenery reveals explored cells after static batching", () => {
+  const layout = new HexLayout(2, 1);
+  const root = new THREE.Group();
+  const visibility = new SceneryVisibility(layout);
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial();
+  const cells = [layout.center(0, 0), layout.center(1, 0), layout.center(1, 0)];
+  for (const [index, center] of cells.entries()) {
+    const decoration = new THREE.Mesh(geometry, material);
+    decoration.name = `Decoration ${index}`;
+    decoration.position.set(center.x, 0, center.z);
+    root.add(decoration);
+    visibility.trackObject(decoration, center.x, center.z);
+  }
+  const landmark = new THREE.Group();
+  const hiddenCenter = layout.center(1, 0);
+  root.add(landmark);
+  visibility.trackObject(landmark, hiddenCenter.x, hiddenCenter.z);
+  const result = batchStaticMeshes(root, object => visibility.keyForObject(object));
+  assert.equal(result.batches.length, 1);
+  visibility.trackBatches(result.batches);
+  const fullBounds = result.batches[0]!.mesh.boundingSphere?.clone();
+  assert.ok(fullBounds && fullBounds.radius > 1, "batch retains bounds for every authored instance");
+
+  visibility.update(snapshot());
+  assert.deepEqual(result.batches[0]!.mesh.boundingSphere, fullBounds,
+    "fog changes do not shrink the culling bounds used by later reveals");
+  assert.equal(landmark.visible, false);
+  const matrix = new THREE.Matrix4();
+  result.batches[0]!.mesh.getMatrixAt(0, matrix);
+  assert.notEqual(matrix.determinant(), 0, "explored decoration remains visible");
+  result.batches[0]!.mesh.getMatrixAt(1, matrix);
+  assert.equal(matrix.determinant(), 0, "unexplored decoration is hidden inside its shared batch");
+
+  visibility.update(snapshot({ fogOfWar: false, visibleHexes: [], exploredHexes: [] }));
+  assert.equal(landmark.visible, true);
+  for (let index = 0; index < result.batches[0]!.matrices.length; index += 1) {
+    result.batches[0]!.mesh.getMatrixAt(index, matrix);
+    assert.notEqual(matrix.determinant(), 0, `decoration ${index} restores when fog is disabled`);
+  }
+  visibility.clear();
+  geometry.dispose();
+  material.dispose();
 });

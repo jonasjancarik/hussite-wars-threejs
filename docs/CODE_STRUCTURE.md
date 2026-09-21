@@ -57,6 +57,9 @@ organická křivka změnila čitelný význam mapy. Test rovnoměrně vzorkuje p
 průchodnost ani bojová pravidla. Obsahuje hash zdrojového terénu; při neshodě se
 automaticky použije obecný generátor. Sudoměř je první schválený manifest a znovu
 používá původní `AuthoredTerrain` a `AuthoredScenery` nad živým stavem kampaně.
+Každá výtvarná dekorace si i po sloučení do instancovaných draw callů zachovává
+klíč nejbližšího herního hexu. Pokročilá mlha proto průběžně odhaluje stromy,
+stavby a drobné detaily pouze v prozkoumaných buňkách, bez rozbití batchingu.
 
 ### Stav se nemění při kreslení
 
