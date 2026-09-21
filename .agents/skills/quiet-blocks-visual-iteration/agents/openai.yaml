@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quiet Blocks Visual Iteration"
+  short_description: "Match the Quiet Blocks reference efficiently"
+  default_prompt: "Use $quiet-blocks-visual-iteration to refine this scene against the approved art direction."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quiet Blocks Renderer Performance"
+  short_description: "Diagnose rendering stalls and edit latency"
+  default_prompt: "Use $quiet-blocks-renderer-performance to measure and optimise this Quiet Blocks rendering, building-edit, or growth performance problem."
