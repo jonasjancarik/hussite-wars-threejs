@@ -3,6 +3,8 @@ export interface MarkerAnchor {
   x: number;
   y: number;
   selected: boolean;
+  /** Projected camera depth: larger values are farther away. */
+  depth?: number;
 }
 
 export interface MarkerPlacement extends MarkerAnchor {
@@ -12,11 +14,15 @@ export interface MarkerPlacement extends MarkerAnchor {
   height: number;
 }
 
+function paintOrder(a: MarkerAnchor, b: MarkerAnchor): number {
+  return Number(a.selected) - Number(b.selected) || (b.depth ?? 0) - (a.depth ?? 0) || a.id - b.id;
+}
+
 /** Follow each projected unit directly. Array order is back-to-front paint order. */
 export function layoutUnitMarkers(anchors: MarkerAnchor[], width: number, height: number): MarkerPlacement[] {
   if (width <= 0 || height <= 0) return [];
   return [...anchors]
-    .sort((a, b) => Number(a.selected) - Number(b.selected) || a.id - b.id)
+    .sort(paintOrder)
     .map(anchor => ({ ...anchor, width: 64, height: 58, left: anchor.x - 32, top: anchor.y - 64 }));
 }
 
@@ -47,7 +53,7 @@ export function separateUnitMarkers(anchors: MarkerAnchor[], width: number, heig
     // stacking unreadable buttons. Zooming in restores every individual marker.
     if (result) placed.push(result);
   }
-  return placed.reverse();
+  return placed.sort(paintOrder);
 }
 
 export function markerAt(placements: MarkerPlacement[], x: number, y: number): number | null {

@@ -5,7 +5,8 @@ export const unitMarkerStyles = `
 .three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;
   margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;
   background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;
-  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; }
+  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }
+.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }
 .three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }
 .three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;
   margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;
@@ -28,6 +29,7 @@ export const unitMarkerStyles = `
 .three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;
   background:#f2e8d388; transform-origin:top; pointer-events:none; }
 @media (prefers-reduced-motion:no-preference) {
+  .three-unit-marker { transition:opacity 120ms ease-out; }
   .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }
 }
 `;

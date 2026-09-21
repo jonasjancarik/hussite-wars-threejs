@@ -1,6 +1,29 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as THREE from "three";
 import { layoutUnitMarkers, separateUnitMarkers, markerAt } from "../src/unit-marker-layout.ts";
+
+test("camera-near banners paint and receive clicks above far banners as the camera rotates", () => {
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+  const anchors = () => [
+    { id: 1, x: 100, y: 150, selected: false, depth: new THREE.Vector3(0, 0, 4).project(camera).z },
+    { id: 99, x: 100, y: 150, selected: false, depth: new THREE.Vector3(0, 0, -4).project(camera).z },
+  ];
+  camera.position.set(0, 0, 10); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
+  const before = layoutUnitMarkers(anchors(), 320, 250);
+  assert.equal(before.at(-1)!.id, 1, "nearer unit wins despite its lower id");
+  assert.equal(markerAt(before, 100, 120), 1);
+  const selectedFar = layoutUnitMarkers(anchors().map(a => ({ ...a, selected: a.id === 99 })), 320, 250);
+  assert.equal(markerAt(selectedFar, 100, 120), 99, "selection remains the explicit exception");
+  camera.position.set(0, 0, -10); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
+  const after = layoutUnitMarkers(anchors(), 320, 250);
+  assert.equal(markerAt(after, 100, 120), 99, "rotation reverses near/far stacking");
+  for (const a of before) {
+    const b = after.find(b => b.id === a.id)!;
+    assert.equal(a.left, b.left);
+    assert.equal(a.top, b.top);
+  }
+});
 
 test("small camera changes move every banner by exactly its anchor movement", () => {
   const anchors = Array.from({ length: 12 }, (_, id) => ({ id, x: 150 + id, y: 200 + id, selected: id === 3 }));

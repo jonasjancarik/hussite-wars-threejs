@@ -115,7 +115,7 @@ export class UnitBanners {
       const ndc = world.project(camera);
       if (ndc.z < -1 || ndc.z > 1 || Math.abs(ndc.x) > 1 || Math.abs(ndc.y) > 1) continue;
       anchors.push({ id: unit.id, x: (ndc.x + 1) * this.width / 2, y: (1 - ndc.y) * this.height / 2,
-        selected: unit.id === this.snapshot.selectedUnitId });
+        selected: unit.id === this.snapshot.selectedUnitId, depth: ndc.z });
     }
     this.placements = this.avoidance
       ? separateUnitMarkers(anchors, this.width, this.height, this.obstacles)
