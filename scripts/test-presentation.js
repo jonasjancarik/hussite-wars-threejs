@@ -26,6 +26,8 @@ test('map options opens accessibly, retains toggles, and closes with Escape or a
     assert.equal(h.document.activeElement, h.document.getElementById('btn-hex-grid'));
     h.document.getElementById('btn-separate-banners').dispatchEvent(new Event('click'));
     assert.equal(menu.hidden, false, 'checkbox-style options keep the menu open');
+    h.document.getElementById('btn-unit-details').dispatchEvent(new Event('click'));
+    assert.equal(game.view.bannerDetails, true, 'detail mode is an army-wide display preference');
     const escape = new Event('keydown', { cancelable: true });
     Object.defineProperty(escape, 'key', { value: 'Escape' });
     h.document.dispatchEvent(escape);
@@ -105,6 +107,7 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     const h = createHarness({ browserView: true });
     let options = null, activeCalls = 0, disposeCalls = 0, snapshots = 0, zoomCalls = 0, createCalls = 0;
     let gridVisible = null;
+    let detailsVisible = null;
     h.context.window.HussiteBattle3D = {
         create: async (_canvas, value) => {
             createCalls++;
@@ -113,6 +116,7 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
                 applySnapshot: () => { snapshots++; },
                 setActive: () => { activeCalls++; }, resize() {}, frameScene() {}, focusHex() {},
                 setGridVisible: value => { gridVisible = value; },
+                setBannerDetails: value => { detailsVisible = value; },
                 zoomBy: () => { zoomCalls++; }, diagnostics: () => ({}),
                 dispose: () => { disposeCalls++; }
             };
@@ -177,13 +181,23 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     bannerButton.dispatchEvent(new Event('click'));
     assert.equal(game.view.threeMap.bannerAvoidance, true);
     assert.equal(bannerButton.getAttribute('aria-pressed'), 'true');
+    const detailsButton = h.document.getElementById('btn-unit-details');
+    assert.equal(detailsButton.hidden, false);
+    assert.equal(detailsButton.getAttribute('aria-pressed'), 'false');
+    detailsButton.dispatchEvent(new Event('click'));
+    assert.equal(game.view.threeMap.bannerDetails, true);
+    assert.equal(detailsVisible, true);
     game.view.setViewMode('2d');
     assert.equal(bannerButton.hidden, true);
+    assert.equal(detailsButton.hidden, true);
     game.view.setViewMode('3d');
     await h.flush();
     assert.equal(bannerButton.hidden, false);
     assert.equal(bannerButton.getAttribute('aria-pressed'), 'true');
     assert.equal(game.view.threeMap.bannerAvoidance, true);
+    assert.equal(detailsButton.hidden, false);
+    assert.equal(detailsButton.getAttribute('aria-pressed'), 'true', 'details persist through 2D/3D changes');
+    assert.equal(detailsVisible, true, 'the resumed renderer receives the retained detail state');
     bannerButton.dispatchEvent(new Event('click'));
     assert.equal(game.view.threeMap.bannerAvoidance, false);
     const gridButton = h.document.getElementById('btn-hex-grid');
@@ -219,6 +233,7 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     await h.flush();
     assert.equal(createCalls, 2, 'terrain changes rebuild the generated landscape');
     assert.equal(disposeCalls, 1, 'stale terrain renderer is disposed before rebuilding');
+    assert.equal(detailsVisible, true, 'a recreated renderer receives the retained detail state');
     game.destroy();
     assert.equal(disposeCalls, 2, 'current renderer is disposed exactly once with the game');
 });

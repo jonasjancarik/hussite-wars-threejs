@@ -17,6 +17,7 @@ class ThreeBattleMapView {
         this.terrainSignature = null;
         this.gridVisible = true;
         this.bannerAvoidance = false;
+        this.bannerDetails = false;
     }
 
     async mount() {
@@ -90,6 +91,7 @@ class ThreeBattleMapView {
             this.renderer = renderer;
             renderer.setGridVisible(this.gridVisible);
             renderer.setBannerAvoidance?.(this.bannerAvoidance);
+            renderer.setBannerDetails?.(this.bannerDetails);
             this.terrainSignature = this.getTerrainSignature(initialSnapshot);
             if (!this.active || !this.pageVisible) renderer.setActive(false);
             return renderer;
@@ -131,7 +133,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.23';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.25';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -192,7 +194,12 @@ class ThreeBattleMapView {
             objectiveKind: game.hexGrid.escapeZoneKind,
             visibleHexes: [...game.visibleHexes],
             exploredHexes: [...game.exploredHexes],
-            events: this.effects
+            events: this.effects,
+            // Zero HP can also mean leaving the field. Only the shared death
+            // handler confirms a casualty; never infer death from disappearance.
+            eliminatedUnitIds: game.units.filter(unit => unit.health <= 0 && unit._deathHandled && !unit.escaped && (
+                unit.faction === 'hussites' || !game.fogOfWar || game.fogOfWarSystem.isEnemyVisible(unit)
+            )).map(unit => unit.id)
         };
     }
 
@@ -246,6 +253,7 @@ class ThreeBattleMapView {
     zoomBy(factor) { this.renderer?.zoomBy(factor); }
     setGridVisible(visible) { this.gridVisible = visible; this.renderer?.setGridVisible(visible); }
     setBannerAvoidance(enabled) { this.bannerAvoidance = enabled; this.renderer?.setBannerAvoidance?.(enabled); }
+    setBannerDetails(enabled) { this.bannerDetails = enabled; this.renderer?.setBannerDetails?.(enabled); }
     diagnostics() { return this.renderer?.diagnostics() ?? null; }
     resetDiagnostics() { this.renderer?.resetDiagnostics(); }
     setPageVisible(visible) { this.pageVisible = visible; this.renderer?.setActive(this.active && visible); }

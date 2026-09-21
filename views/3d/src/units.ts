@@ -3,9 +3,11 @@ import type { BattleAssets } from "./assets.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 import { visibleSnapshotUnits } from "./unit-visibility.ts";
+import { CasualtyFades } from "./casualties.ts";
 
 interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
-interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number }
+interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number;
+  health: number; unit: Pick<UnitSnapshot, "id" | "faction" | "col" | "row"> }
 interface FigureRecipe {
   model: string;
   offsets: Array<[number, number]>;
@@ -66,6 +68,7 @@ function artilleryRecipe(model: string): FigureRecipe[] {
 
 export class UnitPresentation {
   public readonly group = new THREE.Group();
+  public readonly casualties = new CasualtyFades();
   public readonly hitTargets: THREE.Object3D[] = [];
   private readonly visuals = new Map<number, UnitVisual>();
   private disposed = false;
@@ -88,8 +91,13 @@ export class UnitPresentation {
     const revision = ++this.updateRevision;
     const visibleUnits = visibleSnapshotUnits(snapshot);
     const visibleIds = new Set(visibleUnits.map(unit => unit.id));
+    const eliminated = new Set(snapshot.eliminatedUnitIds ?? []);
+    this.casualties.retainVisible(snapshot);
     for (const [id, visual] of this.visuals) {
       if (!visibleIds.has(id)) {
+        if (eliminated.has(id)) {
+          for (const figure of visual.figures) this.casualties.add(figure.object, visual.unit);
+        }
         this.group.remove(visual.root);
         this.hitTargets.splice(this.hitTargets.indexOf(visual.hit), 1);
         visual.hit.geometry.dispose();
@@ -118,6 +126,7 @@ export class UnitPresentation {
     if (this.disposed) return;
     this.disposed = true;
     this.updateRevision += 1;
+    this.casualties.clear();
     for (const visual of this.visuals.values()) {
       visual.hit.geometry.dispose();
       (visual.hit.material as THREE.Material).dispose();
@@ -175,7 +184,8 @@ export class UnitPresentation {
       hit.visible = false;
       hit.userData.unitId = unit.id;
       root.add(hit);
-      visual = { root, hit, figures, revision, markerHeight: 0 };
+      visual = { root, hit, figures, revision, markerHeight: 0, health: unit.health,
+        unit: { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row } };
       this.visuals.set(unit.id, visual);
       this.hitTargets.push(hit);
       this.group.add(root);
@@ -189,17 +199,22 @@ export class UnitPresentation {
     const troopCount = visual.figures.filter(figure => figure.depletes).length;
     const healthRatio = unit.maxHealth > 0 ? Math.min(1, Math.max(0, unit.health / unit.maxHealth)) : 0;
     const survivors = Math.max(1, Math.ceil(troopCount * healthRatio));
+    if (unit.health > visual.health) this.casualties.cancelUnit(unit.id);
     let troopIndex = 0;
     visual.markerHeight = 0;
     for (const { object, bottom, top, depletes } of visual.figures) {
       // Stable slots retain gaps after losses; healing restores those same slots.
-      object.visible = !depletes || troopIndex++ < survivors;
+      const survives = !depletes || troopIndex++ < survivors;
       const world = visual.root.localToWorld(new THREE.Vector3(object.position.x, 0, object.position.z));
       object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
+      if (!survives && object.visible && unit.health < visual.health) this.casualties.add(object, unit);
+      object.visible = survives;
       if (object.visible) visual.markerHeight = Math.max(visual.markerHeight, object.position.y + top);
     }
     visual.root.updateMatrixWorld(true);
     visual.revision = revision;
+    visual.health = unit.health;
+    visual.unit = { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row };
   }
 
   private variant(model: string, faction: UnitSnapshot["faction"]): Promise<THREE.Group> {

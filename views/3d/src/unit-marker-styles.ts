@@ -28,6 +28,16 @@ export const unitMarkerStyles = `
   padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }
 .three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;
   background:#f2e8d388; transform-origin:top; pointer-events:none; }
+.three-unit-marker .marker-details { display:none; }
+.three-unit-marker[data-details=true] { width:152px; height:114px; }
+.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;
+  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;
+  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;
+  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }
+.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;
+  text-overflow:ellipsis; color:#28302b; font-weight:bold; }
+.three-unit-marker .marker-detail-health { white-space:nowrap; }
+.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }
 @media (prefers-reduced-motion:no-preference) {
   .three-unit-marker { transition:opacity 120ms ease-out; }
   .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }

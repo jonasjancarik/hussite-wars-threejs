@@ -151,6 +151,8 @@
     "mapOptions": "Map options",
     "minimap": "Minimap",
     "hexGrid": "Hex grid",
+    "unitDetails": "Unit details",
+    "unitDetailsHint": "Show each visible unit's name, exact health, and morale.",
     "separateBanners": "Separate banners",
     "separateBannersHint": "Move overlapping banners apart. Turn off to keep banners anchored smoothly above their units.",
     "view3dUnavailableTitle": "3D view unavailable",

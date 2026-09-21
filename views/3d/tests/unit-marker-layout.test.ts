@@ -1,7 +1,34 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
-import { layoutUnitMarkers, separateUnitMarkers, markerAt } from "../src/unit-marker-layout.ts";
+import { completeDetailMarkerPlacements, layoutUnitMarkers, separateUnitMarkers, markerAt, unitMarkerDimensions } from "../src/unit-marker-layout.ts";
+
+test("detail cards use their own compact visual and hit rectangles on desktop and small viewports", () => {
+  const compact = unitMarkerDimensions();
+  const details = unitMarkerDimensions(true);
+  assert.deepEqual(compact, { width: 64, height: 58 });
+  assert.deepEqual(details, { width: 152, height: 114 });
+  const anchor = { id: 7, x: 160, y: 140, selected: false };
+  const [desktop] = layoutUnitMarkers([anchor], 640, 420, details);
+  assert.deepEqual({ left: desktop!.left, top: desktop!.top, width: desktop!.width, height: desktop!.height },
+    { left: 84, top: 20, width: 152, height: 114 });
+  assert.equal(markerAt([desktop!], 235, 133), 7, "the right edge of the detail card remains selectable");
+  assert.equal(markerAt([desktop!], 237, 133), null);
+  const [small] = layoutUnitMarkers([anchor], 320, 240, details);
+  assert.deepEqual(small, desktop, "a small viewport clips instead of moving the anchored card");
+  assert.equal(markerAt([small!], 160, 29), 7);
+  assert.equal(markerAt([small!], 85, 29), null, "empty space beside the flag must not intercept map clicks");
+});
+
+test("detail mode restores labels that optional separation cannot place", () => {
+  const details = unitMarkerDimensions(true);
+  const anchors = Array.from({ length: 8 }, (_, id) => ({ id, x: 90, y: 80, selected: id === 5 }));
+  const direct = layoutUnitMarkers(anchors, 320, 240, details);
+  const separated = separateUnitMarkers(anchors, 320, 240, [], details);
+  assert.ok(separated.length < direct.length, "the constrained viewport exhausts nearby detail-card slots");
+  assert.equal(completeDetailMarkerPlacements(separated, direct, true).length, anchors.length);
+  assert.equal(completeDetailMarkerPlacements(separated, direct, false).length, separated.length);
+});
 
 test("camera-near banners paint and receive clicks above far banners as the camera rotates", () => {
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);

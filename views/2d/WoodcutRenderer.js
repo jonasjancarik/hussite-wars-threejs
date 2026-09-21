@@ -112,6 +112,7 @@ class WoodcutRenderer {
             factionColor: unit?.faction === 'hussites' ? p.red : p.blue,
             healthColor,
             healthRatio: ratio,
+            moraleLabel: this.label('game.moraleLabel', 'Morale'),
             moraleText: this.moraleText(unit),
             moraleColor: this.moraleColor(unit),
             badges,

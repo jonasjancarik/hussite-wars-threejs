@@ -31,7 +31,7 @@
     <meta name="twitter:image" content="https://hussitewars.com/imgs/social-preview.png">
     <meta name="twitter:image:alt" content="Husitská vozová hradba pod kalichem · A Hussite wagon fort beneath the chalice banner">
 
-    <link rel="stylesheet" href="style.css?v=8.39">
+    <link rel="stylesheet" href="style.css?v=8.40">
 </head>
 <body class="booting">
     <section id="startup-status" class="startup-status">
@@ -256,6 +256,7 @@
                 <div id="map-options" role="group" data-i18n-aria-label="touch.mapOptions" aria-label="Možnosti mapy" hidden>
                     <strong data-i18n="touch.mapOptions">Možnosti mapy</strong>
                     <button id="btn-hex-grid" type="button" aria-pressed="true" data-i18n="touch.hexGrid" hidden>Hexová síť</button>
+                    <button id="btn-unit-details" type="button" aria-pressed="false" data-i18n="touch.unitDetails" data-i18n-title="touch.unitDetailsHint" hidden>Detaily oddílů</button>
                     <button id="btn-separate-banners" type="button" aria-pressed="false" data-i18n="touch.separateBanners" data-i18n-title="touch.separateBannersHint" hidden>Rozestoupit značky</button>
                 </div>
             </div>
@@ -1069,13 +1070,13 @@
 
     <!-- i18n - lokalizační systém (načíst jako první) -->
     <script src="js/core/GameStorage.js?v=8.9"></script>
-    <script src="js/i18n/i18n.js?v=8.40"></script>
+    <script src="js/i18n/i18n.js?v=8.41"></script>
     <script src="js/i18n/i18nHelpers.js?v=8.18"></script>
     <script src="js/i18n/encyclopediaRenderer.js?v=8.28"></script>
     <!-- ?v= cache-busting: bumpni číslo při každém vydání, ať hráči nedostanou starý JS -->
     <script src="js/ui/sound.js?v=3.9"></script>
     <script src="js/ui/music.js?v=8.20"></script>
-    <script src="views/2d/WoodcutRenderer.js?v=8.28"></script>
+    <script src="views/2d/WoodcutRenderer.js?v=8.29"></script>
     <script src="js/core/hex.js?v=8.13"></script>
     <script src="js/data/unitTypes.js?v=8.17"></script>
     <script src="js/entities/Unit.js?v=8.18"></script>
@@ -1100,8 +1101,8 @@
     <script src="js/ui/BattleTooltip.js?v=8.16"></script>
     <script src="js/ui/BattleMapInput.js?v=8.8"></script>
     <script src="js/ui/BattleOrders.js?v=8.11"></script>
-    <script src="views/3d/ThreeBattleMapView.js?v=2.23"></script>
-    <script src="js/ui/BattleView.js?v=8.23"></script>
+    <script src="views/3d/ThreeBattleMapView.js?v=2.25"></script>
+    <script src="js/ui/BattleView.js?v=8.24"></script>
     <script src="js/core/game.js?v=8.20"></script>
     <script src="js/ai.js?v=8.21"></script>
     <script src="js/ui/main.js?v=8.31"></script>

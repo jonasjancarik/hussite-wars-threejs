@@ -151,6 +151,8 @@
     "mapOptions": "Možnosti mapy",
     "minimap": "Minimapa",
     "hexGrid": "Hexová síť",
+    "unitDetails": "Detaily oddílů",
+    "unitDetailsHint": "Zobrazí název, přesné zdraví a morálku každého viditelného oddílu.",
     "separateBanners": "Rozestoupit značky",
     "separateBannersHint": "Rozmístí překrývající se značky. Vypněte pro plynulé sledování jednotek při otáčení mapy.",
     "view3dUnavailableTitle": "3D pohled není dostupný",

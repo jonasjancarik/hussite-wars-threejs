@@ -16,11 +16,12 @@ class BattleView {
         this.threeMap = typeof ThreeBattleMapView !== 'undefined' ? new ThreeBattleMapView(this) : {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
-            setGridVisible() {}, setPageVisible() {}
+            setGridVisible() {}, setBannerDetails() {}, setPageVisible() {}
         };
         this.viewMode = '2d';
         this.hexGridVisible = true;
         this.separateBanners = false;
+        this.bannerDetails = false;
         this.backgroundPaused = false;
         this.animationEnabled = false;
         this.moveAnimation = null;
@@ -158,6 +159,11 @@ class BattleView {
             this.threeMap.setBannerAvoidance?.(this.separateBanners);
             this.updateViewModeControls();
         }, { signal });
+        document.getElementById('btn-unit-details')?.addEventListener('click', () => {
+            this.bannerDetails = !this.bannerDetails;
+            this.threeMap.setBannerDetails?.(this.bannerDetails);
+            this.updateViewModeControls();
+        }, { signal });
         this.updateViewModeControls();
     }
 
@@ -185,6 +191,7 @@ class BattleView {
             document.getElementById('map-zoom-in').disabled = false;
             document.getElementById('map-zoom-out').disabled = false;
             this.threeMap.setGridVisible(this.hexGridVisible);
+            this.threeMap.setBannerDetails?.(this.bannerDetails);
             this.threeMap.mount();
             this.minimap.canvas?.classList.remove('map-open');
         } else {
@@ -217,6 +224,12 @@ class BattleView {
             gridButton.hidden = this.viewMode !== '3d';
             gridButton.setAttribute('aria-pressed', String(this.hexGridVisible));
             gridButton.classList.toggle('active', this.hexGridVisible);
+        }
+        const detailsButton = document.getElementById('btn-unit-details');
+        if (detailsButton) {
+            detailsButton.hidden = this.viewMode !== '3d';
+            detailsButton.setAttribute('aria-pressed', String(Boolean(this.bannerDetails)));
+            detailsButton.classList.toggle('active', Boolean(this.bannerDetails));
         }
     }
 

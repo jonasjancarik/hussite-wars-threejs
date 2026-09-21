@@ -38,6 +38,7 @@ class IntegratedThreeBattle {
   private readonly sky: BattlePaintedSky;
   private readonly resizeObserver: ResizeObserver;
   private readonly abortController = new AbortController();
+  private readonly reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   private readonly gestures = new Map<number, PointerGesture>();
   private readonly consumedEvents = new Set<string>();
   private frameRequest: number | null = null;
@@ -88,7 +89,7 @@ class IntegratedThreeBattle {
     this.lighting = createBattleLighting(this.scene);
     this.picker = new BattlePicker(canvas, this.cameraRig.camera, this.terrain.layout);
     this.sky = new BattlePaintedSky(this.scene, assetBase, Math.max(500, extent * 3.7));
-    this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.wagonConnections.group,
+    this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group,
       this.overlays.group, this.effects.group);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement ?? canvas);
@@ -123,6 +124,7 @@ class IntegratedThreeBattle {
     this.overlays.update(snapshot);
     this.banners.update(snapshot);
     this.wagonConnections.update(snapshot);
+    this.units.casualties.setEnabled(this.active && !this.reducedMotion.matches);
     await this.units.update(snapshot);
     if (this.disposed || revision !== this.snapshotRevision) return;
     this.effects.setPaused(snapshot.paused || !this.active);
@@ -140,6 +142,7 @@ class IntegratedThreeBattle {
     if (this.disposed || this.active === active) return;
     this.active = active;
     this.banners.setActive(active);
+    if (!active) this.units.casualties.clear();
     this.effects.setPaused(!active);
     if (!active && this.frameRequest !== null) {
       cancelAnimationFrame(this.frameRequest);
@@ -161,6 +164,7 @@ class IntegratedThreeBattle {
 
   public setGridVisible(visible: boolean): void { this.overlays.setGridVisible(visible); }
   public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); }
+  public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
   public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); }
 
   public focusHex(col: number, row: number): void {
@@ -208,6 +212,7 @@ class IntegratedThreeBattle {
       active: this.active, disposed: this.disposed };
     return { backend: this.pipeline.backendName(), active: this.active, disposed: this.disposed,
       listenerCount: this.listenerCount, frameRequestActive: this.frameRequest !== null,
+      casualtyCount: this.units.casualties.group.children.length,
       scenario: this.options.snapshot.scenario, artMode: this.artMode, terrainTypes: this.terrain.terrainTypes,
       sceneChildren: this.scene.children.length, terrainChildren: this.terrain.group.children.length,
       terrainBox: { min: terrainBox.min.toArray(), max: terrainBox.max.toArray() },
@@ -347,6 +352,8 @@ class IntegratedThreeBattle {
     this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, this.targetFocusDistance, focusSmoothingAlpha(delta, 180));
     this.pipeline.setDepthOfField(!this.cameraMoving, this.focusDistance, this.cameraMoving ? 0 : 0.35);
     this.sky.update(this.cameraRig.camera);
+    if (this.reducedMotion.matches) this.units.casualties.clear();
+    else this.units.casualties.advance(delta, this.options.snapshot.paused);
     this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id));
     this.lighting.updateShadows();
     const rendererStartedAt = performance.now();

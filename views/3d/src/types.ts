@@ -7,6 +7,7 @@ export interface UnitMarkerPresentation {
   factionColor: string;
   healthColor: string;
   healthRatio: number;
+  moraleLabel: string;
   moraleText: string;
   moraleColor: string;
   badges: Array<{ id: string; text: string; label: string; color: string }>;
@@ -73,6 +74,8 @@ export interface BattleSnapshot {
   objective?: string;
   result?: unknown;
   events: CosmeticEvent[];
+  /** Visible, confirmed losses only; omission means a normal banner removal. */
+  eliminatedUnitIds?: number[];
   pausedAt?: number;
 }
 
@@ -152,6 +155,7 @@ declare global {
         frameScene(): void;
         setGridVisible(visible: boolean): void;
         setBannerAvoidance(enabled: boolean): void;
+        setBannerDetails(visible: boolean): void;
         focusHex(col: number, row: number): void;
         zoomBy(factor: number): void;
         diagnostics(): Record<string, unknown>;

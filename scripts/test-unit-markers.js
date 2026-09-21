@@ -95,6 +95,7 @@ test('plain snapshot units stay JSON-safe and use localized status labels when a
         morale: 70, maxMorale: 100, hasMoved: false, hasAttacked: false };
     const presentation = marker(plain);
     assert.equal(presentation.moraleText, 'Good');
+    assert.equal(presentation.moraleLabel, 'Morale');
     assert.equal(presentation.actionText, 'Ready');
     assert.doesNotThrow(() => JSON.stringify(presentation));
 });
@@ -151,6 +152,31 @@ test('3D adapter sends presentation only for units visible through fog', () => {
     assert.equal(snapshot.units[1].special, visibleEnemy.special);
     assert.ok(snapshot.units[1].presentation.badges.some(badge => badge.id === 'terrified'));
     assert.doesNotThrow(() => JSON.stringify(snapshot));
+});
+
+test('3D adapter reports only confirmed, non-escaped losses for disappearance effects', () => {
+    const friendlyDead = new h.Unit('CEPNICI', 0, 0, 1);
+    const visibleEnemyDead = new h.Unit('KUSNICI', 1, 0, 2);
+    const hiddenEnemyDead = new h.Unit('TEZKY_RYTIR', 2, 0, 3);
+    const escapedDead = new h.Unit('KOPINICI', 0, 1, 4);
+    for (const unit of [friendlyDead, visibleEnemyDead, hiddenEnemyDead, escapedDead]) {
+        unit.health = 0; unit._deathHandled = true;
+    }
+    const unconfirmedRemoval = new h.Unit('CEPNICI', 0, 0, 5);
+    unconfirmedRemoval.health = 0; unconfirmedRemoval.isRouting = true;
+    visibleEnemyDead.faction = 'crusaders'; hiddenEnemyDead.faction = 'crusaders'; escapedDead.escaped = true;
+    const game = {
+        units: [friendlyDead, visibleEnemyDead, hiddenEnemyDead, escapedDead, unconfirmedRemoval], selectedUnit: null, fogOfWar: true,
+        fogOfWarSystem: { isEnemyVisible: unit => unit.id === visibleEnemyDead.id },
+        hexGrid: { attackableHexes: [], highlightedHexes: [], escapeZoneHexes: [], escapeZoneKind: null,
+            cols: 3, rows: 2, hexes: new Map() },
+        currentScenario: { id: 'marker-test' }, turnNumber: 1, currentFaction: 'hussites',
+        gameState: 'playing', actions: { busy: false }, isPaused: false, aiRunning: false,
+        visibleHexes: new Set(), exploredHexes: new Set()
+    };
+    h.context.__markerGame = game;
+    const snapshot = vm.runInContext('ThreeBattleMapView.prototype.snapshot.call({ game: __markerGame, revision: 0, effects: [] })', h.context);
+    assert.deepEqual(Array.from(snapshot.eliminatedUnitIds), [friendlyDead.id, visibleEnemyDead.id]);
 });
 
 let failures = 0;
