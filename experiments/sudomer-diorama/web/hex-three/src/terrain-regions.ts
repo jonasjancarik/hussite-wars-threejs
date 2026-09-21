@@ -352,6 +352,11 @@ export class TerrainRegions {
       total += weight;
     }
     for (const terrain of Object.keys(weights)) weights[terrain] = weights[terrain]! / total;
+    // Ease into the protected cell interior. An abrupt switch to weight 1 at
+    // coreInset made mud banks jump in height, producing tall triangular teeth.
+    const coreBlend = smooth(Math.max(0, Math.min(1, edgeDistance / this.coreInset)));
+    for (const terrain of Object.keys(weights)) weights[terrain]! *= 1 - coreBlend;
+    weights[cell.terrain] = (weights[cell.terrain] ?? 0) + coreBlend;
     return weights;
   }
 

@@ -88,8 +88,7 @@ export class GeneratedTerrain implements BattleTerrain {
     colors.needsUpdate = true;
   }
 
-  /** Dominant terrain after the same vertex interpolation used by the rendered mesh. */
-  public renderedTerrainAt(x: number, z: number): string | null {
+  private surfaceSampleAt(x: number, z: number): { vertices: [number, number, number]; barycentric: [number, number, number] } | null {
     const { minX, maxX, minZ, maxZ } = this.bounds;
     if (x < minX || x > maxX || z < minZ || z > maxZ) return null;
     const gridX = (x - minX) / (maxX - minX) * (this.gridWidth - 1);
@@ -107,6 +106,22 @@ export class GeneratedTerrain implements BattleTerrain {
     } else {
       vertices = [a, d, b]; barycentric = [1 - tx, tz, tx - tz];
     }
+    return { vertices, barycentric };
+  }
+
+  /** Project overlays onto the actual triangles rather than the unsampled height function. */
+  public renderedHeightAt(x: number, z: number): number {
+    const sample = this.surfaceSampleAt(x, z);
+    if (!sample) return this.heightAt(x, z);
+    return sample.vertices.reduce((height, vertex, index) =>
+      height + this.basePositions[vertex * 3 + 1]! * sample.barycentric[index]!, 0);
+  }
+
+  /** Dominant terrain after the same vertex interpolation used by the rendered mesh. */
+  public renderedTerrainAt(x: number, z: number): string | null {
+    const sample = this.surfaceSampleAt(x, z);
+    if (!sample) return null;
+    const { vertices, barycentric } = sample;
     let result: string | null = null, maximum = -Infinity;
     for (const terrain of this.field.terrainTypes) {
       const weights = this.visualWeights.get(terrain)!;
@@ -224,13 +239,19 @@ export class GeneratedTerrain implements BattleTerrain {
     for (let x = this.gridWidth - 2; x >= 0; x -= 1) edgeIndices.push((this.gridHeight - 1) * this.gridWidth + x);
     for (let z = this.gridHeight - 2; z > 0; z -= 1) edgeIndices.push(z * this.gridWidth);
     edgeIndices.push(edgeIndices[0]!);
-    const positions: number[] = [], colors: number[] = [], indices: number[] = [];
-    const topColor = new THREE.Color(0x79684b), bottomColor = new THREE.Color(0x46382d);
+    const positions: number[] = [], colors: number[] = [], indices: number[] = [], uvs: number[] = [];
+    const topColor = new THREE.Color(0xc7b492), bottomColor = new THREE.Color(0x9b8266);
+    let perimeterDistance = 0;
     for (let index = 0; index < edgeIndices.length; index += 1) {
       const sourceIndex = edgeIndices[index]!;
       const x = surfacePositions.getX(sourceIndex), top = surfacePositions.getY(sourceIndex);
       const z = surfacePositions.getZ(sourceIndex);
+      if (index > 0) {
+        const previous = edgeIndices[index - 1]!;
+        perimeterDistance += Math.hypot(x - surfacePositions.getX(previous), z - surfacePositions.getZ(previous));
+      }
       positions.push(x, top, z, x, -5.9, z);
+      uvs.push(perimeterDistance / 8, top / 8, perimeterDistance / 8, -5.9 / 8);
       const variation = 0.94 + 0.06 * Math.sin(index * 0.43);
       colors.push(topColor.r * variation, topColor.g * variation, topColor.b * variation,
         bottomColor.r * variation, bottomColor.g * variation, bottomColor.b * variation);
@@ -242,10 +263,12 @@ export class GeneratedTerrain implements BattleTerrain {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
     const skirt = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
       color: 0xffffff, vertexColors: true, roughness: 1, side: THREE.DoubleSide,
+      map: this.surfaceMesh.material[3]!.map,
     }));
     skirt.name = "Topography-following layered battlefield soil plinth";
     skirt.receiveShadow = true;

@@ -64,6 +64,7 @@ export interface TerrainSurface {
   readonly group: import("three").Group;
   readonly interactiveMeshes: import("three").Object3D[];
   heightAt(x: number, z: number): number;
+  renderedHeightAt?(x: number, z: number): number;
 }
 
 export interface BattleTerrain extends TerrainSurface {

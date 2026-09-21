@@ -1,26 +1,29 @@
 import * as THREE from "three";
-import { HEX_RADIUS, HexLayout } from "./hex-coordinates.ts";
+import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, HexCoord, TerrainSurface } from "./types.ts";
 
 function key(coord: HexCoord): string { return `${coord.col},${coord.row}`; }
 
-export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt">, fill = false,
-  layout = new HexLayout(20, 12), radiusScale = 0.96): THREE.BufferGeometry {
+export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt" | "renderedHeightAt">, fill = false,
+  layout = new HexLayout(20, 12), radiusScale = 1): THREE.BufferGeometry {
   const center = layout.center(coord.col, coord.row);
   const vertices: number[] = [];
   const indices: number[] = [];
-  const segments = 48;
-  const bands = fill ? 8 : 1;
+  const segments = 96;
+  const sideSegments = segments / 6;
+  const bands = fill ? 16 : 1;
   for (let band = 0; band <= bands; band += 1) {
-    const radius = fill ? HEX_RADIUS * radiusScale * band / bands : HEX_RADIUS * radiusScale - band * 0.19;
+    // Adjacent half-width strips meet at the actual shared edge, without a gap.
+    const radius = fill ? layout.radius * radiusScale * band / bands : layout.radius * radiusScale - band * 0.055;
     for (let i = 0; i < segments; i += 1) {
-      const side = Math.floor(i / 8);
-      const t = (i % 8) / 8;
+      const side = Math.floor(i / sideSegments);
+      const t = (i % sideSegments) / sideSegments;
       const a = side * Math.PI / 3;
       const b = (side + 1) * Math.PI / 3;
       const x = center.x + THREE.MathUtils.lerp(Math.cos(a), Math.cos(b), t) * radius;
       const z = center.z + THREE.MathUtils.lerp(Math.sin(a), Math.sin(b), t) * radius;
-      vertices.push(x, Math.max(terrain.heightAt(x, z), -0.52) + 0.20, z);
+      const height = terrain.renderedHeightAt?.(x, z) ?? terrain.heightAt(x, z);
+      vertices.push(x, Math.max(height, -0.52) + 0.04, z);
     }
   }
   for (let band = 0; band < bands; band += 1) {
@@ -29,6 +32,13 @@ export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "
       const b = band * segments + (i + 1) % segments;
       const c = a + segments;
       const d = b + segments;
+      // Avoid stretching the tactical grid into bright vertical cliff stripes.
+      if (!fill) {
+        const distance = Math.hypot(vertices[a * 3]! - vertices[b * 3]!, vertices[a * 3 + 2]! - vertices[b * 3 + 2]!);
+        if (Math.abs(vertices[a * 3 + 1]! - vertices[b * 3 + 1]!) > distance) continue;
+        const width = Math.hypot(vertices[a * 3]! - vertices[c * 3]!, vertices[a * 3 + 2]! - vertices[c * 3 + 2]!);
+        if (Math.abs(vertices[a * 3 + 1]! - vertices[c * 3 + 1]!) > width) continue;
+      }
       // Counter-clockwise from above, for both the inward ring and outward fill.
       if (fill) indices.push(a, b, c, b, d, c);
       else indices.push(a, c, b, c, d, b);
@@ -49,7 +59,7 @@ function fogOverlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heig
     // overlayGeometry already sampled the shared surface oracle and applied
     // the authored pond floor. Reuse that value instead of resampling every
     // vertex during synchronous scene construction.
-    positions.setY(index, positions.getY(index) + 0.35);
+    positions.setY(index, positions.getY(index) + 0.51);
   }
   positions.needsUpdate = true;
   geometry.computeVertexNormals();
@@ -70,13 +80,14 @@ export class TacticalOverlays {
     for (let col = 0; col < layout.cols; col += 1) {
       for (let row = 0; row < layout.rows; row += 1) {
         const material = new THREE.MeshBasicMaterial({
-          color: 0xd9d1b5,
+          color: 0xb5ae91,
           transparent: true,
           opacity: 0,
           depthWrite: false,
-          depthTest: false,
+          depthTest: true,
           polygonOffset: true,
-          polygonOffsetFactor: -4,
+          polygonOffsetFactor: -1,
+          polygonOffsetUnits: -1,
           toneMapped: false,
           fog: false,
         });
@@ -119,9 +130,9 @@ export class TacticalOverlays {
     const explored = new Set(this.snapshot?.exploredHexes ?? []);
     for (const [coordKey, ring] of this.rings) {
       const material = ring.material as THREE.MeshBasicMaterial;
-      let opacity = this.gridVisible ? 0.42 : 0;
+      let opacity = this.gridVisible ? 0.30 : 0;
       let fillOpacity = 0;
-      let color = 0xd9d1b5;
+      let color = 0xb5ae91;
       if (objectives.has(coordKey)) {
         opacity = Math.max(opacity, 0.72);
         fillOpacity = 0.10;

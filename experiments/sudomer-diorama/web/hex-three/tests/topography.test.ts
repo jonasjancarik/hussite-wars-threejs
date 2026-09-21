@@ -3,6 +3,22 @@ import test from "node:test";
 import { createTerrainRegions } from "../src/terrain-regions.ts";
 import { TopographyPlan } from "../src/topography.ts";
 
+test("mud banks have no height jump where the protected hex interior begins", () => {
+  const field = createTerrainRegions({ cols: 3, rows: 1, seed: 11, coreCoverage: 0.76, boundaryNoise: 0.75, tiles: [
+    { col: 0, row: 0, terrain: "hills" }, { col: 1, row: 0, terrain: "mud" },
+    { col: 2, row: 0, terrain: "hills" },
+  ] });
+  const plan = new TopographyPlan(field);
+  const mud = field.getCell(1, 0)!, hill = field.getCell(0, 0)!;
+  const dx = hill.center.x - mud.center.x, dz = hill.center.z - mud.center.z;
+  const distance = Math.hypot(dx, dz);
+  const coreRadius = field.apothem * Math.sqrt(field.coreCoverage);
+  const samples = [-0.0001, 0.0001].map(offset => plan.elevationAt(
+    mud.center.x + dx / distance * (coreRadius + offset),
+    mud.center.z + dz / distance * (coreRadius + offset)));
+  assert.ok(Math.abs(samples[0]! - samples[1]!) < 0.001, `mud bank jump: ${samples}`);
+});
+
 test("semantic hills form a plateau and slope cells rise toward it", () => {
   const field = createTerrainRegions({ cols: 6, rows: 1, scenario: "ridge-fixture", seed: 3, tiles: [
     { col: 0, row: 0, terrain: "plains" }, { col: 1, row: 0, terrain: "plains" },

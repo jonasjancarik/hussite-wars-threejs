@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
-import { createMeadowMesh, createMeadowPlacements, decorationSeed } from "./generated-meadow.ts";
+import { decorationSeed } from "./generated-meadow.ts";
 import { mulberry32 } from "./geometry-utils.ts";
 import { GeneratedTerrain } from "./generated-terrain.ts";
 import { SceneryVisibility } from "./scenery-visibility.ts";
@@ -10,7 +10,6 @@ export class GeneratedScenery implements BattleScenery {
   public readonly group = new THREE.Group();
   private disposed = false;
   private readonly visibility: SceneryVisibility;
-  private meadowMesh: THREE.InstancedMesh | null = null;
 
   public constructor(private readonly terrain: GeneratedTerrain, private readonly assets: BattleAssets) {
     this.group.name = "Terrain-derived scenery";
@@ -27,15 +26,6 @@ export class GeneratedScenery implements BattleScenery {
     }
     await this.assets.preload([...needed]);
     if (this.disposed) return;
-    const meadow = createMeadowMesh(createMeadowPlacements(this.terrain), (x, z) => this.terrain.heightAt(x, z));
-    if (meadow.matrices.length > 0) {
-      this.meadowMesh = meadow.mesh;
-      this.group.add(meadow.mesh);
-      this.visibility.trackInstances(meadow.mesh, meadow.matrices);
-    } else {
-      meadow.mesh.geometry.dispose();
-      (meadow.mesh.material as THREE.Material).dispose();
-    }
     for (const cell of this.terrain.field.tiles) {
       if (this.disposed) return;
       const random = mulberry32(decorationSeed(this.terrain.field.seed, cell.col, cell.row, "terrain-models"));
@@ -66,10 +56,6 @@ export class GeneratedScenery implements BattleScenery {
   public dispose(): void {
     this.disposed = true;
     this.visibility.clear();
-    this.meadowMesh?.geometry.dispose();
-    const material = this.meadowMesh?.material;
-    if (material) for (const entry of Array.isArray(material) ? material : [material]) entry.dispose();
-    this.meadowMesh = null;
     this.group.clear();
   }
 }

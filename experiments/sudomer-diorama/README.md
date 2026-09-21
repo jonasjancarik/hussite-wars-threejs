@@ -61,7 +61,7 @@ Sudoměř has no rules-level field terrain. Its playable `plains` therefore rema
 
 `web/hex-three/src/terrain-regions.ts` is renderer-neutral. It merges same-terrain neighbours, applies deterministic coherent variation at region borders and preserves a protected core inside every source cell. The test suite measures area coverage across all campaign scenarios and keeps the 75% minimum explicit.
 
-Generator v2 adds the shared visual baseline before scenario authoring: world-scaled meadow, earth, grassy-slope and water materials; deterministic shadow-free instanced grass with clear unit centres; and semantic elevation inferred from connected hills and slopes. `performance.ts` provides resettable 240-frame captures with raw frame, preparation and renderer timings plus public Three.js counters. Vítkov is the primary visual and performance fixture; no Vítkov coordinates or scenario-name branches exist in the generator.
+Generator v2 adds the shared visual baseline before scenario authoring: world-scaled meadow, earth, grassy-slope and water materials, textured vertical soil sides, and semantic elevation inferred from connected hills and slopes. Meadow grass instances are currently disabled. Terrain blends ease into each protected hex interior to avoid abrupt mud-bank height jumps. The thin, muted grid meets at shared hex edges, respects unit occlusion, and omits steep segments instead of stretching across cliffs; selection and movement colors remain stronger. `performance.ts` provides resettable 240-frame captures with raw frame, preparation and renderer timings plus public Three.js counters. Vítkov is the primary visual and performance fixture; no Vítkov coordinates or scenario-name branches exist in the generator.
 
 ## Standalone Sudoměř hex battle
 
