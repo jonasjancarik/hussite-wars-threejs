@@ -27,7 +27,7 @@ On this macOS machine Blender must run with native graphics-device access. Its M
 - `tools/art/blender/previews/<asset>.png` is the rendered close-up.
 - `assets/3d/models/manifest.json` records measured dimensions, triangles, export mesh count, source part count, and animations.
 
-One unit represents approximately one metre. Blender uses Z-up and exports glTF with Y-up. All assets face +X where facing matters. Place a scene at ground height with an identity rotation; there is no hidden global scale. Houses and vegetation are centred in their footprint; soldiers and the horse are centred around their body; the wagon is centred on its deck, so its towing poles extend further toward +X. All meshes are opaque, with small standalone banner surfaces using glTF's default double-sided material behaviour.
+One unit represents approximately one metre. Blender uses Z-up and exports glTF with Y-up. The original kit and units face +X where facing matters. The fortification kit uses Blender −Y / glTF +Z as its front, with straight wall and palisade sections along X; its corner module has an elbow origin, as documented in the references. Place a scene at ground height with an identity rotation; there is no hidden global scale. Houses and vegetation are centred in their footprint; soldiers and the horse are centred around their body; the wagon is centred on its deck, so its towing poles extend further toward +X. All meshes are opaque, with small standalone banner surfaces using glTF's default double-sided material behaviour.
 
 `cavalry.glb` contains one `HorseWalk` clip: 49 source frames at 24 fps, exactly two seconds between the first and last sample. Repeat the clip when walking. The four legs have staggered upper-leg swing and knee flexion, the body rises and pitches slightly, and the tail sways. Animation is an in-place object-transform loop, not skeletal animation or root motion; the game moves the cavalry entity. The rider travels with the horse. No attack, death, or transition clips are included.
 
@@ -57,6 +57,11 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | `field_blockhouse` | Fixed timber/stone garrison with two visible crossbow defenders |
 | `church` | Plastered nave, buttresses, windows, red roof, bell tower, slate spire and cross |
 | `farmhouse` | Timber-and-plaster walls, windows, door, chimney and red gabled roof |
+| `fort_wall`, `fort_wall_corner` | Modular straight and L-shaped masonry walls with a raised wall-walk |
+| `fort_gatehouse` | Open passage through a masonry gate with a roofed timber-and-plaster upper storey |
+| `fort_tower_square`, `fort_tower_round` | Two compact roofed defensive tower silhouettes |
+| `fort_manor` | Fortified residential keep with narrow windows and an external timber stair |
+| `timber_palisade` | Pointed posts with rails and braces, in a reusable six-metre section |
 | `broadleaf_olive`, `broadleaf_gold` | Faceted crowns with visible trunk and branching |
 | `cypress` | Narrow layered dark-green silhouette |
 | `stakes` | Three crossed timber obstacles linked by a rail |
@@ -72,6 +77,8 @@ The artillery batch is defined in `artillery_batch.py`; [artillery-references.md
 The static cavalry variants are defined in `cavalry_batch.py`. They reuse the original horse with its actions removed and standing leg transforms, then add new riders and equipment. [cavalry-references.md](cavalry-references.md) documents the period references and reuse decisions. Pass `-- --cavalry` to `render_infantry_batch.py` for the comparison render.
 
 `people_batch.py` supplies the final civilian, commander and dismounted figures. `support_units.py` supplies the fieldwork, neutral standard and refreshed older unit models. Their references are in [people-references.md](people-references.md) and [support-unit-references.md](support-unit-references.md). Render the final roles with `render_unit_completion.py`. The full roster is deliberately mapped in `views/3d/src/unit-recipes.ts`; unknown types fail instead of silently becoming polearm infantry.
+
+`fortification_batch.py` supplies the first environment batch. [Fortification references](fortification-references.md) records the KCD II screenshots, NPÚ historical checks, intentional simplifications and module connections. `render_fortification_batch.py` renders the exported kit to `previews/fortification-batch.png`. The game composes illustrative manor sites at Nekmíř and Malešov through `views/3d/src/fortification-scenery.ts`; these do not alter the rules or claim to reconstruct the named sites. Other castles and towns still require authored placement.
 
 ## Verification
 

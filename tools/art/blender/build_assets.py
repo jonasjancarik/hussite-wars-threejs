@@ -25,6 +25,9 @@ MODEL_DIRECTORIES = {
     'infantry_dismounted': 'units',
     'infantry_halberd': 'units', 'commander_standard': 'props', 'field_blockhouse': 'buildings',
     'church': 'buildings', 'farmhouse': 'buildings',
+    'fort_wall': 'buildings', 'fort_wall_corner': 'buildings', 'fort_gatehouse': 'buildings',
+    'fort_tower_square': 'buildings', 'fort_tower_round': 'buildings', 'fort_manor': 'buildings',
+    'timber_palisade': 'props',
     'broadleaf_olive': 'vegetation', 'broadleaf_gold': 'vegetation',
     'cypress': 'vegetation',
     'stakes': 'props', 'banner': 'props', 'bridge': 'props',
@@ -396,6 +399,11 @@ def preview(name, objects):
     camera.rotation_euler=(center-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.type='ORTHO'
     camera.data.ortho_scale=size*1.30
+    if name.startswith('fort_') or name == 'timber_palisade':
+        # Wide corner modules need room for their diagonal camera projection.
+        view = camera.rotation_euler.to_matrix().transposed()
+        projected = [sum(abs(view[row][axis])*(hi-lo)[axis] for axis in range(3)) for row in (0, 1)]
+        camera.data.ortho_scale = max(projected[0], projected[1]*800/720)*1.14
     scene.camera=camera
     bpy.ops.object.light_add(type='AREA',location=center+Vector((-3,-4,7))*size)
     light=bpy.context.object
@@ -440,6 +448,8 @@ from people_batch import builders as people_builders
 BUILDERS.update(people_builders(globals()))
 from support_units import builders as support_builders
 BUILDERS.update(support_builders(globals()))
+from fortification_batch import builders as fortification_builders
+BUILDERS.update(fortification_builders(globals()))
 
 
 def main():
@@ -475,7 +485,7 @@ def main():
         bpy.ops.object.select_all(action='DESELECT')
         for obj in objects: obj.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
-        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer', 'infantry_dismounted', 'infantry_halberd', 'infantry_polearm', 'infantry_handgun', 'infantry_shield', 'war_wagon', 'field_blockhouse') or name.startswith(('artillery_', 'cavalry_', 'civilian_', 'commander_')):
+        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer', 'infantry_dismounted', 'infantry_halberd', 'infantry_polearm', 'infantry_handgun', 'infantry_shield', 'war_wagon', 'field_blockhouse', 'timber_palisade') or name.startswith(('artillery_', 'cavalry_', 'civilian_', 'commander_', 'fort_')):
             # Static exports use world-space vertices so runtime AABBs describe
             # the actual feet, not rotated material-batch bounding boxes.
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
@@ -491,7 +501,8 @@ def main():
             'mesh_objects':sum(o.type=='MESH' for o in objects),
             'editable_source_mesh_objects':source_mesh_count,
             'triangles':triangle_count,
-            'forward_axis':'+X','up_axis':'Y','animations':['HorseWalk'] if name=='cavalry' else [],
+            'forward_axis':'+Z' if name.startswith('fort_') or name=='timber_palisade' else '+X',
+            'up_axis':'Y','animations':['HorseWalk'] if name=='cavalry' else [],
             'animation_seconds':2.0 if name=='cavalry' else None,
         }
         print('ASSET_COMPLETE',name,manifest[name],flush=True)

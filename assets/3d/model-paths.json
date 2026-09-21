@@ -41,5 +41,12 @@
   "infantry_dismounted": "models/units/infantry_dismounted.glb",
   "infantry_halberd": "models/units/infantry_halberd.glb",
   "field_blockhouse": "models/buildings/field_blockhouse.glb",
-  "commander_standard": "models/props/commander_standard.glb"
+  "commander_standard": "models/props/commander_standard.glb",
+  "fort_wall": "models/buildings/fort_wall.glb",
+  "fort_wall_corner": "models/buildings/fort_wall_corner.glb",
+  "fort_gatehouse": "models/buildings/fort_gatehouse.glb",
+  "fort_tower_square": "models/buildings/fort_tower_square.glb",
+  "fort_tower_round": "models/buildings/fort_tower_round.glb",
+  "fort_manor": "models/buildings/fort_manor.glb",
+  "timber_palisade": "models/props/timber_palisade.glb"
 }

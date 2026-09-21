@@ -69,7 +69,7 @@ class IntegratedThreeBattle {
     } else {
       const terrain = new GeneratedTerrain(options.snapshot, assetBase);
       this.terrain = terrain;
-      this.scenery = new GeneratedScenery(terrain, this.assets);
+      this.scenery = new GeneratedScenery(terrain, this.assets, options.snapshot.scenario);
       this.artMode = "generated";
     }
     const extent = Math.max(this.terrain.bounds.maxX - this.terrain.bounds.minX,

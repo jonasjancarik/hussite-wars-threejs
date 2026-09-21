@@ -700,5 +700,145 @@
     "up_axis": "Y",
     "animations": [],
     "animation_seconds": null
+  },
+  "fort_wall": {
+    "file": "buildings/fort_wall.glb",
+    "dimensions_blender_xyz_m": [
+      6.0,
+      1.18,
+      4.45
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.0,
+      4.45,
+      1.18
+    ],
+    "mesh_objects": 3,
+    "editable_source_mesh_objects": 69,
+    "triangles": 2972,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "fort_wall_corner": {
+    "file": "buildings/fort_wall_corner.glb",
+    "dimensions_blender_xyz_m": [
+      6.59,
+      6.59,
+      4.45
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.59,
+      4.45,
+      6.59
+    ],
+    "mesh_objects": 3,
+    "editable_source_mesh_objects": 139,
+    "triangles": 5980,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "fort_gatehouse": {
+    "file": "buildings/fort_gatehouse.glb",
+    "dimensions_blender_xyz_m": [
+      6.44,
+      3.62,
+      7.5
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.44,
+      7.5,
+      3.62
+    ],
+    "mesh_objects": 10,
+    "editable_source_mesh_objects": 137,
+    "triangles": 4576,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "fort_tower_square": {
+    "file": "buildings/fort_tower_square.glb",
+    "dimensions_blender_xyz_m": [
+      4.4,
+      4.4,
+      8.1
+    ],
+    "dimensions_gltf_xyz_m": [
+      4.4,
+      8.1,
+      4.4
+    ],
+    "mesh_objects": 10,
+    "editable_source_mesh_objects": 166,
+    "triangles": 5794,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "fort_tower_round": {
+    "file": "buildings/fort_tower_round.glb",
+    "dimensions_blender_xyz_m": [
+      4.276,
+      4.276,
+      8.17
+    ],
+    "dimensions_gltf_xyz_m": [
+      4.276,
+      8.17,
+      4.276
+    ],
+    "mesh_objects": 9,
+    "editable_source_mesh_objects": 126,
+    "triangles": 3616,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "fort_manor": {
+    "file": "buildings/fort_manor.glb",
+    "dimensions_blender_xyz_m": [
+      6.45,
+      5.925,
+      10.0
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.45,
+      10.0,
+      5.925
+    ],
+    "mesh_objects": 9,
+    "editable_source_mesh_objects": 273,
+    "triangles": 9892,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "timber_palisade": {
+    "file": "props/timber_palisade.glb",
+    "dimensions_blender_xyz_m": [
+      6.0,
+      0.828,
+      2.423
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.0,
+      2.423,
+      0.828
+    ],
+    "mesh_objects": 3,
+    "editable_source_mesh_objects": 52,
+    "triangles": 980,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
   }
 }
