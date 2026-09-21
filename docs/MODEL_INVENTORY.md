@@ -4,6 +4,21 @@ Read when planning 3D assets, faction appearance, or scenery for another battle.
 
 Inventory date: 21 September 2026. Scope: this checkout's canonical unit/scenario data and the Three.js renderer in `views/3d`. “Available” means a GLB exists; it does not necessarily mean the renderer uses it or that its appearance has passed visual review. This is an asset-planning inventory, not a new historical audit.
 
+## Art direction and historical references
+
+Keep the existing low-poly diorama art direction: simple faceted geometry, readable silhouettes, restrained materials and colours, miniature proportions, and static figures. Historical detail should improve the recognisable shape and construction of an object without turning the scene into a photorealistic game.
+
+Use **Kingdom Come: Deliverance II screenshots as a preferred visual reference** for Bohemian clothing, armour, helmets, weapons, horse equipment, buildings and everyday props. Start with the [official media gallery](https://www.deepsilver.com/games/kingdom-come-deliverance-ii/media) and the [released gameplay screenshots collected by Gematsu](https://www.gematsu.com/2024/08/kingdom-come-deliverance-ii-gameplay-showcase-video-screenshots). Record the particular screenshot used when developing an asset, so its reference remains inspectable.
+
+The useful translation into our style is:
+
+- Preserve clothing layers, helmet and weapon profiles, shield shapes, and differences in equipment between ordinary soldiers and wealthy nobles.
+- For buildings and props, preserve structural features such as roof form, timber framing, masonry, gates and wagon construction.
+- Simplify small fittings, fabric folds and surface wear into a few clear shapes and colour areas. Judge the result at normal gameplay zoom.
+- Keep side colours as selective readability accents; retain variation in ordinary clothing and equipment. Continue with static figures and optional discrete poses as described below.
+
+KCD II is set in **1403**, shortly before this game's **1419–1437** campaign ([setting and screenshot source](https://www.gematsu.com/2024/08/kingdom-come-deliverance-ii-gameplay-showcase-video-screenshots)). It is a useful nearby-period reference, not proof for every detail of a later Hussite battle. Cross-check date-sensitive armour, firearms, wagon defences, heraldry and named buildings against historical sources when choosing those details. Screenshots guide newly authored models; game meshes and textures are not part of our asset library.
+
 ## Current coverage
 
 There are **27 GLB files**, **59 unit definitions**, and **18 scenarios**. The 27 exports include alternative vegetation and experimental variants; they are not 27 distinct gameplay unit models. Current troop presentation uses five base models: polearm infantry, handgun infantry, shield infantry, cavalry, and war wagon, plus a commander banner.
