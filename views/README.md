@@ -9,4 +9,4 @@ Both views present the same live game. `js/core`, `js/systems`, `js/entities` an
 
 Switching views does not create another game, reload a scenario or change its rules. `index.html` loads the two presentation entrypoints; the larger 3D bundle is loaded on demand. Keep experimental viewers and benchmarks under `experiments/`, not here.
 
-The shared map toolbar keeps **2D**, **3D** and zoom controls visible. Its cog opens **Map options** for Find unit, Minimap, and (in 3D only) Hex grid and Separate banners. Escape or a click outside closes the menu; Escape returns focus to the cog. Display toggles keep the menu open, while Find unit and Minimap close it after the action.
+The shared map toolbar keeps **2D**, **3D**, zoom, **Find unit** and **Minimap** visible. In 3D its cog opens **Map options** for Hex grid and Separate banners; the cog is hidden in 2D, where neither setting applies. Escape or a click outside closes the menu; Escape returns focus to the cog. Display toggles keep the menu open, while Find unit and Minimap close it after the action.

@@ -15,11 +15,15 @@ test('map options opens accessibly, retains toggles, and closes with Escape or a
     const h = createHarness({ browserView: true }), game = h.newGame();
     const toggle = h.document.getElementById('map-options-toggle');
     const menu = h.document.getElementById('map-options');
+    assert.equal(toggle.hidden, true, 'no empty display menu in 2D');
+    game.view.viewMode = '3d';
+    game.view.updateViewModeControls();
+    assert.equal(toggle.hidden, false);
     game.view.setMapOptionsOpen(false);
     toggle.dispatchEvent(new Event('click'));
     assert.equal(menu.hidden, false);
     assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-    assert.equal(h.document.activeElement, h.document.getElementById('map-center'));
+    assert.equal(h.document.activeElement, h.document.getElementById('btn-hex-grid'));
     h.document.getElementById('btn-separate-banners').dispatchEvent(new Event('click'));
     assert.equal(menu.hidden, false, 'checkbox-style options keep the menu open');
     const escape = new Event('keydown', { cancelable: true });

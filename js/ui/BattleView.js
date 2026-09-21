@@ -144,7 +144,7 @@ class BattleView {
             }
         }, { signal, capture: true });
         for (const id of ['map-center', 'btn-minimap']) {
-            document.getElementById(id)?.addEventListener('click', () => this.setMapOptionsOpen(false, true), { signal });
+            document.getElementById(id)?.addEventListener('click', () => this.setMapOptionsOpen(false), { signal });
         }
         document.getElementById('btn-view-2d')?.addEventListener('click', () => this.setViewMode('2d'), { signal });
         document.getElementById('btn-view-3d')?.addEventListener('click', () => this.setViewMode('3d'), { signal });
@@ -167,7 +167,7 @@ class BattleView {
         if (!menu || !toggle) return;
         menu.hidden = !open;
         toggle.setAttribute('aria-expanded', String(open));
-        if (open) document.getElementById('map-center')?.focus();
+        if (open) document.getElementById('btn-hex-grid')?.focus();
         else if (restoreFocus) toggle.focus();
     }
 
@@ -197,6 +197,8 @@ class BattleView {
     }
 
     updateViewModeControls() {
+        const optionsToggle = document.getElementById('map-options-toggle');
+        if (optionsToggle) optionsToggle.hidden = this.viewMode !== '3d';
         for (const mode of ['2d', '3d']) {
             const button = document.getElementById(`btn-view-${mode}`);
             if (!button) continue;
