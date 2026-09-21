@@ -15,6 +15,7 @@ MODEL_DIRECTORIES = {
     'war_wagon': 'units', 'cavalry': 'units',
     'infantry_polearm': 'units', 'infantry_handgun': 'units',
     'infantry_shield': 'units',
+    'infantry_flail': 'units', 'infantry_crossbow': 'units', 'infantry_pavise': 'units',
     'church': 'buildings', 'farmhouse': 'buildings',
     'broadleaf_olive': 'vegetation', 'broadleaf_gold': 'vegetation',
     'cypress': 'vegetation',
@@ -419,6 +420,11 @@ BUILDERS={
     'stakes':stakes,'banner':banner,'bridge':bridge,
 }
 
+# The next infantry batch shares the original kit's primitives and exporter.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from infantry_batch import builders as infantry_builders
+BUILDERS.update(infantry_builders(globals()))
+
 
 def main():
     selected=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else list(BUILDERS)
@@ -453,6 +459,12 @@ def main():
         bpy.ops.object.select_all(action='DESELECT')
         for obj in objects: obj.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
+        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise'):
+            # Static exports use world-space vertices so runtime AABBs describe
+            # the actual feet, not rotated material-batch bounding boxes.
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            bpy.context.view_layer.update()
+            lo,hi=bounds(objects)
         bpy.context.scene.name='HorseWalk' if name=='cavalry' else name
         output = MODELS / MODEL_DIRECTORIES[name] / (name + '.glb')
         output.parent.mkdir(parents=True, exist_ok=True)

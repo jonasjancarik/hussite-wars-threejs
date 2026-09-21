@@ -21,9 +21,9 @@ KCD II is set in **1403**, shortly before this game's **1419–1437** campaign (
 
 ## Current coverage
 
-There are **27 GLB files**, **59 unit definitions**, and **18 scenarios**. The 27 exports include alternative vegetation and experimental variants; they are not 27 distinct gameplay unit models. Current troop presentation uses five base models: polearm infantry, handgun infantry, shield infantry, cavalry, and war wagon, plus a commander banner.
+There are **30 GLB files**, **59 unit definitions**, and **18 scenarios**. The 30 exports include alternative vegetation and experimental variants; they are not 27 distinct gameplay unit models. Current troop presentation uses eight base models: flail, crossbow, pavise, polearm, handgun and sword/shield infantry, cavalry, and war wagon, plus a commander banner.
 
-The biggest omissions are recognisable flails, crossbows, bows, pavises, artillery, pilgrims, field fortifications, and distinct light/heavy cavalry. Some missing coverage needs only a renderer mapping or a material variant; other types require new geometry.
+The first batch adds recognisable flails, crossbows and pavises, with red/blue appearances for those three families. Remaining major omissions include bows, artillery, pilgrims, field fortifications, and distinct light/heavy cavalry. [Batch references and details](../tools/art/blender/infantry-references.md). Some missing coverage needs only a renderer mapping or a material variant; other types require new geometry.
 
 ### Available model files
 
@@ -31,6 +31,9 @@ Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `b
 
 | Files | Count | What we have / limits |
 | --- | ---: | --- |
+| `units/infantry_flail.glb` | 1 | Iron-bound wooden flail, kettle hat and padded clothing; both flail unit types. |
+| `units/infantry_crossbow.glb` | 1 | Crossbow, stirrup and bolt case; all four crossbow types. |
+| `units/infantry_pavise.glb` | 1 | Tall ribbed pavise with wooden back and sword; both pavise types. |
 | `units/infantry_polearm.glb` | 1 | Red-coated soldier, kettle helmet, polearm. Useful for sudličníci; currently also the catch-all for unrelated types. |
 | `units/infantry_handgun.glb` | 1 | Ochre-coated handgunner with powder flask. Used for ručničáři and, incorrectly as a visual identity, Koranda. |
 | `units/infantry_shield.glb` | 1 | Sword and shield with pale cross. Not a crossbowman or a dedicated large-pavise bearer. |
@@ -73,11 +76,11 @@ Only Sudoměř has an authored scenario-art manifest registered. Other scenarios
 
 | Visual family | Unit types covered | Current situation | Needed |
 | --- | --- | --- | --- |
-| Flail infantry | `CEPNICI`, `CEPNICI_PRASKY` | Polearm fallback | Flail weapon and readable carrying/ready pose; reuse infantry body. |
+| Flail infantry | `CEPNICI`, `CEPNICI_PRASKY` | New `infantry_flail`, red/blue cloth | Covered for the first batch; optional clothing and pose variants later. |
 | Polearm infantry | `SUDLICNICI`, `HALAPARTNICI` | Existing polearm | Different weapon heads and appropriate side colours. |
 | Spearmen | `KOPINICI_HUSITI`, `KOPINICI` | Polearm fallback | Straight spear/long spear silhouette; shared body. |
-| Pavise infantry | `PAVEZNICI`, `PAVEZNICI_KRIZACI` | Polearm fallback, despite shield model existing | Large pavise with distinct silhouette and side-specific decoration. |
-| Crossbowmen | `KUSINICI_HUSITI`, `KUSNICI`, `KUSNICI_JANOV`, `KUSINICI_PRASKY` | First two use sword/shield; others polearm | Crossbow and bolt quiver; optional Genoese equipment variation after reference checking. |
+| Pavise infantry | `PAVEZNICI`, `PAVEZNICI_KRIZACI` | New `infantry_pavise`, red/blue cloth and shield paint | Covered for the first batch; planted/fortified pose and researched decoration remain future work. |
+| Crossbowmen | `KUSINICI_HUSITI`, `KUSNICI`, `KUSNICI_JANOV`, `KUSINICI_PRASKY` | New `infantry_crossbow`, red/blue cloth | Shared weapon silhouette covered; Genoese equipment variation still needs reference checking. |
 | Handgunners | `RUCNICARI` | Matching base model | Cloth variants; optional weapon variation. |
 | Archers | `LUCISTNICI` | Polearm fallback | Bow, quiver and pose. |
 | Mercenary infantry | `ZOLDNERI` | Polearm fallback | Reuse sword/shield body with equipment variation; no unique body required initially. |
@@ -97,7 +100,7 @@ Mounted/dismounted heavy infantry is particularly useful for the Sudoměř and H
 
 Keep **game side**, **historical affiliation**, and **unit equipment** separate. The data uses two gameplay factions, `hussites` and `crusaders`, but the second can represent Prague/moderate Hussites or another coalition. Lipany explicitly defines blue Prague variants. A blue Hussite wagon should not automatically receive a crusader cross.
 
-The current Three.js presenter uses faction to choose facing, but does not recolour troop materials. Red coats and chalice flags are embedded in the available models. Merely duplicating the same GLB does not produce a readable opposing army.
+The Three.js presenter now recolours the dedicated cloth and shield-paint slots in the three new infantry models according to game side. It preserves neutral materials and isolates the two palettes. Original models still have baked red/ochre clothing and chalice flags; extending side recognition to those assets remains work to do.
 
 Proposed art scheme, not a claim about historical uniforms:
 
@@ -110,7 +113,7 @@ Proposed art scheme, not a claim about historical uniforms:
 | Individual leaders | Cleric versus noble versus field captain silhouettes; Žižka-specific head/weapon detail after reference review; heraldic shields as interchangeable parts. |
 | Variation within a formation | A few neutral coat colours, helmet/head variants, shield designs and horse coats. Avoid making every person look uniformly dressed. |
 
-Use a small number of shared meshes with interchangeable weapons, shields, headgear, cloth materials and flag designs. Clone/cache materials per appearance variant before recolouring: `clone(true)` currently shares materials, so changing a shared coat material could recolour both armies.
+Use a small number of shared meshes with interchangeable weapons, shields, headgear, cloth materials and flag designs. The presenter clones and caches tagged materials per appearance variant, preserving the original prototype. Extend that convention to future models; `clone(true)` alone shares materials and must not be used to recolour both armies accidentally.
 
 ## Battle surroundings and distinctive props
 
@@ -153,7 +156,7 @@ These are candidates derived from current map labels, terrain and battle lore. T
 ## Suggested production order
 
 1. **Make current units readable:** fix type-to-model mappings, integrate the unarmed adult, establish two side appearances and replace the universal commander chalice. This unlocks existing assets before new modelling.
-2. **Fill major weapon silhouettes:** flail, crossbow, bow, spear, pavise; then light/heavy/scout riders. Share bodies and horse geometry.
+2. **Fill remaining weapon silhouettes:** bow and spear, then light/heavy/scout riders. The first flail/crossbow/pavise batch is integrated; add variation after broader coverage. Share bodies and horse geometry.
 3. **Add guns and fieldworks:** houfnice, tarasnice/field-gun variants, bombarda and a Vítkov blockhouse. These are currently represented by ordinary soldiers.
 4. **Build one modular fortification kit:** use it for Nekmíř/Malešov, town walls, Hněvín/Vyšehrad and Sion, with individually authored placement and a few landmark parts.
 5. **Add civilian/commander variety and camps**, followed by scene-specific atmosphere and optional lore props.
@@ -168,7 +171,7 @@ No need to commission 59 bespoke troop meshes or 18 completely separate scenery 
 - Loading/material reuse: sibling `assets.ts`; scenery coverage: `generated-scenery.ts`, `scenery.ts`, `landscape-details.ts`; authored map registration: `scenario-art.ts`.
 - Asset descriptions and conventions: `tools/art/blender/README.md`; shared GLBs and manifests under `assets/3d/models/`; experimental exports under `experiments/sudomer-diorama/assets/models/`.
 
-Checked live source definitions, all 27 GLB JSON headers/material/animation lists, and the renderer mappings. No new visual QA, historical web research, game build or runtime test was performed for this documentation-only inventory. Battle-specific architectural details remain research work before modelling.
+The original inventory checked live source definitions, the original 27 GLB JSON headers/material/animation lists, and the renderer mappings. The first infantry batch subsequently added three models with linked visual/historical references, inspected Blender previews and an exported-model comparison in both side colours. GLB loading, dimensions, grounding, static geometry, faction material isolation and unit mappings have automated coverage; the 3D build and browser formation checks passed. Battle-specific architectural details remain research work before modelling.
 
 ## Complete roster mapping
 
@@ -176,11 +179,11 @@ This appendix records the current Three.js base-model selection, not whether tha
 
 | Type | Name | Default side | Current model |
 | --- | --- | --- | --- |
-| `CEPNICI` | Cepníci | H | `infantry_polearm` |
+| `CEPNICI` | Cepníci | H | `infantry_flail` |
 | `SUDLICNICI` | Sudličníci | H | `infantry_polearm` |
-| `PAVEZNICI` | Pavézníci | H | `infantry_polearm` |
+| `PAVEZNICI` | Pavézníci | H | `infantry_pavise` |
 | `KOPINICI_HUSITI` | Kopiníci | H | `infantry_polearm` |
-| `KUSINICI_HUSITI` | Kušiníci | H | `infantry_shield` |
+| `KUSINICI_HUSITI` | Kušiníci | H | `infantry_crossbow` |
 | `RUCNICARI` | Ručničáři | H | `infantry_handgun` |
 | `HOUFNICE` | Houfnice | H | `infantry_polearm` |
 | `TARASNICE` | Tarasnice | H | `infantry_polearm` |
@@ -196,9 +199,9 @@ This appendix records the current Three.js base-model selection, not whether tha
 | `ZVED_KRIZACI` | Zvěd | C | `infantry_polearm` |
 | `KOPINICI` | Kopiníci | C | `infantry_polearm` |
 | `HALAPARTNICI` | Halapartníci | C | `infantry_polearm` |
-| `PAVEZNICI_KRIZACI` | Pavézníci | C | `infantry_polearm` |
-| `KUSNICI_JANOV` | Janovští kušiníci | C | `infantry_polearm` |
-| `KUSNICI` | Kušiníci | C | `infantry_shield` |
+| `PAVEZNICI_KRIZACI` | Pavézníci | C | `infantry_pavise` |
+| `KUSNICI_JANOV` | Janovští kušiníci | C | `infantry_crossbow` |
+| `KUSNICI` | Kušiníci | C | `infantry_crossbow` |
 | `LUCISTNICI` | Lučištníci | C | `infantry_polearm` |
 | `BOMBARDA` | Bombarda | H | `infantry_polearm` |
 | `POLNI_DELO` | Polní dělo | C | `infantry_polearm` |
@@ -231,7 +234,7 @@ This appendix records the current Three.js base-model selection, not whether tha
 | `HYNEK_PODEBRADY` | Hynek z Poděbrad | H | `infantry_polearm` |
 | `VIKTORIN_BOCEK` | Viktorín Boček | H | `infantry_polearm` |
 | `VOZOVA_HRADBA_PRASKY` | Pražské vozy | C | `infantry_polearm` |
-| `CEPNICI_PRASKY` | Pražští cepníci | C | `infantry_polearm` |
-| `KUSINICI_PRASKY` | Pražští kušiníci | C | `infantry_polearm` |
+| `CEPNICI_PRASKY` | Pražští cepníci | C | `infantry_flail` |
+| `KUSINICI_PRASKY` | Pražští kušiníci | C | `infantry_crossbow` |
 | `HOUFNICE_PRASKY` | Pražské houfnice | C | `infantry_polearm` |
 | `JIZDA_PRASKY` | Pražská jízda | C | `infantry_polearm` |

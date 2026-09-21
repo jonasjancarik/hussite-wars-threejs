@@ -6,8 +6,15 @@ import { UnitPresentation } from "../src/units.ts";
 import type { BattleSnapshot, UnitSnapshot } from "../src/types.ts";
 
 class TestAssets {
-  public async clone(): Promise<THREE.Group> { return this.load(); }
-  public async load(): Promise<THREE.Group> {
+  public readonly loaded: string[] = [];
+  private readonly models: Record<string, THREE.Group>;
+
+  public constructor(models: Record<string, THREE.Group> = {}) { this.models = models; }
+
+  public async clone(name: string): Promise<THREE.Group> { return (await this.load(name)).clone(true); }
+  public async load(name = "infantry_polearm"): Promise<THREE.Group> {
+    this.loaded.push(name);
+    if (this.models[name]) return this.models[name]!;
     const model = new THREE.Group();
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), new THREE.MeshStandardMaterial());
     mesh.position.y = 0.8; // Deliberately exported with its feet above the origin.
@@ -27,6 +34,38 @@ function snapshot(overrides: Partial<UnitSnapshot> = {}): BattleSnapshot {
       isDefending: false, isRouting: false, formationClosed: false, marching: false, ...overrides,
     }],
   };
+}
+
+function unit(id: number, type: string, faction: UnitSnapshot["faction"] = "hussites"): UnitSnapshot {
+  return {
+    id, col: id, row: 0, type, name: type, faction, unitClass: "infantry",
+    health: 100, maxHealth: 100, morale: 100, maxMorale: 100, hasMoved: false, hasAttacked: false,
+    isDefending: false, isRouting: false, formationClosed: false, marching: false,
+  };
+}
+
+function snapshotWithUnits(units: UnitSnapshot[]): BattleSnapshot {
+  return { ...snapshot(), units };
+}
+
+function taggedModel(materials: { cloth: THREE.MeshStandardMaterial; paint: THREE.MeshStandardMaterial; neutral: THREE.MeshStandardMaterial }): THREE.Group {
+  const model = new THREE.Group();
+  for (const material of [materials.cloth, materials.paint, materials.neutral]) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), material);
+    mesh.position.y = 0.8;
+    model.add(mesh);
+  }
+  return model;
+}
+
+function materialsIn(object: THREE.Object3D): THREE.Material[] {
+  const materials: THREE.Material[] = [];
+  object.traverse(child => {
+    if (!(child as THREE.Mesh).isMesh) return;
+    const mesh = child as THREE.Mesh;
+    materials.push(...(Array.isArray(mesh.material) ? mesh.material : [mesh.material]));
+  });
+  return materials;
 }
 
 test("each figure rests on rendered terrain after movement, rotation and routing scale", async () => {
@@ -62,4 +101,73 @@ test("selection cylinder is excluded from rendering but remains clickable", asyn
   assert.ok(intersection);
   assert.equal(units.unitIdFromHit(intersection.object), 1);
   assert.ok(!rendered.some(object => object instanceof THREE.Mesh && object.geometry instanceof THREE.CircleGeometry));
+});
+
+test("maps the first dedicated infantry batch and keeps five-figure formations", async () => {
+  const assets = new TestAssets();
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(8, 2), assets);
+  const types = [
+    "CEPNICI", "CEPNICI_PRASKY", "KUSINICI_HUSITI", "KUSNICI", "KUSNICI_JANOV", "KUSINICI_PRASKY",
+    "PAVEZNICI", "PAVEZNICI_KRIZACI",
+  ];
+  await units.update(snapshotWithUnits(types.map((type, index) => unit(index + 1, type))));
+  assert.deepEqual(assets.loaded, ["infantry_flail", "infantry_crossbow", "infantry_pavise"]);
+  assert.equal(units.group.children.length, types.length);
+  for (const formation of units.group.children) {
+    assert.equal(formation.children.filter(child => child instanceof THREE.Group).length, 5);
+  }
+});
+
+test("recolours tagged team materials per faction without changing prototypes or neutral materials", async () => {
+  const cloth = new THREE.MeshStandardMaterial({ name: "team_cloth", color: 0x123456 });
+  const paint = new THREE.MeshStandardMaterial({ name: "team_paint", color: 0x654321 });
+  const neutral = new THREE.MeshStandardMaterial({ name: "leather", color: 0xaabbcc });
+  const assets = new TestAssets({ infantry_flail: taggedModel({ cloth, paint, neutral }) });
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(4, 1), assets);
+  await units.update(snapshotWithUnits([
+    unit(1, "CEPNICI", "hussites"), unit(2, "CEPNICI", "hussites"), unit(3, "CEPNICI_PRASKY", "crusaders"),
+  ]));
+
+  const hussiteMaterials = materialsIn(units.group.children[0]!);
+  const secondHussiteMaterials = materialsIn(units.group.children[1]!);
+  const crusaderMaterials = materialsIn(units.group.children[2]!);
+  const hussiteCloth = hussiteMaterials.find(material => material.name === "team_cloth")! as THREE.MeshStandardMaterial;
+  const hussitePaint = hussiteMaterials.find(material => material.name === "team_paint")! as THREE.MeshStandardMaterial;
+  const crusaderCloth = crusaderMaterials.find(material => material.name === "team_cloth")! as THREE.MeshStandardMaterial;
+  const crusaderPaint = crusaderMaterials.find(material => material.name === "team_paint")! as THREE.MeshStandardMaterial;
+
+  assert.equal(hussiteCloth.color.getHex(), 0x9b4f4f);
+  assert.equal(hussitePaint.color.getHex(), 0x7f3f3b);
+  assert.equal(crusaderCloth.color.getHex(), 0x587493);
+  assert.equal(crusaderPaint.color.getHex(), 0x3f5872);
+  assert.equal(new Set(hussiteMaterials.filter(material => material.name === "team_cloth")).size, 1);
+  assert.equal(hussiteCloth, secondHussiteMaterials.find(material => material.name === "team_cloth"));
+  assert.notEqual(hussiteCloth, crusaderCloth);
+  assert.equal(cloth.color.getHex(), 0x123456);
+  assert.equal(paint.color.getHex(), 0x654321);
+  assert.equal(neutral.color.getHex(), 0xaabbcc);
+  assert.equal(hussiteMaterials.find(material => material.name === "leather"), neutral);
+});
+
+test("disposes presenter-owned faction material variants", async () => {
+  const cloth = new THREE.MeshStandardMaterial({ name: "team_cloth", color: 0x123456 });
+  const paint = new THREE.MeshStandardMaterial({ name: "team_paint", color: 0x654321 });
+  const neutral = new THREE.MeshStandardMaterial({ name: "leather", color: 0xaabbcc });
+  const assets = new TestAssets({ infantry_flail: taggedModel({ cloth, paint, neutral }) });
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(2, 1), assets);
+  await units.update(snapshotWithUnits([unit(1, "CEPNICI")]));
+  const owned = [...new Set(materialsIn(units.group.children[0]!).filter(material => material.name.startsWith("team_")))];
+  let disposed = 0;
+  for (const material of owned) {
+    const originalDispose = material.dispose.bind(material);
+    material.dispose = () => { disposed += 1; originalDispose(); };
+  }
+  let neutralDisposed = false;
+  neutral.dispose = () => { neutralDisposed = true; };
+  units.dispose();
+  assert.equal(disposed, 2);
+  assert.equal(neutralDisposed, false);
 });

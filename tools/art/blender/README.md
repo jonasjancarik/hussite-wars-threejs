@@ -40,6 +40,9 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | `infantry_polearm` | Red coat, kettle helmet, polearm |
 | `infantry_handgun` | Ochre coat, helmet, short hand cannon and powder flask |
 | `infantry_shield` | Red coat, shield with pale cross, sword |
+| `infantry_flail` | Static flailman with iron-bound wooden striker, padded jack, kettle hat and side-colour cloth |
+| `infantry_crossbow` | Static crossbowman with composite bow, tiller, stirrup, bolt case and side-colour cloth |
+| `infantry_pavise` | Static bearer with tall ribbed pavise, wooden back, sword, side-colour cloth and shield paint |
 | `church` | Plastered nave, buttresses, windows, red roof, bell tower, slate spire and cross |
 | `farmhouse` | Timber-and-plaster walls, windows, door, chimney and red gabled roof |
 | `broadleaf_olive`, `broadleaf_gold` | Faceted crowns with visible trunk and branching |
@@ -49,6 +52,8 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | `bridge` | Slightly arched plank deck, timber girders, posts and rails |
 
 The village and troop detailing is intended for a stylized battlefield, not a reconstruction of a particular historical location. Small faces and hands remain deliberately simplified. There are no colliders or LOD meshes; the application supplies placement, movement, collisions, and distance visibility. Asset heights in the manifest include raised weapons, flags, roof crosses, or tree tips.
+
+The first infantry additions are defined in `infantry_batch.py`, registered by the shared generator. Their references, intentional simplifications and gameplay mappings are recorded in [infantry-references.md](infantry-references.md). They keep static poses; the campaign only recolours materials named `team_cloth` and `team_paint`. `render_infantry_batch.py` renders the exported batch together in both game-side palettes to `previews/infantry-batch.png`.
 
 ## Verification
 

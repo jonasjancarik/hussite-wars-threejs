@@ -9175,7 +9175,10 @@ var gu = {
 	"procedural-worlds/pw_deciduous_01": "models/vegetation/procedural-worlds/pw_deciduous_01.glb",
 	"procedural-worlds/pw_deciduous_02": "models/vegetation/procedural-worlds/pw_deciduous_02.glb",
 	"procedural-worlds/pw_deciduous_03": "models/vegetation/procedural-worlds/pw_deciduous_03.glb",
-	"procedural-worlds/pw_shrub_01": "models/vegetation/procedural-worlds/pw_shrub_01.glb"
+	"procedural-worlds/pw_shrub_01": "models/vegetation/procedural-worlds/pw_shrub_01.glb",
+	infantry_flail: "models/units/infantry_flail.glb",
+	infantry_crossbow: "models/units/infantry_crossbow.glb",
+	infantry_pavise: "models/units/infantry_pavise.glb"
 }, _u = class {
 	baseUrl;
 	loader = new gl();
@@ -31403,10 +31406,17 @@ var tV = class {
 		}));
 		g.receiveShadow = !0, g.name = "Layered soil island following the meadow edge", this.group.add(g);
 	}
-};
-//#endregion
-//#region src/units.ts
-function nV(e) {
+}, nV = {
+	hussites: {
+		team_cloth: 10178383,
+		team_paint: 8339259
+	},
+	crusaders: {
+		team_cloth: 5797011,
+		team_paint: 4151410
+	}
+}, rV = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]);
+function iV(e) {
 	return e.type === "VOZOVA_HRADBA" ? {
 		model: "war_wagon",
 		offsets: [[0, 0]],
@@ -31428,7 +31438,12 @@ function nV(e) {
 		offsets: [[0, 0]],
 		scale: 1.24
 	} : {
-		model: e.type === "RUCNICARI" ? "infantry_handgun" : ["KUSINICI_HUSITI", "KUSNICI"].includes(e.type) ? "infantry_shield" : "infantry_polearm",
+		model: e.type === "RUCNICARI" ? "infantry_handgun" : ["CEPNICI", "CEPNICI_PRASKY"].includes(e.type) ? "infantry_flail" : [
+			"KUSINICI_HUSITI",
+			"KUSNICI",
+			"KUSNICI_JANOV",
+			"KUSINICI_PRASKY"
+		].includes(e.type) ? "infantry_crossbow" : ["PAVEZNICI", "PAVEZNICI_KRIZACI"].includes(e.type) ? "infantry_pavise" : "infantry_polearm",
 		offsets: [
 			[-1.02, .5],
 			[0, -.66],
@@ -31439,7 +31454,7 @@ function nV(e) {
 		scale: 1.15
 	};
 }
-var rV = class {
+var aV = class {
 	group = new $n();
 	hitTargets = [];
 	visuals = /* @__PURE__ */ new Map();
@@ -31448,6 +31463,8 @@ var rV = class {
 	terrain;
 	layout;
 	assets;
+	variants = /* @__PURE__ */ new Map();
+	ownedMaterials = /* @__PURE__ */ new Set();
 	constructor(e, t, n) {
 		this.terrain = e, this.layout = t, this.assets = n, this.group.name = "Visible battle formations";
 	}
@@ -31464,14 +31481,18 @@ var rV = class {
 		return Number.isInteger(t) ? t : null;
 	}
 	dispose() {
-		this.disposed = !0, this.updateRevision += 1;
+		if (!this.disposed) {
+			this.disposed = !0, this.updateRevision += 1;
+			for (let e of this.ownedMaterials) e.dispose();
+			this.ownedMaterials.clear(), this.variants.clear();
+		}
 	}
 	async updateUnit(e, t) {
 		let n = this.visuals.get(e.id);
 		if (!n) {
 			let r = new $n();
 			r.name = `${e.name} (${e.id})`;
-			let i = nV(e), a = await this.assets.load(i.model);
+			let i = iV(e), a = await this.variant(i.model, e.faction);
 			if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
 			let o = e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2, s = [];
 			for (let [e, t] of i.offsets) {
@@ -31508,7 +31529,28 @@ var rV = class {
 		}
 		n.root.updateMatrixWorld(!0), n.revision = t;
 	}
-}, iV = class e {
+	variant(e, t) {
+		let n = `${e}:${t}`, r = this.variants.get(n);
+		return r || (r = this.assets.load(e).then((e) => {
+			let n = /* @__PURE__ */ new Map(), r = e.clone(!0);
+			return r.traverse((e) => {
+				let r = e;
+				if (!r.isMesh) return;
+				let i = (Array.isArray(r.material) ? r.material : [r.material]).map((e) => {
+					if (!rV.has(e.name)) return e;
+					let r = n.get(e);
+					if (!r) {
+						r = e.clone();
+						let i = r.color;
+						i && i.setHex(nV[t][e.name]), n.set(e, r), this.disposed ? r.dispose() : this.ownedMaterials.add(r);
+					}
+					return r;
+				});
+				r.material = Array.isArray(r.material) ? i : i[0];
+			}), r;
+		}), this.variants.set(n, r)), r;
+	}
+}, oV = class e {
 	canvas;
 	options;
 	scene = new cr();
@@ -31560,7 +31602,7 @@ var rV = class {
 			effects: !0,
 			gtaoSamples: 12,
 			maxPixelRatio: 2
-		}), this.units = new rV(this.terrain, this.terrain.layout, this.assets), this.overlays = new Gd(this.terrain, this.terrain.layout), this.lighting = Vd(this.scene), this.picker = new Kd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new ZB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
+		}), this.units = new aV(this.terrain, this.terrain.layout, this.assets), this.overlays = new Gd(this.terrain, this.terrain.layout), this.lighting = Vd(this.scene), this.picker = new Kd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new ZB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await qB(n.snapshot, r), a = new e(t, n, i);
@@ -31750,8 +31792,8 @@ var rV = class {
 		this.lastRendererCounters = tf(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, a - r, o - a, o - r) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => iV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function aV() {
+window.HussiteBattle3D = { create: (e, t) => oV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function sV() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = JB(() => t.takeSnapshot(), window), r = new XB(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -31763,7 +31805,7 @@ async function aV() {
 			action: e,
 			...n
 		}));
-	}, s = await iV.create(e, {
+	}, s = await oV.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -31776,7 +31818,7 @@ async function aV() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-aV().catch((e) => {
+sV().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

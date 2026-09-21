@@ -19,5 +19,8 @@
   "procedural-worlds/pw_deciduous_01": "models/vegetation/procedural-worlds/pw_deciduous_01.glb",
   "procedural-worlds/pw_deciduous_02": "models/vegetation/procedural-worlds/pw_deciduous_02.glb",
   "procedural-worlds/pw_deciduous_03": "models/vegetation/procedural-worlds/pw_deciduous_03.glb",
-  "procedural-worlds/pw_shrub_01": "models/vegetation/procedural-worlds/pw_shrub_01.glb"
+  "procedural-worlds/pw_shrub_01": "models/vegetation/procedural-worlds/pw_shrub_01.glb",
+  "infantry_flail": "models/units/infantry_flail.glb",
+  "infantry_crossbow": "models/units/infantry_crossbow.glb",
+  "infantry_pavise": "models/units/infantry_pavise.glb"
 }

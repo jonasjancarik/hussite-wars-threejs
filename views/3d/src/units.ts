@@ -6,6 +6,12 @@ import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 interface GroundedFigure { object: THREE.Object3D; bottom: number }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number }
 
+const TEAM_MATERIAL_COLORS = {
+  hussites: { team_cloth: 0x9b4f4f, team_paint: 0x7f3f3b },
+  crusaders: { team_cloth: 0x587493, team_paint: 0x3f5872 },
+} as const;
+const TEAM_MATERIAL_NAMES = new Set(["team_cloth", "team_paint"]);
+
 function displayRecipe(unit: UnitSnapshot): { model: string; offsets: Array<[number, number]>; scale: number } {
   if (unit.type === "VOZOVA_HRADBA") return { model: "war_wagon", offsets: [[0, 0]], scale: 1.1 };
   if (["JIZDA_HUSITI", "TEZKY_RYTIR", "TEZKOODENCI"].includes(unit.type)) {
@@ -14,7 +20,9 @@ function displayRecipe(unit: UnitSnapshot): { model: string; offsets: Array<[num
   if (["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(unit.type)) return { model: "infantry_shield", offsets: [[0, 0]], scale: 1.28 };
   if (unit.type === "VACLAV_KORANDA") return { model: "infantry_handgun", offsets: [[0, 0]], scale: 1.24 };
   const model = unit.type === "RUCNICARI" ? "infantry_handgun"
-    : ["KUSINICI_HUSITI", "KUSNICI"].includes(unit.type) ? "infantry_shield"
+    : ["CEPNICI", "CEPNICI_PRASKY"].includes(unit.type) ? "infantry_flail"
+      : ["KUSINICI_HUSITI", "KUSNICI", "KUSNICI_JANOV", "KUSINICI_PRASKY"].includes(unit.type) ? "infantry_crossbow"
+        : ["PAVEZNICI", "PAVEZNICI_KRIZACI"].includes(unit.type) ? "infantry_pavise"
       : "infantry_polearm";
   return { model, offsets: [[-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1]], scale: 1.15 };
 }
@@ -28,6 +36,8 @@ export class UnitPresentation {
   private readonly terrain: TerrainSurface;
   private readonly layout: HexLayout;
   private readonly assets: Pick<BattleAssets, "load" | "clone">;
+  private readonly variants = new Map<string, Promise<THREE.Group>>();
+  private readonly ownedMaterials = new Set<THREE.Material>();
 
   public constructor(terrain: TerrainSurface, layout: HexLayout, assets: Pick<BattleAssets, "load" | "clone">) {
     this.terrain = terrain;
@@ -58,7 +68,14 @@ export class UnitPresentation {
     return Number.isInteger(id) ? id : null;
   }
 
-  public dispose(): void { this.disposed = true; this.updateRevision += 1; }
+  public dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.updateRevision += 1;
+    for (const material of this.ownedMaterials) material.dispose();
+    this.ownedMaterials.clear();
+    this.variants.clear();
+  }
 
   private async updateUnit(unit: UnitSnapshot, revision: number): Promise<void> {
     let visual = this.visuals.get(unit.id);
@@ -66,7 +83,7 @@ export class UnitPresentation {
       const root = new THREE.Group();
       root.name = `${unit.name} (${unit.id})`;
       const recipe = displayRecipe(unit);
-      const prototype = await this.assets.load(recipe.model);
+      const prototype = await this.variant(recipe.model, unit.faction);
       if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
       const facing = unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
       const figures: GroundedFigure[] = [];
@@ -112,5 +129,38 @@ export class UnitPresentation {
     }
     visual.root.updateMatrixWorld(true);
     visual.revision = revision;
+  }
+
+  private variant(model: string, faction: UnitSnapshot["faction"]): Promise<THREE.Group> {
+    const key = `${model}:${faction}`;
+    let variant = this.variants.get(key);
+    if (!variant) {
+      variant = this.assets.load(model).then(prototype => {
+        const materials = new Map<THREE.Material, THREE.Material>();
+        const result = prototype.clone(true);
+        result.traverse(object => {
+          const mesh = object as THREE.Mesh;
+          if (!mesh.isMesh) return;
+          const sourceMaterials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          const mappedMaterials = sourceMaterials.map(source => {
+            if (!TEAM_MATERIAL_NAMES.has(source.name)) return source;
+            let recolored = materials.get(source);
+            if (!recolored) {
+              recolored = source.clone();
+              const color = (recolored as THREE.Material & { color?: THREE.Color }).color;
+              if (color) color.setHex(TEAM_MATERIAL_COLORS[faction][source.name as "team_cloth" | "team_paint"]);
+              materials.set(source, recolored);
+              if (this.disposed) recolored.dispose();
+              else this.ownedMaterials.add(recolored);
+            }
+            return recolored;
+          });
+          mesh.material = Array.isArray(mesh.material) ? mappedMaterials : mappedMaterials[0]!;
+        });
+        return result;
+      });
+      this.variants.set(key, variant);
+    }
+    return variant;
   }
 }

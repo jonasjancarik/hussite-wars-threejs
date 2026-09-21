@@ -260,5 +260,65 @@
     "up_axis": "Y",
     "animations": [],
     "animation_seconds": null
+  },
+  "infantry_flail": {
+    "file": "units/infantry_flail.glb",
+    "dimensions_blender_xyz_m": [
+      1.369,
+      0.796,
+      2.352
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.369,
+      2.352,
+      0.796
+    ],
+    "mesh_objects": 10,
+    "editable_source_mesh_objects": 42,
+    "triangles": 1364,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "infantry_crossbow": {
+    "file": "units/infantry_crossbow.glb",
+    "dimensions_blender_xyz_m": [
+      1.424,
+      0.999,
+      1.8
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.424,
+      1.8,
+      0.999
+    ],
+    "mesh_objects": 12,
+    "editable_source_mesh_objects": 59,
+    "triangles": 1650,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "infantry_pavise": {
+    "file": "units/infantry_pavise.glb",
+    "dimensions_blender_xyz_m": [
+      0.872,
+      1.038,
+      1.891
+    ],
+    "dimensions_gltf_xyz_m": [
+      0.872,
+      1.891,
+      1.038
+    ],
+    "mesh_objects": 11,
+    "editable_source_mesh_objects": 53,
+    "triangles": 1476,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
   }
 }
