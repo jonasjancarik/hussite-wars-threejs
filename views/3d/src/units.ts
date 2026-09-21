@@ -1,9 +1,10 @@
 import * as THREE from "three";
-import { BattleAssets } from "./assets.ts";
+import type { BattleAssets } from "./assets.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 
-interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; revision: number }
+interface GroundedFigure { object: THREE.Object3D; bottom: number }
+interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number }
 
 function displayRecipe(unit: UnitSnapshot): { model: string; offsets: Array<[number, number]>; scale: number } {
   if (unit.type === "VOZOVA_HRADBA") return { model: "war_wagon", offsets: [[0, 0]], scale: 1.1 };
@@ -24,8 +25,14 @@ export class UnitPresentation {
   private readonly visuals = new Map<number, UnitVisual>();
   private disposed = false;
   private updateRevision = 0;
+  private readonly terrain: TerrainSurface;
+  private readonly layout: HexLayout;
+  private readonly assets: Pick<BattleAssets, "load" | "clone">;
 
-  public constructor(private readonly terrain: TerrainSurface, private readonly layout: HexLayout, private readonly assets: BattleAssets) {
+  public constructor(terrain: TerrainSurface, layout: HexLayout, assets: Pick<BattleAssets, "load" | "clone">) {
+    this.terrain = terrain;
+    this.layout = layout;
+    this.assets = assets;
     this.group.name = "Visible battle formations";
   }
 
@@ -39,7 +46,7 @@ export class UnitPresentation {
         this.visuals.delete(id);
       }
     }
-    await Promise.all(snapshot.units.map(unit => this.updateUnit(unit, snapshot.selectedUnitId === unit.id, revision)));
+    await Promise.all(snapshot.units.map(unit => this.updateUnit(unit, revision)));
   }
 
   public worldPosition(unitId: number): THREE.Vector3 | null {
@@ -53,7 +60,7 @@ export class UnitPresentation {
 
   public dispose(): void { this.disposed = true; this.updateRevision += 1; }
 
-  private async updateUnit(unit: UnitSnapshot, selected: boolean, revision: number): Promise<void> {
+  private async updateUnit(unit: UnitSnapshot, revision: number): Promise<void> {
     let visual = this.visuals.get(unit.id);
     if (!visual) {
       const root = new THREE.Group();
@@ -62,24 +69,20 @@ export class UnitPresentation {
       const prototype = await this.assets.load(recipe.model);
       if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
       const facing = unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
+      const figures: GroundedFigure[] = [];
       for (const [offsetX, offsetZ] of recipe.offsets) {
         const figure = prototype.clone(true);
-        figure.position.set(offsetX, 0.08, offsetZ);
+        figure.position.set(offsetX, 0, offsetZ);
         figure.rotation.y = facing;
         figure.scale.setScalar(recipe.scale);
+        figures.push({ object: figure, bottom: new THREE.Box3().setFromObject(figure).min.y });
         root.add(figure);
-        const contact = new THREE.Mesh(
-          new THREE.CircleGeometry(recipe.model === "cavalry" ? 0.92 : recipe.model === "war_wagon" ? 1.6 : 0.58, 18),
-          new THREE.MeshBasicMaterial({ color: 0x15120d, transparent: true, opacity: 0.24, depthWrite: false }),
-        );
-        contact.rotation.x = -Math.PI / 2;
-        contact.position.set(offsetX, 0.035, offsetZ);
-        root.add(contact);
       }
       if (unit.unitClass === "commander") {
         const banner = await this.assets.clone("banner");
-        banner.position.set(-1.15, 0.05, -0.45);
+        banner.position.set(-1.15, 0, -0.45);
         banner.scale.setScalar(0.7);
+        figures.push({ object: banner, bottom: new THREE.Box3().setFromObject(banner).min.y });
         root.add(banner);
       }
       const hit = new THREE.Mesh(
@@ -87,22 +90,27 @@ export class UnitPresentation {
         new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
       );
       hit.position.y = 2;
+      // Raycaster still intersects invisible meshes. Keep the picking volume
+      // out of every render attachment, including the post-processing normals.
+      hit.visible = false;
       hit.userData.unitId = unit.id;
       root.add(hit);
-      visual = { root, hit, revision };
+      visual = { root, hit, figures, revision };
       this.visuals.set(unit.id, visual);
       this.hitTargets.push(hit);
       this.group.add(root);
     }
     const center = this.layout.center(unit.col, unit.row);
-    visual.root.position.set(center.x, this.terrain.heightAt(center.x, center.z) + 0.04, center.z);
+    const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
+    visual.root.position.set(center.x, heightAt(center.x, center.z), center.z);
     visual.root.scale.setScalar(unit.isRouting ? 0.92 : 1);
     visual.root.rotation.y = unit.marching ? 0.06 : 0;
-    visual.root.traverse(object => {
-      if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshBasicMaterial && object.material.opacity > 0) {
-        object.material.opacity = selected ? 0.38 : 0.24;
-      }
-    });
+    visual.root.updateMatrixWorld(true);
+    for (const { object, bottom } of visual.figures) {
+      const world = visual.root.localToWorld(new THREE.Vector3(object.position.x, 0, object.position.z));
+      object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
+    }
+    visual.root.updateMatrixWorld(true);
     visual.revision = revision;
   }
 }

@@ -20,6 +20,8 @@ Serve the repository root and use the campaign's 2D/3D buttons. The standalone p
 
 ## Campaign behaviour
 
+Each figure is grounded independently at its formation position using the rendered terrain height and its model's lowest point, including after movement, marching or routing. Real scene shadows provide contact shading; artificial shadow discs are omitted. Selection cylinders remain raycast targets but are invisible to rendering and post-processing.
+
 The root campaign now loads the Three.js renderer on demand through `views/3d/ThreeBattleMapView.js`. The active root `HexGrid` remains authoritative, and the same generator provides a complete fallback for every campaign scenario. Optional art manifests must validate against that live map before they can change presentation. The standalone Sudoměř page below remains a renderer fixture.
 
 Sudoměř additionally has an authored-art manifest in `assets/3d/scenarios/sudomer-landscape.json`. Its source-terrain hash must match the active map before it can replace the generated presentation. A mismatch falls back to generated terrain, so authored scenery cannot silently drift away from gameplay.
