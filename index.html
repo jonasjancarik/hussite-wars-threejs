@@ -31,7 +31,7 @@
     <meta name="twitter:image" content="https://hussitewars.com/imgs/social-preview.png">
     <meta name="twitter:image:alt" content="Husitská vozová hradba pod kalichem · A Hussite wagon fort beneath the chalice banner">
 
-    <link rel="stylesheet" href="style.css?v=8.37">
+    <link rel="stylesheet" href="style.css?v=8.38">
 </head>
 <body class="booting">
     <section id="startup-status" class="startup-status">
@@ -252,6 +252,7 @@
                 <button id="map-zoom-in" data-i18n-title="touch.zoomIn" data-i18n-aria-label="touch.zoomIn" aria-label="Přiblížit">+</button>
                 <button id="map-center" data-i18n="touch.center"></button>
                 <button id="btn-hex-grid" type="button" aria-pressed="true" data-i18n="touch.hexGrid" hidden>Hexová síť</button>
+                <button id="btn-separate-banners" type="button" aria-pressed="false" data-i18n="touch.separateBanners" data-i18n-title="touch.separateBannersHint" hidden>Rozestoupit značky</button>
                 <button id="btn-minimap" data-i18n="touch.overview" aria-controls="minimap" aria-expanded="false"></button>
             </div>
             <section id="battle-order" class="hidden" aria-labelledby="order-title">
@@ -1064,7 +1065,7 @@
 
     <!-- i18n - lokalizační systém (načíst jako první) -->
     <script src="js/core/GameStorage.js?v=8.9"></script>
-    <script src="js/i18n/i18n.js?v=8.38"></script>
+    <script src="js/i18n/i18n.js?v=8.39"></script>
     <script src="js/i18n/i18nHelpers.js?v=8.18"></script>
     <script src="js/i18n/encyclopediaRenderer.js?v=8.28"></script>
     <!-- ?v= cache-busting: bumpni číslo při každém vydání, ať hráči nedostanou starý JS -->
@@ -1095,8 +1096,8 @@
     <script src="js/ui/BattleTooltip.js?v=8.16"></script>
     <script src="js/ui/BattleMapInput.js?v=8.8"></script>
     <script src="js/ui/BattleOrders.js?v=8.11"></script>
-    <script src="views/3d/ThreeBattleMapView.js?v=2.21"></script>
-    <script src="js/ui/BattleView.js?v=8.20"></script>
+    <script src="views/3d/ThreeBattleMapView.js?v=2.22"></script>
+    <script src="js/ui/BattleView.js?v=8.21"></script>
     <script src="js/core/game.js?v=8.20"></script>
     <script src="js/ai.js?v=8.21"></script>
     <script src="js/ui/main.js?v=8.31"></script>

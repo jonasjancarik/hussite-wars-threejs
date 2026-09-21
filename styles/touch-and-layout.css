@@ -53,7 +53,8 @@
 .view-mode-controls { display: inline-flex; gap: 3px; }
 #map-tools .view-mode-controls button.active,
 #map-tools .view-mode-controls button[aria-pressed="true"],
-#map-tools #btn-hex-grid[aria-pressed="true"] {
+#map-tools #btn-hex-grid[aria-pressed="true"],
+#map-tools #btn-separate-banners[aria-pressed="true"] {
     background: var(--field-ink);
     color: var(--field-page-light);
 }

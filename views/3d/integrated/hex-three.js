@@ -31654,8 +31654,20 @@ var lV = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, uV = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
-function dV(e, t, n, r = []) {
+};
+//#endregion
+//#region src/unit-marker-layout.ts
+function uV(e, t, n) {
+	return t <= 0 || n <= 0 ? [] : [...e].sort((e, t) => Number(e.selected) - Number(t.selected) || e.id - t.id).map((e) => ({
+		...e,
+		width: 64,
+		height: 58,
+		left: e.x - 32,
+		top: e.y - 64
+	}));
+}
+var dV = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
+function fV(e, t, n, r = []) {
 	let i = [];
 	for (let a of [...e].sort((e, t) => Number(t.selected) - Number(e.selected) || e.y - t.y || e.id - t.id)) {
 		if (t < 72 || n < 66) continue;
@@ -31681,21 +31693,21 @@ function dV(e, t, n, r = []) {
 				left: Math.max(4, Math.min(t - 64 - 4, a.x - 64 / 2 + o)),
 				top: Math.max(4, Math.min(n - 58 - 4, a.y - 58 - 6 + s))
 			};
-			if (![...i, ...r].some((e) => uV(c, e))) {
+			if (![...i, ...r].some((e) => dV(c, e))) {
 				e = c;
 				break;
 			}
 		}
 		e && i.push(e);
 	}
-	return i;
+	return i.reverse();
 }
-function fV(e, t, n) {
-	return e.find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height)?.id ?? null;
+function pV(e, t, n) {
+	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height)?.id ?? null;
 }
 //#endregion
 //#region src/unit-marker-styles.ts
-var pV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", mV = class {
+var mV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", hV = class {
 	canvas;
 	onChoose;
 	layer;
@@ -31708,13 +31720,14 @@ var pV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 	disposed = !1;
 	width = 0;
 	height = 0;
+	avoidance = !1;
 	obstacles = [];
 	constructor(e, t) {
 		this.canvas = e, this.onChoose = t;
 		let n = e.ownerDocument;
 		this.layer = n.createElement("div"), this.layer.className = "three-unit-markers";
 		let r = n.createElement("style");
-		r.textContent = pV, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
+		r.textContent = mV, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
 	}
 	update(e) {
 		if (this.disposed) return;
@@ -31750,6 +31763,9 @@ var pV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 			}];
 		});
 	}
+	setAvoidance(e) {
+		this.avoidance = e, this.resize();
+	}
 	setActive(e) {
 		this.active = e, this.layer.hidden = !e, e || (this.placements = []);
 	}
@@ -31767,19 +31783,19 @@ var pV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 				selected: r.id === this.snapshot.selectedUnitId
 			});
 		}
-		this.placements = dV(n, this.width, this.height, this.obstacles);
+		this.placements = this.avoidance ? fV(n, this.width, this.height, this.obstacles) : uV(n, this.width, this.height);
 		let r = new Set(this.placements.map((e) => e.id));
 		for (let [e, t] of this.markers) t.button.hidden = !r.has(e);
-		for (let e of this.placements) {
-			let t = this.markers.get(e.id);
-			t.button.style.transform = `translate(${e.left.toFixed(1)}px, ${e.top.toFixed(1)}px)`;
-			let n = e.x - e.left - e.width / 2, r = e.y - e.top - e.height, i = Math.hypot(n, r);
-			t.leader.hidden = i < 14, t.leader.style.height = `${i}px`, t.leader.style.transform = `rotate(${-Math.atan2(n, r)}rad)`;
+		for (let [e, t] of this.placements.entries()) {
+			let n = this.markers.get(t.id);
+			n.button.style.zIndex = String(e + 1), n.button.style.transform = `translate(${t.left.toFixed(1)}px, ${t.top.toFixed(1)}px)`;
+			let r = t.x - t.left - t.width / 2, i = t.y - t.top - t.height, a = Math.hypot(r, i);
+			n.leader.hidden = a < 14, n.leader.style.height = `${a}px`, n.leader.style.transform = `rotate(${-Math.atan2(r, i)}rad)`;
 		}
 	}
 	unitAt(e, t) {
 		if (!this.active || this.disposed) return null;
-		let n = this.canvas.getBoundingClientRect(), r = fV(this.placements, e - n.left, t - n.top);
+		let n = this.canvas.getBoundingClientRect(), r = pV(this.placements, e - n.left, t - n.top);
 		return this.units.find((e) => e.id === r) ?? null;
 	}
 	dispose() {
@@ -31820,18 +31836,18 @@ var pV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		};
 		return this.markers.set(e, d), d;
 	}
-}, hV = 10, gV = 5, _V = 1.3, vV = .48, yV = .24, bV = .065;
-function xV(e) {
+}, gV = 10, _V = 5, vV = 1.3, yV = .48, bV = .24, xV = .065;
+function SV(e) {
 	return `${e.col},${e.row}`;
 }
-function SV(e, t) {
+function CV(e, t) {
 	return `${Math.min(e.id, t.id)}:${Math.max(e.id, t.id)}`;
 }
-var CV = class {
+var wV = class {
 	group = new $n();
 	terrain;
 	layout;
-	linkGeometry = new Ds(yV, bV, 8, 8);
+	linkGeometry = new Ds(bV, xV, 8, 8);
 	closedMaterial = new As({
 		color: 5917215,
 		roughness: .88,
@@ -31853,11 +31869,11 @@ var CV = class {
 	}
 	update(e) {
 		if (this.disposed) return;
-		let t = rV(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [xV(e), e])), r = /* @__PURE__ */ new Set();
+		let t = rV(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [SV(e), e])), r = /* @__PURE__ */ new Set();
 		for (let e of t) for (let t of this.layout.neighbours(e)) {
 			let i = n.get(`${t.col},${t.row}`);
 			if (!i || e.faction !== i.faction || e.id >= i.id) continue;
-			let a = SV(e, i);
+			let a = CV(e, i);
 			r.add(a);
 			let o = e.marching || i.marching, s = `${a}|${e.col},${e.row}|${i.col},${i.row}|${o ? "marching" : "closed"}`, c = this.connections.get(a);
 			if (c?.stateKey === s) continue;
@@ -31871,11 +31887,11 @@ var CV = class {
 		this.disposed || (this.disposed = !0, this.connections.clear(), this.group.clear(), this.linkGeometry.dispose(), this.closedMaterial.dispose(), this.marchingMaterial.dispose());
 	}
 	createConnection(e, t, n) {
-		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new O(a / s, 0, o / s), l = new O(-c.z, 0, c.x), u = new O(0, 1, 0), d = Math.max(0, s - _V * 2), f = n ? gV : hV, p = n ? this.marchingMaterial : this.closedMaterial, m = new $n();
+		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new O(a / s, 0, o / s), l = new O(-c.z, 0, c.x), u = new O(0, 1, 0), d = Math.max(0, s - vV * 2), f = n ? _V : gV, p = n ? this.marchingMaterial : this.closedMaterial, m = new $n();
 		m.name = `Wagon chain ${Math.min(e.id, t.id)}-${Math.max(e.id, t.id)}`, m.userData.wagonIds = [e.id, t.id];
 		let h = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		for (let e = 0; e < f; e += 1) {
-			let t = _V + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + vV, o = new Ji(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
+			let t = vV + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + yV, o = new Ji(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
 			o.position.set(n, a, i), o.quaternion.setFromUnitVectors(new O(0, 0, 1), s), o.castShadow = !0, o.receiveShadow = !0, o.userData.connectionLink = !0, m.add(o);
 		}
 		return {
@@ -31883,7 +31899,7 @@ var CV = class {
 			stateKey: ""
 		};
 	}
-}, wV = class e {
+}, TV = class e {
 	canvas;
 	options;
 	scene = new cr();
@@ -31937,7 +31953,7 @@ var CV = class {
 			effects: !0,
 			gtaoSamples: 12,
 			maxPixelRatio: 2
-		}), this.units = new lV(this.terrain, this.terrain.layout, this.assets), this.banners = new mV(e, (e) => this.options.onHex?.(e)), this.wagonConnections = new CV(this.terrain, this.terrain.layout), this.overlays = new Kd(this.terrain, this.terrain.layout), this.lighting = Hd(this.scene), this.picker = new qd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new QB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.wagonConnections.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
+		}), this.units = new lV(this.terrain, this.terrain.layout, this.assets), this.banners = new hV(e, (e) => this.options.onHex?.(e)), this.wagonConnections = new wV(this.terrain, this.terrain.layout), this.overlays = new Kd(this.terrain, this.terrain.layout), this.lighting = Hd(this.scene), this.picker = new qd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new QB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.wagonConnections.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await JB(n.snapshot, r), a = new e(t, n, i);
@@ -31966,6 +31982,9 @@ var CV = class {
 	}
 	setGridVisible(e) {
 		this.overlays.setGridVisible(e);
+	}
+	setBannerAvoidance(e) {
+		this.banners.setAvoidance(e);
 	}
 	setEffectsEnabled(e) {
 		this.pipeline.setEffectsEnabled(e);
@@ -32127,8 +32146,8 @@ var CV = class {
 		this.lastRendererCounters = nf(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, a - r, o - a, o - r) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => wV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function TV() {
+window.HussiteBattle3D = { create: (e, t) => TV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function EV() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = YB(() => t.takeSnapshot(), window), r = new ZB(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -32140,7 +32159,7 @@ async function TV() {
 			action: e,
 			...n
 		}));
-	}, s = await wV.create(e, {
+	}, s = await TV.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -32153,7 +32172,7 @@ async function TV() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-TV().catch((e) => {
+EV().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

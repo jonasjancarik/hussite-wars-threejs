@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { BattleSnapshot, HexCoord, UnitSnapshot } from "./types.ts";
-import { layoutUnitMarkers, markerAt, type MarkerAnchor, type MarkerObstacle, type MarkerPlacement } from "./unit-marker-layout.ts";
+import { layoutUnitMarkers, separateUnitMarkers, markerAt, type MarkerObstacle, type MarkerAnchor, type MarkerPlacement } from "./unit-marker-layout.ts";
 import { unitMarkerStyles } from "./unit-marker-styles.ts";
 import { visibleSnapshotUnits } from "./unit-visibility.ts";
 
@@ -25,6 +25,7 @@ export class UnitBanners {
   private disposed = false;
   private width = 0;
   private height = 0;
+  private avoidance = false;
   private obstacles: MarkerObstacle[] = [];
 
   public constructor(private readonly canvas: HTMLCanvasElement,
@@ -86,12 +87,17 @@ export class UnitBanners {
     this.width = rect.width;
     this.height = rect.height;
     this.obstacles = ["map-tools", "objectives-panel"].flatMap(id => {
-      const element = this.canvas.ownerDocument.getElementById(id);
-      const box = element?.getBoundingClientRect();
+      const box = this.canvas.ownerDocument.getElementById(id)?.getBoundingClientRect();
       if (!box || box.width === 0 || box.height === 0 || box.right <= rect.left || box.left >= rect.right
         || box.bottom <= rect.top || box.top >= rect.bottom) return [];
       return [{ left: box.left - rect.left, top: box.top - rect.top, width: box.width, height: box.height }];
     });
+
+  }
+
+  public setAvoidance(enabled: boolean): void {
+    this.avoidance = enabled;
+    this.resize();
   }
 
   public setActive(active: boolean): void {
@@ -111,11 +117,14 @@ export class UnitBanners {
       anchors.push({ id: unit.id, x: (ndc.x + 1) * this.width / 2, y: (1 - ndc.y) * this.height / 2,
         selected: unit.id === this.snapshot.selectedUnitId });
     }
-    this.placements = layoutUnitMarkers(anchors, this.width, this.height, this.obstacles);
+    this.placements = this.avoidance
+      ? separateUnitMarkers(anchors, this.width, this.height, this.obstacles)
+      : layoutUnitMarkers(anchors, this.width, this.height);
     const visible = new Set(this.placements.map(marker => marker.id));
     for (const [id, marker] of this.markers) marker.button.hidden = !visible.has(id);
-    for (const placement of this.placements) {
+    for (const [order, placement] of this.placements.entries()) {
       const marker = this.markers.get(placement.id)!;
+      marker.button.style.zIndex = String(order + 1);
       marker.button.style.transform = `translate(${placement.left.toFixed(1)}px, ${placement.top.toFixed(1)}px)`;
       const dx = placement.x - placement.left - placement.width / 2;
       const dy = placement.y - placement.top - placement.height;

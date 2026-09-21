@@ -151,6 +151,7 @@ declare global {
         resize(): void;
         frameScene(): void;
         setGridVisible(visible: boolean): void;
+        setBannerAvoidance(enabled: boolean): void;
         focusHex(col: number, row: number): void;
         zoomBy(factor: number): void;
         diagnostics(): Record<string, unknown>;

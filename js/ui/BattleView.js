@@ -20,6 +20,7 @@ class BattleView {
         };
         this.viewMode = '2d';
         this.hexGridVisible = true;
+        this.separateBanners = false;
         this.backgroundPaused = false;
         this.animationEnabled = false;
         this.moveAnimation = null;
@@ -134,6 +135,11 @@ class BattleView {
             this.threeMap.setGridVisible(this.hexGridVisible);
             this.updateViewModeControls();
         }, { signal });
+        document.getElementById('btn-separate-banners')?.addEventListener('click', () => {
+            this.separateBanners = !this.separateBanners;
+            this.threeMap.setBannerAvoidance?.(this.separateBanners);
+            this.updateViewModeControls();
+        }, { signal });
         this.updateViewModeControls();
     }
 
@@ -168,6 +174,12 @@ class BattleView {
             const active = mode === this.viewMode;
             button.setAttribute('aria-pressed', String(active));
             button.classList.toggle('active', active);
+        }
+        const bannerButton = document.getElementById('btn-separate-banners');
+        if (bannerButton) {
+            bannerButton.hidden = this.viewMode !== '3d';
+            bannerButton.setAttribute('aria-pressed', String(Boolean(this.separateBanners)));
+            bannerButton.classList.toggle('active', Boolean(this.separateBanners));
         }
         const gridButton = document.getElementById('btn-hex-grid');
         if (gridButton) {

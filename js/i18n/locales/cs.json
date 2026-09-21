@@ -149,6 +149,8 @@
     "view2d": "2D mapa",
     "view3d": "3D krajina",
     "hexGrid": "Hexová síť",
+    "separateBanners": "Rozestoupit značky",
+    "separateBannersHint": "Rozmístí překrývající se značky. Vypněte pro plynulé sledování jednotek při otáčení mapy.",
     "view3dUnavailableTitle": "3D pohled není dostupný",
     "view3dUnavailable": "Bitva pokračuje ve 2D mapě. V tomto prohlížeči se 3D krajinu nepodařilo spustit.",
     "help": "Na dotyku nebo v kompaktním okně: klepněte na vlastní oddíl a potom na cíl. Zelené pole oddíl rovnou přesune, klepnutí na červeně zvýrazněného nepřítele rovnou zaútočí. Tažením posunujete mapu; dvěma prsty nebo tlačítky − / + ji přiblížíte. Rozkazy a detail otevřou kartu oddílu, Armáda přehled jednotek. Ukončit tah jedná rovnou: nevyužité oddíly se automaticky brání, stojící oddíly s dostřelem 2+ a zbývajícím výstřelem místo toho kryjí palbou bez bonusu obrany. Rozehraná bitva se ukládá automaticky po dokončených akcích, odděleně od ručního uložení.",
