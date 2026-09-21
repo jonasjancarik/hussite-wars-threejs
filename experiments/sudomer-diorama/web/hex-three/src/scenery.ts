@@ -3,15 +3,15 @@ import { BattleAssets } from "./assets.ts";
 import { distanceToPolygon, distanceToPolyline, mulberry32, pointInPolygon } from "./geometry-utils.ts";
 import { addLandscapeDetails } from "./landscape-details.ts";
 import { AuthoredTerrain } from "./terrain.ts";
-import type { LandscapeData } from "./types.ts";
+import type { BattleScenery, BattleSnapshot, ScenarioArtManifest } from "./types.ts";
 import { batchStaticMeshes } from "./static-batching.ts";
 
-export class AuthoredScenery {
+export class AuthoredScenery implements BattleScenery {
   public readonly group = new THREE.Group();
   private disposed = false;
 
   public constructor(
-    private readonly data: LandscapeData,
+    private readonly data: ScenarioArtManifest,
     private readonly terrain: AuthoredTerrain,
     private readonly assets: BattleAssets,
   ) {
@@ -34,7 +34,14 @@ export class AuthoredScenery {
     console.info(`[Sudomer] batched static scenery (${savedMeshes} meshes removed)`);
   }
 
-  public dispose(): void { this.disposed = true; }
+  public updateVisibility(snapshot: BattleSnapshot): void {
+    // The current authored fixture batches its decorations. Until manifests
+    // retain per-object cell ownership, hide the decorative layer in advanced
+    // fog rather than leaking forests or landmarks from unexplored cells.
+    this.group.visible = !snapshot.fogOfWar;
+  }
+
+  public dispose(): void { this.disposed = true; this.group.clear(); }
 
   private async addWoodland(): Promise<void> {
     const random = mulberry32(this.data.artSeed);

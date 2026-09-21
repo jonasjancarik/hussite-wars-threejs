@@ -9,16 +9,20 @@ import { TacticalOverlays } from "./overlays.ts";
 import { BattlePicker } from "./picking.ts";
 import { beginPointerGesture, pointerGestureIsClick, recordPointerGestureMovement, type PointerGesture } from "./pointer-gesture.ts";
 import { BattleRenderPipeline } from "./render-pipeline.ts";
+import { AuthoredScenery } from "./scenery.ts";
+import { loadScenarioArt } from "./scenario-art.ts";
 import { SnapshotClient } from "./snapshot-client.ts";
 import { BattlePaintedSky } from "./sky.ts";
-import type { BattleSnapshot, CosmeticEvent, HexCoord, IntegratedRendererOptions } from "./types.ts";
+import { AuthoredTerrain } from "./terrain.ts";
+import type { BattleScenery, BattleSnapshot, BattleTerrain, CosmeticEvent, HexCoord, IntegratedRendererOptions, ScenarioArtManifest } from "./types.ts";
 import { UnitPresentation } from "./units.ts";
 
 class IntegratedThreeBattle {
   private readonly scene = new THREE.Scene();
   private readonly assets: BattleAssets;
-  private readonly terrain: GeneratedTerrain;
-  private readonly scenery: GeneratedScenery;
+  private readonly terrain: BattleTerrain;
+  private readonly scenery: BattleScenery;
+  private readonly artMode: "authored" | "generated";
   private readonly cameraRig;
   private readonly pipeline;
   private readonly units: UnitPresentation;
@@ -45,10 +49,21 @@ class IntegratedThreeBattle {
   private snapshotRevision = -1;
   private readonly openingDistance: number;
 
-  private constructor(private readonly canvas: HTMLCanvasElement, private readonly options: IntegratedRendererOptions) {
+  private constructor(private readonly canvas: HTMLCanvasElement, private readonly options: IntegratedRendererOptions,
+    art: ScenarioArtManifest | null) {
     const assetBase = new URL(options.assetBase ?? "assets/", document.baseURI).href;
     this.assets = new BattleAssets(assetBase);
-    this.terrain = new GeneratedTerrain(options.snapshot);
+    if (art) {
+      const terrain = new AuthoredTerrain(art, options.snapshot, assetBase);
+      this.terrain = terrain;
+      this.scenery = new AuthoredScenery(art, terrain, this.assets);
+      this.artMode = "authored";
+    } else {
+      const terrain = new GeneratedTerrain(options.snapshot);
+      this.terrain = terrain;
+      this.scenery = new GeneratedScenery(terrain, this.assets);
+      this.artMode = "generated";
+    }
     const extent = Math.max(this.terrain.bounds.maxX - this.terrain.bounds.minX,
       this.terrain.bounds.maxZ - this.terrain.bounds.minZ);
     this.scene.background = new THREE.Color(0x83969c);
@@ -59,7 +74,6 @@ class IntegratedThreeBattle {
     this.pipeline = new BattleRenderPipeline(canvas, this.scene, this.cameraRig.camera, {
       ambientOcclusion: true, depthOfFieldMode: "compact", effects: true, gtaoSamples: 12, maxPixelRatio: 2,
     });
-    this.scenery = new GeneratedScenery(this.terrain, this.assets);
     this.units = new UnitPresentation(this.terrain, this.terrain.layout, this.assets);
     this.overlays = new TacticalOverlays(this.terrain, this.terrain.layout);
     this.lighting = createBattleLighting(this.scene);
@@ -72,7 +86,9 @@ class IntegratedThreeBattle {
   }
 
   public static async create(canvas: HTMLCanvasElement, options: IntegratedRendererOptions): Promise<IntegratedThreeBattle> {
-    const battle = new IntegratedThreeBattle(canvas, options);
+    const manifestBase = new URL(options.artManifestBase ?? "hex-three/", document.baseURI).href;
+    const art = await loadScenarioArt(options.snapshot, manifestBase);
+    const battle = new IntegratedThreeBattle(canvas, options, art);
     try {
       await battle.pipeline.init();
       battle.resize();
@@ -165,7 +181,7 @@ class IntegratedThreeBattle {
     const terrainBox = new THREE.Box3().setFromObject(this.terrain.group);
     return { backend: this.pipeline.backendName(), active: this.active, disposed: this.disposed,
       listenerCount: this.listenerCount, frameRequestActive: this.frameRequest !== null,
-      scenario: this.options.snapshot.scenario, terrainTypes: this.terrain.field.terrainTypes,
+      scenario: this.options.snapshot.scenario, artMode: this.artMode, terrainTypes: this.terrain.terrainTypes,
       sceneChildren: this.scene.children.length, terrainChildren: this.terrain.group.children.length,
       terrainBox: { min: terrainBox.min.toArray(), max: terrainBox.max.toArray() },
       camera: this.cameraRig.camera.position.toArray(), cameraTarget: this.cameraRig.controls.target.toArray(),

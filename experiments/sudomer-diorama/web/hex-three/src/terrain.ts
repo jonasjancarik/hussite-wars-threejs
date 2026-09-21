@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { distanceToPolygon, distanceToPolyline, pointInPolygon } from "./geometry-utils.ts";
-import type { LandscapeData } from "./types.ts";
+import { HexLayout } from "./hex-coordinates.ts";
+import type { BattleSnapshot, BattleTerrain, ScenarioArtManifest } from "./types.ts";
 import { createPondNormal } from "./landscape-details.ts";
 
 const NX = 241;
@@ -11,12 +12,19 @@ function smoothstep(minimum: number, maximum: number, value: number): number {
   return t * t * (3 - 2 * t);
 }
 
-export class AuthoredTerrain {
+export class AuthoredTerrain implements BattleTerrain {
   public readonly group = new THREE.Group();
   public readonly ground: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
   public readonly interactiveMeshes: THREE.Object3D[] = [];
+  public readonly layout: HexLayout;
+  public readonly bounds: ScenarioArtManifest["bounds"];
+  public readonly terrainTypes: readonly string[];
 
-  public constructor(public readonly data: LandscapeData) {
+  public constructor(public readonly data: ScenarioArtManifest, snapshot: BattleSnapshot,
+    private readonly assetBase = new URL("assets/", document.baseURI).href) {
+    this.layout = new HexLayout(snapshot.cols ?? 20, snapshot.rows ?? 12);
+    this.bounds = data.bounds;
+    this.terrainTypes = [...new Set(snapshot.tiles.map(tile => tile.terrain))];
     this.group.name = "Authored Sudomer landscape";
     this.ground = this.createGround();
     this.ground.name = "Continuous authored ground";
@@ -50,6 +58,19 @@ export class AuthoredTerrain {
     const roadDistance = distanceToPolyline(x, z, this.data.causeway.points);
     const roadFlatten = 1 - smoothstep(this.data.causeway.width, this.data.causeway.width + 3.5, roadDistance);
     return THREE.MathUtils.lerp(broad + ridge + edge, 0.1 + Math.sin(x * 0.035) * 0.12, roadFlatten * 0.78);
+  }
+
+  public updateVisibility(_snapshot: BattleSnapshot): void {}
+
+  public dispose(): void {
+    this.group.traverse(object => {
+      if (!(object instanceof THREE.Mesh || object instanceof THREE.Line)) return;
+      object.geometry.dispose();
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) material.dispose();
+    });
+    this.group.clear();
+    this.interactiveMeshes.length = 0;
   }
 
   private createGround(): THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> {
@@ -96,7 +117,7 @@ export class AuthoredTerrain {
     geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
-    const texture = new THREE.TextureLoader().load(new URL("assets/textures/procedural-worlds/T_ConceptBGroundCalm.webp", document.baseURI).href);
+    const texture = new THREE.TextureLoader().load(new URL("textures/procedural-worlds/T_ConceptBGroundCalm.webp", this.assetBase).href);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
     texture.anisotropy = 16;
@@ -333,7 +354,7 @@ export class AuthoredTerrain {
     geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
-    const bump = new THREE.TextureLoader().load(new URL("assets/textures/procedural-worlds/T_ConceptBCliff.webp", document.baseURI).href);
+    const bump = new THREE.TextureLoader().load(new URL("textures/procedural-worlds/T_ConceptBCliff.webp", this.assetBase).href);
     bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
     bump.anisotropy = 16;
     const plinth = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({

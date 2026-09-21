@@ -56,6 +56,7 @@ class ThreeBattleMapView {
             const renderer = await factory.create(this.canvas, {
                 snapshot: initialSnapshot,
                 assetBase: 'experiments/sudomer-diorama/assets/',
+                artManifestBase: 'experiments/sudomer-diorama/web/hex-three/public/',
                 onHex: ({ col, row }) => {
                     if (!this.active || this.destroyed) return;
                     const hex = { col, row };
@@ -126,7 +127,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'experiments/sudomer-diorama/web/hex-three/integrated/hex-three.js?v=1.9';
+                script.src = 'experiments/sudomer-diorama/web/hex-three/integrated/hex-three.js?v=2.0';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });

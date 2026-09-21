@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
 import { mulberry32 } from "./geometry-utils.ts";
 import { GeneratedTerrain } from "./generated-terrain.ts";
-import type { BattleSnapshot } from "./types.ts";
+import type { BattleScenery, BattleSnapshot } from "./types.ts";
 
-export class GeneratedScenery {
+export class GeneratedScenery implements BattleScenery {
   public readonly group = new THREE.Group();
   private disposed = false;
   private readonly placements: Array<{ object: THREE.Object3D; key: string }> = [];

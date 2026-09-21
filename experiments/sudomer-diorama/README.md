@@ -51,7 +51,9 @@ The normal browser build uses Bevy's WebGPU backend. Browsers without WebGPU sup
 
 ## Integrated turn-based campaign view
 
-The root campaign now loads the Three.js renderer on demand through `js/ui/ThreeBattleMapView.js`. Its terrain comes from the active root `HexGrid`, not from `public/sudomer-landscape.json` or the vendored rules copy. The same generator handles every campaign scenario; forest and settlement decoration is derived only from matching gameplay terrain. The standalone Sudoměř page below remains a renderer fixture.
+The root campaign now loads the Three.js renderer on demand through `js/ui/ThreeBattleMapView.js`. The active root `HexGrid` remains authoritative, and the same generator provides a complete fallback for every campaign scenario. Optional art manifests must validate against that live map before they can change presentation. The standalone Sudoměř page below remains a renderer fixture.
+
+Sudoměř additionally has an authored-art manifest in `web/hex-three/public/sudomer-landscape.json`. Its source-terrain hash must match the active map before it can replace the generated presentation. A mismatch falls back to generated terrain, so authored scenery cannot silently drift away from gameplay.
 
 `web/hex-three/src/terrain-regions.ts` is renderer-neutral. It merges same-terrain neighbours, applies deterministic coherent variation at region borders and preserves a protected core inside every source cell. The test suite measures area coverage across all campaign scenarios and keeps the 75% minimum explicit.
 

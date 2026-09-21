@@ -62,3 +62,9 @@ After the usage reset, added broad, unequal curves to both basins. Variation is 
 ## Cursor zoom and fork preparation
 
 Enabled OrbitControls zoom-to-cursor. Verified in the integrated browser by scrolling over the church away from the view center: the camera approaches the church rather than the central target. No change to orbit or reset controls. The public development fork preserves upstream history at https://github.com/jonasjancarik/hussite-wars-threejs and keeps the diorama under experiments/sudomer-diorama. Washed-out lighting and far clipping are separate known issues, not fixed by cursor zoom.
+
+## Authored campaign integration, 21 September 2026
+
+Restored the approved Sudoměř terrain and scenery inside the root campaign rather than the standalone vendored game. The integrated renderer now selects the authored manifest only when its terrain hash matches the live 20×12 rules map; all other maps retain the generated fallback. The restored view includes the painted pond and drained basin, worn causeway, fields and furrows, woodland masses, village landmarks, reeds, grass, flowers, stone walls, layered plinth and the existing static figurines.
+
+The in-app WebGPU browser confirmed the authored mode, selection and mint/gold tactical overlays at the live campaign URL. Diagnostics reported `artMode: authored`, a 1300×1708 drawing buffer, 16.7 ms median and 17.5 ms p95 frame time over 1,080 sampled frames, and no console warnings or errors. The existing uniform 0.1-unit Sudoměř coverage test remains at 76.0%, above the 75% floor. Advanced fog hides the batched authored decoration layer rather than leaking unexplored landmarks; per-region authored fog reveal remains future manifest work.

@@ -3,9 +3,61 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { distanceToPolyline, pointInPolygon } from "../src/geometry-utils.ts";
 import { COLS, ROWS, hexCenter, terrainFor, pointInsideHex } from "../src/hex-coordinates.ts";
-import type { LandscapeData } from "../src/types.ts";
+import { loadScenarioArt, terrainHash } from "../src/scenario-art.ts";
+import type { BattleSnapshot, ScenarioArtManifest } from "../src/types.ts";
 
-const landscape = JSON.parse(readFileSync(new URL("../public/sudomer-landscape.json", import.meta.url), "utf8")) as LandscapeData;
+const landscape = JSON.parse(readFileSync(new URL("../public/sudomer-landscape.json", import.meta.url), "utf8")) as ScenarioArtManifest;
+
+function sudomerSnapshot(): BattleSnapshot {
+  const tiles = [];
+  for (let col = 0; col < COLS; col += 1) for (let row = 0; row < ROWS; row += 1) {
+    tiles.push({ col, row, terrain: terrainFor(col, row) });
+  }
+  return { protocolVersion: 2, generation: 1, revision: 1, scenario: "sudomere_1420",
+    cols: COLS, rows: ROWS, round: 1, faction: "hussites", state: "playing", busy: false,
+    paused: false, aiRunning: false, tiles, units: [], selectedUnitId: null, legalMoves: [],
+    legalAttacks: [], marchTargets: [], visibleHexes: [], exploredHexes: [], events: [] };
+}
+
+test("Sudomer art manifest is pinned to the authoritative terrain layout", async () => {
+  const snapshot = sudomerSnapshot();
+  assert.equal(landscape.sourceTerrainHash, terrainHash(snapshot.tiles));
+  assert.equal(landscape.renderer, "authored-sudomer-v1");
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  globalThis.fetch = async () => new Response(JSON.stringify(landscape), { status: 200 });
+  console.warn = () => {};
+  try {
+    assert.deepEqual(await loadScenarioArt(snapshot, "https://example.invalid/"), landscape);
+    const changed = structuredClone(snapshot);
+    changed.tiles[0]!.terrain = "water";
+    assert.equal(await loadScenarioArt(changed, "https://example.invalid/"), null);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
+  }
+});
+
+test("Sudomer keeps generated 3D terrain when authored art cannot load", async () => {
+  const snapshot = sudomerSnapshot();
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  const warnings: string[] = [];
+  console.warn = message => warnings.push(String(message));
+  try {
+    globalThis.fetch = async () => new Response("missing", { status: 404 });
+    assert.equal(await loadScenarioArt(snapshot, "https://example.invalid/"), null);
+    globalThis.fetch = async () => new Response("not json", { status: 200 });
+    assert.equal(await loadScenarioArt(snapshot, "https://example.invalid/"), null);
+    globalThis.fetch = async () => { throw new Error("offline"); };
+    assert.equal(await loadScenarioArt(snapshot, "https://example.invalid/"), null);
+    assert.equal(warnings.length, 3);
+    assert.ok(warnings.every(warning => warning.includes("using generated terrain")));
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
+  }
+});
 
 test("at least 75 percent of every hex matches its water, mud or dry terrain", () => {
   let minimum = 1;

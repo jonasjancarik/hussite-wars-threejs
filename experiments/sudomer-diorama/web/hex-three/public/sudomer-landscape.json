@@ -2,6 +2,9 @@
   "version": 1,
   "scenario": "sudomere_1420",
   "scenarioRevision": "dbdf61907212476cda816ff2036a9a8d41bf3572",
+  "renderer": "authored-sudomer-v1",
+  "sourceTerrainHash": "fnv1a32:405c4477",
+  "preset": "painted-miniature",
   "artSeed": 14200325,
   "bounds": { "minX": -72, "maxX": 72, "minZ": -52, "maxZ": 52 },
   "pond": {

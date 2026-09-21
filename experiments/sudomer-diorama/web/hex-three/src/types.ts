@@ -66,9 +66,25 @@ export interface TerrainSurface {
   heightAt(x: number, z: number): number;
 }
 
+export interface BattleTerrain extends TerrainSurface {
+  readonly layout: import("./hex-coordinates.ts").HexLayout;
+  readonly bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  readonly terrainTypes: readonly string[];
+  updateVisibility(snapshot: BattleSnapshot): void;
+  dispose(): void;
+}
+
+export interface BattleScenery {
+  readonly group: import("three").Group;
+  build(): Promise<void>;
+  updateVisibility(snapshot: BattleSnapshot): void;
+  dispose(): void;
+}
+
 export interface IntegratedRendererOptions {
   snapshot: BattleSnapshot;
   assetBase?: string;
+  artManifestBase?: string;
   onHex?(coord: HexCoord): void;
   onHover?(coord: (HexCoord & { clientX: number; clientY: number }) | null): void;
   onContext?(): void;
@@ -101,6 +117,12 @@ export interface LandscapeData {
   woodlandMasses: Array<LandscapePolygon & { density: number }>;
   clearings: LandscapePolygon[];
   landmarks: LandscapePlacement[];
+}
+
+export interface ScenarioArtManifest extends LandscapeData {
+  renderer: "authored-sudomer-v1";
+  sourceTerrainHash: string;
+  preset?: string;
 }
 
 declare global {

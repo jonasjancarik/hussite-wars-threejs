@@ -19,6 +19,8 @@ npm --prefix experiments/sudomer-diorama/web/hex-three ci
 npm --prefix experiments/sudomer-diorama/web/hex-three run build
 ```
 
+Sudoměř is the first scenario with an approved authored-art manifest. When its manifest terrain hash matches the live rules map, the integrated view restores the painted ponds, drained basin, causeway, fields, woods, village landmarks, textures and terrain-following details. Other scenarios continue to use the deterministic generated fallback until their own art manifests are approved.
+
 ## Run the retained diorama page
 
 Requires Node.js 22.18 or newer, npm, and Python 3. No Rust toolchain is needed for the Three.js scene.

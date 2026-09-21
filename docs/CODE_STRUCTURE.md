@@ -52,6 +52,12 @@ seedovaným šumem pouze v okrajovém pásu. Chráněné jádro každé buňky b
 organická křivka změnila čitelný význam mapy. Test rovnoměrně vzorkuje plochu všech
 5 224 buněk v 18 scénářích a vyžaduje nejméně 75 % shody i u okolní suché země.
 
+`scenario-art.ts` je malý registr volitelných výtvarných manifestů. Manifest smí
+řídit kompozici, materiály, křivky, dekorace, kameru a atmosféru, ale neopakuje
+průchodnost ani bojová pravidla. Obsahuje hash zdrojového terénu; při neshodě se
+automaticky použije obecný generátor. Sudoměř je první schválený manifest a znovu
+používá původní `AuthoredTerrain` a `AuthoredScenery` nad živým stavem kampaně.
+
 ### Stav se nemění při kreslení
 
 `Game.render()` je kompatibilní bod pro obnovení odvozené viditelnosti po změně hry

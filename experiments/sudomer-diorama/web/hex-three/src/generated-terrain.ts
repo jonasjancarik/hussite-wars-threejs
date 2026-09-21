@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, type TerrainRegions } from "./terrain-regions.ts";
-import type { BattleSnapshot, TerrainSurface } from "./types.ts";
+import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 
 const COLORS: Record<string, number> = {
   plains: 0xacb273, forest: 0x45633c, hills: 0x858453, water: 0x4f918c,
@@ -10,7 +10,7 @@ const COLORS: Record<string, number> = {
   church: 0x96826b,
 };
 
-export class GeneratedTerrain implements TerrainSurface {
+export class GeneratedTerrain implements BattleTerrain {
   public readonly group = new THREE.Group();
   public readonly interactiveMeshes: THREE.Object3D[] = [];
   public readonly field: TerrainRegions;
@@ -24,6 +24,8 @@ export class GeneratedTerrain implements TerrainSurface {
   private gridWidth = 0;
   private gridHeight = 0;
   private readonly visualWeights = new Map<string, Float32Array>();
+
+  public get terrainTypes(): readonly string[] { return this.field.terrainTypes; }
 
   public constructor(snapshot: BattleSnapshot) {
     const cols = snapshot.cols ?? Math.max(...snapshot.tiles.map(tile => tile.col)) + 1;
