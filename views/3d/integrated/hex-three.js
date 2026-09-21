@@ -9218,7 +9218,17 @@ var _u = {
 	infantry_archer: "models/units/infantry_archer.glb",
 	cavalry_light: "models/units/cavalry_light.glb",
 	cavalry_scout: "models/units/cavalry_scout.glb",
-	cavalry_heavy: "models/units/cavalry_heavy.glb"
+	cavalry_heavy: "models/units/cavalry_heavy.glb",
+	civilian_adult: "models/units/civilian_adult.glb",
+	civilian_woman: "models/units/civilian_woman.glb",
+	civilian_child: "models/units/civilian_child.glb",
+	commander_captain: "models/units/commander_captain.glb",
+	commander_noble: "models/units/commander_noble.glb",
+	commander_cleric: "models/units/commander_cleric.glb",
+	infantry_dismounted: "models/units/infantry_dismounted.glb",
+	infantry_halberd: "models/units/infantry_halberd.glb",
+	field_blockhouse: "models/buildings/field_blockhouse.glb",
+	commander_standard: "models/props/commander_standard.glb"
 }, vu = class {
 	baseUrl;
 	loader = new _l();
@@ -31512,72 +31522,25 @@ var iV = class {
 		for (let t of e.materials.keys()) t.dispose();
 		this.fading.delete(e);
 	}
-}, aV = {
-	hussites: {
-		team_cloth: 10178383,
-		team_paint: 8339259
-	},
-	crusaders: {
-		team_cloth: 5797011,
-		team_paint: 4151410
-	}
-}, oV = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]);
-function sV(e) {
-	return [
-		"JIZDA_HUSITI",
-		"LEHKA_JIZDA",
-		"JIZDA_PRASKY"
-	].includes(e.type) ? cV("cavalry_light") : ["ZVED", "ZVED_KRIZACI"].includes(e.type) ? cV("cavalry_scout") : [
-		"SLECHTICKA_JIZDA_HUSITI",
-		"TEZKY_RYTIR",
-		"TEZKOODENCI"
-	].includes(e.type) ? cV("cavalry_heavy") : ["HOUFNICE", "HOUFNICE_PRASKY"].includes(e.type) ? lV("artillery_houfnice") : ["TARASNICE", "POLNI_DELO"].includes(e.type) ? lV("artillery_tarasnice") : e.type === "BOMBARDA" ? lV("artillery_bombard") : e.type === "VOZOVA_HRADBA" ? [{
-		model: "war_wagon",
-		offsets: [[0, 0]],
-		scale: 1.1
-	}] : ["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(e.type) ? [{
-		model: "infantry_shield",
-		offsets: [[0, 0]],
-		scale: 1.28
-	}] : e.type === "VACLAV_KORANDA" ? [{
-		model: "infantry_handgun",
-		offsets: [[0, 0]],
-		scale: 1.24
-	}] : [
-		"KOPINICI_HUSITI",
-		"KOPINICI",
-		"LUCISTNICI"
-	].includes(e.type) ? [{
-		model: e.type === "LUCISTNICI" ? "infantry_archer" : "infantry_spear",
-		offsets: [
-			[-1.02, .5],
-			[0, -.66],
-			[1.02, .5],
-			[-.52, -.1],
-			[.52, -.1]
-		],
-		scale: 1.15
-	}] : [{
-		model: e.type === "RUCNICARI" ? "infantry_handgun" : ["CEPNICI", "CEPNICI_PRASKY"].includes(e.type) ? "infantry_flail" : [
-			"KUSINICI_HUSITI",
-			"KUSNICI",
-			"KUSNICI_JANOV",
-			"KUSINICI_PRASKY"
-		].includes(e.type) ? "infantry_crossbow" : ["PAVEZNICI", "PAVEZNICI_KRIZACI"].includes(e.type) ? "infantry_pavise" : "infantry_polearm",
-		offsets: [
-			[-1.02, .5],
-			[0, -.66],
-			[1.02, .5],
-			[-.52, -.1],
-			[.52, -.1]
-		],
-		scale: 1.15
+}, aV = [
+	[-1.02, .5],
+	[0, -.66],
+	[1.02, .5],
+	[-.52, -.1],
+	[.52, -.1]
+], oV = [[-.7, -.2], [.7, .2]];
+function sV(e, t = 1.15, n = 2.15) {
+	return [{
+		model: e,
+		offsets: aV,
+		scale: t,
+		pickRadius: n
 	}];
 }
 function cV(e) {
 	return [{
 		model: e,
-		offsets: [[-.7, -.2], [.7, .2]],
+		offsets: oV,
 		scale: .98
 	}];
 }
@@ -31593,7 +31556,131 @@ function lV(e) {
 		rotateOffsetsWithFacing: !0
 	}];
 }
-var uV = class {
+var uV = [
+	{
+		model: "civilian_adult",
+		offsets: [[-1.02, .5], [.52, -.1]],
+		scale: 1.12
+	},
+	{
+		model: "civilian_woman",
+		offsets: [[0, -.66], [1.02, .5]],
+		scale: 1.12
+	},
+	{
+		model: "civilian_child",
+		offsets: [[-.52, -.1]],
+		scale: 1.12
+	}
+], dV = /* @__PURE__ */ new Set([
+	"PROKOP_HOLY",
+	"JAN_ZELIVSKY",
+	"VACLAV_KORANDA"
+]), fV = /* @__PURE__ */ new Set([
+	"JAN_ZIZKA",
+	"ZATECKY_HEJTMAN",
+	"JAN_HVEZDA"
+]), pV = /* @__PURE__ */ new Set([
+	"FRIDRICH_MISNENSKY",
+	"BOHUSLAV_SVAMBERK",
+	"ZIKMUND",
+	"FILIPPO_SCOLARI",
+	"HEINRICH_ISENBURG",
+	"ERKINGER_SEINSHEIM",
+	"FRIDRICH_SASKY",
+	"BOSO_VITZTHUM",
+	"PETR_STERNBERK",
+	"VILEM_SVIHOVSKY",
+	"BRENEK_SVIHOVSKY",
+	"HYNEK_NEKMIRE",
+	"HYNEK_KRUSINA",
+	"JINDRICH_PLUMOV",
+	"DIVIS_BOREK",
+	"CENEK_VARTENBERK",
+	"ARNOST_FLASKA",
+	"JINDRICH_BERKA",
+	"HYNEK_PODEBRADY",
+	"VIKTORIN_BOCEK",
+	"JAN_ROHAC"
+]);
+function mV(e) {
+	switch (e.type) {
+		case "CEPNICI":
+		case "CEPNICI_PRASKY": return sV("infantry_flail", 1.15, 2.25);
+		case "SUDLICNICI": return sV("infantry_polearm");
+		case "PAVEZNICI":
+		case "PAVEZNICI_KRIZACI": return sV("infantry_pavise");
+		case "KOPINICI_HUSITI":
+		case "KOPINICI": return sV("infantry_spear");
+		case "KUSINICI_HUSITI":
+		case "KUSNICI":
+		case "KUSNICI_JANOV":
+		case "KUSINICI_PRASKY": return sV("infantry_crossbow");
+		case "RUCNICARI": return sV("infantry_handgun");
+		case "HALAPARTNICI": return sV("infantry_halberd");
+		case "ZOLDNERI": return sV("infantry_shield");
+		case "LUCISTNICI": return sV("infantry_archer");
+		case "POUTNICI": return uV;
+		case "HOUFNICE":
+		case "HOUFNICE_PRASKY": return lV("artillery_houfnice");
+		case "TARASNICE":
+		case "POLNI_DELO": return lV("artillery_tarasnice");
+		case "BOMBARDA": return lV("artillery_bombard");
+		case "POLNI_OPEVNENI": return [{
+			model: "field_blockhouse",
+			offsets: [[0, 0]],
+			scale: 1,
+			pickRadius: 2.35
+		}];
+		case "VOZOVA_HRADBA":
+		case "VOZOVA_HRADBA_PRASKY": return [{
+			model: "war_wagon",
+			offsets: [[0, 0]],
+			scale: 1.05,
+			pickRadius: 3.4
+		}];
+		case "JIZDA_HUSITI":
+		case "LEHKA_JIZDA":
+		case "JIZDA_PRASKY": return e.dismounted ? sV("infantry_spear") : cV("cavalry_light");
+		case "ZVED":
+		case "ZVED_KRIZACI": return e.dismounted ? sV("infantry_shield") : cV("cavalry_scout");
+		case "SLECHTICKA_JIZDA_HUSITI":
+		case "TEZKY_RYTIR":
+		case "TEZKOODENCI": return e.dismounted ? sV("infantry_dismounted") : cV("cavalry_heavy");
+		default:
+			if (dV.has(e.type)) return [{
+				model: "commander_cleric",
+				offsets: [[0, 0]],
+				scale: 1.24
+			}];
+			if (fV.has(e.type)) return [{
+				model: "commander_captain",
+				offsets: [[0, 0]],
+				scale: 1.28
+			}];
+			if (pV.has(e.type)) return [{
+				model: "commander_noble",
+				offsets: [[0, 0]],
+				scale: 1.28
+			}];
+			throw Error(`No 3D unit recipe for ${e.type}`);
+	}
+}
+function hV(e) {
+	return `${e.faction}:${e.dismounted ? "foot" : "mounted"}:${mV(e).map((e) => e.model).join(",")}`;
+}
+//#endregion
+//#region src/units.ts
+var gV = {
+	hussites: {
+		team_cloth: 10178383,
+		team_paint: 8339259
+	},
+	crusaders: {
+		team_cloth: 5797011,
+		team_paint: 4151410
+	}
+}, _V = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]), vV = class {
 	group = new $n();
 	casualties = new iV();
 	hitTargets = [];
@@ -31614,7 +31701,7 @@ var uV = class {
 		this.casualties.retainVisible(e);
 		for (let [e, t] of this.visuals) if (!r.has(e)) {
 			if (i.has(e)) for (let e of t.figures) this.casualties.add(e.object, t.unit);
-			this.group.remove(t.root), this.hitTargets.splice(this.hitTargets.indexOf(t.hit), 1), t.hit.geometry.dispose(), t.hit.material.dispose(), this.visuals.delete(e);
+			this.removeVisual(e, t);
 		}
 		await Promise.all(n.map((e) => this.updateUnit(e, t)));
 	}
@@ -31639,49 +31726,51 @@ var uV = class {
 		}
 	}
 	async updateUnit(e, t) {
-		let n = this.visuals.get(e.id);
-		if (!n) {
-			let r = new $n();
-			r.name = `${e.name} (${e.id})`;
-			let i = e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2, a = [];
-			for (let n of sV(e)) {
-				let o = await this.variant(n.model, e.faction);
+		let n = this.visuals.get(e.id), r = hV(e);
+		if (n && n.appearance !== r && (this.removeVisual(e.id, n), n = void 0), !n) {
+			let i = new $n();
+			i.name = `${e.name} (${e.id})`;
+			let a = e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2, o = [], s = mV(e), c = Math.max(2.15, ...s.map((e) => e.pickRadius ?? 0));
+			for (let n of s) {
+				let r = await this.variant(n.model, e.faction);
 				if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
 				for (let [t, s] of n.offsets) {
-					let c = o.clone(!0), l = n.rotateOffsetsWithFacing ? new O(t, 0, s).applyAxisAngle(new O(0, 1, 0), i) : new O(t, 0, s);
-					c.position.set(l.x, 0, l.z), c.rotation.y = i, c.scale.setScalar(n.scale);
+					let c = r.clone(!0), l = n.rotateOffsetsWithFacing ? new O(t, 0, s).applyAxisAngle(new O(0, 1, 0), a) : new O(t, 0, s);
+					c.position.set(l.x, 0, l.z), c.rotation.y = a, c.scale.setScalar(n.scale);
 					let u = new Cr().setFromObject(c);
-					a.push({
+					o.push({
 						object: c,
 						bottom: u.min.y,
 						top: u.max.y,
-						depletes: e.unitClass !== "commander" && e.special !== "commander" && e.unitClass !== "fortification" && (/^(infantry_|cavalry_)/.test(n.model) || n.model === "artillery_gunner")
-					}), r.add(c);
+						depletes: e.unitClass !== "commander" && e.special !== "commander" && e.unitClass !== "fortification" && (/^(infantry_|cavalry_|civilian_)/.test(n.model) || n.model === "artillery_gunner")
+					}), i.add(c);
 				}
 			}
 			if (e.unitClass === "commander") {
-				let n = await this.assets.clone("banner");
+				let n = await this.variant("commander_standard", e.faction);
 				if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
-				n.position.set(-1.15, 0, -.45), n.scale.setScalar(.7);
-				let i = new Cr().setFromObject(n);
-				a.push({
-					object: n,
-					bottom: i.min.y,
-					top: i.max.y,
+				let r = n.clone(!0);
+				r.position.set(-1.15, 0, -.45), r.scale.setScalar(.7);
+				let a = new Cr().setFromObject(r);
+				o.push({
+					object: r,
+					bottom: a.min.y,
+					top: a.max.y,
 					depletes: !1
-				}), r.add(n);
+				}), i.add(r);
 			}
-			let o = new Ji(new ro(2.15, 2.15, 4.5, 12), new Ii({
+			let l = new Ji(new ro(c, c, 4.5, 12), new Ii({
 				transparent: !0,
 				opacity: 0,
 				depthWrite: !1
 			}));
-			o.position.y = 2, o.visible = !1, o.userData.unitId = e.id, r.add(o), n = {
-				root: r,
-				hit: o,
-				figures: a,
+			l.position.y = 2, l.visible = !1, l.userData.unitId = e.id, i.add(l), n = {
+				root: i,
+				hit: l,
+				figures: o,
 				revision: t,
 				markerHeight: 0,
+				appearance: r,
 				health: e.health,
 				unit: {
 					id: e.id,
@@ -31689,17 +31778,17 @@ var uV = class {
 					col: e.col,
 					row: e.row
 				}
-			}, this.visuals.set(e.id, n), this.hitTargets.push(o), this.group.add(r);
+			}, this.visuals.set(e.id, n), this.hitTargets.push(l), this.group.add(i);
 		}
-		let r = this.layout.center(e.col, e.row), i = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
-		n.root.position.set(r.x, i(r.x, r.z), r.z), n.root.scale.setScalar(e.isRouting ? .92 : 1), n.root.rotation.y = e.marching ? .06 : 0, n.root.updateMatrixWorld(!0);
-		let a = n.figures.filter((e) => e.depletes).length, o = e.maxHealth > 0 ? Math.min(1, Math.max(0, e.health / e.maxHealth)) : 0, s = Math.max(1, Math.ceil(a * o));
+		let i = this.layout.center(e.col, e.row), a = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
+		n.root.position.set(i.x, a(i.x, i.z), i.z), n.root.scale.setScalar(e.isRouting ? .92 : 1), n.root.rotation.y = e.marching ? .06 : 0, n.root.updateMatrixWorld(!0);
+		let o = n.figures.filter((e) => e.depletes).length, s = e.maxHealth > 0 ? Math.min(1, Math.max(0, e.health / e.maxHealth)) : 0, c = Math.max(1, Math.ceil(o * s));
 		e.health > n.health && this.casualties.cancelUnit(e.id);
-		let c = 0;
+		let l = 0;
 		n.markerHeight = 0;
-		for (let { object: t, bottom: r, top: a, depletes: o } of n.figures) {
-			let l = !o || c++ < s, u = n.root.localToWorld(new O(t.position.x, 0, t.position.z));
-			t.position.y = (i(u.x, u.z) - n.root.position.y) / n.root.scale.y - r, !l && t.visible && e.health < n.health && this.casualties.add(t, e), t.visible = l, t.visible && (n.markerHeight = Math.max(n.markerHeight, t.position.y + a));
+		for (let { object: t, bottom: r, top: i, depletes: o } of n.figures) {
+			let s = !o || l++ < c, u = n.root.localToWorld(new O(t.position.x, 0, t.position.z));
+			t.position.y = (a(u.x, u.z) - n.root.position.y) / n.root.scale.y - r, !s && t.visible && e.health < n.health && this.casualties.add(t, e), t.visible = s, t.visible && (n.markerHeight = Math.max(n.markerHeight, t.position.y + i));
 		}
 		n.root.updateMatrixWorld(!0), n.revision = t, n.health = e.health, n.unit = {
 			id: e.id,
@@ -31707,6 +31796,11 @@ var uV = class {
 			col: e.col,
 			row: e.row
 		};
+	}
+	removeVisual(e, t) {
+		this.group.remove(t.root);
+		let n = this.hitTargets.indexOf(t.hit);
+		n >= 0 && this.hitTargets.splice(n, 1), t.hit.geometry.dispose(), t.hit.material.dispose(), this.visuals.delete(e);
 	}
 	variant(e, t) {
 		let n = `${e}:${t}`, r = this.variants.get(n);
@@ -31716,12 +31810,12 @@ var uV = class {
 				let r = e;
 				if (!r.isMesh) return;
 				let i = (Array.isArray(r.material) ? r.material : [r.material]).map((e) => {
-					if (!oV.has(e.name)) return e;
+					if (!_V.has(e.name)) return e;
 					let r = n.get(e);
 					if (!r) {
 						r = e.clone();
 						let i = r.color;
-						i && i.setHex(aV[t][e.name]), n.set(e, r), this.disposed ? r.dispose() : this.ownedMaterials.add(r);
+						i && i.setHex(gV[t][e.name]), n.set(e, r), this.disposed ? r.dispose() : this.ownedMaterials.add(r);
 					}
 					return r;
 				});
@@ -31729,21 +31823,21 @@ var uV = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, dV = {
+}, yV = {
 	width: 64,
 	height: 58
-}, fV = {
+}, bV = {
 	width: 152,
 	height: 114
 };
-function pV(e = !1) {
-	return e ? fV : dV;
+function xV(e = !1) {
+	return e ? bV : yV;
 }
-function mV(e, t) {
+function SV(e, t) {
 	return Number(e.selected) - Number(t.selected) || (t.depth ?? 0) - (e.depth ?? 0) || e.id - t.id;
 }
-function hV(e, t, n, r = dV) {
-	return t <= 0 || n <= 0 ? [] : [...e].sort(mV).map((e) => ({
+function CV(e, t, n, r = yV) {
+	return t <= 0 || n <= 0 ? [] : [...e].sort(SV).map((e) => ({
 		...e,
 		width: r.width,
 		height: r.height,
@@ -31751,8 +31845,8 @@ function hV(e, t, n, r = dV) {
 		top: e.y - r.height - 6
 	}));
 }
-var gV = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
-function _V(e, t, n, r = [], i = dV) {
+var wV = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
+function TV(e, t, n, r = [], i = yV) {
 	let a = [];
 	for (let o of [...e].sort((e, t) => Number(t.selected) - Number(e.selected) || e.y - t.y || e.id - t.id)) {
 		let { width: e, height: s } = i;
@@ -31779,26 +31873,26 @@ function _V(e, t, n, r = [], i = dV) {
 				left: Math.max(4, Math.min(t - e - 4, o.x - e / 2 + i)),
 				top: Math.max(4, Math.min(n - s - 4, o.y - s - 6 + d))
 			};
-			if (![...a, ...r].some((e) => gV(l, e))) {
+			if (![...a, ...r].some((e) => wV(l, e))) {
 				c = l;
 				break;
 			}
 		}
 		c && a.push(c);
 	}
-	return a.sort(mV);
+	return a.sort(SV);
 }
-function vV(e, t, n) {
+function EV(e, t, n) {
 	if (!n || e.length === t.length) return e;
 	let r = new Set(e.map((e) => e.id));
-	return [...e, ...t.filter((e) => !r.has(e.id))].sort(mV);
+	return [...e, ...t.filter((e) => !r.has(e.id))].sort(SV);
 }
-function yV(e, t, n) {
-	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + dV.height || Math.abs(t - e.left - e.width / 2) <= dV.width / 2))?.id ?? null;
+function DV(e, t, n) {
+	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + yV.height || Math.abs(t - e.left - e.width / 2) <= yV.width / 2))?.id ?? null;
 }
 //#endregion
 //#region src/unit-marker-styles.ts
-var bV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", xV = class {
+var OV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", kV = class {
 	canvas;
 	onChoose;
 	layer;
@@ -31819,7 +31913,7 @@ var bV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		let n = e.ownerDocument;
 		this.layer = n.createElement("div"), this.layer.className = "three-unit-markers";
 		let r = n.createElement("style");
-		r.textContent = bV, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
+		r.textContent = OV, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
 	}
 	update(e) {
 		if (this.disposed) return;
@@ -31868,8 +31962,8 @@ var bV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 				depth: a.z
 			});
 		}
-		let r = pV(this.detailsVisible), i = hV(n, this.width, this.height, r);
-		this.placements = this.avoidance ? _V(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = vV(this.placements, i, this.detailsVisible));
+		let r = xV(this.detailsVisible), i = CV(n, this.width, this.height, r);
+		this.placements = this.avoidance ? TV(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = EV(this.placements, i, this.detailsVisible));
 		let a = new Set(this.placements.map((e) => e.id));
 		for (let [e, t] of this.markers) t.button.hidden = !a.has(e);
 		for (let [e, t] of this.placements.entries()) {
@@ -31881,7 +31975,7 @@ var bV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 	}
 	unitAt(e, t) {
 		if (!this.active || this.disposed) return null;
-		let n = this.canvas.getBoundingClientRect(), r = yV(this.placements, e - n.left, t - n.top);
+		let n = this.canvas.getBoundingClientRect(), r = DV(this.placements, e - n.left, t - n.top);
 		return this.units.find((e) => e.id === r) ?? null;
 	}
 	dispose() {
@@ -31949,18 +32043,18 @@ var bV = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 			return t.className = "marker-badge", t.dataset.status = e.id, t.textContent = e.text, t.title = e.label, t.style.backgroundColor = e.color, t;
 		}));
 	}
-}, SV = 10, CV = 5, wV = 1.3, TV = .48, EV = .24, DV = .065;
-function OV(e) {
+}, AV = 10, jV = 5, MV = 1.3, NV = .48, PV = .24, FV = .065;
+function IV(e) {
 	return `${e.col},${e.row}`;
 }
-function kV(e, t) {
+function LV(e, t) {
 	return `${Math.min(e.id, t.id)}:${Math.max(e.id, t.id)}`;
 }
-var AV = class {
+var RV = class {
 	group = new $n();
 	terrain;
 	layout;
-	linkGeometry = new Ds(EV, DV, 8, 8);
+	linkGeometry = new Ds(PV, FV, 8, 8);
 	closedMaterial = new As({
 		color: 5917215,
 		roughness: .88,
@@ -31982,11 +32076,11 @@ var AV = class {
 	}
 	update(e) {
 		if (this.disposed) return;
-		let t = rV(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [OV(e), e])), r = /* @__PURE__ */ new Set();
+		let t = rV(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [IV(e), e])), r = /* @__PURE__ */ new Set();
 		for (let e of t) for (let t of this.layout.neighbours(e)) {
 			let i = n.get(`${t.col},${t.row}`);
 			if (!i || e.faction !== i.faction || e.id >= i.id) continue;
-			let a = kV(e, i);
+			let a = LV(e, i);
 			r.add(a);
 			let o = e.marching || i.marching, s = `${a}|${e.col},${e.row}|${i.col},${i.row}|${o ? "marching" : "closed"}`, c = this.connections.get(a);
 			if (c?.stateKey === s) continue;
@@ -32000,11 +32094,11 @@ var AV = class {
 		this.disposed || (this.disposed = !0, this.connections.clear(), this.group.clear(), this.linkGeometry.dispose(), this.closedMaterial.dispose(), this.marchingMaterial.dispose());
 	}
 	createConnection(e, t, n) {
-		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new O(a / s, 0, o / s), l = new O(-c.z, 0, c.x), u = new O(0, 1, 0), d = Math.max(0, s - wV * 2), f = n ? CV : SV, p = n ? this.marchingMaterial : this.closedMaterial, m = new $n();
+		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new O(a / s, 0, o / s), l = new O(-c.z, 0, c.x), u = new O(0, 1, 0), d = Math.max(0, s - MV * 2), f = n ? jV : AV, p = n ? this.marchingMaterial : this.closedMaterial, m = new $n();
 		m.name = `Wagon chain ${Math.min(e.id, t.id)}-${Math.max(e.id, t.id)}`, m.userData.wagonIds = [e.id, t.id];
 		let h = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		for (let e = 0; e < f; e += 1) {
-			let t = wV + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + TV, o = new Ji(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
+			let t = MV + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + NV, o = new Ji(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
 			o.position.set(n, a, i), o.quaternion.setFromUnitVectors(new O(0, 0, 1), s), o.castShadow = !0, o.receiveShadow = !0, o.userData.connectionLink = !0, m.add(o);
 		}
 		return {
@@ -32012,7 +32106,7 @@ var AV = class {
 			stateKey: ""
 		};
 	}
-}, jV = class e {
+}, zV = class e {
 	canvas;
 	options;
 	scene = new cr();
@@ -32067,7 +32161,7 @@ var AV = class {
 			effects: !0,
 			gtaoSamples: 12,
 			maxPixelRatio: 2
-		}), this.units = new uV(this.terrain, this.terrain.layout, this.assets), this.banners = new xV(e, (e) => this.options.onHex?.(e)), this.wagonConnections = new AV(this.terrain, this.terrain.layout), this.overlays = new Kd(this.terrain, this.terrain.layout), this.lighting = Hd(this.scene), this.picker = new qd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new QB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
+		}), this.units = new vV(this.terrain, this.terrain.layout, this.assets), this.banners = new kV(e, (e) => this.options.onHex?.(e)), this.wagonConnections = new RV(this.terrain, this.terrain.layout), this.overlays = new Kd(this.terrain, this.terrain.layout), this.lighting = Hd(this.scene), this.picker = new qd(e, this.cameraRig.camera, this.terrain.layout), this.sky = new QB(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await JB(n.snapshot, r), a = new e(t, n, i);
@@ -32264,8 +32358,8 @@ var AV = class {
 		this.lastRendererCounters = nf(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, a - r, o - a, o - r) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => jV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function MV() {
+window.HussiteBattle3D = { create: (e, t) => zV.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function BV() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = YB(() => t.takeSnapshot(), window), r = new ZB(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -32277,7 +32371,7 @@ async function MV() {
 			action: e,
 			...n
 		}));
-	}, s = await jV.create(e, {
+	}, s = await zV.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -32290,7 +32384,7 @@ async function MV() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-MV().catch((e) => {
+BV().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

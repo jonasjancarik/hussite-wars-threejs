@@ -103,6 +103,16 @@ test('vykreslení panelů, mapy a tooltipu nemění herní stav', () => {
     game.destroy();
 });
 
+test('3D snapshot nese pouze výslovný stav sesednutí', () => {
+    const h = createHarness({ browserView: true }), game = h.newGame();
+    const cavalry = game.units.find(unit => unit.isCavalry());
+    assert.ok(cavalry);
+    assert.equal(game.view.threeMap.snapshot().units.find(unit => unit.id === cavalry.id).dismounted, false);
+    cavalry.dismounted = true;
+    assert.equal(game.view.threeMap.snapshot().units.find(unit => unit.id === cavalry.id).dismounted, true);
+    game.destroy();
+});
+
 test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou akci', async () => {
     const h = createHarness({ browserView: true });
     let options = null, activeCalls = 0, disposeCalls = 0, snapshots = 0, zoomCalls = 0, createCalls = 0;

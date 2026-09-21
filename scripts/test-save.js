@@ -73,6 +73,22 @@ test('zápis ověří skutečný JSON po serializaci, ne pouze vstupní objekt',
     assert.equal(h.storage.get(key), previous);
 });
 
+test('starý save bez sesednutí zůstane na koni, nový stav se uloží a znovu načte', () => {
+    const { h, game, key } = fixture();
+    const oldUnit = game.units[0].serialize();
+    delete oldUnit.dismounted;
+    assert.equal(h.Unit.deserialize(oldUnit).dismounted, false);
+
+    game.units[0].dismounted = true;
+    assert.equal(game.saveGame(), true);
+    const data = JSON.parse(h.storage.get(key));
+    assert.equal(data.units[0].dismounted, true);
+    assert.equal(h.SaveGameSystem.read().units[0].dismounted, true);
+
+    data.units[0].dismounted = 'yes';
+    assert.throws(() => h.SaveGameSystem.prepare(data), /saveIncompatible/);
+});
+
 let failures = 0;
 for (const { name, run } of tests) {
     try { run(); console.log(`✓ ${name}`); }

@@ -52,6 +52,7 @@ class Unit {
         this.chargeBonus = false;  // Bonus z nárazu
         this.isRouting = false;    // Jednotka prchá
         this.rallyAttempts = 0;    // Počet pokusů o rally
+        this.dismounted = false;   // Explicitní stav scénářového sesednutí, ne pouhé zpomalení
     }
 
     // Kontrola, zda je jednotka velitel
@@ -861,6 +862,7 @@ class Unit {
             morale: this.morale,
             formationClosed: this.formationClosed,  // WP1: stav vozové hradby
             marching: this.marching,  // P4: pochodová hradba
+            dismounted: Boolean(this.dismounted),
             isRouting: this.isRouting,
             rallyAttempts: this.rallyAttempts,
             // Hodnoty, které mohou být za hry přepsány (strana scénáře,
@@ -903,6 +905,8 @@ class Unit {
         if (data.marching !== undefined) {
             unit.marching = data.marching;
         }
+        // Starší savy před explicitním sesednutím zůstávají na koni.
+        unit.dismounted = data.dismounted ?? false;
         // Přepsané hodnoty - bez nich by jednotka po načtení spadla
         // zpět na šablonu (a posila s přepsanou frakcí by změnila stranu)
         if (data.faction !== undefined) unit.faction = data.faction;

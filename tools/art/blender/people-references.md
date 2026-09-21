@@ -36,4 +36,4 @@ The commander standard is cloned for each figure; faction palette materials are 
 
 The support models are described in [support-unit-references.md](support-unit-references.md). Astra extra-high reviewed the support modelling and these figure previews. Corrections included grounded/contacting parts, a draped apron, a connected cleric neckline, the child's cap placement, and a hollow chalice. The combined `previews/unit-completion.png` is rendered from final GLBs.
 
-Validation includes the full project gate, 83 3D tests, GLB checks, TypeScript/Vite build, all-59-type real-asset coverage, mounted/dismounted save and appearance regressions, civilian visible losses, and browser rendering/selection. Native Bevy scenes, mobile-device performance and new individual portrait/heraldry work are outside this pass.
+Validation includes the full project gate, 90 3D tests, GLB checks, TypeScript/Vite build, all-59-type real-asset coverage, mounted/dismounted save and appearance regressions, civilian visible losses, and browser rendering/selection. Native Bevy scenes, mobile-device performance and new individual portrait/heraldry work are outside this pass.

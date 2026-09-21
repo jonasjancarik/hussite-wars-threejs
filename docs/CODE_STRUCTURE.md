@@ -331,3 +331,9 @@ V CSS zůstává samostatná vrstva pozdějšího tématu a v panelech inline st
 Další menší krok může oddělit hexovou geometrii od kreslení. Sloučení základních
 stylů s tématem už potřebuje samostatnou vizuální regresi; nemá se míchat s úpravami
 pravidel nebo balancu.
+
+## 3D modely jednotek a sesednutí
+
+`views/3d/src/unit-recipes.ts` přiřazuje modely všem 59 typům jednotek. `UnitPresentation` zajišťuje umístění, barvy, viditelné ztráty a samostatné instance velitelských standard. Při změně frakce nebo explicitního stavu `dismounted` bezpečně přestaví vzhled stejné jednotky včetně cíle pro kliknutí.
+
+`Unit.dismounted` nastavuje stávající scénářová událost sesednutí. Příznak se ukládá, načítá a předává 3D pohledu; starší uložené hry bez příznaku používají `false`. Samotné zpomalení nebo odebrání bonusu nárazu vzhled na pěší nemění. Pravidla, statistiky a sestavy scénářů zůstávají stejné.

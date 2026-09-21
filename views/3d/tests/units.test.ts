@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import * as THREE from "three";
 import { HexLayout } from "../src/hex-coordinates.ts";
+import { unitRecipe } from "../src/unit-recipes.ts";
 import { UnitPresentation } from "../src/units.ts";
 import type { BattleSnapshot, UnitSnapshot } from "../src/types.ts";
 
@@ -160,12 +163,115 @@ test("maps both spearman definitions and archers without changing polearm infant
     unit(1, "KOPINICI_HUSITI", "hussites"), unit(2, "KOPINICI", "crusaders"),
     unit(3, "LUCISTNICI", "crusaders"), unit(4, "SUDLICNICI", "hussites"), unit(5, "HALAPARTNICI", "crusaders"),
   ]));
-  const expected = ["infantry_spear", "infantry_spear", "infantry_archer", "infantry_polearm", "infantry_polearm"];
+  const expected = ["infantry_spear", "infantry_spear", "infantry_archer", "infantry_polearm", "infantry_halberd"];
   for (const [index, formation] of units.group.children.entries()) {
     const figures = formation.children.filter(child => child instanceof THREE.Group);
     assert.equal(figures.length, 5);
     assert.ok(figures.every(figure => figure.name === expected[index]));
   }
+});
+
+test("maps every current game roster definition to an explicit, meaningful recipe", () => {
+  const source = readFileSync(new URL("../../../js/data/unitTypes.js", import.meta.url), "utf8");
+  const roster = Object.keys(runInNewContext(`${source}; UnitTypes`) as Record<string, unknown>);
+  const expectedPrimaryModels: Record<string, string> = {
+    CEPNICI: "infantry_flail", SUDLICNICI: "infantry_polearm", PAVEZNICI: "infantry_pavise", KOPINICI_HUSITI: "infantry_spear",
+    KUSINICI_HUSITI: "infantry_crossbow", RUCNICARI: "infantry_handgun", HOUFNICE: "artillery_houfnice", TARASNICE: "artillery_tarasnice",
+    POLNI_OPEVNENI: "field_blockhouse", VOZOVA_HRADBA: "war_wagon", JIZDA_HUSITI: "cavalry_light", SLECHTICKA_JIZDA_HUSITI: "cavalry_heavy",
+    POUTNICI: "civilian_adult", ZVED: "cavalry_scout", TEZKY_RYTIR: "cavalry_heavy", TEZKOODENCI: "cavalry_heavy",
+    LEHKA_JIZDA: "cavalry_light", ZVED_KRIZACI: "cavalry_scout", KOPINICI: "infantry_spear", HALAPARTNICI: "infantry_halberd",
+    PAVEZNICI_KRIZACI: "infantry_pavise", KUSNICI_JANOV: "infantry_crossbow", KUSNICI: "infantry_crossbow", LUCISTNICI: "infantry_archer",
+    BOMBARDA: "artillery_bombard", POLNI_DELO: "artillery_tarasnice", ZOLDNERI: "infantry_shield",
+    JAN_ZIZKA: "commander_captain", PROKOP_HOLY: "commander_cleric", JAN_ZELIVSKY: "commander_cleric", VACLAV_KORANDA: "commander_cleric",
+    ZATECKY_HEJTMAN: "commander_captain", JAN_ROHAC: "commander_noble", FRIDRICH_MISNENSKY: "commander_noble", BOHUSLAV_SVAMBERK: "commander_noble",
+    ZIKMUND: "commander_noble", FILIPPO_SCOLARI: "commander_noble", HEINRICH_ISENBURG: "commander_noble", ERKINGER_SEINSHEIM: "commander_noble",
+    FRIDRICH_SASKY: "commander_noble", BOSO_VITZTHUM: "commander_noble", PETR_STERNBERK: "commander_noble", VILEM_SVIHOVSKY: "commander_noble",
+    BRENEK_SVIHOVSKY: "commander_noble", HYNEK_NEKMIRE: "commander_noble", HYNEK_KRUSINA: "commander_noble", JINDRICH_PLUMOV: "commander_noble",
+    DIVIS_BOREK: "commander_noble", CENEK_VARTENBERK: "commander_noble", ARNOST_FLASKA: "commander_noble", JINDRICH_BERKA: "commander_noble",
+    JAN_HVEZDA: "commander_captain", HYNEK_PODEBRADY: "commander_noble", VIKTORIN_BOCEK: "commander_noble", VOZOVA_HRADBA_PRASKY: "war_wagon",
+    CEPNICI_PRASKY: "infantry_flail", KUSINICI_PRASKY: "infantry_crossbow", HOUFNICE_PRASKY: "artillery_houfnice", JIZDA_PRASKY: "cavalry_light",
+  };
+  assert.equal(roster.length, 59);
+  assert.deepEqual(new Set(Object.keys(expectedPrimaryModels)), new Set(roster));
+  for (const type of roster) {
+    const recipe = unitRecipe(unit(1, type));
+    assert.ok(recipe.length > 0, `${type} has no figures`);
+    assert.equal(recipe[0]!.model, expectedPrimaryModels[type], type);
+  }
+  assert.deepEqual(unitRecipe(unit(1, "POUTNICI")).flatMap(recipe => recipe.offsets).length, 5);
+});
+
+test("uses recipe-specific pick radii for fieldworks and both wagon variants", async () => {
+  const assets = new TestAssets();
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(5, 1), assets);
+  await units.update(snapshotWithUnits([
+    unit(1, "CEPNICI"), unit(2, "POLNI_OPEVNENI"), unit(3, "VOZOVA_HRADBA"), unit(4, "VOZOVA_HRADBA_PRASKY", "crusaders"),
+  ]));
+  const radii = units.hitTargets.map(hit => (hit as THREE.Mesh<THREE.CylinderGeometry>).geometry.parameters.radiusTop);
+  assert.deepEqual(radii, [2.25, 2.35, 3.4, 3.4]);
+  assert.equal(unitRecipe(unit(1, "VOZOVA_HRADBA"))[0]!.scale, 1.05);
+  assert.equal(unitRecipe(unit(1, "VOZOVA_HRADBA_PRASKY"))[0]!.scale, 1.05);
+});
+
+test("poutníci use five civilian figures that deplete with health", async () => {
+  const assets = new TestAssets();
+  const pilgrims = unit(1, "POUTNICI");
+  pilgrims.health = 40;
+  pilgrims.maxHealth = 100;
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(3, 1), assets);
+  await units.update(snapshotWithUnits([pilgrims]));
+  const figures = units.group.children[0]!.children.filter(child => child instanceof THREE.Group);
+  assert.equal(figures.length, 5);
+  assert.equal(figures.filter(figure => figure.visible).length, 2);
+  assert.deepEqual(new Set(assets.loaded), new Set(["civilian_adult", "civilian_woman", "civilian_child"]));
+});
+
+test("rebuilds a same-ID cavalry visual after explicit dismount", async () => {
+  const assets = new TestAssets();
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(3, 1), assets);
+  const cavalry = unit(1, "TEZKY_RYTIR", "crusaders");
+  await units.update(snapshotWithUnits([cavalry]));
+  assert.equal(units.group.children[0]!.children.filter(child => child instanceof THREE.Group).length, 2);
+  await units.update(snapshotWithUnits([{ ...cavalry, dismounted: true }]));
+  const figures = units.group.children[0]!.children.filter(child => child instanceof THREE.Group);
+  assert.equal(figures.length, 5);
+  assert.ok(figures.every(figure => figure.name === "infantry_dismounted"));
+  assert.deepEqual(new Set(assets.loaded), new Set(["cavalry_heavy", "infantry_dismounted"]));
+  assert.equal(units.casualties.group.children.length, 0, "changing appearance is not a casualty");
+  await units.update(snapshotWithUnits([cavalry]));
+  assert.equal(units.group.children[0]!.children.filter(child => child instanceof THREE.Group).length, 2);
+  assert.equal(units.hitTargets.length, 1);
+  assert.equal(units.casualties.group.children.length, 0);
+});
+
+test("commanders own cloned standards while sharing each faction's material variant", async () => {
+  const cloth = new THREE.MeshStandardMaterial({ name: "team_cloth", color: 0x123456 });
+  const standard = taggedModel({ cloth, paint: cloth, neutral: cloth });
+  standard.name = "commander_standard";
+  const assets = new TestAssets({ commander_captain: new THREE.Group(), commander_standard: standard });
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(5, 1), assets);
+  const hussite = { ...unit(1, "JAN_ZIZKA", "hussites"), unitClass: "commander", special: "commander" };
+  const secondHussite = { ...unit(2, "ZATECKY_HEJTMAN", "hussites"), unitClass: "commander", special: "commander" };
+  const crusader = { ...unit(3, "JAN_ZIZKA", "crusaders"), unitClass: "commander", special: "commander" };
+  await units.update(snapshotWithUnits([hussite, secondHussite, crusader]));
+  const standards = units.group.children.map(formation => formation.children.find(child => child.name === "commander_standard")!);
+  assert.equal(new Set(standards).size, 3);
+  assert.ok(standards.every((banner, index) => banner.parent === units.group.children[index]));
+  const material = (banner: THREE.Object3D) => materialsIn(banner).find(item => item.name === "team_cloth")! as THREE.MeshStandardMaterial;
+  const hussiteCloth = material(standards[0]!);
+  assert.equal(hussiteCloth, material(standards[1]!));
+  assert.notEqual(hussiteCloth, material(standards[2]!));
+  assert.deepEqual(standards.map(banner => material(banner).color.getHex()), [0x9b4f4f, 0x9b4f4f, 0x587493]);
+  const variants = (units as unknown as { variants: Map<string, Promise<THREE.Group>> }).variants;
+  const cachedHussiteStandard = await variants.get("commander_standard:hussites")!;
+  assert.equal(cachedHussiteStandard.parent, null);
+  assert.deepEqual(cachedHussiteStandard.position.toArray(), [0, 0, 0]);
+  assert.deepEqual(cachedHussiteStandard.scale.toArray(), [1, 1, 1]);
+  assert.equal(cloth.color.getHex(), 0x123456);
 });
 
 test("artillery gun and crew figures each follow rotated routing terrain", async () => {

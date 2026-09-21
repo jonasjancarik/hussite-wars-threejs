@@ -133,7 +133,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.25';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.26';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -180,6 +180,7 @@ class ThreeBattleMapView {
                 hasMoved: unit.hasMoved, hasAttacked: unit.hasAttacked,
                 isDefending: unit.isDefending, isRouting: unit.isRouting,
                 formationClosed: unit.formationClosed, marching: unit.marching,
+                dismounted: Boolean(unit.dismounted),
                 special: unit.special,
                 // Visible units only: this contains no extra information about
                 // enemies hidden by fog and gives 3D the same token facts as 2D.

@@ -31,6 +31,8 @@ export interface UnitSnapshot extends HexCoord {
   isRouting: boolean;
   formationClosed: boolean;
   marching: boolean;
+  /** A scenario event explicitly forced this cavalry unit to fight on foot. */
+  dismounted?: boolean;
   special?: string | null;
   presentation?: UnitMarkerPresentation;
 }

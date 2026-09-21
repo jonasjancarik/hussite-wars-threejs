@@ -4,67 +4,17 @@ import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 import { visibleSnapshotUnits } from "./unit-visibility.ts";
 import { CasualtyFades } from "./casualties.ts";
+import { recipeSignature, unitRecipe } from "./unit-recipes.ts";
 
 interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number;
-  health: number; unit: Pick<UnitSnapshot, "id" | "faction" | "col" | "row"> }
-interface FigureRecipe {
-  model: string;
-  offsets: Array<[number, number]>;
-  scale: number;
-  rotateOffsetsWithFacing?: boolean;
-}
+  appearance: string; health: number; unit: Pick<UnitSnapshot, "id" | "faction" | "col" | "row"> }
 
 const TEAM_MATERIAL_COLORS = {
   hussites: { team_cloth: 0x9b4f4f, team_paint: 0x7f3f3b },
   crusaders: { team_cloth: 0x587493, team_paint: 0x3f5872 },
 } as const;
 const TEAM_MATERIAL_NAMES = new Set(["team_cloth", "team_paint"]);
-
-function displayRecipe(unit: UnitSnapshot): FigureRecipe[] {
-  if (["JIZDA_HUSITI", "LEHKA_JIZDA", "JIZDA_PRASKY"].includes(unit.type)) {
-    return cavalryRecipe("cavalry_light");
-  }
-  if (["ZVED", "ZVED_KRIZACI"].includes(unit.type)) {
-    return cavalryRecipe("cavalry_scout");
-  }
-  if (["SLECHTICKA_JIZDA_HUSITI", "TEZKY_RYTIR", "TEZKOODENCI"].includes(unit.type)) {
-    return cavalryRecipe("cavalry_heavy");
-  }
-  if (["HOUFNICE", "HOUFNICE_PRASKY"].includes(unit.type)) {
-    return artilleryRecipe("artillery_houfnice");
-  }
-  if (["TARASNICE", "POLNI_DELO"].includes(unit.type)) {
-    return artilleryRecipe("artillery_tarasnice");
-  }
-  if (unit.type === "BOMBARDA") return artilleryRecipe("artillery_bombard");
-  if (unit.type === "VOZOVA_HRADBA") return [{ model: "war_wagon", offsets: [[0, 0]], scale: 1.1 }];
-  if (["JAN_ZIZKA", "BOHUSLAV_SVAMBERK"].includes(unit.type)) {
-    return [{ model: "infantry_shield", offsets: [[0, 0]], scale: 1.28 }];
-  }
-  if (unit.type === "VACLAV_KORANDA") return [{ model: "infantry_handgun", offsets: [[0, 0]], scale: 1.24 }];
-  if (["KOPINICI_HUSITI", "KOPINICI", "LUCISTNICI"].includes(unit.type)) {
-    return [{ model: unit.type === "LUCISTNICI" ? "infantry_archer" : "infantry_spear",
-      offsets: [[-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1]], scale: 1.15 }];
-  }
-  const model = unit.type === "RUCNICARI" ? "infantry_handgun"
-    : ["CEPNICI", "CEPNICI_PRASKY"].includes(unit.type) ? "infantry_flail"
-      : ["KUSINICI_HUSITI", "KUSNICI", "KUSNICI_JANOV", "KUSINICI_PRASKY"].includes(unit.type) ? "infantry_crossbow"
-        : ["PAVEZNICI", "PAVEZNICI_KRIZACI"].includes(unit.type) ? "infantry_pavise"
-      : "infantry_polearm";
-  return [{ model, offsets: [[-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1]], scale: 1.15 }];
-}
-
-function cavalryRecipe(model: string): FigureRecipe[] {
-  return [{ model, offsets: [[-0.70, -0.20], [0.70, 0.20]], scale: 0.98 }];
-}
-
-function artilleryRecipe(model: string): FigureRecipe[] {
-  return [
-    { model, offsets: [[0, 0]], scale: 1 },
-    { model: "artillery_gunner", offsets: [[-0.5, -1.2], [-0.5, 1.2]], scale: 1.05, rotateOffsetsWithFacing: true },
-  ];
-}
 
 export class UnitPresentation {
   public readonly group = new THREE.Group();
@@ -98,11 +48,7 @@ export class UnitPresentation {
         if (eliminated.has(id)) {
           for (const figure of visual.figures) this.casualties.add(figure.object, visual.unit);
         }
-        this.group.remove(visual.root);
-        this.hitTargets.splice(this.hitTargets.indexOf(visual.hit), 1);
-        visual.hit.geometry.dispose();
-        (visual.hit.material as THREE.Material).dispose();
-        this.visuals.delete(id);
+        this.removeVisual(id, visual);
       }
     }
     await Promise.all(visibleUnits.map(unit => this.updateUnit(unit, revision)));
@@ -141,12 +87,19 @@ export class UnitPresentation {
 
   private async updateUnit(unit: UnitSnapshot, revision: number): Promise<void> {
     let visual = this.visuals.get(unit.id);
+    const appearance = recipeSignature(unit);
+    if (visual && visual.appearance !== appearance) {
+      this.removeVisual(unit.id, visual);
+      visual = undefined;
+    }
     if (!visual) {
       const root = new THREE.Group();
       root.name = `${unit.name} (${unit.id})`;
       const facing = unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
       const figures: GroundedFigure[] = [];
-      for (const recipe of displayRecipe(unit)) {
+      const recipes = unitRecipe(unit);
+      const pickRadius = Math.max(2.15, ...recipes.map(recipe => recipe.pickRadius ?? 0));
+      for (const recipe of recipes) {
         const prototype = await this.variant(recipe.model, unit.faction);
         if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
         for (const [offsetX, offsetZ] of recipe.offsets) {
@@ -161,13 +114,17 @@ export class UnitPresentation {
           figures.push({ object: figure, bottom: box.min.y, top: box.max.y,
             depletes: unit.unitClass !== "commander" && unit.special !== "commander"
               && unit.unitClass !== "fortification"
-              && (/^(infantry_|cavalry_)/.test(recipe.model) || recipe.model === "artillery_gunner") });
+              && (/^(infantry_|cavalry_|civilian_)/.test(recipe.model) || recipe.model === "artillery_gunner") });
           root.add(figure);
         }
       }
       if (unit.unitClass === "commander") {
-        const banner = await this.assets.clone("banner");
+        const standard = await this.variant("commander_standard", unit.faction);
         if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
+        // `variant` is the cached, recoloured prototype for its faction. Each
+        // commander must own a clone: adding the prototype would reparent it
+        // from another commander and mutate its transform.
+        const banner = standard.clone(true);
         banner.position.set(-1.15, 0, -0.45);
         banner.scale.setScalar(0.7);
         const box = new THREE.Box3().setFromObject(banner);
@@ -175,7 +132,7 @@ export class UnitPresentation {
         root.add(banner);
       }
       const hit = new THREE.Mesh(
-        new THREE.CylinderGeometry(2.15, 2.15, 4.5, 12),
+        new THREE.CylinderGeometry(pickRadius, pickRadius, 4.5, 12),
         new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
       );
       hit.position.y = 2;
@@ -184,7 +141,7 @@ export class UnitPresentation {
       hit.visible = false;
       hit.userData.unitId = unit.id;
       root.add(hit);
-      visual = { root, hit, figures, revision, markerHeight: 0, health: unit.health,
+      visual = { root, hit, figures, revision, markerHeight: 0, appearance, health: unit.health,
         unit: { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row } };
       this.visuals.set(unit.id, visual);
       this.hitTargets.push(hit);
@@ -215,6 +172,15 @@ export class UnitPresentation {
     visual.revision = revision;
     visual.health = unit.health;
     visual.unit = { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row };
+  }
+
+  private removeVisual(id: number, visual: UnitVisual): void {
+    this.group.remove(visual.root);
+    const hitIndex = this.hitTargets.indexOf(visual.hit);
+    if (hitIndex >= 0) this.hitTargets.splice(hitIndex, 1);
+    visual.hit.geometry.dispose();
+    (visual.hit.material as THREE.Material).dispose();
+    this.visuals.delete(id);
   }
 
   private variant(model: string, faction: UnitSnapshot["faction"]): Promise<THREE.Group> {

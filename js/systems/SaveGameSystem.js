@@ -32,7 +32,7 @@ const SaveGameSystem = {
             for (const key of ['attack', 'defense', 'movement', 'morale', 'attackCount', 'rallyAttempts', 'breachedTurns']) {
                 if (item[key] !== undefined && !nonnegative(item[key])) invalid();
             }
-            for (const key of ['hasMoved', 'hasAttacked', 'isDefending', 'isTerrified', 'isRouting', 'isReinforcement', 'formationClosed', 'marching', 'escaped', '_deathCounted', '_deathHandled']) {
+            for (const key of ['hasMoved', 'hasAttacked', 'isDefending', 'isTerrified', 'isRouting', 'isReinforcement', 'formationClosed', 'marching', 'dismounted', 'escaped', '_deathCounted', '_deathHandled']) {
                 if (item[key] !== undefined && typeof item[key] !== 'boolean') invalid();
             }
             const key = `${item.col},${item.row}`;
