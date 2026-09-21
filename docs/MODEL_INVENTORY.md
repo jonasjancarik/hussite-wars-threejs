@@ -30,7 +30,23 @@ Paths below are relative to `experiments/sudomer-diorama/assets/models/`.
 | `battle/horse_rider_static.glb`, `battle/war_wagon_crewless.glb` | 2 | Experimental static rider and empty wagon; not separate gameplay classes. |
 | `benchmark/infantry_polearm_flat.glb`, `infantry_handgun_flat.glb`, `infantry_shield_flat.glb` | 3 | Flattened benchmark copies, not additional troop identities. |
 
-The original kit has editable Blender sources and an export manifest. The subfolders also have manifests. The flattened battle/benchmark exports use vertex colours, so selective coat recolouring is less straightforward than with separate cloth materials. Only the cavalry GLB contains an animation clip; the current Three.js unit presenter does not play it. Static figurines remain a valid presentation choice—attack/death animations are optional, not a prerequisite for completing this inventory.
+The original kit has editable Blender sources and an export manifest. The subfolders also have manifests. The flattened battle/benchmark exports use vertex colours, so selective coat recolouring is less straightforward than with separate cloth materials. Only the cavalry GLB contains an animation clip; the current Three.js unit presenter does not play it.
+
+### Static figures and future poses
+
+Static figurines are the intended diorama style. The lack of continuous character animation is acceptable and is not an asset gap to resolve. Walking, attack and death animation cycles are not required.
+
+Later, discrete poses could make gameplay states easier to read while preserving the miniature appearance:
+
+| Pose | Possible appearance |
+| --- | --- |
+| At ease | Weapons lowered and a relaxed stance. |
+| Ready | Shields forward and weapons raised. |
+| Fortified | Crouched behind a pavise or firing over wagon boards. |
+| Marching | A fixed walking or riding pose, without a repeating movement cycle. |
+| Routing | Turned away with weapons lowered. |
+
+These are optional future variants, not a commitment to implement new gameplay states. Reuse bodies and equipment where practical; a pose change need not be animated. Prioritise recognisable unit types and side colours first, then add poses where they communicate an actual gameplay state.
 
 ### Existing scenery that is not a model file
 
