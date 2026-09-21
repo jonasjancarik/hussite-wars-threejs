@@ -57,6 +57,7 @@ temp/
 # Node (if ever added)
 node_modules/
 package-lock.json
+__pycache__/
 
 # OS specific
 Thumbs.db
@@ -65,6 +66,19 @@ Desktop.ini
 
 # Three.js diorama build outputs
 /experiments/sudomer-diorama/web/dist/
-/experiments/sudomer-diorama/web/hex-three/dist/
+/views/3d/dist/
 /experiments/sudomer-diorama/target/
-!/experiments/sudomer-diorama/web/hex-three/package-lock.json
+!/views/3d/package-lock.json
+
+# Generated aliases for legacy Bevy scenes. Canonical shared assets live in
+# /assets/3d and are staged by scripts/prepare_shared_assets.py.
+/experiments/sudomer-diorama/assets/models/*.glb
+/experiments/sudomer-diorama/assets/models/manifest.json
+/experiments/sudomer-diorama/assets/models/procedural-worlds/
+/experiments/sudomer-diorama/assets/models/sudomer/
+/experiments/sudomer-diorama/assets/textures/earth-grain.png
+/experiments/sudomer-diorama/assets/textures/painted-ground.png
+/experiments/sudomer-diorama/assets/textures/procedural-worlds/
+/experiments/sudomer-diorama/assets/textures/sky/
+/experiments/sudomer-diorama/assets/textures/sudomer-meadow.png
+/experiments/sudomer-diorama/assets/textures/sudomer-pond-mud.png

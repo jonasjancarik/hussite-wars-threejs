@@ -6,6 +6,8 @@ The separate Sudoměř landscape study combines official ČÚZK DMR 5G elevation
 
 ## Run the native scenes
 
+Before a native run, stage the shared assets at the legacy paths with `python3 scripts/prepare_shared_assets.py`. Re-run this after shared assets change. These generated copies are ignored; edit the shared sources instead. The Wasm build scripts do this automatically.
+
 Rust 1.95.0 is pinned in `rust-toolchain.toml` without changing the machine-wide default.
 
 ```sh
@@ -49,30 +51,20 @@ The normal browser build uses Bevy's WebGPU backend. Browsers without WebGPU sup
 - Flattened 50,000-soldier Bevy WebGPU check: `http://localhost:8082/army-benchmark-webgpu.html`
 - Flattened 50,000-soldier Bevy WebGL 2 comparison: `http://localhost:8082/army-benchmark-webgl-50k.html`
 
-## Integrated turn-based campaign view
+## Supported campaign views
 
-The root campaign now loads the Three.js renderer on demand through `js/ui/ThreeBattleMapView.js`. The active root `HexGrid` remains authoritative, and the same generator provides a complete fallback for every campaign scenario. Optional art manifests must validate against that live map before they can change presentation. The standalone Sudoměř page below remains a renderer fixture.
-
-Sudoměř additionally has an authored-art manifest in `web/hex-three/public/sudomer-landscape.json`. Its source-terrain hash must match the active map before it can replace the generated presentation. A mismatch falls back to generated terrain, so authored scenery cannot silently drift away from gameplay.
-
-Authored decorations retain the key of their nearest gameplay hex even after static and instanced batching. Under advanced fog, explored cells reveal their own trees, landmarks, reeds, stones, grass and flowers while decorations assigned to unexplored cells remain hidden.
-
-Sudoměř has no rules-level field terrain. Its playable `plains` therefore remain meadow, while crop fields, buildings, woodland framing, walls and heavier stones sit in the non-playable diorama fringe. The generic renderer still treats `field`, `fields`, `farmland` and `cropland` as cultivated terrain when those values occur in a scenario snapshot. The complete 3D hex grid is visible by default and can be toggled with **Hex grid** in the map controls.
-
-`web/hex-three/src/terrain-regions.ts` is renderer-neutral. It merges same-terrain neighbours, applies deterministic coherent variation at region borders and preserves a protected core inside every source cell. The test suite measures area coverage across all campaign scenarios and keeps the 75% minimum explicit.
-
-Generator v2 adds the shared visual baseline before scenario authoring: world-scaled meadow, earth, grassy-slope and water materials, textured vertical soil sides, and semantic elevation inferred from connected hills and slopes. Meadow grass instances are currently disabled. Terrain blends ease into each protected hex interior to avoid abrupt mud-bank height jumps. The thin, muted grid meets at shared hex edges, respects unit occlusion, and omits steep segments instead of stretching across cliffs; selection and movement colors remain stronger. `performance.ts` provides resettable 240-frame captures with raw frame, preparation and renderer timings plus public Three.js counters. Vítkov is the primary visual and performance fixture; no Vítkov coordinates or scenario-name branches exist in the generator.
+The production renderer has moved to [views/3d](../../views/3d/README.md), alongside [views/2d](../../views/2d/README.md). This directory retains Bevy prototypes, the standalone Sudoměř compatibility fixture, terrain research and benchmarks. Shared model/texture source files live in [assets/3d](../../assets/3d/README.md).
 
 ## Standalone Sudoměř hex battle
 
 The default turn-based page uses the pinned JavaScript rules and AI with a Three.js WebGPU presentation. Build it without Rust or Wasm using:
 
 ```sh
-npm --prefix web/hex-three install
+npm --prefix ../../views/3d ci
 ./scripts/build_sudomer_hex_three.sh
 ```
 
-The retained page uses the same generated renderer as the campaign and continues to use the Sudoměř fixture for bridge/parity checks. Procedural-worlds supplies the WebGPU/TSL render graph, lighting and atmospheric foundation, cursor-driven miniature focus and generated tree/shrub assets. Provenance is recorded in `web/hex-three/THIRD_PARTY_NOTICES.md`.
+The retained page uses the same generated renderer as the campaign and continues to use the Sudoměř fixture for bridge/parity checks. Procedural-worlds supplies the WebGPU/TSL render graph, lighting and atmospheric foundation, cursor-driven miniature focus and generated tree/shrub assets. Provenance is recorded in [views/3d/THIRD_PARTY_NOTICES.md](../../views/3d/THIRD_PARTY_NOTICES.md).
 
 The build preserves every other page in `web/dist`. `sudomer-hex-three.html` is an alias of the default Three.js page, while `sudomer-hex-bevy.html` keeps the previous renderer for comparison. Add `?effects=off` to judge the composition without AO, depth of field or grading, or `?quality=photo` for the stronger photographic bokeh graph. Three.js can fall back automatically where supported, but WebGPU is the tested target and WebGL 2 compatibility is not claimed.
 
@@ -80,7 +72,7 @@ The build preserves every other page in `web/dist`. `sudomer-hex-three.html` is 
 
 The main scene traces a generated overhead landscape study into editable woodland, field, road, village, and pond regions on a display plinth. Existing low-poly buildings, wagons, soldiers, and horses populate the terrain, with filtered shadows, distance fog, smoke, and cavalry dust providing the atmospheric pass. Attacking infantry and cavalry retain their formation movement; cavalry use the existing walk animation, and their dust follows their current positions.
 
-Click or tap the terrain to redirect the attacking formations. Short taps give orders, while touch drags orbit and two-finger gestures pan or zoom without issuing an order. `Space` pauses movement, cavalry animation, smoke, and dust together; `R` clears the order and restarts the original advance; `F` restores the composition. This remains a stylized interactive study, not an exact reproduction or a historical reconstruction. The earlier moving scene and separate sourced Sudoměř fixture are retained for comparison. Texture provenance is in `assets/textures/README.md`.
+Click or tap the terrain to redirect the attacking formations. Short taps give orders, while touch drags orbit and two-finger gestures pan or zoom without issuing an order. `Space` pauses movement, cavalry animation, smoke, and dust together; `R` clears the order and restarts the original advance; `F` restores the composition. This remains a stylized interactive study, not an exact reproduction or a historical reconstruction. The earlier moving scene and separate sourced Sudoměř fixture are retained for comparison. Texture provenance is in [texture provenance](../../assets/3d/textures/README.md).
 
 ## Tin-soldier diorama experiment
 
@@ -93,7 +85,7 @@ The figures are fixed; only smoke, dust, and haze drift. On touchscreens, drag o
 Blender 5.2 LTS generated the production assets through one deterministic script. Editable `.blend` files, GLBs, preview renders, and dimensions/polycount metadata are retained.
 
 ```sh
-/opt/homebrew/bin/blender --background --python blender/build_assets.py
+/opt/homebrew/bin/blender --background --python ../../tools/art/blender/build_assets.py
 ```
 
 The kit contains a crewed war wagon, animated horse and rider, three infantry variants, church, farmhouse, two broadleaf palettes, cypress, stakes, chalice banner, and bridge.
@@ -128,7 +120,7 @@ Raw per-frame CSV data and process logs are written under `benchmark-results/`. 
 The focused flattened-mesh experiment retains the original geometry and bakes its material colors into one shared mesh/material per infantry variant. This removes the GLB scene hierarchy per soldier, at the cost of flattening the subtle metallic response of weapon and armor parts.
 
 ```sh
-/opt/homebrew/bin/blender --background --python blender/build_benchmark_assets.py
+/opt/homebrew/bin/blender --background --python ../../tools/art/blender/build_benchmark_assets.py
 ./scripts/run_flat_army_benchmark.sh
 ```
 

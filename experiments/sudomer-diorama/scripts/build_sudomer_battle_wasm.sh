@@ -2,6 +2,7 @@
 set -euo pipefail
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$project_dir"
+python3 scripts/prepare_shared_assets.py
 cargo build --release --target wasm32-unknown-unknown --bin sudomer_battle
 mkdir -p web/dist/assets
 wasm-bindgen --out-name sudomer_battle --out-dir web/dist --target web target/wasm32-unknown-unknown/release/sudomer_battle.wasm

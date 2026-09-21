@@ -2,7 +2,7 @@
 
 Read when planning 3D assets, faction appearance, or scenery for another battle.
 
-Inventory date: 21 September 2026. Scope: this checkout's canonical unit/scenario data and the Three.js renderer in `experiments/sudomer-diorama/web/hex-three`. “Available” means a GLB exists; it does not necessarily mean the renderer uses it or that its appearance has passed visual review. This is an asset-planning inventory, not a new historical audit.
+Inventory date: 21 September 2026. Scope: this checkout's canonical unit/scenario data and the Three.js renderer in `views/3d`. “Available” means a GLB exists; it does not necessarily mean the renderer uses it or that its appearance has passed visual review. This is an asset-planning inventory, not a new historical audit.
 
 ## Current coverage
 
@@ -12,20 +12,20 @@ The biggest omissions are recognisable flails, crossbows, bows, pavises, artille
 
 ### Available model files
 
-Paths below are relative to `experiments/sudomer-diorama/assets/models/`.
+Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `benchmark/` variants remain under `experiments/sudomer-diorama/assets/models/`; they are available experimental exports, not production mappings. Shared logical IDs are resolved by `assets/3d/model-paths.json`.
 
 | Files | Count | What we have / limits |
 | --- | ---: | --- |
-| `infantry_polearm.glb` | 1 | Red-coated soldier, kettle helmet, polearm. Useful for sudličníci; currently also the catch-all for unrelated types. |
-| `infantry_handgun.glb` | 1 | Ochre-coated handgunner with powder flask. Used for ručničáři and, incorrectly as a visual identity, Koranda. |
-| `infantry_shield.glb` | 1 | Sword and shield with pale cross. Not a crossbowman or a dedicated large-pavise bearer. |
-| `cavalry.glb` | 1 | Horse and polearm rider. One `HorseWalk` animation; no distinct scout, light cavalry, or armoured knight model. |
-| `war_wagon.glb` | 1 | Defensive wagon with two crew, wheels, towing poles, stakes and chalice flag. |
-| `banner.glb` | 1 | Red cloth with pale chalice; currently added to every commander, including opponents. |
-| `church.glb`, `farmhouse.glb`, `bridge.glb`, `stakes.glb` | 4 | Generic church, house, timber bridge and crossed timber obstacle. No castle or town-wall kit. |
-| `broadleaf_olive.glb`, `broadleaf_gold.glb`, `cypress.glb` | 3 | Original stylized vegetation. |
-| `sudomer/tree-a.glb`, `tree-b.glb`, `tree-c.glb`, `shrub.glb` | 4 | Separate Sudoměř vegetation set. |
-| `procedural-worlds/pw_deciduous_01.glb`, `pw_deciduous_02.glb`, `pw_deciduous_03.glb`, `pw_shrub_01.glb` | 4 | Additional vegetation; generated battle scenery currently selects deciduous 02. |
+| `units/infantry_polearm.glb` | 1 | Red-coated soldier, kettle helmet, polearm. Useful for sudličníci; currently also the catch-all for unrelated types. |
+| `units/infantry_handgun.glb` | 1 | Ochre-coated handgunner with powder flask. Used for ručničáři and, incorrectly as a visual identity, Koranda. |
+| `units/infantry_shield.glb` | 1 | Sword and shield with pale cross. Not a crossbowman or a dedicated large-pavise bearer. |
+| `units/cavalry.glb` | 1 | Horse and polearm rider. One `HorseWalk` animation; no distinct scout, light cavalry, or armoured knight model. |
+| `units/war_wagon.glb` | 1 | Defensive wagon with two crew, wheels, towing poles, stakes and chalice flag. |
+| `props/banner.glb` | 1 | Red cloth with pale chalice; currently added to every commander, including opponents. |
+| `buildings/church.glb`, `buildings/farmhouse.glb`, `props/bridge.glb`, `props/stakes.glb` | 4 | Generic church, house, timber bridge and crossed timber obstacle. No castle or town-wall kit. |
+| `vegetation/broadleaf_olive.glb`, `vegetation/broadleaf_gold.glb`, `vegetation/cypress.glb` | 3 | Original stylized vegetation. |
+| `vegetation/sudomer/tree-a.glb`, `vegetation/sudomer/tree-b.glb`, `vegetation/sudomer/tree-c.glb`, `vegetation/sudomer/shrub.glb` | 4 | Separate Sudoměř vegetation set. |
+| `vegetation/procedural-worlds/pw_deciduous_01.glb`, `vegetation/procedural-worlds/pw_deciduous_02.glb`, `vegetation/procedural-worlds/pw_deciduous_03.glb`, `vegetation/procedural-worlds/pw_shrub_01.glb` | 4 | Additional vegetation; generated battle scenery currently selects deciduous 02. |
 | `battle/unarmed_adult_static.glb` | 1 | Existing civilian starting point; not mapped to `POUTNICI` in Three.js. |
 | `battle/horse_rider_static.glb`, `battle/war_wagon_crewless.glb` | 2 | Experimental static rider and empty wagon; not separate gameplay classes. |
 | `benchmark/infantry_polearm_flat.glb`, `infantry_handgun_flat.glb`, `infantry_shield_flat.glb` | 3 | Flattened benchmark copies, not additional troop identities. |
@@ -149,9 +149,9 @@ No need to commission 59 bespoke troop meshes or 18 completely separate scenery 
 
 - Roster: `js/data/unitTypes.js`; scenario placements and labels: `js/data/scenarios.js`.
 - Narrative context and uncertainty: `js/data/battleLore.js`; historical source registry: `js/data/historicalSources.js`.
-- Actual model selection: `experiments/sudomer-diorama/web/hex-three/src/units.ts`.
+- Actual model selection: `views/3d/src/units.ts`.
 - Loading/material reuse: sibling `assets.ts`; scenery coverage: `generated-scenery.ts`, `scenery.ts`, `landscape-details.ts`; authored map registration: `scenario-art.ts`.
-- Asset descriptions and conventions: `experiments/sudomer-diorama/blender/README.md`; GLB files and manifests under `experiments/sudomer-diorama/assets/models/`.
+- Asset descriptions and conventions: `tools/art/blender/README.md`; shared GLBs and manifests under `assets/3d/models/`; experimental exports under `experiments/sudomer-diorama/assets/models/`.
 
 Checked live source definitions, all 27 GLB JSON headers/material/animation lists, and the renderer mappings. No new visual QA, historical web research, game build or runtime test was performed for this documentation-only inventory. Battle-specific architectural details remain research work before modelling.
 

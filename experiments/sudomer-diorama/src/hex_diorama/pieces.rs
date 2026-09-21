@@ -175,7 +175,8 @@ mod tests {
     #[test]
     fn every_sudomer_type_has_explicit_mapping() {
         let manifest: serde_json::Value =
-            serde_json::from_str(include_str!("../../assets/models/manifest.json")).unwrap();
+            serde_json::from_str(include_str!("../../../../assets/3d/models/manifest.json"))
+                .unwrap();
         for unit_type in [
             "VOZOVA_HRADBA",
             "KUSINICI_HUSITI",

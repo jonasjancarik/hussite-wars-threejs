@@ -5,6 +5,8 @@ project_dir="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$project_dir"
 dist_dir="${SUDOMER_HEX_DIST_DIR:-web/dist}"
 
+python3 scripts/prepare_shared_assets.py
+
 cargo build --release --target wasm32-unknown-unknown --bin sudomer_hex
 mkdir -p "$dist_dir/hex-diorama" "$dist_dir/assets/models" "$dist_dir/assets/textures"
 wasm-bindgen --out-name sudomer_hex --out-dir "$dist_dir" --target web target/wasm32-unknown-unknown/release/sudomer_hex.wasm

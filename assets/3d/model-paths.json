@@ -1,0 +1,23 @@
+{
+  "banner": "models/props/banner.glb",
+  "bridge": "models/props/bridge.glb",
+  "broadleaf_gold": "models/vegetation/broadleaf_gold.glb",
+  "broadleaf_olive": "models/vegetation/broadleaf_olive.glb",
+  "cavalry": "models/units/cavalry.glb",
+  "church": "models/buildings/church.glb",
+  "cypress": "models/vegetation/cypress.glb",
+  "farmhouse": "models/buildings/farmhouse.glb",
+  "infantry_handgun": "models/units/infantry_handgun.glb",
+  "infantry_polearm": "models/units/infantry_polearm.glb",
+  "infantry_shield": "models/units/infantry_shield.glb",
+  "stakes": "models/props/stakes.glb",
+  "war_wagon": "models/units/war_wagon.glb",
+  "sudomer/shrub": "models/vegetation/sudomer/shrub.glb",
+  "sudomer/tree-a": "models/vegetation/sudomer/tree-a.glb",
+  "sudomer/tree-b": "models/vegetation/sudomer/tree-b.glb",
+  "sudomer/tree-c": "models/vegetation/sudomer/tree-c.glb",
+  "procedural-worlds/pw_deciduous_01": "models/vegetation/procedural-worlds/pw_deciduous_01.glb",
+  "procedural-worlds/pw_deciduous_02": "models/vegetation/procedural-worlds/pw_deciduous_02.glb",
+  "procedural-worlds/pw_deciduous_03": "models/vegetation/procedural-worlds/pw_deciduous_03.glb",
+  "procedural-worlds/pw_shrub_01": "models/vegetation/procedural-worlds/pw_shrub_01.glb"
+}

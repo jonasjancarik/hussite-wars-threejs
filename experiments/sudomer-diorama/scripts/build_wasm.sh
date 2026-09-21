@@ -4,6 +4,8 @@ set -euo pipefail
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$project_dir"
 
+python3 scripts/prepare_shared_assets.py
+
 cargo build --release --target wasm32-unknown-unknown \
   --bin hussite-battlefield-poc \
   --bin real_terrain \

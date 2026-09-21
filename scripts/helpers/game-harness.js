@@ -70,12 +70,12 @@ function createHarness({ browserView = false, pathname = '/', storage = new Map(
     });
     for (const file of [
         'core/GameStorage.js',
-        'data/unitTypes.js', 'entities/Unit.js', 'entities/UnitFactory.js', 'ui/WoodcutRenderer.js', 'core/hex.js',
+        'data/unitTypes.js', 'entities/Unit.js', 'entities/UnitFactory.js', '../views/2d/WoodcutRenderer.js', 'core/hex.js',
         'data/scenarios.js', 'data/campaign.js', 'systems/CampaignProgressSystem.js',
         'systems/CombatSystem.js', 'systems/FogOfWarSystem.js', 'systems/MoraleSystem.js',
         'systems/VictoryConditionsSystem.js', 'systems/TutorialSystem.js',
         'systems/BattleActionSystem.js', 'systems/SaveGameSystem.js', 'systems/ScenarioEventSystem.js',
-        'ui/BattlePanels.js', 'ui/BattleTooltip.js', 'ui/BattleMapInput.js', 'ui/BattleOrders.js', 'ui/ThreeBattleMapView.js', 'ui/BattleView.js', 'core/game.js', 'ai.js'
+        'ui/BattlePanels.js', 'ui/BattleTooltip.js', 'ui/BattleMapInput.js', 'ui/BattleOrders.js', '../views/3d/ThreeBattleMapView.js', 'ui/BattleView.js', 'core/game.js', 'ai.js'
     ]) {
         const filename = path.join(__dirname, '../../js', file);
         vm.runInContext(fs.readFileSync(filename, 'utf8'), context, { filename });

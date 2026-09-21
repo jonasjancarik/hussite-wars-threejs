@@ -17,7 +17,9 @@ function run(args) {
     if (result.error) throw result.error;
     if (result.status !== 0) process.exit(result.status || 1);
 }
-const sources = [...files(path.join(root, 'js')), ...files(__dirname), path.join(root, 'validate_scenarios.js')];
+const sources = [...files(path.join(root, 'js')), ...files(__dirname),
+    path.join(root, 'views/2d/WoodcutRenderer.js'), path.join(root, 'views/3d/ThreeBattleMapView.js'),
+    path.join(root, 'validate_scenarios.js')];
 for (const file of sources.filter(file => file.endsWith('.js'))) run(['--check', file]);
 console.log('✓ Syntaxe JavaScriptu');
 for (const script of [

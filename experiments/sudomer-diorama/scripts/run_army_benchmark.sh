@@ -5,6 +5,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 results_dir=${BATTLE_BENCH_RESULTS_DIR:-"$root/benchmark-results/$(date +%Y%m%d-%H%M%S)"}
 mkdir -p "$results_dir"
 
+python3 "$root/scripts/prepare_shared_assets.py" || exit 1
 cargo build --release --bin army_benchmark --manifest-path "$root/Cargo.toml" || exit 1
 
 printf '%s\n' "results_dir=$results_dir"

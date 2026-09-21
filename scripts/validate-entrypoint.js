@@ -8,13 +8,13 @@ const root = path.resolve(__dirname, '..');
 const scriptOrder = [
     'js/core/GameStorage.js',
     'js/i18n/i18n.js', 'js/i18n/i18nHelpers.js', 'js/i18n/encyclopediaRenderer.js',
-    'js/ui/sound.js', 'js/ui/music.js', 'js/ui/WoodcutRenderer.js', 'js/core/hex.js', 'js/data/unitTypes.js',
+    'js/ui/sound.js', 'js/ui/music.js', 'views/2d/WoodcutRenderer.js', 'js/core/hex.js', 'js/data/unitTypes.js',
     'js/entities/Unit.js', 'js/entities/UnitFactory.js', 'js/data/battleLore.js', 'js/data/historicalSources.js',
     'js/data/campaign.js', 'js/systems/CampaignProgressSystem.js', 'js/data/scenarios.js',
     'js/systems/CombatSystem.js', 'js/systems/BattleActionSystem.js', 'js/systems/SaveGameSystem.js',
     'js/systems/ScenarioEventSystem.js', 'js/systems/FogOfWarSystem.js', 'js/systems/VictoryConditionsSystem.js',
     'js/systems/TutorialSystem.js', 'js/systems/MoraleSystem.js', 'js/systems/ChronicleSystem.js',
-    'js/ui/HistoricalNotesView.js', 'js/ui/ChronicleView.js', 'js/ui/BattlePanels.js', 'js/ui/BattleTooltip.js', 'js/ui/BattleMapInput.js', 'js/ui/BattleOrders.js', 'js/ui/ThreeBattleMapView.js', 'js/ui/BattleView.js',
+    'js/ui/HistoricalNotesView.js', 'js/ui/ChronicleView.js', 'js/ui/BattlePanels.js', 'js/ui/BattleTooltip.js', 'js/ui/BattleMapInput.js', 'js/ui/BattleOrders.js', 'views/3d/ThreeBattleMapView.js', 'js/ui/BattleView.js',
     'js/core/game.js', 'js/ai.js', 'js/ui/main.js'
 ];
 
@@ -55,7 +55,8 @@ function tags(html) {
     return result;
 }
 
-function validateEntrypoint({ html = readFile('index.html'), read = readFile, exists = exactFileExists, scripts = listScripts() } = {}) {
+function validateEntrypoint({ html = readFile('index.html'), read = readFile, exists = exactFileExists,
+    scripts = [...listScripts(), 'views/2d/WoodcutRenderer.js', 'views/3d/ThreeBattleMapView.js'] } = {}) {
     const assets = new Set(), loadedScripts = [], stylesheets = [];
     const cloudflareBeacon = 'https://static.cloudflareinsights.com/beacon.min.js';
     function reference(value, source) {
@@ -105,10 +106,10 @@ function validateEntrypoint({ html = readFile('index.html'), read = readFile, ex
     assert.equal(audio.length, 1, 'Změněný způsob načítání hudby: aktualizujte kontrolu assetů');
     reference(audio[0][2], 'js/ui/music.js');
 
-    const threeViewSource = read('js/ui/ThreeBattleMapView.js');
+    const threeViewSource = read('views/3d/ThreeBattleMapView.js');
     const threeBundle = threeViewSource.match(/script\.src\s*=\s*(['"])([^'"]+)\1/);
     assert.ok(threeBundle, 'Změněný způsob načítání 3D rendereru: aktualizujte kontrolu assetů');
-    reference(threeBundle[2], 'js/ui/ThreeBattleMapView.js');
+    reference(threeBundle[2], 'views/3d/ThreeBattleMapView.js');
 
     const localeSource = read('js/i18n/i18n.js');
     const locale = [...localeSource.matchAll(/fetch\(\s*`([^`]+)`\s*\)/g)];

@@ -1,5 +1,11 @@
 # Struktura kódu a pravidla údržby
 
+Read when changing shared game rules, presentation ownership or entrypoints.
+
+## Umístění pohledů a assetů
+
+`views/2d/WoodcutRenderer.js` a `views/3d/ThreeBattleMapView.js` jsou vstupy podporovaných pohledů. Three.js zdroje a testy jsou v `views/3d/`; `js/` ponechává společná pravidla, data a UI. Modely, textury a výtvarné manifesty jsou v `assets/3d/`, autorské nástroje v `tools/art/`. `experiments/` obsahuje starší prototypy a benchmarky, nikoli závislosti běžné kampaně. Podrobnosti: [pohledy](../views/README.md), [3D assety](../assets/3d/README.md).
+
 ## Bitva: pravidla a prezentace
 
 `Game` vlastní stav bitvy a koordinuje tahy, scénáře, výběr jednotek, pohyb a herní

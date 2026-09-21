@@ -42,7 +42,14 @@ function createHarness({ root, adapter = false } = {}) {
         requestAnimationFrame: noop, cancelAnimationFrame: noop
     });
     context.globalThis = context;
-    for (const file of files) vm.runInContext(fs.readFileSync(path.join(root, 'js', file), 'utf8'), context, { filename: file });
+    for (const file of files) {
+        // The retained upstream fixture keeps its original layout; the campaign
+        // now exposes the same 2D renderer under the supported views directory.
+        const currentRenderer = path.join(root, 'views/2d/WoodcutRenderer.js');
+        const filename = file === 'ui/WoodcutRenderer.js' && fs.existsSync(currentRenderer)
+            ? currentRenderer : path.join(root, 'js', file);
+        vm.runInContext(fs.readFileSync(filename, 'utf8'), context, { filename });
+    }
     if (adapter) {
         for (const file of ['bridge.js', 'view.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../../web/hex-diorama', file), 'utf8'), context, { filename: file });
     } else {

@@ -30,13 +30,10 @@ jobs:
       - name: Syntaxe, testy, styly, překlady a scénáře
         run: node scripts/check.js
 
-  diorama:
-    name: Three.js diorama
+  view-3d:
+    name: 3D campaign view and retained fixture
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: experiments/sudomer-diorama
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -46,13 +43,13 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - run: npm --prefix web/hex-three ci
-      - run: npm --prefix web/hex-three test
-      - run: ./scripts/build_sudomer_hex_three.sh
+      - run: npm --prefix views/3d ci
+      - run: npm --prefix views/3d test
+      - run: ./experiments/sudomer-diorama/scripts/build_sudomer_hex_three.sh
       - name: Integrated campaign bundle is current
         run: |
-          git ls-files --error-unmatch web/hex-three/integrated/hex-three.js
-          test -s web/hex-three/integrated/hex-three.js
-          git diff --exit-code -- web/hex-three/integrated/hex-three.js
-      - run: node scripts/hex-diorama/test-reference.cjs
-      - run: node scripts/hex-diorama/test-bridge.cjs
+          git ls-files --error-unmatch views/3d/integrated/hex-three.js
+          test -s views/3d/integrated/hex-three.js
+          git diff --exit-code -- views/3d/integrated/hex-three.js
+      - run: node experiments/sudomer-diorama/scripts/hex-diorama/test-reference.cjs
+      - run: node experiments/sudomer-diorama/scripts/hex-diorama/test-bridge.cjs

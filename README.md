@@ -151,7 +151,6 @@ strategie/
 │   │   ├── campaign.js    # Struktura kampaně
 │   │   └── battleLore.js  # Historické texty
 │   ├── ui/                # UI komponenty
-│   │   ├── WoodcutRenderer.js # Dřevořezová mapa a společné vektorové značky oddílů
 │   │   ├── BattleView.js  # Vstupy bitvy, kamera, vykreslování a UI lifecycle
 │   │   ├── BattleMapInput.js # Posun, zoom, gesta a souřadnice
 │   │   ├── BattleOrders.js # Přímé dotykové rozkazy a bezpečná inspekce mapy
@@ -162,6 +161,12 @@ strategie/
 │   │   ├── sound.js       # Zvukové efekty
 │   │   └── music.js       # Hudba — instrumentální chorál, menu a jednorázové přehrání
 │   └── ai.js              # AI protivníka
+├── views/                 # Podporované pohledy stejné hry
+│   ├── 2d/                # WoodcutRenderer: mapa a vektorové značky
+│   └── 3d/                # ThreeBattleMapView, Three.js zdroje, testy a bundle
+├── assets/3d/             # Sdílené modely, textury a výtvarné podklady scénářů
+├── tools/art/             # Generátory, Blender zdroje a náhledy
+├── experiments/           # Starší prototypy, samostatné studie a benchmarky
 ├── docs/                  # Dokumentace
 │   ├── CODE_STRUCTURE.md       # Hranice odpovědností, CSS a testování
 │   ├── VICTORY_CONDITIONS.md    # Dokumentace vítězných podmínek

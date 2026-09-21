@@ -4,6 +4,10 @@ This development fork preserves the history and MIT license of [josefslerka/husi
 
 GitHub fork: https://github.com/jonasjancarik/hussite-wars-threejs. The original project remains available through the `upstream` remote.
 
+## Project layout
+
+The supported views live in `views/2d` and `views/3d`. Shared rules and UI remain in `js/`, production 3D assets in `assets/3d`, and art tools and Blender sources in `tools/art`. Only retained prototypes, standalone fixtures and benchmark variants live under `experiments`. See [views](views/README.md) and [asset organisation](assets/3d/README.md).
+
 ## Run the campaign
 
 Serve the repository root and open `index.html`. Start any scenario, then use **2D map** or **3D landscape** in the map toolbar. Both presentations read the same live `Game` instance and issue the same commands; switching does not reload the scenario or replace the rules engine.
@@ -12,11 +16,11 @@ Serve the repository root and open `index.html`. Start any scenario, then use **
 python3 -m http.server 8082 --bind 0.0.0.0
 ```
 
-The 3D renderer bundle is committed for the static campaign and built from `experiments/sudomer-diorama/web/hex-three/src/`. Rebuild it with:
+The 3D renderer bundle is committed for the static campaign and built from `views/3d/src/`. Rebuild it with:
 
 ```sh
-npm --prefix experiments/sudomer-diorama/web/hex-three ci
-npm --prefix experiments/sudomer-diorama/web/hex-three run build
+npm --prefix views/3d ci
+npm --prefix views/3d run build
 ```
 
 Sudoměř is the first scenario with an approved authored-art manifest. When its manifest terrain hash matches the live rules map, the integrated view restores the painted ponds, drained basin, causeway, fields, woods, village landmarks, textures and terrain-following details. Other scenarios continue to use the deterministic generated fallback until their own art manifests are approved.
@@ -27,7 +31,7 @@ Requires Node.js 22.18 or newer, npm, and Python 3. No Rust toolchain is needed 
 
 ```sh
 cd experiments/sudomer-diorama
-npm --prefix web/hex-three ci
+npm --prefix ../../views/3d ci
 ./scripts/build_sudomer_hex_three.sh
 python3 -m http.server 8082 --bind 0.0.0.0 --directory web/dist
 ```
@@ -41,15 +45,15 @@ The separate Sudoměř page is retained as a renderer study and compatibility fi
 From `experiments/sudomer-diorama/`:
 
 ```sh
-npm --prefix web/hex-three test
-npm --prefix web/hex-three run build
+npm --prefix ../../views/3d test
+npm --prefix ../../views/3d run build
 node scripts/hex-diorama/test-reference.cjs
 node scripts/hex-diorama/test-bridge.cjs
 ```
 
 The reference comparison checks the root JavaScript rules against upstream revision `dbdf61907212476cda816ff2036a9a8d41bf3572`. The retained standalone diorama vendors that revision with a documented storage-key compatibility patch. The integrated campaign view does not use that vendor copy: it consumes the root campaign's live map, units, selection, legal actions and events. Prior Bevy experiments and their sources are retained; generated Wasm bundles, local captures and dependencies are excluded.
 
-The diorama's README, design QA, and `web/hex-three/THIRD_PARTY_NOTICES.md` document assets and implementation. Integrated terrain is deterministic per scenario, keeps every gameplay terrain type distinct, and uses protected cell cores plus seeded continuous transitions. Automated sampling covers all 18 campaign scenarios. Camera far distance and the atmospheric veil now scale together, and the ambient fill is reduced to avoid the washed-out prototype lighting.
+The diorama's README, design QA, and [3D asset provenance](views/3d/THIRD_PARTY_NOTICES.md) document assets and implementation. Integrated terrain is deterministic per scenario, keeps every gameplay terrain type distinct, and uses protected cell cores plus seeded continuous transitions. Automated sampling covers all 18 campaign scenarios. Camera far distance and the atmospheric veil now scale together, and the ambient fill is reduced to avoid the washed-out prototype lighting.
 
 ## Upstream updates
 

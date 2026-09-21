@@ -1,0 +1,20 @@
+{
+  "name": "hussite-wars-3d-view",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build && node scripts/copy-integrated.cjs",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "0.185.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@types/three": "0.185.1",
+    "typescript": "6.0.3",
+    "vite": "8.1.5"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "war_wagon_crewless": {
     "file": "war_wagon_crewless.glb",
-    "source": "blender/source/war_wagon.blend",
+    "source": "tools/art/blender/source/war_wagon.blend",
     "pose_frame": 1,
     "animations": [],
     "vertices": 2712,
@@ -159,7 +159,7 @@
   },
   "unarmed_adult_static": {
     "file": "unarmed_adult_static.glb",
-    "source": "blender/source/battle_unarmed_adult.blend",
+    "source": "tools/art/blender/source/battle_unarmed_adult.blend",
     "pose_frame": 1,
     "animations": [],
     "vertices": 326,
@@ -189,7 +189,7 @@
   },
   "horse_rider_static": {
     "file": "horse_rider_static.glb",
-    "source": "blender/source/cavalry.blend",
+    "source": "tools/art/blender/source/cavalry.blend",
     "pose_frame": 1,
     "animations": [],
     "vertices": 1127,

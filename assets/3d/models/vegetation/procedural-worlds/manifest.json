@@ -1,0 +1,175 @@
+{
+  "format": "glTF 2.0 binary (.glb)",
+  "coordinate_system": "right-handed, Y-up; each whole asset is translated so its global lowest vertex is Y=0; 1 unit = 1 metre",
+  "provenance": {
+    "source_repository": "/Users/janca/projects/procedural-worlds",
+    "source_revision": "bada861a8d5c8cb7275a1b3d6e6a3f4ea4844cf4",
+    "source_files": [
+      "web/src/world/vegetation.ts",
+      "web/src/world/canopy-geometry.ts",
+      "web/src/world/mesh-data.ts",
+      "web/src/dev/three-mesh-data.ts"
+    ],
+    "source_file_blob_ids": {
+      "web/src/world/vegetation.ts": "1c97cbc423a744ba77369d2a2a72b9ba55c96cb4",
+      "web/src/world/canopy-geometry.ts": "490f674ddd3afa14513b4667e7951e3b796b5f6d",
+      "web/src/world/mesh-data.ts": "0337babf06211c0136e41e7d25ba4177d63b9186",
+      "web/src/dev/three-mesh-data.ts": "b74a5055c189c8315c47def4cc0ea6b61fae1984"
+    },
+    "source_working_file_sha256": {
+      "web/src/world/vegetation.ts": "1c221f9e69317b52d6de40433dd9187048f35342db7a6a90356f8ba6b7c050ba",
+      "web/src/world/canopy-geometry.ts": "c729d37c422e1adbdaa933e6552f278bab42393593d04bd7a4eb4de4ee814766",
+      "web/src/world/mesh-data.ts": "41f4cfbde66239b8bfb08e0082ce62a20f26663241bc8b343c65ba4229290e0d",
+      "web/src/dev/three-mesh-data.ts": "b9a4a0d0abcbf26b1abc5b504ba441512c87c05fc8ac7c6e2329814ccbd34fa3"
+    },
+    "export_script": "tools/art/vegetation/export-procedural-worlds.mjs"
+  },
+  "export_settings": {
+    "tree_assembly_season": "summer",
+    "material_palette": {
+      "material": "MeshStandardMaterial",
+      "flat_shading": true,
+      "roughness": 0.92,
+      "metalness": 0,
+      "trunk": "#4c3322",
+      "birch": "#c8b79a",
+      "leaves": [
+        "#3d6b30",
+        "#668343",
+        "#91a34e"
+      ],
+      "soil": "#51442c",
+      "litter": "#75643e",
+      "rocks": [
+        "#777060",
+        "#958a70"
+      ]
+    }
+  },
+  "assets": [
+    {
+      "file": "pw_deciduous_01.glb",
+      "kind": "tree",
+      "seed": 1103,
+      "source_generator": "createTreeAssembly",
+      "target_height_m": 10.8,
+      "bounds_y_up_m": {
+        "min": [
+          -3.9007,
+          0,
+          -3.6334
+        ],
+        "max": [
+          3.2974,
+          10.8,
+          3.2455
+        ],
+        "dimensions": [
+          7.1981,
+          10.8,
+          6.8789
+        ]
+      },
+      "meshes": 4,
+      "vertices": 6386,
+      "triangles": 3258,
+      "baked_instanced_meshes": 1,
+      "gltf_extensions_required": [],
+      "gltf_extensions_used": [],
+      "sha256": "1488f5facf981f97c17e69880a65bf20b45c556af50d75b7d106d841ecf93a54"
+    },
+    {
+      "file": "pw_deciduous_02.glb",
+      "kind": "tree",
+      "seed": 4009,
+      "source_generator": "createTreeAssembly",
+      "target_height_m": 14.2,
+      "bounds_y_up_m": {
+        "min": [
+          -3.2135,
+          0,
+          -2.9679
+        ],
+        "max": [
+          2.9604,
+          14.2,
+          3.068
+        ],
+        "dimensions": [
+          6.1739,
+          14.2,
+          6.0358
+        ]
+      },
+      "meshes": 4,
+      "vertices": 6522,
+      "triangles": 3318,
+      "baked_instanced_meshes": 1,
+      "gltf_extensions_required": [],
+      "gltf_extensions_used": [],
+      "sha256": "e1a4e01a7876f08ffc16475456117b073349ede3fc8a323347a5889b81eba1f6"
+    },
+    {
+      "file": "pw_deciduous_03.glb",
+      "kind": "tree",
+      "seed": 92017,
+      "source_generator": "createTreeAssembly",
+      "target_height_m": 17.5,
+      "bounds_y_up_m": {
+        "min": [
+          -3.4383,
+          0,
+          -3.4879
+        ],
+        "max": [
+          3.6964,
+          17.5,
+          3.1977
+        ],
+        "dimensions": [
+          7.1347,
+          17.5,
+          6.6855
+        ]
+      },
+      "meshes": 4,
+      "vertices": 6402,
+      "triangles": 3278,
+      "baked_instanced_meshes": 1,
+      "gltf_extensions_required": [],
+      "gltf_extensions_used": [],
+      "sha256": "8788cdde07a08a85e59e2ca53f1b0327626fc67b95703096fc21dac53cc27fd0"
+    },
+    {
+      "file": "pw_shrub_01.glb",
+      "kind": "shrub",
+      "seed": 414,
+      "source_generator": "createShrubAssembly",
+      "target_height_m": 1.35,
+      "bounds_y_up_m": {
+        "min": [
+          -1.4356,
+          0,
+          -1.5299
+        ],
+        "max": [
+          1.119,
+          1.35,
+          1.7051
+        ],
+        "dimensions": [
+          2.5545,
+          1.35,
+          3.235
+        ]
+      },
+      "meshes": 5,
+      "vertices": 360,
+      "triangles": 120,
+      "baked_instanced_meshes": 2,
+      "gltf_extensions_required": [],
+      "gltf_extensions_used": [],
+      "sha256": "9c05935d236f3f36ff36da0ff8ac51bf6d3daa10332f249745b2d967e57d6e75"
+    }
+  ]
+}
