@@ -15,12 +15,13 @@ class InfantryBatch:
         self.k = kit
 
     def palette(self):
-        self.k.material('team_cloth', (.36, .075, .055))
-        self.k.material('team_paint', (.29, .055, .035))
-        self.k.material('hose', (.24, .235, .175))
-        self.k.material('padded_linen', (.40, .36, .26))
-        self.k.material('shield_edge', (.31, .235, .13))
-        self.k.material('bow_horn', (.12, .10, .075))
+        for name, colour in {
+            'team_cloth': (.36, .075, .055), 'team_paint': (.29, .055, .035),
+            'hose': (.24, .235, .175), 'padded_linen': (.40, .36, .26),
+            'shield_edge': (.31, .235, .13), 'bow_horn': (.12, .10, .075),
+        }.items():
+            if name not in self.k.M:
+                self.k.material(name, colour)
 
     def ring_mesh(self, name, rings, mat, segments=12):
         """Elliptical horizontal rings; flat-shaded faces keep the kit's facets."""
@@ -178,7 +179,7 @@ class InfantryBatch:
                 k.beam('Crossbow_composite_limb', a, b, .043-i*.009, 'bow_horn', 6, radius2=.035-i*.009)
             k.beam('Crossbow_string', points[-1], (.20, 0, 1.31), .009, 'linen', 5)
         for y in (-.055, -.028, 0, .028, .055):
-            k.box('Crossbow_lashing', (.748, y, 1.298), (.105, .018, .105), 'linen', .009)
+            k.box('Crossbow_lashing', (.748, y, 1.298), (.105, .018, .105), 'linen', .007)
         k.cone('Crossbow_nut', (.19, 0, 1.31), .047, .047, .035, 'linen', 8)
         k.beam('Crossbow_trigger_lever', (.22, 0, 1.24), (.055, 0, 1.11), .017, 'iron', 5)
         k.beam('Crossbow_loaded_bolt', (.20, 0, 1.352), (.975, 0, 1.37), .013, 'oak_light', 5)

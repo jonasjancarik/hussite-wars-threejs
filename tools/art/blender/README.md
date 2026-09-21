@@ -40,9 +40,9 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | `cavalry_light`, `cavalry_scout`, `cavalry_heavy` | Static mounted variants with distinct equipment and side-colour cloth/shields |
 | `infantry_spear` | Long plain spear, kettle hat and side-colour cloth |
 | `infantry_archer` | Drawn wooden bow, nocked arrow, hip quiver, cloth cap and side-colour cloth |
-| `infantry_polearm` | Red coat, kettle helmet, polearm |
-| `infantry_handgun` | Ochre coat, helmet, short hand cannon and powder flask |
-| `infantry_shield` | Red coat, shield with pale cross, sword |
+| `infantry_polearm`, `infantry_halberd` | Distinct sudlice/halberd heads, kettle helmets, side-colour cloth |
+| `infantry_handgun` | Side-colour coat, helmet, short hand cannon and neutral ochre powder flask |
+| `infantry_shield` | Side-colour coat, plain striped shield and sword for mercenaries |
 | `infantry_flail` | Static flailman with iron-bound wooden striker, padded jack, kettle hat and side-colour cloth |
 | `infantry_crossbow` | Static crossbowman with composite bow, tiller, stirrup, bolt case and side-colour cloth |
 | `infantry_pavise` | Static bearer with tall ribbed pavise, wooden back, sword, side-colour cloth and shield paint |
@@ -50,6 +50,11 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | `artillery_tarasnice` | Long slim field gun on a low wheeled timber bed |
 | `artillery_bombard` | Heavy hoop-bound siege gun on ground timbers with stone shot |
 | `artillery_gunner` | Static crew with apron, ramrod and side-colour cloth |
+| `civilian_adult`, `civilian_woman`, `civilian_child` | Mixed pilgrim figures with ordinary clothes, staff and bundles |
+| `commander_captain`, `commander_noble`, `commander_cleric` | Shared leader bases for all 27 commanders |
+| `infantry_dismounted` | Armoured foot soldier for explicit cavalry dismounts |
+| `commander_standard` | Neutral striped faction-colour standard for leaders |
+| `field_blockhouse` | Fixed timber/stone garrison with two visible crossbow defenders |
 | `church` | Plastered nave, buttresses, windows, red roof, bell tower, slate spire and cross |
 | `farmhouse` | Timber-and-plaster walls, windows, door, chimney and red gabled roof |
 | `broadleaf_olive`, `broadleaf_gold` | Faceted crowns with visible trunk and branching |
@@ -65,6 +70,8 @@ The infantry additions are defined in `infantry_batch.py`, registered by the sha
 The artillery batch is defined in `artillery_batch.py`; [artillery-references.md](artillery-references.md) records its evidence, reuse choices and crew abstraction. `render_artillery_batch.py` renders the three exported guns with both crew palettes to `previews/artillery-batch.png`.
 
 The static cavalry variants are defined in `cavalry_batch.py`. They reuse the original horse with its actions removed and standing leg transforms, then add new riders and equipment. [cavalry-references.md](cavalry-references.md) documents the period references and reuse decisions. Pass `-- --cavalry` to `render_infantry_batch.py` for the comparison render.
+
+`people_batch.py` supplies the final civilian, commander and dismounted figures. `support_units.py` supplies the fieldwork, neutral standard and refreshed older unit models. Their references are in [people-references.md](people-references.md) and [support-unit-references.md](support-unit-references.md). Render the final roles with `render_unit_completion.py`. The full roster is deliberately mapped in `views/3d/src/unit-recipes.ts`; unknown types fail instead of silently becoming polearm infantry.
 
 ## Verification
 

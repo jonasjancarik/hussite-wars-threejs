@@ -31,5 +31,15 @@
   "infantry_archer": "models/units/infantry_archer.glb",
   "cavalry_light": "models/units/cavalry_light.glb",
   "cavalry_scout": "models/units/cavalry_scout.glb",
-  "cavalry_heavy": "models/units/cavalry_heavy.glb"
+  "cavalry_heavy": "models/units/cavalry_heavy.glb",
+  "civilian_adult": "models/units/civilian_adult.glb",
+  "civilian_woman": "models/units/civilian_woman.glb",
+  "civilian_child": "models/units/civilian_child.glb",
+  "commander_captain": "models/units/commander_captain.glb",
+  "commander_noble": "models/units/commander_noble.glb",
+  "commander_cleric": "models/units/commander_cleric.glb",
+  "infantry_dismounted": "models/units/infantry_dismounted.glb",
+  "infantry_halberd": "models/units/infantry_halberd.glb",
+  "field_blockhouse": "models/buildings/field_blockhouse.glb",
+  "commander_standard": "models/props/commander_standard.glb"
 }

@@ -20,6 +20,10 @@ MODEL_DIRECTORIES = {
     'artillery_houfnice': 'units', 'artillery_tarasnice': 'units',
     'artillery_bombard': 'units', 'artillery_gunner': 'units',
     'cavalry_light': 'units', 'cavalry_scout': 'units', 'cavalry_heavy': 'units',
+    'civilian_adult': 'units', 'civilian_woman': 'units', 'civilian_child': 'units',
+    'commander_captain': 'units', 'commander_noble': 'units', 'commander_cleric': 'units',
+    'infantry_dismounted': 'units',
+    'infantry_halberd': 'units', 'commander_standard': 'props', 'field_blockhouse': 'buildings',
     'church': 'buildings', 'farmhouse': 'buildings',
     'broadleaf_olive': 'vegetation', 'broadleaf_gold': 'vegetation',
     'cypress': 'vegetation',
@@ -147,13 +151,13 @@ def soldier(prefix='Infantry', origin=(0,0,0), weapon='polearm', coat='red', mou
     if weapon == 'polearm':
         beam(prefix+'_pole',p(.38,-.23,.10),p(.66,-.23,2.63),.031,'oak_dark')
         beam(prefix+'_spear',p(.66,-.23,2.59),p(.71,-.23,2.98),.083,'steel',4,radius2=0)
-        box(prefix+'_halberd_blade',p(.69,-.23,2.60),(.23,.034,.27),'steel',.03)
+        box(prefix+'_halberd_blade',p(.69,-.23,2.60),(.23,.034,.27),'steel',.012)
     elif weapon == 'handgun':
         beam(prefix+'_gun_stock',p(.03,-.20,1.08),p(.65,-.20,1.17),.067,'oak_dark')
         beam(prefix+'_gun_barrel',p(.40,-.20,1.14),p(.97,-.20,1.23),.055,'iron',8)
         cone(prefix+'_powder_flask',p(-.11,-.21,.79),.085,.06,.20,'ochre')
     elif weapon == 'shield':
-        shield=box(prefix+'_shield',p(.29,-.35,1.02),(.08,.45,.62),'red',.08)
+        shield=box(prefix+'_shield',p(.29,-.35,1.02),(.08,.45,.62),'red',.025)
         box(prefix+'_shield_cross_vertical',p(.34,-.35,1.03),(.014,.06,.44),'linen')
         box(prefix+'_shield_cross_horizontal',p(.34,-.35,1.08),(.014,.30,.06),'linen')
         beam(prefix+'_sword',p(.38,.22,1.10),p(.66,.22,1.84),.033,'steel',4,radius2=.01)
@@ -409,7 +413,7 @@ def preview(name, objects):
     scene.render.resolution_percentage=100
     scene.view_settings.view_transform='AgX'
     scene.render.image_settings.file_format='PNG'
-    scene.render.filepath=str(PREVIEWS/(name+'.png'))
+    scene.render.filepath='//../previews/'+name+'.png'
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     bpy.ops.render.render(write_still=True)
 
@@ -432,6 +436,10 @@ from artillery_batch import builders as artillery_builders
 BUILDERS.update(artillery_builders(globals()))
 from cavalry_batch import builders as cavalry_builders
 BUILDERS.update(cavalry_builders(globals()))
+from people_batch import builders as people_builders
+BUILDERS.update(people_builders(globals()))
+from support_units import builders as support_builders
+BUILDERS.update(support_builders(globals()))
 
 
 def main():
@@ -467,7 +475,7 @@ def main():
         bpy.ops.object.select_all(action='DESELECT')
         for obj in objects: obj.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
-        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer') or name.startswith(('artillery_', 'cavalry_')):
+        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer', 'infantry_dismounted', 'infantry_halberd', 'infantry_polearm', 'infantry_handgun', 'infantry_shield', 'war_wagon', 'field_blockhouse') or name.startswith(('artillery_', 'cavalry_', 'civilian_', 'commander_')):
             # Static exports use world-space vertices so runtime AABBs describe
             # the actual feet, not rotated material-batch bounding boxes.
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
