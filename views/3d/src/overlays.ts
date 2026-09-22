@@ -5,7 +5,7 @@ import type { BattleSnapshot, HexCoord, TerrainSurface } from "./types.ts";
 function key(coord: HexCoord): string { return `${coord.col},${coord.row}`; }
 
 export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt" | "renderedHeightAt">, fill = false,
-  layout = new HexLayout(20, 12), radiusScale = 1): THREE.BufferGeometry {
+  layout = new HexLayout(20, 12), radiusScale = 1, lineWidth = .055): THREE.BufferGeometry {
   const center = layout.center(coord.col, coord.row);
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -14,7 +14,7 @@ export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "
   const bands = fill ? 16 : 1;
   for (let band = 0; band <= bands; band += 1) {
     // Adjacent half-width strips meet at the actual shared edge, without a gap.
-    const radius = fill ? layout.radius * radiusScale * band / bands : layout.radius * radiusScale - band * 0.055;
+    const radius = fill ? layout.radius * radiusScale * band / bands : layout.radius * radiusScale - band * lineWidth;
     for (let i = 0; i < segments; i += 1) {
       const side = Math.floor(i / sideSegments);
       const t = (i % sideSegments) / sideSegments;
@@ -74,8 +74,10 @@ export class TacticalOverlays {
   private gridVisible = true;
   private hovered: HexCoord | null = null;
   private snapshot: BattleSnapshot | null = null;
+  private readonly winter: boolean;
 
-  public constructor(terrain: TerrainSurface, layout = new HexLayout(20, 12)) {
+  public constructor(terrain: TerrainSurface & { environmentPlan?: { winter: boolean } }, layout = new HexLayout(20, 12)) {
+    this.winter = terrain.environmentPlan?.winter ?? false;
     this.group.name = "Tactical overlays";
     for (let col = 0; col < layout.cols; col += 1) {
       for (let row = 0; row < layout.rows; row += 1) {
@@ -91,7 +93,7 @@ export class TacticalOverlays {
           toneMapped: false,
           fog: false,
         });
-        const ring = new THREE.Mesh(overlayGeometry({ col, row }, terrain, false, layout), material);
+        const ring = new THREE.Mesh(overlayGeometry({ col, row }, terrain, false, layout, 1, this.winter ? .09 : .055), material);
         ring.renderOrder = 10;
         this.rings.set(`${col},${row}`, ring);
         this.group.add(ring);
@@ -128,11 +130,13 @@ export class TacticalOverlays {
     const march = new Set(this.snapshot?.marchTargets.map(key) ?? []);
     const objectives = new Set(this.snapshot?.objectiveHexes?.map(key) ?? []);
     const explored = new Set(this.snapshot?.exploredHexes ?? []);
+    const terrains = new Map(this.snapshot?.tiles.map(tile => [key(tile), tile.terrain.toLowerCase()]) ?? []);
     for (const [coordKey, ring] of this.rings) {
       const material = ring.material as THREE.MeshBasicMaterial;
-      let opacity = this.gridVisible ? 0.30 : 0;
+      const paleGround = this.winter && !["mud", "swamp", "marsh", "road", "road2", "dam", "trenches"].includes(terrains.get(coordKey) ?? "plains");
+      let opacity = this.gridVisible ? (paleGround ? .65 : .30) : 0;
       let fillOpacity = 0;
-      let color = 0xb5ae91;
+      let color = paleGround ? 0x506277 : 0xb5ae91;
       if (objectives.has(coordKey)) {
         opacity = Math.max(opacity, 0.72);
         fillOpacity = 0.10;

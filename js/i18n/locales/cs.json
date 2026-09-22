@@ -151,6 +151,8 @@
     "mapOptions": "Možnosti mapy",
     "minimap": "Minimapa",
     "hexGrid": "Hexová síť",
+    "unitLabels": "Značky oddílů",
+    "unitLabelsHint": "Zobrazit nebo skrýt všechny plovoucí značky jednotek na 3D mapě.",
     "unitDetails": "Detaily oddílů",
     "unitDetailsHint": "Zobrazí název, přesné zdraví a morálku každého viditelného oddílu.",
     "separateBanners": "Rozestoupit značky",

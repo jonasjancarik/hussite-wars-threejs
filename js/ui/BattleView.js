@@ -16,12 +16,13 @@ class BattleView {
         this.threeMap = typeof ThreeBattleMapView !== 'undefined' ? new ThreeBattleMapView(this) : {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
-            setGridVisible() {}, setBannerDetails() {}, setPageVisible() {}
+            setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setPageVisible() {}
         };
         this.viewMode = '2d';
         this.hexGridVisible = true;
         this.separateBanners = false;
         this.bannerDetails = false;
+        this.unitLabelsVisible = true;
         this.backgroundPaused = false;
         this.animationEnabled = false;
         this.moveAnimation = null;
@@ -164,6 +165,11 @@ class BattleView {
             this.threeMap.setBannerDetails?.(this.bannerDetails);
             this.updateViewModeControls();
         }, { signal });
+        document.getElementById('btn-unit-labels')?.addEventListener('click', () => {
+            this.unitLabelsVisible = !this.unitLabelsVisible;
+            this.threeMap.setUnitLabelsVisible?.(this.unitLabelsVisible);
+            this.updateViewModeControls();
+        }, { signal });
         this.updateViewModeControls();
     }
 
@@ -192,6 +198,7 @@ class BattleView {
             document.getElementById('map-zoom-out').disabled = false;
             this.threeMap.setGridVisible(this.hexGridVisible);
             this.threeMap.setBannerDetails?.(this.bannerDetails);
+            this.threeMap.setUnitLabelsVisible?.(this.unitLabelsVisible);
             this.threeMap.mount();
             this.minimap.canvas?.classList.remove('map-open');
         } else {
@@ -228,9 +235,17 @@ class BattleView {
         const detailsButton = document.getElementById('btn-unit-details');
         if (detailsButton) {
             detailsButton.hidden = this.viewMode !== '3d';
+            detailsButton.disabled = !this.unitLabelsVisible;
             detailsButton.setAttribute('aria-pressed', String(Boolean(this.bannerDetails)));
             detailsButton.classList.toggle('active', Boolean(this.bannerDetails));
         }
+        const labelsButton = document.getElementById('btn-unit-labels');
+        if (labelsButton) {
+            labelsButton.hidden = this.viewMode !== '3d';
+            labelsButton.setAttribute('aria-pressed', String(Boolean(this.unitLabelsVisible)));
+            labelsButton.classList.toggle('active', Boolean(this.unitLabelsVisible));
+        }
+        if (bannerButton) bannerButton.disabled = !this.unitLabelsVisible;
     }
 
     resize() {

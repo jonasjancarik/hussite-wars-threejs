@@ -151,6 +151,8 @@
     "mapOptions": "Map options",
     "minimap": "Minimap",
     "hexGrid": "Hex grid",
+    "unitLabels": "Unit labels",
+    "unitLabelsHint": "Show or hide all floating unit labels on the 3D map.",
     "unitDetails": "Unit details",
     "unitDetailsHint": "Show each visible unit's name, exact health, and morale.",
     "separateBanners": "Separate banners",

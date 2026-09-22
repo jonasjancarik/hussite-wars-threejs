@@ -40,3 +40,31 @@ test('adjacent outlines meet at a single shared edge and follow rendered height'
   }
   geometries.forEach(geometry => geometry.dispose());
 });
+
+test('winter grid contrasts with snow and ice while roads and action colours stay distinct', () => {
+  const layout = new HexLayout(3, 1);
+  const overlays = new TacticalOverlays({ heightAt: () => 0, group: new THREE.Group(), interactiveMeshes: [],
+    environmentPlan: { winter: true } }, layout);
+  const snapshot = {
+    tiles: [{ col: 0, row: 0, terrain: 'plains' }, { col: 1, row: 0, terrain: 'water' }, { col: 2, row: 0, terrain: 'road' }],
+    units: [], selectedUnitId: null, legalMoves: [], legalAttacks: [], marchTargets: [], exploredHexes: [], fogOfWar: false,
+  } as unknown as import('../src/types.ts').BattleSnapshot;
+  overlays.update(snapshot);
+  const rings = overlays.group.children.filter(child => child.renderOrder === 10) as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>[];
+  const luminance = (c: THREE.Color) => .2126*c.r + .7152*c.g + .0722*c.b;
+  for (const [index, ground] of [[0, 0xe2e5dc], [1, 0xbad1d1]]) {
+    const material = rings[index!]!.material, background = new THREE.Color(ground);
+    const line = background.clone().lerp(material.color, material.opacity);
+    assert.ok((luminance(background)+.05)/(luminance(line)+.05) > 1.8, 'grid must be visible on pale terrain');
+    assert.equal(material.depthTest, true, 'grid must not show through units');
+  }
+  assert.notEqual(rings[0]!.material.color.getHex(), rings[2]!.material.color.getHex(), 'dark roads retain a light grid');
+  overlays.setGridVisible(false);
+  assert.ok(rings.every(ring => !ring.visible));
+  overlays.update({ ...snapshot, legalMoves: [{ col: 0, row: 0 }] });
+  assert.ok(rings[0]!.visible, 'movement remains visible with the base grid off');
+  assert.equal(rings[0]!.material.color.getHex(), 0x72e0ab);
+  for (const child of overlays.group.children as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>[]) {
+    child.geometry.dispose(); child.material.dispose();
+  }
+});

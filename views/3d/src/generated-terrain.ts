@@ -5,6 +5,7 @@ import { createTerrainRegions, isFieldTerrain, isWaterTerrain, type TerrainRegio
 import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
+import { isRoadTerrain } from "./road-corridors.ts";
 import { nearestOnStreet } from "./settlement-plan.ts";
 import { clipPolygon, triangulatePolygon } from "./water-geometry.ts";
 
@@ -34,7 +35,7 @@ export class GeneratedTerrain implements BattleTerrain {
   private gridWidth = 0;
   private gridHeight = 0;
   private readonly visualWeights = new Map<string, number[]>();
-  private readonly shorelineTriangles = new Map<string, number[][]>();
+  private readonly surfaceTriangles = new Map<string, number[][]>();
   private waterIndices: number[] = [];
   private readonly waterCellIndices = new Map<string, number[]>();
 
@@ -131,7 +132,7 @@ export class GeneratedTerrain implements BattleTerrain {
     } else {
       vertices = [a, d, b]; barycentric = [1 - tx, tz, tx - tz];
     }
-    const shoreline = this.shorelineTriangles.get([...vertices].sort((a,b)=>a-b).join(","));
+    const shoreline = this.surfaceTriangles.get([...vertices].sort((a,b)=>a-b).join(","));
     if (shoreline) for (const triangle of shoreline) {
       const [a,b,c]=triangle as [number,number,number];
       const ax=this.basePositions[a*3]!,az=this.basePositions[a*3+2]!;
@@ -205,7 +206,7 @@ export class GeneratedTerrain implements BattleTerrain {
     this.interactiveMeshes.length = 0;
     this.vertexKeys.length = 0;
     this.visualWeights.clear();
-    this.shorelineTriangles.clear();
+    this.surfaceTriangles.clear();
     this.waterIndices.length=0;
     this.waterCellIndices.clear();
     for (const texture of this.surfaceTextures) texture.dispose();
@@ -243,6 +244,13 @@ export class GeneratedTerrain implements BattleTerrain {
             if(distance<minimum) {minimum=distance;nearest=cell;}
           }
           weights={[nearest.terrain]:1};
+          if(this.field.roads.active && isRoadTerrain(nearest.terrain)) {
+            const road=this.field.roads.sample(x,z);
+            const backdrop=this.field.tiles.filter(cell=>!isRoadTerrain(cell.terrain)).sort((a,b)=>
+              Math.hypot(x-a.center.x,z-a.center.z)-Math.hypot(x-b.center.x,z-b.center.z))[0]!;
+            const coverage=road?.weight??0;
+            weights={[backdrop.terrain]:1-coverage,[road?.terrain??nearest.terrain]:coverage};
+          }
           if(isWaterTerrain(nearest.terrain)) positions[positions.length-2]=-.7;
         }
         const vertexIndex = iz * nx + ix;
@@ -281,42 +289,76 @@ export class GeneratedTerrain implements BattleTerrain {
         colors.push(color.r * grain, color.g * grain, color.b * grain);
       }
     }
-    const materialIndices: number[][] = [[], [], [], [], [], []];
+    const materialIndices: number[][] = [[], [], [], [], [], [], []];
     const waterTypes=this.field.terrainTypes.filter(isWaterTerrain);
     const dryTypes=this.field.terrainTypes.filter(name=>!isWaterTerrain(name));
+    const roadTypes=this.field.terrainTypes.filter(isRoadTerrain);
+    const nonRoadTypes=dryTypes.filter(name=>!isRoadTerrain(name));
+    const roadAt=(index:number):number=>roadTypes.reduce((total,name)=>total+this.visualWeights.get(name)![index]!,0);
     const waterAt=(index:number):number=>waterTypes.reduce((total,name)=>total+this.visualWeights.get(name)![index]!,0);
-    const margin=(index:number,dry:string):number=>waterAt(index)-this.visualWeights.get(dry)![index]!;
+    const margin=(index:number,dry:string,road=false):number=>(road ? roadAt(index) : waterAt(index))-this.visualWeights.get(dry)![index]!;
     const crossings=new Map<string,number>();
-    const intersect=(a:number,b:number,dry:string):number=>{
-      const key=`${dry}:${[a,b].sort((a,b)=>a-b).join(",")}`;
+    const intersect=(a:number,b:number,dry:string,road=false):number=>{
+      const key=`${road}:${dry}:${[a,b].sort((a,b)=>a-b).join(",")}`;
       const known=crossings.get(key); if(known!==undefined) return known;
-      const t=margin(a,dry)/(margin(a,dry)-margin(b,dry)), index=positions.length/3;
+      const t=margin(a,dry,road)/(margin(a,dry,road)-margin(b,dry,road)), index=positions.length/3;
       const x=THREE.MathUtils.lerp(positions[a*3]!,positions[b*3]!,t);
       const z=THREE.MathUtils.lerp(positions[a*3+2]!,positions[b*3+2]!,t);
-      positions.push(x,-.7,z);
+      positions.push(x,road ? THREE.MathUtils.lerp(positions[a*3+1]!,positions[b*3+1]!,t) : -.7,z);
       for(let axis=0;axis<3;axis++) colors.push(THREE.MathUtils.lerp(colors[a*3+axis]!,colors[b*3+axis]!,t));
       for(let axis=0;axis<2;axis++) uvs.push(THREE.MathUtils.lerp(uvs[a*2+axis]!,uvs[b*2+axis]!,t));
       for(const weights of this.visualWeights.values()) weights.push(THREE.MathUtils.lerp(weights[a]!,weights[b]!,t));
       const coord=this.layout.coordAt(x,z); this.vertexKeys.push(coord ? `${coord.col},${coord.row}` : null);
       crossings.set(key,index); return index;
     };
-    const cut=(polygon:number[],dry:string,keepWater:boolean):number[]=>{
+    const cut=(polygon:number[],dry:string,keepWater:boolean,road=false):number[]=>{
       const result:number[]=[];
       for(let i=0;i<polygon.length;i++) {
         const a=polygon[i]!,b=polygon[(i+1)%polygon.length]!;
-        const insideA=margin(a,dry)>=0,insideB=margin(b,dry)>=0;
+        const insideA=margin(a,dry,road)>=0,insideB=margin(b,dry,road)>=0;
         if(insideA===keepWater) result.push(a);
-        if(insideA!==insideB) result.push(intersect(a,b,dry));
+        if(insideA!==insideB) result.push(intersect(a,b,dry,road));
       }
       return result;
     };
     const dryMaterial=(triangle:number[]):number=>{
       const dry=[...dryTypes].sort((a,b)=>triangle.reduce((sum,v)=>sum+this.visualWeights.get(b)![v]!-this.visualWeights.get(a)![v]!,0))[0] ?? "plains";
-      return dry==="town" && this.environmentPlan.settlement ? 5 : surfaceMaterialIndex(dry);
+      return dry==="town" && this.environmentPlan.settlement ? 6 : surfaceMaterialIndex(dry);
+    };
+    const emitLand=(original:number[]):number[][]=>{
+      if(roadTypes.length && original.every(index=>roadAt(index)>0 && nonRoadTypes.every(dry=>margin(index,dry,true)>=0))) {
+        materialIndices[5]!.push(...original);return [original];
+      }
+      if(!roadTypes.length || original.every(index=>roadAt(index)<=1e-12)
+        || nonRoadTypes.some(dry=>original.every(index=>margin(index,dry,true)<0))) {
+        materialIndices[dryMaterial(original)]!.push(...original); return [original];
+      }
+      const pieces:number[][]=[];
+      const emit=(polygon:number[],road:boolean):void=>{
+        for(let i=1;i<polygon.length-1;i++) {
+          const triangle=[polygon[0]!,polygon[i]!,polygon[i+1]!];
+          const [a,b,c]=triangle as [number,number,number];
+          if(Math.abs((positions[b*3]!-positions[a*3]!)*(positions[c*3+2]!-positions[a*3+2]!)
+            -(positions[c*3]!-positions[a*3]!)*(positions[b*3+2]!-positions[a*3+2]!))<1e-10) continue;
+          materialIndices[road ? 5 : dryMaterial(triangle)]!.push(...triangle);pieces.push(triangle);
+        }
+      };
+      let polygon=original;
+      for(const dry of nonRoadTypes) {
+        emit(cut(polygon,dry,false,true),false);
+        polygon=cut(polygon,dry,true,true);
+        if(polygon.length<3) break;
+      }
+      emit(polygon,true);
+      return pieces;
+    };
+    const addLand=(original:number[]):void=>{
+      const pieces=emitLand(original);
+      if(pieces.length!==1 || pieces[0]!==original) this.surfaceTriangles.set([...original].sort((a,b)=>a-b).join(","),pieces);
     };
     const addTriangle = (a: number, b: number, c: number): void => {
       const original=[a,b,c];
-      if(original.every(index=>waterAt(index)<=1e-12)) { materialIndices[dryMaterial(original)]!.push(a,b,c);return; }
+      if(original.every(index=>waterAt(index)<=1e-12)) { addLand(original);return; }
       if(waterTypes.length && original.every(index=>dryTypes.every(dry=>margin(index,dry)>=0))) {
         materialIndices[4]!.push(a,b,c);return;
       }
@@ -328,7 +370,8 @@ export class GeneratedTerrain implements BattleTerrain {
             const [a,b,c]=triangle as [number,number,number];
             if(Math.abs((positions[b*3]!-positions[a*3]!)*(positions[c*3+2]!-positions[a*3+2]!)
               -(positions[c*3]!-positions[a*3]!)*(positions[b*3+2]!-positions[a*3+2]!))<1e-10) continue;
-            materialIndices[water ? 4 : dryMaterial(triangle)]!.push(...triangle); pieces.push(triangle);
+            if(water) {materialIndices[4]!.push(...triangle);pieces.push(triangle);}
+            else pieces.push(...emitLand(triangle));
           }
         };
         let polygon=original;
@@ -340,10 +383,10 @@ export class GeneratedTerrain implements BattleTerrain {
           if(polygon.length<3) break;
         }
         emit(polygon,true);
-        this.shorelineTriangles.set([...original].sort((a,b)=>a-b).join(","),pieces);
+        this.surfaceTriangles.set([...original].sort((a,b)=>a-b).join(","),pieces);
         return;
       }
-      materialIndices[dryMaterial(original)]!.push(a,b,c);
+      addLand(original);
     };
     for (let iz = 0; iz < nz - 1; iz += 1) {
       for (let ix = 0; ix < nx - 1; ix += 1) {

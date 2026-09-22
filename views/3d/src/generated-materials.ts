@@ -1,13 +1,15 @@
 import * as THREE from "three";
 import { isFieldTerrain } from "./terrain-regions.ts";
+import { isRoadTerrain } from "./road-corridors.ts";
 
-export type SurfaceMaterialKind = "meadow" | "earth" | "slope" | "rock" | "water";
+export type SurfaceMaterialKind = "meadow" | "earth" | "slope" | "rock" | "water" | "road";
 
-const MATERIAL_ORDER: SurfaceMaterialKind[] = ["meadow", "earth", "slope", "rock", "water"];
+const MATERIAL_ORDER: SurfaceMaterialKind[] = ["meadow", "earth", "slope", "rock", "water", "road"];
 
 export function surfaceMaterialKind(terrain: string): SurfaceMaterialKind {
   const name = terrain.toLowerCase();
   if (["water", "river", "lake"].includes(name)) return "water";
+  if (isRoadTerrain(name)) return "road";
   if (["slope", "steep_slope"].includes(name)) return "slope";
   if (["cliff", "rock"].includes(name)) return "rock";
   if (["mud", "swamp", "marsh", "road", "road2", "dam", "causeway", "trenches"].includes(name)
@@ -55,5 +57,6 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
     material("slope", meadowMap, 0.98),
     material("rock", slopeMap, 1),
     material("water", null, 0.34),
+    material("road", slopeMap, 1),
   ], textures };
 }

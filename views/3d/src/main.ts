@@ -168,6 +168,7 @@ class IntegratedThreeBattle {
   public setGridVisible(visible: boolean): void { this.overlays.setGridVisible(visible); }
   public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); }
   public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
+  public setUnitLabelsVisible(visible: boolean): void { this.banners.setLabelsVisible(visible); this.scheduleFrame(); }
   public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); }
 
   public focusHex(col: number, row: number): void {

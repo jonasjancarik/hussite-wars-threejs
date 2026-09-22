@@ -18,6 +18,7 @@ class ThreeBattleMapView {
         this.gridVisible = true;
         this.bannerAvoidance = false;
         this.bannerDetails = false;
+        this.unitLabelsVisible = true;
     }
 
     async mount() {
@@ -92,6 +93,7 @@ class ThreeBattleMapView {
             renderer.setGridVisible(this.gridVisible);
             renderer.setBannerAvoidance?.(this.bannerAvoidance);
             renderer.setBannerDetails?.(this.bannerDetails);
+            renderer.setUnitLabelsVisible?.(this.unitLabelsVisible);
             this.terrainSignature = this.getTerrainSignature(initialSnapshot);
             if (!this.active || !this.pageVisible) renderer.setActive(false);
             return renderer;
@@ -133,7 +135,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.26';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.27';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -259,6 +261,7 @@ class ThreeBattleMapView {
     setGridVisible(visible) { this.gridVisible = visible; this.renderer?.setGridVisible(visible); }
     setBannerAvoidance(enabled) { this.bannerAvoidance = enabled; this.renderer?.setBannerAvoidance?.(enabled); }
     setBannerDetails(enabled) { this.bannerDetails = enabled; this.renderer?.setBannerDetails?.(enabled); }
+    setUnitLabelsVisible(visible) { this.unitLabelsVisible = visible; this.renderer?.setUnitLabelsVisible?.(visible); }
     diagnostics() { return this.renderer?.diagnostics() ?? null; }
     resetDiagnostics() { this.renderer?.resetDiagnostics(); }
     setPageVisible(visible) { this.pageVisible = visible; this.renderer?.setActive(this.active && visible); }

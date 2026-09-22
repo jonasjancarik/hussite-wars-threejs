@@ -31,6 +31,7 @@ export class UnitBanners {
   private height = 0;
   private avoidance = false;
   private detailsVisible = false;
+  private labelsVisible = true;
   private obstacles: MarkerObstacle[] = [];
 
   public constructor(private readonly canvas: HTMLCanvasElement,
@@ -84,14 +85,30 @@ export class UnitBanners {
     for (const unit of this.units) this.updateMarker(unit);
   }
 
+  /** Show or hide every floating marker without changing the retained display options. */
+  public setLabelsVisible(visible: boolean): void {
+    if (this.labelsVisible === visible) return;
+    this.labelsVisible = visible;
+    this.layer.hidden = !this.active || !visible;
+    if (!visible) {
+      this.placements = [];
+      for (const marker of this.markers.values()) {
+        marker.button.hidden = true;
+        marker.button.tabIndex = -1;
+      }
+    } else {
+      for (const marker of this.markers.values()) marker.button.tabIndex = 0;
+    }
+  }
+
   public setActive(active: boolean): void {
     this.active = active;
-    this.layer.hidden = !active;
+    this.layer.hidden = !active || !this.labelsVisible;
     if (!active) this.placements = [];
   }
 
   public position(camera: THREE.Camera, worldPosition: (id: number) => THREE.Vector3 | null): void {
-    if (!this.active || this.disposed || !this.snapshot) return;
+    if (!this.active || !this.labelsVisible || this.disposed || !this.snapshot) return;
     const anchors: MarkerAnchor[] = [];
     for (const unit of this.units) {
       const world = worldPosition(unit.id);
@@ -125,7 +142,7 @@ export class UnitBanners {
   }
 
   public unitAt(clientX: number, clientY: number): UnitSnapshot | null {
-    if (!this.active || this.disposed) return null;
+    if (!this.active || !this.labelsVisible || this.disposed) return null;
     const rect = this.canvas.getBoundingClientRect();
     const id = markerAt(this.placements, clientX - rect.left, clientY - rect.top);
     return this.units.find(unit => unit.id === id) ?? null;
@@ -148,6 +165,7 @@ export class UnitBanners {
     button.className = "three-unit-marker";
     button.dataset.unitId = String(id);
     button.hidden = true;
+    button.tabIndex = this.labelsVisible ? 0 : -1;
     const flag = doc.createElement("span");
     flag.className = "marker-flag";
     const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");

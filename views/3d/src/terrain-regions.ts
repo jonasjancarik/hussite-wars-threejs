@@ -1,3 +1,6 @@
+import { HexLayout } from "./hex-coordinates.ts";
+import { RoadCorridors, isRoadTerrain } from "./road-corridors.ts";
+
 /**
  * Renderer-neutral terrain fields for odd-q, flat-top hex maps.
  *
@@ -233,6 +236,7 @@ export class TerrainRegions {
   public readonly seed: number;
   public readonly terrainTypes: readonly TerrainType[];
   public readonly tiles: readonly TerrainCell[];
+  public readonly roads: RoadCorridors;
 
   private readonly tileByKey = new Map<string, TerrainCell>();
   private readonly coverageCache = new Map<number, TerrainCoverage>();
@@ -271,6 +275,7 @@ export class TerrainRegions {
     }
     this.tiles = allTiles;
     this.terrainTypes = [...new Set(allTiles.map((tile) => tile.terrain))];
+    this.roads = new RoadCorridors(this.tiles, new HexLayout(this.cols,this.rows,this.hexRadius));
     // Insetting every edge by this amount leaves a geometrically similar core
     // with area = coreCoverage * hex area, before discrete sample rounding.
     this.coreInset = this.apothem * (1 - Math.sqrt(this.coreCoverage));
@@ -325,6 +330,32 @@ export class TerrainRegions {
   public weightsAt(x: number, z: number): TerrainWeights {
     const cell = this.cellAt(x, z);
     if (!cell) return {};
+    if (!this.roads.active) return this.baseWeightsAt(x,z,cell);
+    const road=this.roads.sample(x,z);
+    if(road && road.weight>=1-1e-9) return {[road.terrain]:1};
+    const base=this.baseWeightsAt(x,z,cell);
+    const ground:Record<string,number>={};
+    let total=0;
+    for(const [terrain,weight] of Object.entries(base)) if(!isRoadTerrain(terrain)) {
+      ground[terrain]=weight;total+=weight;
+    }
+    if(total<1e-9) {
+      // Outside a swept road, reveal the neighbouring landscape rather than
+      // restoring a brown patch shaped like the source road hex.
+      for(const neighbour of this.nearbyCells(x,z)) if(!isRoadTerrain(neighbour.terrain)) {
+        const d=Math.hypot(x-neighbour.center.x,z-neighbour.center.z)/this.hexRadius;
+        const weight=Math.exp(-d*d/1.5);
+        ground[neighbour.terrain]=(ground[neighbour.terrain]??0)+weight;total+=weight;
+      }
+    }
+    if(total<1e-9) { ground[this.terrainTypes.find(name=>!isRoadTerrain(name))!]=1;total=1; }
+    const coverage=road?.weight??0;
+    for(const name of Object.keys(ground)) ground[name]=ground[name]!/total*(1-coverage);
+    if(road && coverage>0) ground[road.terrain]=coverage;
+    return ground;
+  }
+
+  private baseWeightsAt(x:number,z:number,cell:TerrainCell):TerrainWeights {
     const edgeDistance = this.hexEdgeDistance(x, z, cell.col, cell.row);
     const candidates = this.nearbyCells(x, z);
     const coastal = candidates.some(candidate => isWaterTerrain(candidate.terrain));

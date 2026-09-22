@@ -118,6 +118,7 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     let options = null, activeCalls = 0, disposeCalls = 0, snapshots = 0, zoomCalls = 0, createCalls = 0;
     let gridVisible = null;
     let detailsVisible = null;
+    let labelsVisible = null;
     h.context.window.HussiteBattle3D = {
         create: async (_canvas, value) => {
             createCalls++;
@@ -127,6 +128,7 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
                 setActive: () => { activeCalls++; }, resize() {}, frameScene() {}, focusHex() {},
                 setGridVisible: value => { gridVisible = value; },
                 setBannerDetails: value => { detailsVisible = value; },
+                setUnitLabelsVisible: value => { labelsVisible = value; },
                 zoomBy: () => { zoomCalls++; }, diagnostics: () => ({}),
                 dispose: () => { disposeCalls++; }
             };
@@ -185,6 +187,10 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     game.view.setViewMode('3d');
     await h.flush();
     const bannerButton = h.document.getElementById('btn-separate-banners');
+    const labelsButton = h.document.getElementById('btn-unit-labels');
+    assert.equal(labelsButton.hidden, false);
+    assert.equal(labelsButton.getAttribute('aria-pressed'), 'true', 'unit labels are visible by default');
+    assert.equal(labelsVisible, true);
     assert.equal(bannerButton.hidden, false);
     assert.equal(bannerButton.getAttribute('aria-pressed'), 'false');
     assert.equal(game.view.threeMap.bannerAvoidance, false);
@@ -197,9 +203,18 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     detailsButton.dispatchEvent(new Event('click'));
     assert.equal(game.view.threeMap.bannerDetails, true);
     assert.equal(detailsVisible, true);
+    labelsButton.dispatchEvent(new Event('click'));
+    assert.equal(game.view.unitLabelsVisible, false);
+    assert.equal(game.view.threeMap.unitLabelsVisible, false);
+    assert.equal(labelsButton.getAttribute('aria-pressed'), 'false');
+    assert.equal(detailsButton.disabled, true, 'detail controls are unavailable while labels are hidden');
+    assert.equal(bannerButton.disabled, true, 'separation controls are unavailable while labels are hidden');
+    assert.equal(detailsButton.getAttribute('aria-pressed'), 'true', 'hiding labels retains detail preference');
+    assert.equal(game.view.bannerDetails, true);
     game.view.setViewMode('2d');
     assert.equal(bannerButton.hidden, true);
     assert.equal(detailsButton.hidden, true);
+    assert.equal(labelsButton.hidden, true);
     game.view.setViewMode('3d');
     await h.flush();
     assert.equal(bannerButton.hidden, false);
@@ -208,6 +223,13 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     assert.equal(detailsButton.hidden, false);
     assert.equal(detailsButton.getAttribute('aria-pressed'), 'true', 'details persist through 2D/3D changes');
     assert.equal(detailsVisible, true, 'the resumed renderer receives the retained detail state');
+    assert.equal(labelsButton.getAttribute('aria-pressed'), 'false', 'label preference persists through 2D/3D changes');
+    assert.equal(labelsVisible, false, 'the resumed renderer receives the hidden-label preference');
+    labelsButton.dispatchEvent(new Event('click'));
+    assert.equal(game.view.unitLabelsVisible, true);
+    assert.equal(labelsButton.getAttribute('aria-pressed'), 'true');
+    assert.equal(detailsButton.disabled, false);
+    assert.equal(bannerButton.disabled, false);
     bannerButton.dispatchEvent(new Event('click'));
     assert.equal(game.view.threeMap.bannerAvoidance, false);
     const gridButton = h.document.getElementById('btn-hex-grid');
@@ -238,12 +260,14 @@ test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou 
     options.onHex(target);
     await h.advance(300);
     assert.deepEqual({ col: selected.col, row: selected.row }, { col: target.col, row: target.row });
+    labelsButton.dispatchEvent(new Event('click'));
     game.hexGrid.setTerrain(0, 0, 'forest');
     game.view.render();
     await h.flush();
     assert.equal(createCalls, 2, 'terrain changes rebuild the generated landscape');
     assert.equal(disposeCalls, 1, 'stale terrain renderer is disposed before rebuilding');
     assert.equal(detailsVisible, true, 'a recreated renderer receives the retained detail state');
+    assert.equal(labelsVisible, false, 'a recreated renderer receives the retained hidden-label preference');
     game.destroy();
     assert.equal(disposeCalls, 2, 'current renderer is disposed exactly once with the game');
 });
