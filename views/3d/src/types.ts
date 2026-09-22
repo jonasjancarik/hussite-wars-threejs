@@ -34,6 +34,7 @@ export interface UnitSnapshot extends HexCoord {
   /** A scenario event explicitly forced this cavalry unit to fight on foot. */
   dismounted?: boolean;
   special?: string | null;
+  commanderAbilities?: { auraRange?: number } | null;
   presentation?: UnitMarkerPresentation;
 }
 

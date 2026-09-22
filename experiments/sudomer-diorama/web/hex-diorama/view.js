@@ -79,7 +79,8 @@
                 id: unit.id, type: unit.type, name: unit.name, faction: unit.faction, unitClass: unit.unitClass,
                 col: unit.col, row: unit.row, health: unit.health, maxHealth: unit.maxHealth,
                 morale: unit.morale, maxMorale: unit.maxMorale, hasMoved: unit.hasMoved, hasAttacked: unit.hasAttacked,
-                isDefending: unit.isDefending, isRouting: unit.isRouting, formationClosed: unit.formationClosed, marching: unit.marching
+                isDefending: unit.isDefending, isRouting: unit.isRouting, formationClosed: unit.formationClosed, marching: unit.marching,
+                commanderAbilities: unit.isCommander() ? unit.getCommanderAbilities() : null
             }));
             const inspectedTile = this.inspected ? this.game.hexGrid.hexes.get(key(this.inspected.col, this.inspected.row)) : null;
             const inspectedUnit = this.inspected ? units.find(unit => unit.col === this.inspected.col && unit.row === this.inspected.row) : null;

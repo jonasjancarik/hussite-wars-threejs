@@ -33783,6 +33783,7 @@ var BH = class {
 	ownedMaterials = /* @__PURE__ */ new Set();
 	seenAttackEvents = /* @__PURE__ */ new Set();
 	attackFacing = /* @__PURE__ */ new Map();
+	commanderAuras = /* @__PURE__ */ new Map();
 	constructor(e, t, n, r) {
 		this.terrain = e, this.layout = t, this.assets = n, this.movementPosition = r, this.group.name = "Visible battle formations";
 	}
@@ -33794,7 +33795,7 @@ var BH = class {
 			if (i.has(e)) for (let e of t.figures) this.casualties.add(e.object, t.unit);
 			this.removeVisual(e, t);
 		}
-		await Promise.all(n.map((n) => this.updateUnit(n, t, e)));
+		await Promise.all(n.map((n) => this.updateUnit(n, t, e))), !(this.disposed || t !== this.updateRevision) && this.updateCommanderAuras(n, e);
 	}
 	worldPosition(e) {
 		return this.visuals.get(e)?.root.position.clone() ?? null;
@@ -33819,9 +33820,82 @@ var BH = class {
 		if (!this.disposed) {
 			this.disposed = !0, this.updateRevision += 1, this.casualties.clear();
 			for (let e of this.visuals.values()) e.hit.geometry.dispose(), e.hit.material.dispose();
-			this.visuals.clear(), this.hitTargets.length = 0, this.group.clear();
+			this.visuals.clear(), this.hitTargets.length = 0;
+			for (let e of this.commanderAuras.values()) this.group.remove(e.group), e.geometry.dispose(), e.material.dispose();
+			this.commanderAuras.clear(), this.group.clear();
 			for (let e of this.ownedMaterials) e.dispose();
 			this.ownedMaterials.clear(), this.variants.clear();
+		}
+	}
+	updateCommanderAuras(e, t) {
+		let n = e.filter((e) => (e.unitClass === "commander" || e.special === "commander") && (e.commanderAbilities?.auraRange ?? 0) > 0), r = new Set(n.map((e) => e.id));
+		for (let [e, t] of this.commanderAuras) r.has(e) || (this.group.remove(t.group), t.geometry.dispose(), t.material.dispose(), this.commanderAuras.delete(e));
+		let i = new Set(e.map((e) => e.id)), a = t.movement;
+		for (let e of n) {
+			let t = this.commanderAuras.get(e.id);
+			if (!t) {
+				let n = new Qn();
+				n.name = `${e.name} command aura`;
+				let r = new Fi({
+					color: 6470126,
+					transparent: !0,
+					opacity: .78,
+					depthWrite: !1,
+					depthTest: !0,
+					toneMapped: !1,
+					side: 2
+				});
+				t = {
+					group: n,
+					geometry: new ai(),
+					material: r
+				}, this.commanderAuras.set(e.id, t), this.group.add(n);
+			}
+			let n = a?.unitId === e.id && this.movementPosition ? this.movementPosition(a) : null, r = e.commanderAbilities?.auraRange ?? 0, o = this.layout.center(e.col, e.row), s = n ? n.x - o.x : 0, c = n ? n.z - o.z : 0;
+			t.group.visible = r > 0, t.material.opacity = i.has(e.id) ? .78 : .45;
+			let l = [];
+			for (let t = Math.max(0, e.col - r); t <= Math.min(this.layout.cols - 1, e.col + r); t += 1) for (let n = Math.max(0, e.row - r - 1); n <= Math.min(this.layout.rows - 1, e.row + r + 1); n += 1) {
+				let i = t - e.col, a = n - Math.floor(t / 2) - (e.row - Math.floor(e.col / 2));
+				Math.max(Math.abs(i), Math.abs(a), Math.abs(i + a)) > r || l.push({
+					col: t,
+					row: n
+				});
+			}
+			let u = /* @__PURE__ */ new Map();
+			for (let t of l) {
+				let n = this.layout.center(t.col, t.row), i = Array.from({ length: 6 }, (e, t) => {
+					let r = t * Math.PI / 3;
+					return {
+						x: n.x + Math.cos(r) * this.layout.radius,
+						z: n.z + Math.sin(r) * this.layout.radius
+					};
+				});
+				for (let t = 0; t < i.length; t += 1) {
+					let a = i[t], o = i[(t + 1) % i.length], s = (a.x + o.x) * .5, c = (a.z + o.z) * .5, l = this.layout.coordAt(s + (s - n.x) * .015, c + (c - n.z) * .015);
+					if (l) {
+						let t = l.col - e.col, n = l.row - Math.floor(l.col / 2) - (e.row - Math.floor(e.col / 2));
+						if (Math.max(Math.abs(t), Math.abs(n), Math.abs(t + n)) <= r) continue;
+					}
+					let d = `${a.x.toFixed(3)},${a.z.toFixed(3)}`, f = `${o.x.toFixed(3)},${o.z.toFixed(3)}`;
+					u.set(d < f ? `${d}|${f}` : `${f}|${d}`, {
+						a,
+						b: o
+					});
+				}
+			}
+			let d = [];
+			for (let { a: e, b: t } of u.values()) for (let n of [e, t]) {
+				let e = Math.max(this.terrain.renderedHeightAt?.(n.x, n.z) ?? this.terrain.heightAt(n.x, n.z), -.52);
+				d.push(n.x + s, e + .12, n.z + c);
+			}
+			t.geometry.setAttribute("position", new M(d, 3)), t.geometry.computeBoundingSphere();
+			let f = t.group.children[0];
+			if (f) f.geometry = t.geometry;
+			else {
+				let e = new Ha(t.geometry, t.material);
+				e.name = "Outer command range hex edges", e.renderOrder = 8, t.group.add(e);
+			}
+			t.group.position.set(0, 0, 0);
 		}
 	}
 	async updateUnit(e, t, n) {
