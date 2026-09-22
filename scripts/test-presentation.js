@@ -113,6 +113,26 @@ test('3D snapshot nese pouze výslovný stav sesednutí', () => {
     game.destroy();
 });
 
+test('3D view shows a loading screen until its renderer is ready', async () => {
+    const h = createHarness({ browserView: true });
+    let finishCreate;
+    h.context.window.HussiteBattle3D = {
+        create: () => new Promise(resolve => { finishCreate = resolve; })
+    };
+    const game = h.newGame();
+    game.view.setViewMode('3d');
+    await h.flush();
+    const loading = h.document.getElementById('three-view-loading');
+    assert.equal(loading.hidden, false, 'the empty 3D canvas is covered while preparation runs');
+    finishCreate({
+        applySnapshot() {}, setActive() {}, resize() {}, frameScene() {}, focusHex() {},
+        setGridVisible() {}, dispose() {}
+    });
+    await h.flush();
+    assert.equal(loading.hidden, true, 'the screen clears after the renderer is ready');
+    game.destroy();
+});
+
 test('opakované přepnutí 2D/3D zachová jedinou hru, výběr i rozpracovanou akci', async () => {
     const h = createHarness({ browserView: true });
     let options = null, activeCalls = 0, disposeCalls = 0, snapshots = 0, zoomCalls = 0, createCalls = 0;

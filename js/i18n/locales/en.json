@@ -148,6 +148,7 @@
     "viewMode": "Battlefield view",
     "view2d": "2D map",
     "view3d": "3D landscape",
+    "view3dLoading": "Preparing 3D battlefield…",
     "mapOptions": "Map options",
     "minimap": "Minimap",
     "hexGrid": "Hex grid",

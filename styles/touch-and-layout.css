@@ -50,6 +50,33 @@
     height: 100% !important;
     min-height: 360px;
 }
+.three-view-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #273438;
+    color: #f2e8d3;
+    font: 600 0.95rem/1.3 Georgia, serif;
+    letter-spacing: 0.02em;
+}
+.three-view-loading[hidden] { display: none; }
+.three-view-loading__spinner {
+    width: 18px;
+    height: 18px;
+    box-sizing: border-box;
+    border: 2px solid #f2e8d355;
+    border-top-color: #e5bc70;
+    border-radius: 50%;
+    animation: three-view-loading-spin 700ms linear infinite;
+}
+@keyframes three-view-loading-spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) {
+    .three-view-loading__spinner { animation: none; border-color: #e5bc70; }
+}
 .view-mode-controls { display: inline-flex; gap: 3px; }
 #map-tools .view-mode-controls button.active,
 #map-tools .view-mode-controls button[aria-pressed="true"],

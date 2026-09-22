@@ -5,6 +5,7 @@ class ThreeBattleMapView {
         this.game = view.game;
         this.canvas = document.getElementById('game-canvas-3d');
         this.surface = document.getElementById('map-surface');
+        this.loadingScreen = document.getElementById('three-view-loading');
         this.renderer = null;
         this.starting = null;
         this.cancelFactoryWait = null;
@@ -26,6 +27,7 @@ class ThreeBattleMapView {
         this.active = true;
         this.surface.classList.add('three-view-active');
         this.canvas.hidden = false;
+        this.setLoading(!this.renderer);
         this.game.hexGrid.canvas.hidden = true;
         this.view.mapInput.cancel();
         this.view.orders.cancel();
@@ -35,6 +37,7 @@ class ThreeBattleMapView {
             this.renderer.setActive(this.pageVisible);
             this.resize();
             this.render();
+            this.setLoading(false);
             return true;
         } catch (error) {
             this.handleRendererFailure(error);
@@ -45,6 +48,7 @@ class ThreeBattleMapView {
     unmount() {
         this.active = false;
         this.renderer?.setActive(false);
+        this.setLoading(false);
         this.canvas.hidden = true;
         this.game.hexGrid.canvas.hidden = false;
         this.surface.classList.remove('three-view-active');
@@ -230,10 +234,14 @@ class ThreeBattleMapView {
             this.renderer = null;
             this.terrainSignature = null;
             this.effects = [];
+            this.setLoading(true);
         }
         if (!this.renderer) {
             void this.ensureRenderer().then(renderer => {
-                if (this.active && !this.destroyed) renderer.applySnapshot(this.snapshot());
+                if (this.active && !this.destroyed) {
+                    renderer.applySnapshot(this.snapshot());
+                    this.setLoading(false);
+                }
             }).catch(error => {
                 this.handleRendererFailure(error);
             });
@@ -245,6 +253,10 @@ class ThreeBattleMapView {
     getTerrainSignature(snapshot) {
         return `${snapshot.scenario ?? 'battle'}:${snapshot.seed ?? 1}|` +
             snapshot.tiles.map(tile => `${tile.col},${tile.row}:${tile.terrain}`).join('|');
+    }
+
+    setLoading(loading) {
+        if (this.loadingScreen) this.loadingScreen.hidden = !loading;
     }
 
     handleRendererFailure(error) {
@@ -293,6 +305,7 @@ class ThreeBattleMapView {
         this.renderer?.dispose();
         this.renderer = null;
         this.terrainSignature = null;
+        this.setLoading(false);
         this.canvas.hidden = true;
         this.surface.classList.remove('three-view-active');
     }

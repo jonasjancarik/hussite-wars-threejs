@@ -148,6 +148,7 @@
     "viewMode": "Zobrazení bojiště",
     "view2d": "2D mapa",
     "view3d": "3D krajina",
+    "view3dLoading": "Připravuje se 3D bojiště…",
     "mapOptions": "Možnosti mapy",
     "minimap": "Minimapa",
     "hexGrid": "Hexová síť",
