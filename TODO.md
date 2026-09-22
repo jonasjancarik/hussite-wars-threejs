@@ -60,6 +60,10 @@ changelogu. Tento soubor obsahuje pouze otevřené úkoly a záměrně odložen�
 - [ ] **Nechat kresbu vody plynule navazovat přes sousední hexy.**
   - Preferovat souvislý motiv v souřadnicích mapy nebo hranově kompatibilní varianty.
   - Ověřit velké vodní plochy, členité pobřeží a několik úrovní přiblížení.
+- [ ] **Zlepšit 3D podobu tvrze Nekmíř.**
+  - V současném záběru působí jako nesourodá sestava jednotlivých staveb; přednostně
+    upravit stávající generátor a jejich rozmístění.
+  - Výsledek ověřit přímo ve scénáři Nekmíř, v herním pohledu a měřítku.
 - [ ] **Ověřit s dalšími hráči srozumitelnost piktogramů jednotek.**
   - Měnit je pouze tehdy, pokud hráči opakovaně nerozeznají druh vojska nebo velitele;
     zachovat čitelnost v malém měřítku.
