@@ -137,6 +137,14 @@
 #map-options strong { padding:4px 3px 7px; font-size:0.85rem; }
 #map-options button { width:100%; text-align:left; }
 #map-options button[aria-pressed=true]::after { content:'✓'; float:right; }
+.map-options-focus { display:grid; gap:5px; padding:7px 3px 3px; border-top:1px solid var(--field-rule); }
+.map-options-focus[hidden] { display:none; }
+.map-options-check, .map-options-range-label { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:0.8rem; }
+.map-options-check { justify-content:flex-start; cursor:pointer; }
+.map-options-range-label output { font-variant-numeric:tabular-nums; }
+.map-options-focus input[type="range"] { width:100%; margin:0; accent-color:var(--field-ink); }
+.map-options-focus select { width:100%; box-sizing:border-box; font:inherit; font-size:0.8rem; }
+.map-options-focus small { color:var(--field-ink-muted, #655d50); font-size:0.7rem; line-height:1.35; }
 #map-zoom-in, #map-zoom-out { min-width: 44px; }
 #map-zoom-value { min-width: 44px; text-align: center; font-size: 0.75rem; }
 #minimap { display: none; }

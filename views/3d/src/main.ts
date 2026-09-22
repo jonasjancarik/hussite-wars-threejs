@@ -46,8 +46,10 @@ class IntegratedThreeBattle {
   private lastFrame = performance.now();
   private focusDistance = 74;
   private targetFocusDistance = 74;
+  private focusStrength = 0.04;
+  private depthOfFieldEnabled = true;
+  private closeupFocusStrength = 0.8;
   private focusPointer: { x: number; y: number } | null = null;
-  private cameraMoving = false;
   private active = true;
   private disposed = false;
   private readonly performanceTracker = new PerformanceTracker();
@@ -169,7 +171,6 @@ class IntegratedThreeBattle {
     this.cameraRig.frameScene();
     this.focusPointer = null;
     this.focusOn(this.cameraRig.controls.target.clone());
-    this.cameraMoving = true;
   }
 
   public setGridVisible(visible: boolean): void { this.overlays.setGridVisible(visible); }
@@ -177,6 +178,12 @@ class IntegratedThreeBattle {
   public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
   public setUnitLabelsVisible(visible: boolean): void { this.banners.setLabelsVisible(visible); this.scheduleFrame(); }
   public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); }
+  public setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void {
+    this.depthOfFieldEnabled = enabled;
+    this.closeupFocusStrength = THREE.MathUtils.clamp(closeupStrength, 0, 1);
+    this.pipeline.setDepthOfFieldMode(quality);
+    this.scheduleFrame();
+  }
 
   public focusHex(col: number, row: number): void {
     const center = this.terrain.layout.center(col, row);
@@ -186,7 +193,6 @@ class IntegratedThreeBattle {
     this.cameraRig.camera.position.copy(next).add(offset);
     this.cameraRig.controls.update();
     this.focusOn(next.clone());
-    this.cameraMoving = true;
   }
 
   public zoomBy(factor: number): void {
@@ -197,7 +203,6 @@ class IntegratedThreeBattle {
     offset.setLength(distance);
     this.cameraRig.camera.position.copy(this.cameraRig.controls.target).add(offset);
     this.cameraRig.controls.update();
-    this.cameraMoving = true;
     this.reportZoom();
   }
 
@@ -273,10 +278,6 @@ class IntegratedThreeBattle {
   }
 
   private installInput(): void {
-    const start = () => { this.cameraMoving = true; };
-    const end = () => { window.setTimeout(() => { if (!this.disposed) this.cameraMoving = false; }, 80); };
-    this.cameraRig.controls.addEventListener("start", start);
-    this.cameraRig.controls.addEventListener("end", end);
     this.cameraRig.controls.addEventListener("change", () => this.reportZoom());
     this.addListener(this.canvas, "contextmenu", ((event: Event) => {
       event.preventDefault(); if (this.active) this.options.onContext?.();
@@ -359,9 +360,23 @@ class IntegratedThreeBattle {
         ? this.picker.worldPointAt(this.focusPointer.x, this.focusPointer.y, this.terrain.interactiveMeshes) : null;
       this.focusOn(point ?? this.cameraRig.controls.target.clone());
     }
-    if (!controlsChanged && this.cameraMoving) this.cameraMoving = false;
     this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, this.targetFocusDistance, focusSmoothingAlpha(delta, 180));
-    this.pipeline.setDepthOfField(!this.cameraMoving, this.focusDistance, this.cameraMoving ? 0 : 0.35);
+    const cameraDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);
+    const zoomSpan = Math.max(this.openingDistance - this.cameraRig.controls.minDistance, 0.001);
+    const zoomProgress = THREE.MathUtils.clamp((this.openingDistance - cameraDistance) / zoomSpan, 0, 1);
+    const closeupBlend = THREE.MathUtils.smoothstep(zoomProgress, 0.55, 0.95);
+    const targetFocusStrength = THREE.MathUtils.lerp(
+      0.04,
+      THREE.MathUtils.clamp(this.closeupFocusStrength, 0, 1),
+      closeupBlend,
+    );
+    const desiredFocusStrength = this.depthOfFieldEnabled ? targetFocusStrength : 0;
+    this.focusStrength = THREE.MathUtils.lerp(
+      this.focusStrength,
+      desiredFocusStrength,
+      focusSmoothingAlpha(delta, this.focusStrength < desiredFocusStrength ? 220 : 140),
+    );
+    this.pipeline.setDepthOfField(this.depthOfFieldEnabled, this.focusDistance, this.focusStrength);
     this.sky.update(this.cameraRig.camera);
     if (this.reducedMotion.matches) this.units.casualties.clear();
     else this.units.casualties.advance(delta, this.options.snapshot.paused);

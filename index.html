@@ -263,6 +263,26 @@
                     <button id="btn-unit-labels" type="button" aria-pressed="true" data-i18n="touch.unitLabels" data-i18n-title="touch.unitLabelsHint" hidden>Značky oddílů</button>
                     <button id="btn-unit-details" type="button" aria-pressed="false" data-i18n="touch.unitDetails" data-i18n-title="touch.unitDetailsHint" hidden>Detaily oddílů</button>
                     <button id="btn-separate-banners" type="button" aria-pressed="false" data-i18n="touch.separateBanners" data-i18n-title="touch.separateBannersHint" hidden>Rozestoupit značky</button>
+                    <div id="focus-controls" class="map-options-focus" hidden>
+                        <label class="map-options-check" for="depth-of-field-enabled">
+                            <input id="depth-of-field-enabled" type="checkbox" checked>
+                            <span data-i18n="touch.depthOfField">Depth of field</span>
+                        </label>
+                        <label class="map-options-range-label" for="focus-closeup-strength">
+                            <span data-i18n="touch.closeupFocus">Close-up focus</span>
+                            <output id="focus-closeup-value" for="focus-closeup-strength">80%</output>
+                        </label>
+                        <input id="focus-closeup-strength" type="range" min="0" max="100" step="1" value="80" data-i18n-aria-label="touch.closeupFocus">
+                        <label class="map-options-range-label" for="focus-quality">
+                            <span data-i18n="touch.focusQuality">Focus quality</span>
+                        </label>
+                        <select id="focus-quality">
+                            <option value="compact" data-i18n="touch.focusQualityCompact">Compact</option>
+                            <option value="bokeh" data-i18n="touch.focusQualityBokeh">Photo bokeh</option>
+                        </select>
+                        <small data-i18n="touch.closeupFocusHint">Subtle at strategic zoom, stronger when inspecting models up close.</small>
+                        <small data-i18n="touch.focusQualityHint">Photo bokeh uses more rendering power.</small>
+                    </div>
                 </div>
             </div>
             <section id="battle-order" class="hidden" aria-labelledby="order-title">

@@ -32929,6 +32929,12 @@ var kV = (e, t, n) => new EV(GB(e), GB(t), n), AV = /*@__PURE__*/ new Gk(), jV, 
 		let r = Uu(e ? n : 0);
 		this.focusDistanceNode.value = Math.max(.1, t), this.focusRangeNode.value = r.focusRange, this.blurDirectionNode.value = e ? r.blurRadiusPixels / 8 : 0, this.bokehScaleNode.value = e ? r.blurRadiusPixels : 0;
 	}
+	setDepthOfFieldMode(e) {
+		this.quality.depthOfFieldMode !== e && (this.quality = {
+			...this.quality,
+			depthOfFieldMode: e
+		}, this.rebuildGraph(), this.resize(this.width, this.height));
+	}
 	setEffectsEnabled(e) {
 		this.quality = {
 			...this.quality,
@@ -34326,8 +34332,10 @@ var oU = class {
 	lastFrame = performance.now();
 	focusDistance = 74;
 	targetFocusDistance = 74;
+	focusStrength = .04;
+	depthOfFieldEnabled = !0;
+	closeupFocusStrength = .8;
 	focusPointer = null;
-	cameraMoving = !1;
 	active = !0;
 	disposed = !1;
 	performanceTracker = new Cp();
@@ -34390,7 +34398,7 @@ var oU = class {
 		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.lastFrame = performance.now(), this.performanceTracker.skipNextFrameInterval(), this.resize(), this.scheduleFrame()));
 	}
 	frameScene() {
-		this.cameraRig.frameScene(), this.focusPointer = null, this.focusOn(this.cameraRig.controls.target.clone()), this.cameraMoving = !0;
+		this.cameraRig.frameScene(), this.focusPointer = null, this.focusOn(this.cameraRig.controls.target.clone());
 	}
 	setGridVisible(e) {
 		this.overlays.setGridVisible(e);
@@ -34407,14 +34415,17 @@ var oU = class {
 	setEffectsEnabled(e) {
 		this.pipeline.setEffectsEnabled(e);
 	}
+	setFocusSettings(e, t, n) {
+		this.depthOfFieldEnabled = e, this.closeupFocusStrength = D.clamp(t, 0, 1), this.pipeline.setDepthOfFieldMode(n), this.scheduleFrame();
+	}
 	focusHex(e, t) {
 		let n = this.terrain.layout.center(e, t), r = new k(n.x, this.terrain.heightAt(n.x, n.z), n.z), i = this.cameraRig.camera.position.clone().sub(this.cameraRig.controls.target);
-		this.cameraRig.controls.target.copy(r), this.cameraRig.camera.position.copy(r).add(i), this.cameraRig.controls.update(), this.focusOn(r.clone()), this.cameraMoving = !0;
+		this.cameraRig.controls.target.copy(r), this.cameraRig.camera.position.copy(r).add(i), this.cameraRig.controls.update(), this.focusOn(r.clone());
 	}
 	zoomBy(e) {
 		if (this.disposed || !Number.isFinite(e) || e <= 0) return;
 		let t = this.cameraRig.camera.position.clone().sub(this.cameraRig.controls.target), n = D.clamp(t.length() / e, this.cameraRig.controls.minDistance, this.cameraRig.controls.maxDistance);
-		t.setLength(n), this.cameraRig.camera.position.copy(this.cameraRig.controls.target).add(t), this.cameraRig.controls.update(), this.cameraMoving = !0, this.reportZoom();
+		t.setLength(n), this.cameraRig.camera.position.copy(this.cameraRig.controls.target).add(t), this.cameraRig.controls.update(), this.reportZoom();
 	}
 	resize() {
 		if (this.disposed) return;
@@ -34489,13 +34500,7 @@ var oU = class {
 		}), this.listenerCount += 1;
 	}
 	installInput() {
-		this.cameraRig.controls.addEventListener("start", () => {
-			this.cameraMoving = !0;
-		}), this.cameraRig.controls.addEventListener("end", () => {
-			window.setTimeout(() => {
-				this.disposed || (this.cameraMoving = !1);
-			}, 80);
-		}), this.cameraRig.controls.addEventListener("change", () => this.reportZoom()), this.addListener(this.canvas, "contextmenu", ((e) => {
+		this.cameraRig.controls.addEventListener("change", () => this.reportZoom()), this.addListener(this.canvas, "contextmenu", ((e) => {
 			e.preventDefault(), this.active && this.options.onContext?.();
 		})), this.addListener(this.canvas, "pointerdown", ((e) => {
 			if (!this.active) return;
@@ -34553,16 +34558,18 @@ var oU = class {
 		if (this.frameRequest = null, !this.active || this.disposed) return;
 		let t = e - this.lastFrame, n = Math.min(64, t);
 		this.lastFrame = e, this.frameCount += 1;
-		let r = performance.now(), i = this.cameraRig.controls.update();
-		if (i) {
+		let r = performance.now();
+		if (this.cameraRig.controls.update()) {
 			let e = this.focusPointer ? this.picker.worldPointAt(this.focusPointer.x, this.focusPointer.y, this.terrain.interactiveMeshes) : null;
 			this.focusOn(e ?? this.cameraRig.controls.target.clone());
 		}
-		!i && this.cameraMoving && (this.cameraMoving = !1), this.focusDistance = D.lerp(this.focusDistance, this.targetFocusDistance, Hu(n, 180)), this.pipeline.setDepthOfField(!this.cameraMoving, this.focusDistance, this.cameraMoving ? 0 : .35), this.sky.update(this.cameraRig.camera), this.reducedMotion.matches ? this.units.casualties.clear() : this.units.casualties.advance(n, this.options.snapshot.paused), this.units.advance(n, this.options.snapshot.paused || this.reducedMotion.matches), this.banners.position(this.cameraRig.camera, (e) => this.units.markerPosition(e)), this.lighting.updateShadows();
-		let a = performance.now();
+		this.focusDistance = D.lerp(this.focusDistance, this.targetFocusDistance, Hu(n, 180));
+		let i = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), a = Math.max(this.openingDistance - this.cameraRig.controls.minDistance, .001), o = D.clamp((this.openingDistance - i) / a, 0, 1), s = D.smoothstep(o, .55, .95), c = D.lerp(.04, D.clamp(this.closeupFocusStrength, 0, 1), s), l = this.depthOfFieldEnabled ? c : 0;
+		this.focusStrength = D.lerp(this.focusStrength, l, Hu(n, this.focusStrength < l ? 220 : 140)), this.pipeline.setDepthOfField(this.depthOfFieldEnabled, this.focusDistance, this.focusStrength), this.sky.update(this.cameraRig.camera), this.reducedMotion.matches ? this.units.casualties.clear() : this.units.casualties.advance(n, this.options.snapshot.paused), this.units.advance(n, this.options.snapshot.paused || this.reducedMotion.matches), this.banners.position(this.cameraRig.camera, (e) => this.units.markerPosition(e)), this.lighting.updateShadows();
+		let u = performance.now();
 		this.pipeline.renderer.info.reset(), this.pipeline.render();
-		let o = performance.now();
-		this.lastRendererCounters = Sp(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, a - r, o - a, o - r) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
+		let d = performance.now();
+		this.lastRendererCounters = Sp(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, u - r, d - u, d - r) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.scheduleFrame();
 	};
 };
 window.HussiteBattle3D = { create: (e, t) => sU.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));

@@ -131,6 +131,13 @@ export class BattleRenderPipeline {
     this.bokehScaleNode.value = enabled ? profile.blurRadiusPixels : 0;
   }
 
+  public setDepthOfFieldMode(mode: "compact" | "bokeh"): void {
+    if (this.quality.depthOfFieldMode === mode) return;
+    this.quality = { ...this.quality, depthOfFieldMode: mode };
+    this.rebuildGraph();
+    this.resize(this.width, this.height);
+  }
+
   public setEffectsEnabled(enabled: boolean): void {
     this.quality = { ...this.quality, effects: enabled };
     this.gradeAmountNode.value = enabled ? 1 : 0;

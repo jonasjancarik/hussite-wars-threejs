@@ -20,6 +20,9 @@ class ThreeBattleMapView {
         this.bannerAvoidance = false;
         this.bannerDetails = false;
         this.unitLabelsVisible = true;
+        this.depthOfFieldEnabled = true;
+        this.closeupFocusStrength = 0.8;
+        this.focusQuality = 'compact';
     }
 
     async mount() {
@@ -94,6 +97,7 @@ class ThreeBattleMapView {
                 throw new Error('battle view was destroyed while 3D was loading');
             }
             this.renderer = renderer;
+            renderer.setFocusSettings(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
             renderer.setGridVisible(this.gridVisible);
             renderer.setBannerAvoidance?.(this.bannerAvoidance);
             renderer.setBannerDetails?.(this.bannerDetails);
@@ -299,6 +303,12 @@ class ThreeBattleMapView {
     setBannerAvoidance(enabled) { this.bannerAvoidance = enabled; this.renderer?.setBannerAvoidance?.(enabled); }
     setBannerDetails(enabled) { this.bannerDetails = enabled; this.renderer?.setBannerDetails?.(enabled); }
     setUnitLabelsVisible(visible) { this.unitLabelsVisible = visible; this.renderer?.setUnitLabelsVisible?.(visible); }
+    setFocusSettings(enabled, closeupStrength, quality = this.focusQuality) {
+        this.depthOfFieldEnabled = Boolean(enabled);
+        this.closeupFocusStrength = Math.max(0, Math.min(1, Number(closeupStrength) || 0));
+        this.focusQuality = quality === 'bokeh' ? 'bokeh' : 'compact';
+        this.renderer?.setFocusSettings(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
+    }
     diagnostics() { return this.renderer?.diagnostics() ?? null; }
     resetDiagnostics() { this.renderer?.resetDiagnostics(); }
     setPageVisible(visible) { this.pageVisible = visible; this.renderer?.setActive(this.active && visible); }

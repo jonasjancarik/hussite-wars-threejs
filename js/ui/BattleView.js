@@ -16,7 +16,8 @@ class BattleView {
         this.threeMap = typeof ThreeBattleMapView !== 'undefined' ? new ThreeBattleMapView(this) : {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
-            setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setPageVisible() {}
+            setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setFocusSettings() {}, setPageVisible() {},
+            depthOfFieldEnabled: true, closeupFocusStrength: 0.8, focusQuality: 'compact'
         };
         this.viewMode = '2d';
         this.hexGridVisible = true;
@@ -170,6 +171,26 @@ class BattleView {
             this.threeMap.setUnitLabelsVisible?.(this.unitLabelsVisible);
             this.updateViewModeControls();
         }, { signal });
+        document.getElementById('depth-of-field-enabled')?.addEventListener('change', event => {
+            this.threeMap.setFocusSettings?.(
+                event.currentTarget.checked,
+                this.threeMap.closeupFocusStrength,
+                this.threeMap.focusQuality
+            );
+            this.updateViewModeControls();
+        }, { signal });
+        document.getElementById('focus-closeup-strength')?.addEventListener('input', event => {
+            const strength = Number(event.currentTarget.value) / 100;
+            document.getElementById('focus-closeup-value').value = `${event.currentTarget.value}%`;
+            this.threeMap.setFocusSettings?.(this.threeMap.depthOfFieldEnabled, strength, this.threeMap.focusQuality);
+        }, { signal });
+        document.getElementById('focus-quality')?.addEventListener('change', event => {
+            this.threeMap.setFocusSettings?.(
+                this.threeMap.depthOfFieldEnabled,
+                this.threeMap.closeupFocusStrength,
+                event.currentTarget.value
+            );
+        }, { signal });
         this.updateViewModeControls();
     }
 
@@ -247,6 +268,22 @@ class BattleView {
             labelsButton.classList.toggle('active', Boolean(this.unitLabelsVisible));
         }
         if (bannerButton) bannerButton.disabled = !this.unitLabelsVisible;
+        const focusControls = document.getElementById('focus-controls');
+        if (focusControls) focusControls.hidden = this.viewMode !== '3d';
+        const focusEnabled = document.getElementById('depth-of-field-enabled');
+        if (focusEnabled) focusEnabled.checked = this.threeMap.depthOfFieldEnabled !== false;
+        const closeupStrength = document.getElementById('focus-closeup-strength');
+        if (closeupStrength) {
+            closeupStrength.disabled = this.threeMap.depthOfFieldEnabled === false;
+            closeupStrength.value = String(Math.round((this.threeMap.closeupFocusStrength ?? 0.8) * 100));
+        }
+        const closeupValue = document.getElementById('focus-closeup-value');
+        if (closeupValue && closeupStrength) closeupValue.value = `${closeupStrength.value}%`;
+        const focusQuality = document.getElementById('focus-quality');
+        if (focusQuality) {
+            focusQuality.value = this.threeMap.focusQuality ?? 'compact';
+            focusQuality.disabled = this.threeMap.depthOfFieldEnabled === false;
+        }
     }
 
     resize() {
