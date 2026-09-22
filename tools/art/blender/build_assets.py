@@ -31,7 +31,25 @@ MODEL_DIRECTORIES = {
     'broadleaf_olive': 'vegetation', 'broadleaf_gold': 'vegetation',
     'cypress': 'vegetation',
     'stakes': 'props', 'banner': 'props', 'bridge': 'props',
+    'rock_foundation': 'props', 'field_shelter': 'buildings', 'low_stone_wall': 'props',
+    'firing_platform': 'props', 'bridge_approach': 'props', 'ford_stones': 'props',
+    'reeds': 'vegetation', 'bank_rocks': 'props',
 }
+ENVIRONMENT_MODELS = {
+    'rock_foundation', 'field_shelter', 'low_stone_wall', 'firing_platform',
+    'bridge_approach', 'ford_stones', 'reeds', 'bank_rocks',
+}
+CAMP_MODELS = {
+    'tent_small', 'tent_pavilion', 'baggage_cart', 'camp_barrels', 'camp_sacks',
+    'camp_fire', 'ammunition_pile', 'haystack', 'timber_pile', 'discarded_equipment', 'wagon_abandoned',
+}
+MODEL_DIRECTORIES.update({name: 'props' for name in CAMP_MODELS})
+ENVIRONMENT_MODELS.update(CAMP_MODELS)
+SETTLEMENT_MODELS = {'house_timber', 'house_plaster', 'townhouse', 'barn', 'shed',
+                     'fence_gate', 'monastery_wing', 'church_gothic', 'well'}
+MODEL_DIRECTORIES.update({name: 'props' if name in ('fence_gate', 'well') else 'buildings'
+                         for name in SETTLEMENT_MODELS})
+ENVIRONMENT_MODELS.update(SETTLEMENT_MODELS)
 for path in (MODELS, PREVIEWS, SOURCE):
     path.mkdir(parents=True, exist_ok=True)
 random.seed(1419)
@@ -399,7 +417,7 @@ def preview(name, objects):
     camera.rotation_euler=(center-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.type='ORTHO'
     camera.data.ortho_scale=size*1.30
-    if name.startswith('fort_') or name == 'timber_palisade':
+    if name.startswith('fort_') or name == 'timber_palisade' or name in ENVIRONMENT_MODELS:
         # Wide corner modules need room for their diagonal camera projection.
         view = camera.rotation_euler.to_matrix().transposed()
         projected = [sum(abs(view[row][axis])*(hi-lo)[axis] for axis in range(3)) for row in (0, 1)]
@@ -450,6 +468,12 @@ from support_units import builders as support_builders
 BUILDERS.update(support_builders(globals()))
 from fortification_batch import builders as fortification_builders
 BUILDERS.update(fortification_builders(globals()))
+from landscape_batch import builders as landscape_builders
+BUILDERS.update(landscape_builders(globals()))
+from camp_batch import builders as camp_builders
+BUILDERS.update(camp_builders(globals()))
+from settlement_batch import builders as settlement_builders
+BUILDERS.update(settlement_builders(globals()))
 
 
 def main():
@@ -485,7 +509,7 @@ def main():
         bpy.ops.object.select_all(action='DESELECT')
         for obj in objects: obj.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
-        if name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer', 'infantry_dismounted', 'infantry_halberd', 'infantry_polearm', 'infantry_handgun', 'infantry_shield', 'war_wagon', 'field_blockhouse', 'timber_palisade') or name.startswith(('artillery_', 'cavalry_', 'civilian_', 'commander_', 'fort_')):
+        if name in ENVIRONMENT_MODELS or name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer', 'infantry_dismounted', 'infantry_halberd', 'infantry_polearm', 'infantry_handgun', 'infantry_shield', 'war_wagon', 'field_blockhouse', 'timber_palisade') or name.startswith(('artillery_', 'cavalry_', 'civilian_', 'commander_', 'fort_')):
             # Static exports use world-space vertices so runtime AABBs describe
             # the actual feet, not rotated material-batch bounding boxes.
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
@@ -501,7 +525,7 @@ def main():
             'mesh_objects':sum(o.type=='MESH' for o in objects),
             'editable_source_mesh_objects':source_mesh_count,
             'triangles':triangle_count,
-            'forward_axis':'+Z' if name.startswith('fort_') or name=='timber_palisade' else '+X',
+            'forward_axis':'+Z' if name.startswith('fort_') or name=='timber_palisade' or name in CAMP_MODELS or name in SETTLEMENT_MODELS else '+X',
             'up_axis':'Y','animations':['HorseWalk'] if name=='cavalry' else [],
             'animation_seconds':2.0 if name=='cavalry' else None,
         }

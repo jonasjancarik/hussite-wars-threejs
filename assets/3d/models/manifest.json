@@ -840,5 +840,565 @@
     "up_axis": "Y",
     "animations": [],
     "animation_seconds": null
+  },
+  "rock_foundation": {
+    "file": "props/rock_foundation.glb",
+    "dimensions_blender_xyz_m": [
+      6.0,
+      4.0,
+      1.5
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.0,
+      1.5,
+      4.0
+    ],
+    "mesh_objects": 1,
+    "editable_source_mesh_objects": 1,
+    "triangles": 80,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "field_shelter": {
+    "file": "buildings/field_shelter.glb",
+    "dimensions_blender_xyz_m": [
+      2.95,
+      1.933,
+      2.06
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.95,
+      2.06,
+      1.933
+    ],
+    "mesh_objects": 4,
+    "editable_source_mesh_objects": 36,
+    "triangles": 1160,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "low_stone_wall": {
+    "file": "props/low_stone_wall.glb",
+    "dimensions_blender_xyz_m": [
+      3.98,
+      0.715,
+      1.1
+    ],
+    "dimensions_gltf_xyz_m": [
+      3.98,
+      1.1,
+      0.715
+    ],
+    "mesh_objects": 3,
+    "editable_source_mesh_objects": 47,
+    "triangles": 2144,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "firing_platform": {
+    "file": "props/firing_platform.glb",
+    "dimensions_blender_xyz_m": [
+      3.0,
+      2.2,
+      0.4
+    ],
+    "dimensions_gltf_xyz_m": [
+      3.0,
+      0.4,
+      2.2
+    ],
+    "mesh_objects": 5,
+    "editable_source_mesh_objects": 22,
+    "triangles": 716,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "bridge_approach": {
+    "file": "props/bridge_approach.glb",
+    "dimensions_blender_xyz_m": [
+      3.0,
+      2.7,
+      0.559
+    ],
+    "dimensions_gltf_xyz_m": [
+      3.0,
+      0.559,
+      2.7
+    ],
+    "mesh_objects": 6,
+    "editable_source_mesh_objects": 25,
+    "triangles": 720,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "ford_stones": {
+    "file": "props/ford_stones.glb",
+    "dimensions_blender_xyz_m": [
+      2.525,
+      0.987,
+      0.21
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.525,
+      0.21,
+      0.987
+    ],
+    "mesh_objects": 1,
+    "editable_source_mesh_objects": 5,
+    "triangles": 230,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "reeds": {
+    "file": "vegetation/reeds.glb",
+    "dimensions_blender_xyz_m": [
+      1.222,
+      0.863,
+      1.271
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.222,
+      1.271,
+      0.863
+    ],
+    "mesh_objects": 4,
+    "editable_source_mesh_objects": 30,
+    "triangles": 496,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "bank_rocks": {
+    "file": "props/bank_rocks.glb",
+    "dimensions_blender_xyz_m": [
+      1.891,
+      1.101,
+      0.65
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.891,
+      0.65,
+      1.101
+    ],
+    "mesh_objects": 1,
+    "editable_source_mesh_objects": 4,
+    "triangles": 184,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "tent_small": {
+    "file": "props/tent_small.glb",
+    "dimensions_blender_xyz_m": [
+      3.08,
+      2.927,
+      1.986
+    ],
+    "dimensions_gltf_xyz_m": [
+      3.08,
+      1.986,
+      2.927
+    ],
+    "mesh_objects": 5,
+    "editable_source_mesh_objects": 25,
+    "triangles": 412,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "tent_pavilion": {
+    "file": "props/tent_pavilion.glb",
+    "dimensions_blender_xyz_m": [
+      4.295,
+      4.274,
+      3.226
+    ],
+    "dimensions_gltf_xyz_m": [
+      4.295,
+      3.226,
+      4.274
+    ],
+    "mesh_objects": 6,
+    "editable_source_mesh_objects": 51,
+    "triangles": 740,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "baggage_cart": {
+    "file": "props/baggage_cart.glb",
+    "dimensions_blender_xyz_m": [
+      1.68,
+      2.782,
+      1.296
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.68,
+      1.296,
+      2.782
+    ],
+    "mesh_objects": 7,
+    "editable_source_mesh_objects": 71,
+    "triangles": 2860,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "camp_barrels": {
+    "file": "props/camp_barrels.glb",
+    "dimensions_blender_xyz_m": [
+      1.25,
+      1.149,
+      0.763
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.25,
+      0.763,
+      1.149
+    ],
+    "mesh_objects": 3,
+    "editable_source_mesh_objects": 31,
+    "triangles": 1732,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "camp_sacks": {
+    "file": "props/camp_sacks.glb",
+    "dimensions_blender_xyz_m": [
+      1.084,
+      1.028,
+      0.725
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.084,
+      0.725,
+      1.028
+    ],
+    "mesh_objects": 4,
+    "editable_source_mesh_objects": 15,
+    "triangles": 724,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "camp_fire": {
+    "file": "props/camp_fire.glb",
+    "dimensions_blender_xyz_m": [
+      1.286,
+      1.306,
+      1.376
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.286,
+      1.376,
+      1.306
+    ],
+    "mesh_objects": 4,
+    "editable_source_mesh_objects": 26,
+    "triangles": 664,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "ammunition_pile": {
+    "file": "props/ammunition_pile.glb",
+    "dimensions_blender_xyz_m": [
+      1.22,
+      0.952,
+      0.495
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.22,
+      0.495,
+      0.952
+    ],
+    "mesh_objects": 5,
+    "editable_source_mesh_objects": 18,
+    "triangles": 948,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "haystack": {
+    "file": "props/haystack.glb",
+    "dimensions_blender_xyz_m": [
+      1.901,
+      1.92,
+      1.87
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.901,
+      1.87,
+      1.92
+    ],
+    "mesh_objects": 3,
+    "editable_source_mesh_objects": 16,
+    "triangles": 316,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "timber_pile": {
+    "file": "props/timber_pile.glb",
+    "dimensions_blender_xyz_m": [
+      0.899,
+      1.994,
+      0.824
+    ],
+    "dimensions_gltf_xyz_m": [
+      0.899,
+      0.824,
+      1.994
+    ],
+    "mesh_objects": 3,
+    "editable_source_mesh_objects": 30,
+    "triangles": 864,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "discarded_equipment": {
+    "file": "props/discarded_equipment.glb",
+    "dimensions_blender_xyz_m": [
+      1.942,
+      1.073,
+      0.191
+    ],
+    "dimensions_gltf_xyz_m": [
+      1.942,
+      0.191,
+      1.073
+    ],
+    "mesh_objects": 5,
+    "editable_source_mesh_objects": 9,
+    "triangles": 194,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "wagon_abandoned": {
+    "file": "props/wagon_abandoned.glb",
+    "dimensions_blender_xyz_m": [
+      2.446,
+      3.98,
+      1.471
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.446,
+      1.471,
+      3.98
+    ],
+    "mesh_objects": 4,
+    "editable_source_mesh_objects": 88,
+    "triangles": 2884,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "house_timber": {
+    "file": "buildings/house_timber.glb",
+    "dimensions_blender_xyz_m": [
+      5.48,
+      4.28,
+      4.2
+    ],
+    "dimensions_gltf_xyz_m": [
+      5.48,
+      4.2,
+      4.28
+    ],
+    "mesh_objects": 8,
+    "editable_source_mesh_objects": 76,
+    "triangles": 2688,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "house_plaster": {
+    "file": "buildings/house_plaster.glb",
+    "dimensions_blender_xyz_m": [
+      5.46,
+      4.73,
+      4.91
+    ],
+    "dimensions_gltf_xyz_m": [
+      5.46,
+      4.91,
+      4.73
+    ],
+    "mesh_objects": 10,
+    "editable_source_mesh_objects": 59,
+    "triangles": 1972,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "townhouse": {
+    "file": "buildings/townhouse.glb",
+    "dimensions_blender_xyz_m": [
+      4.64,
+      5.87,
+      7.41
+    ],
+    "dimensions_gltf_xyz_m": [
+      4.64,
+      7.41,
+      5.87
+    ],
+    "mesh_objects": 10,
+    "editable_source_mesh_objects": 110,
+    "triangles": 3236,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "barn": {
+    "file": "buildings/barn.glb",
+    "dimensions_blender_xyz_m": [
+      6.48,
+      4.66,
+      4.9
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.48,
+      4.9,
+      4.66
+    ],
+    "mesh_objects": 6,
+    "editable_source_mesh_objects": 79,
+    "triangles": 2720,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "shed": {
+    "file": "buildings/shed.glb",
+    "dimensions_blender_xyz_m": [
+      3.32,
+      2.42,
+      2.68
+    ],
+    "dimensions_gltf_xyz_m": [
+      3.32,
+      2.68,
+      2.42
+    ],
+    "mesh_objects": 4,
+    "editable_source_mesh_objects": 34,
+    "triangles": 1304,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "fence_gate": {
+    "file": "props/fence_gate.glb",
+    "dimensions_blender_xyz_m": [
+      6.0,
+      1.815,
+      1.38
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.0,
+      1.38,
+      1.815
+    ],
+    "mesh_objects": 4,
+    "editable_source_mesh_objects": 35,
+    "triangles": 1396,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "monastery_wing": {
+    "file": "buildings/monastery_wing.glb",
+    "dimensions_blender_xyz_m": [
+      8.42,
+      4.215,
+      5.57
+    ],
+    "dimensions_gltf_xyz_m": [
+      8.42,
+      5.57,
+      4.215
+    ],
+    "mesh_objects": 10,
+    "editable_source_mesh_objects": 51,
+    "triangles": 1284,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "church_gothic": {
+    "file": "buildings/church_gothic.glb",
+    "dimensions_blender_xyz_m": [
+      7.52,
+      11.67,
+      9.8
+    ],
+    "dimensions_gltf_xyz_m": [
+      7.52,
+      9.8,
+      11.67
+    ],
+    "mesh_objects": 12,
+    "editable_source_mesh_objects": 75,
+    "triangles": 1772,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
+  },
+  "well": {
+    "file": "props/well.glb",
+    "dimensions_blender_xyz_m": [
+      2.595,
+      2.01,
+      3.04
+    ],
+    "dimensions_gltf_xyz_m": [
+      2.595,
+      3.04,
+      2.01
+    ],
+    "mesh_objects": 8,
+    "editable_source_mesh_objects": 26,
+    "triangles": 844,
+    "forward_axis": "+Z",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
   }
 }

@@ -1,6 +1,6 @@
 # Battlefield asset kit
 
-The kit uses matte olive, ochre, tan, plaster, dark iron and red roof materials, following the supplied battlefield reference. All geometry and materials are generated locally; there are no external textures or downloaded models.
+The shared kit uses matte olive, ochre, tan, plaster, dark iron and red roof materials in a low-poly battlefield style. All geometry and materials are generated locally; there are no external textures or downloaded models. Settlement, camp and landscape pieces are typological scenery, not surveyed reconstructions of named sites.
 
 ## Rebuild
 
@@ -27,7 +27,7 @@ On this macOS machine Blender must run with native graphics-device access. Its M
 - `tools/art/blender/previews/<asset>.png` is the rendered close-up.
 - `assets/3d/models/manifest.json` records measured dimensions, triangles, export mesh count, source part count, and animations.
 
-One unit represents approximately one metre. Blender uses Z-up and exports glTF with Y-up. The original kit and units face +X where facing matters. The fortification kit uses Blender −Y / glTF +Z as its front, with straight wall and palisade sections along X; its corner module has an elbow origin, as documented in the references. Place a scene at ground height with an identity rotation; there is no hidden global scale. Houses and vegetation are centred in their footprint; soldiers and the horse are centred around their body; the wagon is centred on its deck, so its towing poles extend further toward +X. All meshes are opaque, with small standalone banner surfaces using glTF's default double-sided material behaviour.
+One unit represents approximately one metre. Blender uses Z-up and exports glTF with Y-up. The original kit and units face +X where facing matters. The fortification kit uses Blender −Y / glTF +Z as its front, with straight wall and palisade sections along X; its corner module has an elbow origin, as documented in the references. Houses and camp pieces also present their fronts along Blender −Y / glTF +Z. Functional landscape pieces—the field shelter, firing platform and bridge approach—face Blender +X and retain glTF +X. Place a scene at ground height with an identity rotation; there is no hidden global scale. Houses and vegetation are centred in their footprint; soldiers and the horse are centred around their body; the wagon is centred on its deck, so its towing poles extend further toward +X. All meshes are opaque, with small standalone banner surfaces using glTF's default double-sided material behaviour.
 
 `cavalry.glb` contains one `HorseWalk` clip: 49 source frames at 24 fps, exactly two seconds between the first and last sample. Repeat the clip when walking. The four legs have staggered upper-leg swing and knee flexion, the body rises and pitches slightly, and the tail sways. Animation is an in-place object-transform loop, not skeletal animation or root motion; the game moves the cavalry entity. The rider travels with the horse. No attack, death, or transition clips are included.
 
@@ -67,6 +67,9 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | `stakes` | Three crossed timber obstacles linked by a rail |
 | `banner` | Red cloth and pale Hussite chalice on wooden crossbar |
 | `bridge` | Slightly arched plank deck, timber girders, posts and rails |
+| Settlement batch (9) | `house_timber`, `house_plaster`, `townhouse`, `barn`, `shed`, `monastery_wing`, `church_gothic`, `fence_gate`, `well` |
+| Camp batch (11) | `tent_small`, `tent_pavilion`, `baggage_cart`, `camp_barrels`, `camp_sacks`, `camp_fire`, `ammunition_pile`, `haystack`, `timber_pile`, `discarded_equipment`, `wagon_abandoned` |
+| Landscape batch (8) | `rock_foundation`, `field_shelter`, `low_stone_wall`, `firing_platform`, `bridge_approach`, `ford_stones`, `reeds`, `bank_rocks` |
 
 The village and troop detailing is intended for a stylized battlefield, not a reconstruction of a particular historical location. Small faces and hands remain deliberately simplified. There are no colliders or LOD meshes; the application supplies placement, movement, collisions, and distance visibility. Asset heights in the manifest include raised weapons, flags, roof crosses, or tree tips.
 
@@ -78,7 +81,17 @@ The static cavalry variants are defined in `cavalry_batch.py`. They reuse the or
 
 `people_batch.py` supplies the final civilian, commander and dismounted figures. `support_units.py` supplies the fieldwork, neutral standard and refreshed older unit models. Their references are in [people-references.md](people-references.md) and [support-unit-references.md](support-unit-references.md). Render the final roles with `render_unit_completion.py`. The full roster is deliberately mapped in `views/3d/src/unit-recipes.ts`; unknown types fail instead of silently becoming polearm infantry.
 
-`fortification_batch.py` supplies the first environment batch. [Fortification references](fortification-references.md) records the KCD II screenshots, NPÚ historical checks, intentional simplifications and module connections. `render_fortification_batch.py` renders the exported kit to `previews/fortification-batch.png`. The game composes illustrative manor sites at Nekmíř and Malešov through `views/3d/src/fortification-scenery.ts`; these do not alter the rules or claim to reconstruct the named sites. Other castles and towns still require authored placement.
+`fortification_batch.py` supplies the reusable wall, gate, tower, manor and palisade pieces. [Fortification references](fortification-references.md) records the KCD II screenshots, NPÚ historical checks, intentional simplifications and module connections. `render_fortification_batch.py` renders the exported kit to `previews/fortification-batch.png`. The environment batches are defined in `settlement_batch.py`, `camp_batch.py` and `landscape_batch.py`; their corresponding `*-references.md` files document sources and interpretation limits, and `render_settlement_batch.py`, `render_camp_batch.py` and `render_landscape_batch.py` render the exported GLBs. `build_assets.py` registers the builders and writes the export manifest; logical model paths are maintained in `assets/3d/model-paths.json`. Their pieces are used by `views/3d/src/environment-plan.ts` and `generated-scenery.ts` across the battle maps; this is a stylized typological kit, not an exact reconstruction of each named place. The Gothic church uses a 1.45 vertical display factor to keep its landmark silhouette readable within its compact footprint.
+
+Run an individual same-scale gallery from the repository root (the scripts read exported GLBs and do not regenerate or change them):
+
+```sh
+/opt/homebrew/bin/blender --background --factory-startup --python-exit-code 1 --python tools/art/blender/render_settlement_batch.py
+/opt/homebrew/bin/blender --background --factory-startup --python-exit-code 1 --python tools/art/blender/render_camp_batch.py
+/opt/homebrew/bin/blender --background --factory-startup --python-exit-code 1 --python tools/art/blender/render_landscape_batch.py
+```
+
+Each renderer can write a private preview by appending `-- --output /tmp/<batch>-batch.png`. The checked-in gallery renders are under `tools/art/blender/previews/`; the matching `*-references.md` documents include the sources and interpretation limits. Build scripts generate source `.blend` files, exports and manifest entries; render scripts only inspect the GLBs.
 
 ## Verification
 
