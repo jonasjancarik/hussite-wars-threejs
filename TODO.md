@@ -137,7 +137,8 @@ rozhodnutí o rozsahu.
 ### Prezentace a platforma
 
 - [ ] Animace skupinového pochodu sepnuté vozové linie.
-- [ ] Další hudba, zvuky jednotek a střídmé efekty počasí či boje.
+- [ ] Další hudba, zvuky jednotek a střídmé efekty počasí či boje; počasí by
+  mělo reagovat na události bitvy (např. „Padá hustá mlha! Viditelnost klesá.“).
 - [ ] PWA manifest a offline režim přes Service Worker.
 - [ ] Volitelná anonymní telemetrie průchodů scénáři; základní návštěvnost už měří
   Cloudflare Web Analytics.
