@@ -34392,10 +34392,10 @@ var eU = class {
 			if (!this.active) return;
 			let t = e, n = this.gestures.get(t.pointerId);
 			if (this.gestures.delete(t.pointerId), !n || !gp(n, t) || t.button !== 0) return;
-			let r = this.picker.unitAt(t.clientX, t.clientY, this.units.hitTargets), i = r ? this.units.unitIdFromHit(r) : null, a = i == null ? null : this.options.snapshot.units.find((e) => e.id === i), o = this.banners.unitAt(t.clientX, t.clientY) ?? a ?? this.picker.hexAt(t.clientX, t.clientY, this.terrain.interactiveMeshes);
-			o && this.options.onHex?.({
-				col: o.col,
-				row: o.row
+			let r = this.picker.hexAt(t.clientX, t.clientY, this.terrain.interactiveMeshes);
+			r && this.options.onHex?.({
+				col: r.col,
+				row: r.row
 			});
 		}), this.addListener(this.canvas, "pointercancel", ((e) => {
 			this.gestures.delete(e.pointerId);
@@ -34413,7 +34413,7 @@ var eU = class {
 		if (t && hp(t, e), this.gestures.size > 0 || e.pointerType !== "mouse") return;
 		let n = this.picker.worldPointAt(e.clientX, e.clientY, this.terrain.interactiveMeshes);
 		n && this.focusOn(n);
-		let r = this.banners.unitAt(e.clientX, e.clientY) ?? this.picker.hexAt(e.clientX, e.clientY, this.terrain.interactiveMeshes);
+		let r = this.picker.hexAt(e.clientX, e.clientY, this.terrain.interactiveMeshes);
 		this.overlays.setHovered(r), this.options.onHover?.(r ? {
 			...r,
 			clientX: e.clientX,

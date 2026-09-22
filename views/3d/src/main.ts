@@ -294,11 +294,11 @@ class IntegratedThreeBattle {
       const gesture = this.gestures.get(event.pointerId);
       this.gestures.delete(event.pointerId);
       if (!gesture || !pointerGestureIsClick(gesture, event) || event.button !== 0) return;
-      const unitHit = this.picker.unitAt(event.clientX, event.clientY, this.units.hitTargets);
-      const unitId = unitHit ? this.units.unitIdFromHit(unitHit) : null;
-      const unit = unitId == null ? null : this.options.snapshot.units.find(item => item.id === unitId);
-      const coord = this.banners.unitAt(event.clientX, event.clientY)
-        ?? unit ?? this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
+      // The tactical overlay and the action target must use the identical
+      // surface. Unit models and their screen-space labels are presentation,
+      // not alternate click targets, so their footprint cannot steal a click
+      // from an adjacent highlighted hex.
+      const coord = this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
       if (coord) this.options.onHex?.({ col: coord.col, row: coord.row });
     };
     this.addListener(this.canvas, "pointerup", finish as EventListener);
@@ -319,8 +319,7 @@ class IntegratedThreeBattle {
     if (this.gestures.size > 0 || event.pointerType !== "mouse") return;
     const focusPoint = this.picker.worldPointAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
     if (focusPoint) this.focusOn(focusPoint);
-    const coord = this.banners.unitAt(event.clientX, event.clientY)
-      ?? this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
+    const coord = this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
     this.overlays.setHovered(coord);
     this.options.onHover?.(coord ? { ...coord, clientX: event.clientX, clientY: event.clientY } : null);
   }
@@ -366,6 +365,7 @@ class IntegratedThreeBattle {
     this.sky.update(this.cameraRig.camera);
     if (this.reducedMotion.matches) this.units.casualties.clear();
     else this.units.casualties.advance(delta, this.options.snapshot.paused);
+    this.units.advance(delta, this.options.snapshot.paused || this.reducedMotion.matches);
     this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id));
     this.lighting.updateShadows();
     const rendererStartedAt = performance.now();
