@@ -1,6 +1,8 @@
 import { planFortifications } from "./fortification-scenery.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { TerrainCell } from "./terrain-regions.ts";
+import { planSettlement, type SettlementPlan } from "./settlement-plan.ts";
+import { settlementAuthoring } from "./settlement-authoring.ts";
 
 export interface EnvironmentPlacement {
   id: string;
@@ -29,6 +31,7 @@ export interface EnvironmentPlan {
   frozenRiver: boolean;
   raisedCells: Map<string, number>;
   bridge?: { x: number; z: number };
+  settlement?: SettlementPlan;
 }
 
 /** Art profiles cover the current campaign. They never change semantic terrain or rules. */
@@ -237,6 +240,17 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     if ((cell.col+cell.row)%5 === 0) near("field_shelter",cell,.62,1.15);
   }
   if (scenario !== "sudomere_1420") {
+    const art = scenario ? settlementAuthoring(scenario) : undefined;
+    if (art && scenario) {
+      const settlement = planSettlement(scenario, tiles, layout, occupied.map(obstacle => ({ ...obstacle,
+        entrance: plan.placements.some(p => p.model === "fort_gatehouse" && p.x === obstacle.x && p.z === obstacle.z),
+      })), art);
+      plan.settlement = settlement;
+      settlement.cells.forEach(cell => plan.replacedCells.add(cell));
+      for (const placement of settlement.placements) {
+        add(placement.model, placement.x, placement.z, placement.scale, placement.rotation, placement);
+      }
+    }
     for (const cell of tiles) {
       if (plan.replacedCells.has(key(cell))) continue;
       if (cell.terrain === "town") {
@@ -261,7 +275,7 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
       }
     }
     // Rural accents are modest and deterministic; no villages are invented on empty plains.
-    for (const cell of select(cell => ["town","church"].includes(cell.terrain)).filter((_,i)=>i%9===0)) {
+    for (const cell of select(cell => ["town","church"].includes(cell.terrain) && !plan.settlement?.cells.has(key(cell))).filter((_,i)=>i%9===0)) {
       near("shed",cell,.48,.95); near("haystack",cell,.65,.8);
     }
   }

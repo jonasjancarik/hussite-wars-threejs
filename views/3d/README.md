@@ -45,3 +45,22 @@ Generator v2 adds the shared visual baseline before scenario authoring: world-sc
 All 59 roster definitions have explicit recipes in `src/unit-recipes.ts`. Models use faction material variants and preserve the shared markers, fog, losses and wagon-link presentation. Civilians use a mixed adult/woman/child group; all commanders use one of three role bases and their own neutral standard. Both wagon types are rendered as wagons, and `POLNI_OPEVNENI` is a fixed blockhouse/garrison.
 
 The engine's explicit `dismounted` flag chooses foot figures and is included in saves and renderer snapshots. The presenter rebuilds same-ID appearances when this flag or faction changes. Slower movement or a lost charge bonus does not imply dismounting. Existing saves without the field remain valid and default to mounted. The all-roster asset test loads actual GLBs and checks each unit's geometry against its recipe-specific picking volume.
+
+## Settlement generation and authoring
+
+Read when refining towns or editing `assets/3d/scenarios/settlement-authoring.json`.
+
+Německý Brod and Žatec use the same settlement generator. It groups connected town hexes, connects road access through each group (or starts from an existing gate), and places houses facing the resulting street. Smaller sheds share their house's orientation. Packed ground makes the street visible. These streets are scenery: town hexes keep their original movement and combat rules. Other battles retain their existing environment arrangements.
+
+The planner uses measured model footprints, keeps at least 1.3 world units clear around gameplay hex centres, reserves the street corridor, and avoids existing environment placements and non-town terrain. Placement is deterministic. It omits a building when no candidate fits; it does not force one into every hex. The renderer retains its existing terrain seating, slope rejection and explored-cell fog handling.
+
+Edit the committed JSON to refine the generated result, then run `npm --prefix views/3d run build` and reload the campaign. A profile contains:
+
+- `version: 1`, a deterministic integer `seed`, and `sourceTerrainHash` matching the complete gameplay map. A stale hash ignores the saved adjustments and reports a warning while keeping generated scenery.
+- `edits`: a generated building's `id`, its `cell: [col, row]`, and optional `offset: [x, z]`, `model`, `rotation` in radians, or `scale`. Offsets are world units relative to that hex centre. Supply `remove: true` to omit it. House identities are `<scenario>:settlement:<col>,<row>:house`; sheds end in `:shed`. Identities do not depend on placement order or model choice.
+- `openAreas`: named circular areas with `cell`, optional `offset`, and `radius`. Generated buildings relocate or are omitted to leave them clear.
+- `landmarks`: a unique `id`, `cell`, optional `offset`, a catalogued settlement `model`, `rotation`, and optional `scale`. These reserve their space before generated buildings. Pinning a generated house uses an edit with explicit position and orientation.
+
+Německý Brod demonstrates a townhouse replacement, a pinned well, an open bridge-side square and removal of a shed beside the approach. Žatec uses the same generator without manual adjustments. These are illustrative compositions, not surveyed historical reconstructions. The JSON is the authoring source; the generated bundle is not edited directly.
+
+Malformed profile data fails validation. Unsafe edits report their identity in `EnvironmentPlan.settlement.issues` and the browser console; a rejected edit leaves the procedural slot available. Inspect these diagnostics after editing instead of assuming every requested placement was accepted. Available model dimensions, origins and front directions are in `src/settlement-models.ts`, checked against the shared GLB manifest. Full terrain-aware placement is still conservative: a model may be omitted at rendering time if its footprint crosses too steep a slope. There is no visual editor in this pass.

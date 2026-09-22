@@ -4,7 +4,7 @@ const MANIFESTS: Record<string, string> = {
   sudomere_1420: "sudomer-landscape.json",
 };
 
-export function terrainHash(tiles: BattleSnapshot["tiles"]): string {
+export function terrainHash(tiles: Readonly<BattleSnapshot["tiles"]>): string {
   const input = [...tiles].sort((a, b) => a.col - b.col || a.row - b.row)
     .map(tile => `${tile.col},${tile.row}:${tile.terrain};`).join("");
   let hash = 2166136261;

@@ -5,6 +5,7 @@ import { createTerrainRegions, isFieldTerrain, type TerrainRegions } from "./ter
 import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
+import { nearestOnStreet } from "./settlement-plan.ts";
 
 const COLORS: Record<string, number> = {
   plains: 0xdfe6b3, forest: 0xb3c68f, hills: 0xcfce98, water: 0x78aaa4,
@@ -41,6 +42,7 @@ export class GeneratedTerrain implements BattleTerrain {
     this.field = createTerrainRegions({ cols, rows, tiles: snapshot.tiles, scenario: snapshot.scenario ?? "battle",
       seed: snapshot.seed ?? 1, hexRadius: this.layout.radius, coreCoverage: 0.76, boundaryNoise: 0.75 });
     this.environmentPlan = planEnvironment(snapshot.scenario, this.field.tiles);
+    for (const issue of this.environmentPlan.settlement?.issues ?? []) console.warn(`[Hussite 3D] ${issue}`);
     this.topography = new TopographyPlan(this.field,this.environmentPlan.raisedCells);
     this.bounds = this.layout.bounds();
     this.group.name = `Generated ${snapshot.scenario ?? "battle"} landscape`;
@@ -196,16 +198,27 @@ export class GeneratedTerrain implements BattleTerrain {
           total += weight;
         }
         if (total === 0) color.setHex(COLORS.plains!);
+        const streets = this.environmentPlan.settlement?.streets;
+        if (streets?.length && (weights.town ?? 0) > 0) {
+          const nearest = nearestOnStreet({ x, z }, streets);
+          if (nearest) {
+            const distance = Math.hypot(x-nearest.x, z-nearest.z);
+            const worn = 1 - THREE.MathUtils.smoothstep(distance, .42, 1.05);
+            sampleColor.setHex(this.environmentPlan.winter ? 0xa49a86 : 0xbca183);
+            color.lerp(sampleColor, worn * (weights.town ?? 0) * .8);
+          }
+        }
         const grain = 0.96 + 0.04 * Math.sin(x * 0.19 + z * 0.13);
         colors.push(color.r * grain, color.g * grain, color.b * grain);
       }
     }
-    const materialIndices: number[][] = [[], [], [], [], []];
+    const materialIndices: number[][] = [[], [], [], [], [], []];
     const addTriangle = (a: number, b: number, c: number): void => {
       const x = (positions[a * 3]! + positions[b * 3]! + positions[c * 3]!) / 3;
       const z = (positions[a * 3 + 2]! + positions[b * 3 + 2]! + positions[c * 3 + 2]!) / 3;
       const terrain = this.field.classify(x, z) ?? "plains";
-      materialIndices[surfaceMaterialIndex(terrain)]!.push(a, b, c);
+      const index = terrain === "town" && this.environmentPlan.settlement ? 5 : surfaceMaterialIndex(terrain);
+      materialIndices[index]!.push(a, b, c);
     };
     for (let iz = 0; iz < nz - 1; iz += 1) {
       for (let ix = 0; ix < nx - 1; ix += 1) {
@@ -227,6 +240,9 @@ export class GeneratedTerrain implements BattleTerrain {
     });
     geometry.computeVertexNormals();
     const surface = createGeneratedSurfaceMaterials(assetBase, this.environmentPlan.winter);
+    if (this.environmentPlan.settlement) surface.materials.push(new THREE.MeshStandardMaterial({
+      name: "Settlement packed ground", color: 0xffffff, vertexColors: true, roughness: 1, side: THREE.DoubleSide,
+    }));
     this.surfaceTextures.push(...surface.textures);
     const mesh = new THREE.Mesh(geometry, surface.materials);
     mesh.name = `Continuous terrain regions: ${this.field.terrainTypes.join(", ")}`;

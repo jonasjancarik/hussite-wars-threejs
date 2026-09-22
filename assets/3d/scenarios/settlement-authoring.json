@@ -1,0 +1,68 @@
+{
+  "nemecky_brod_1422": {
+    "version": 1,
+    "sourceTerrainHash": "fnv1a32:72defbfd",
+    "seed": 1422,
+    "edits": [
+      {
+        "id": "nemecky_brod_1422:settlement:9,9:house",
+        "cell": [
+          9,
+          9
+        ],
+        "offset": [
+          -3.9,
+          0
+        ],
+        "model": "townhouse",
+        "rotation": -1.5707963267948966,
+        "scale": 0.4
+      },
+      {
+        "id": "nemecky_brod_1422:settlement:8,11:shed",
+        "cell": [
+          8,
+          11
+        ],
+        "remove": true
+      }
+    ],
+    "openAreas": [
+      {
+        "id": "bridge-square",
+        "cell": [
+          7,
+          11
+        ],
+        "offset": [
+          0,
+          0
+        ],
+        "radius": 2.8
+      }
+    ],
+    "landmarks": [
+      {
+        "id": "brod-town-well",
+        "cell": [
+          7,
+          9
+        ],
+        "offset": [
+          3.9,
+          -2.7
+        ],
+        "model": "well",
+        "rotation": 0
+      }
+    ]
+  },
+  "zatec_1421": {
+    "version": 1,
+    "sourceTerrainHash": "fnv1a32:09f784c0",
+    "seed": 1421,
+    "edits": [],
+    "openAreas": [],
+    "landmarks": []
+  }
+}

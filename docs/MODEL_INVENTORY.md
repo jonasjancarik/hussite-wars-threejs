@@ -85,6 +85,8 @@ These are optional future variants, not a commitment to implement new gameplay s
 
 ### Environment baseline
 
+Německý Brod and Žatec now arrange their existing settlement models around generated streets through `views/3d/src/settlement-plan.ts`. Saved adjustments in `assets/3d/scenarios/settlement-authoring.json` preserve a townhouse replacement, well and bridge-side open space at Brod; Žatec demonstrates the same generator without manual edits. No new models are required. See the [settlement authoring workflow](../views/3d/README.md#settlement-generation-and-authoring) for placement identities, clearance rules and regeneration.
+
 The renderer generates terrain, water and meadow geometry. Sudoměř retains its complete authored scenery manifest, including grass/stubble, small stone field enclosures and flowers; the other 17 battles now receive deterministic scenario placements through `views/3d/src/environment-plan.ts` and `generated-scenery.ts`. This baseline adds 28 shared GLBs: nine settlement pieces, eleven camp pieces and eight landscape pieces. Together with explicit recipes for all 59 unit definitions and the existing seven-piece fortification kit, the shared library has 78 GLBs; six battle/benchmark experiments remain in the experiment directory (84 total).
 
 | Battle | Environment baseline |
