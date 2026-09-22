@@ -46,16 +46,18 @@ export class TopographyPlan {
   private readonly layout: HexLayout;
   private readonly elevations = new Map<string, number>();
 
-  public constructor(field: TerrainRegions) {
+  public constructor(field: TerrainRegions, heightOverrides: ReadonlyMap<string, number> = new Map()) {
     this.field = field;
     this.layout = new HexLayout(field.cols, field.rows, field.hexRadius);
-    const high = field.tiles.filter(isHigh);
-    const low = field.tiles.filter(cell => !isHigh(cell) && !isSlope(cell));
+    const elevated = (cell: TerrainCell): boolean => isHigh(cell) || (heightOverrides.get(this.key(cell.col,cell.row)) ?? 0) >= HIGH_ELEVATION;
+    const high = field.tiles.filter(elevated);
+    const low = field.tiles.filter(cell => !elevated(cell) && !isSlope(cell));
     const highDistance = distanceFrom(this.layout, high);
     const lowDistance = distanceFrom(this.layout, low);
     for (const cell of field.tiles) {
       const key = this.key(cell.col, cell.row);
-      if (isHigh(cell)) this.elevations.set(key, HIGH_ELEVATION);
+      if (heightOverrides.has(key)) this.elevations.set(key,heightOverrides.get(key)!);
+      else if (isHigh(cell)) this.elevations.set(key, HIGH_ELEVATION);
       else if (!isSlope(cell)) this.elevations.set(key, semanticLowElevation(cell));
       else {
         const toHigh = highDistance.get(key) ?? Infinity;
@@ -70,7 +72,7 @@ export class TopographyPlan {
     // vertical wall. Wet cells retain their semantic depression.
     const dryRamps = new Map<string, number>();
     for (const cell of field.tiles) {
-      if (isHigh(cell) || isSlope(cell) || isWet(cell) || isWater(cell)) continue;
+      if (elevated(cell) || isSlope(cell) || isWet(cell) || isWater(cell)) continue;
       const highestNeighbour = Math.max(0, ...this.layout.neighbours(cell)
         .map(neighbour => this.cellElevation(neighbour.col, neighbour.row)));
       if (highestNeighbour > 1.5) dryRamps.set(this.key(cell.col, cell.row), Math.min(1.8, highestNeighbour * 0.30));

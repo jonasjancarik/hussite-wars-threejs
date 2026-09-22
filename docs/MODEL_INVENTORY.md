@@ -1,4 +1,4 @@
-# Model inventory and remaining needs
+# Model inventory and optional refinements
 
 Read when planning 3D assets, faction appearance, or scenery for another battle.
 
@@ -21,15 +21,15 @@ KCD II is set in **1403**, shortly before this game's **1419–1437** campaign (
 
 ## Current coverage
 
-The basic unit set is complete: **all 59 unit definitions have explicit 3D recipes**, including the 27 commanders, both wagon types, mixed civilian groups and the fixed fieldwork garrison. Models use shared families rather than one unique mesh per definition. There are **56 GLB files** across the shared library and retained experimental variants.
+The basic unit set is complete: **all 59 unit definitions have explicit 3D recipes**, including the 27 commanders, both wagon types, mixed civilian groups and the fixed fieldwork garrison. Models use shared families rather than one unique mesh per definition. The environment baseline is also complete across all 18 battles: Sudoměř keeps its authored scenery, and the other 17 use scenario-specific placements from `environment-plan.ts` and `generated-scenery.ts`. There are **78 shared GLBs and six retained experimental variants (84 total)**.
 
 The completed batches cover flails, crossbows, pavises, spears, archers, three artillery families and crew, light/scout/heavy cavalry, dismounted knights, civilians, three commander bases, halberdiers, a blockhouse with garrison, and a neutral commander standard. Older handgun, sword/shield and wagon models now support faction colours. Unit rules and scenario rosters are unchanged; the existing explicit dismount state is now displayed and preserved in saves.
 
-[Infantry references](../tools/art/blender/infantry-references.md), [artillery references](../tools/art/blender/artillery-references.md), [cavalry references](../tools/art/blender/cavalry-references.md), [remaining figures](../tools/art/blender/people-references.md), and [fieldwork/support references](../tools/art/blender/support-unit-references.md) record the visual sources and interpretation limits. The remaining work below concerns environment kits, individual character details, researched heraldry and optional pose/equipment variation.
+[Infantry references](../tools/art/blender/infantry-references.md), [artillery references](../tools/art/blender/artillery-references.md), [cavalry references](../tools/art/blender/cavalry-references.md), [remaining figures](../tools/art/blender/people-references.md), [fieldwork/support references](../tools/art/blender/support-unit-references.md), and the settlement, camp and landscape references linked below record visual sources and interpretation limits. Remaining work is optional refinement, not missing baseline coverage.
 
 ### Available model files
 
-Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `benchmark/` variants remain under `experiments/sudomer-diorama/assets/models/`; they are available experimental exports, not production mappings. Shared logical IDs are resolved by `assets/3d/model-paths.json`.
+Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `benchmark/` variants remain under `experiments/sudomer-diorama/assets/models/`; they are available experimental exports, not production mappings. Shared logical IDs are resolved by `assets/3d/model-paths.json`, and measured export data is in `assets/3d/models/manifest.json`.
 
 | Files | Count | What we have / limits |
 | --- | ---: | --- |
@@ -55,6 +55,9 @@ Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `b
 | `buildings/field_blockhouse.glb` | 1 | Fixed timber/stone fieldwork with open firing bay and two visible crossbow defenders. |
 | `buildings/church.glb`, `buildings/farmhouse.glb`, `props/bridge.glb`, `props/stakes.glb` | 4 | Generic church, house, timber bridge and crossed timber obstacle. |
 | `buildings/fort_wall.glb`, `fort_wall_corner.glb`, `fort_gatehouse.glb`, `fort_tower_square.glb`, `fort_tower_round.glb`, `fort_manor.glb`; `props/timber_palisade.glb` | 7 | First reusable fortification kit: two wall modules, an open gatehouse, two roofed towers, a residential keep and a palisade. Composed manor scenery replaces the four farmhouses at Nekmíř and Malešov. The corner wall is available for later assemblies. |
+| `buildings/house_timber.glb`, `house_plaster.glb`, `townhouse.glb`, `barn.glb`, `shed.glb`, `monastery_wing.glb`, `church_gothic.glb`; `props/fence_gate.glb`, `well.glb` | 9 | Settlement and landmark kit with timber/plaster cottages, town house, barn, shed, monastery wing, a Gothic church silhouette and small rural structures. |
+| `props/tent_small.glb`, `tent_pavilion.glb`, `baggage_cart.glb`, `camp_barrels.glb`, `camp_sacks.glb`, `camp_fire.glb`, `ammunition_pile.glb`, `haystack.glb`, `timber_pile.glb`, `discarded_equipment.glb`, `wagon_abandoned.glb` | 11 | Camp and rural props used for siege positions and narrative retreat states; abandoned equipment and wagon appear only from their configured battle rounds. |
+| `buildings/field_shelter.glb`; `props/rock_foundation.glb`, `low_stone_wall.glb`, `firing_platform.glb`, `bridge_approach.glb`, `ford_stones.glb`, `bank_rocks.glb`; `vegetation/reeds.glb` | 8 | Terrain-following fieldwork, castle footing, bridge and ford approaches, shoreline rocks and wetland vegetation. |
 | `vegetation/broadleaf_olive.glb`, `vegetation/broadleaf_gold.glb`, `vegetation/cypress.glb` | 3 | Original stylized vegetation. |
 | `vegetation/sudomer/tree-a.glb`, `vegetation/sudomer/tree-b.glb`, `vegetation/sudomer/tree-c.glb`, `vegetation/sudomer/shrub.glb` | 4 | Separate Sudoměř vegetation set. |
 | `vegetation/procedural-worlds/pw_deciduous_01.glb`, `vegetation/procedural-worlds/pw_deciduous_02.glb`, `vegetation/procedural-worlds/pw_deciduous_03.glb`, `vegetation/procedural-worlds/pw_shrub_01.glb` | 4 | Additional vegetation; generated battle scenery currently selects deciduous 02. |
@@ -80,13 +83,36 @@ Later, discrete poses could make gameplay states easier to read while preserving
 
 These are optional future variants, not a commitment to implement new gameplay states. Reuse bodies and equipment where practical; a pose change need not be animated. Prioritise recognisable unit types and side colours first, then add poses where they communicate an actual gameplay state.
 
-### Existing scenery that is not a model file
+### Environment baseline
 
-The renderer already generates terrain, water and meadow geometry. Authored Sudoměř adds grass/stubble, small stone field enclosures and flowers procedurally. Do not commission replacement GLBs just because those objects are absent from the model directory.
+The renderer generates terrain, water and meadow geometry. Sudoměř retains its complete authored scenery manifest, including grass/stubble, small stone field enclosures and flowers; the other 17 battles now receive deterministic scenario placements through `views/3d/src/environment-plan.ts` and `generated-scenery.ts`. This baseline adds 28 shared GLBs: nine settlement pieces, eleven camp pieces and eight landscape pieces. Together with explicit recipes for all 59 unit definitions and the existing seven-piece fortification kit, the shared library has 78 GLBs; six battle/benchmark experiments remain in the experiment directory (84 total).
 
-Only Sudoměř has a complete authored scenario-art manifest registered. Other scenarios use terrain-derived scenery: forest → tree, town → farmhouse, church → church, trenches → stakes. Nekmíř and Malešov additionally have small composed manor sites at their existing four labelled town hexes. These use the shared fortification kit, with open hex centres and breaks in the perimeter; the renderer does not introduce collision, movement costs or new defences. Each piece follows the existing explored-cell fog rule. If the expected town cells change, placement falls back to ordinary terrain scenery.
+| Battle | Environment baseline |
+| --- | --- |
+| Živohošť 1419 | Vltava ford stones and bank rocks; no wagon fort is introduced. |
+| Nekmíř 1419 | Retained illustrative manor composition, with haystack and timber pile rural details. |
+| Sudoměř 1420 | Complete authored pond, muddy basin, embankment and wagon-line scenery remains in the retained reference map. |
+| Vítkov 1420 | Three earthwork runs shape the ridge neck, with a low wall, field shelter and timber pile. |
+| Vyšehrad 1420 | Fortified hill complex with wall/gate perimeter, church and keep landmarks, and a camp. |
+| Žatec 1421 | Town walls, gates, towers and houses; abandoned camp props appear from round 6. |
+| Kutná Hora 1421 | Walled town and winter-bare trees; night lighting begins at round 3. |
+| Německý Brod 1422 | Walled town, winter terrain, bridge approaches and a frozen-river surface state. |
+| Most 1421 | Hněvín hilltop castle, town walls and a monastery composition. |
+| Ústí 1426 | Town houses and gate placed at the planned approach. |
+| Tachov 1427 | Town perimeter and an initial retreat camp. |
+| Nisa 1428 | Town wall/gate perimeter, a Gothic church and varied suburb houses. |
+| Domažlice 1431 | Two camps; abandoned wagon, equipment and crewless gun details appear from round 4. |
+| Plzeň 1433–34 | Walled siege city, Gothic church, camps and terrain-deformed trenches around the gun positions. |
+| Lipany 1434 | Village houses and barns with haystacks beside the opposing wagon lines. |
+| Sion 1437 | Rocky castle core and bailey, three defensive earthwork banks and two siege camps. |
+| Hořice 1423 | Rural barns and timber details complement the existing hill, town and church terrain. |
+| Malešov 1424 | Retained illustrative manor composition with ford stones and bank rocks. |
 
-The manor compositions are illustrative, not archaeological reconstructions. Their roof forms, timber framing, rubble masonry and stairs use [recorded KCD II screenshots and NPÚ references](../tools/art/blender/fortification-references.md). Other labelled castles, fortified cities and monasteries still need deliberate placement and site research; a generic building on a town tile does not complete them.
+Walls and buildings use local stone footings; earth banks and ditches deform the terrain. Castle-core cells at Hněvín/Most, Sion and Vyšehrad receive visual elevation overrides to keep generic town terrain from flattening their hilltops. These visual changes do not change terrain semantics or rules. Small field structures are skipped on slopes too steep for safe placement. Placed scenery follows per-hex explored fog visibility. Brod's broken-ice marks are cosmetic game state: only breaks witnessed by the player are recorded, those marks remain on explored cells, and they do not affect movement, combat or drowning. Unknown and custom maps still receive generic town, church and shoreline scenery derived from their terrain.
+
+These are compressed, stylized diorama compositions, not exact surveyed or archaeological reconstructions. [Fortification references](../tools/art/blender/fortification-references.md), [settlement references](../tools/art/blender/settlement-references.md), [camp references](../tools/art/blender/camp-references.md) and [landscape references](../tools/art/blender/landscape-references.md) record source images and interpretation limits, including KCD II references, the Plzeň parish history and warning about its modern 19th-century spire, and NPÚ/Archaeological Atlas material for Sion and earlier fortifications.
+
+Site interpretation also uses the [City of Most history](https://www.mesto-most.cz/hrad-hnevin/d-4413), which distinguishes the demolished medieval castle from the later lookout reconstruction, the [study of Hussite-era Vyšehrad](https://staletapraha.cz/pdfs/pha/1984/01/12.pdf), and the [Archaeological Atlas Sion plan](https://www.archeologickyatlas.cz/cs/lokace/chlistovice_kh_hrad_sion). The compositions use medieval wall, tower and residential forms; they do not copy modern bastions or claim surveyed layouts.
 
 ## Unit coverage and optional variants
 
@@ -131,61 +157,29 @@ Proposed art scheme, not a claim about historical uniforms:
 
 Use a small number of shared meshes with interchangeable weapons, shields, headgear, cloth materials and flag designs. The presenter clones and caches tagged materials per appearance variant, preserving the original prototype. Extend that convention to future models; `clone(true)` alone shares materials and must not be used to recolour both armies accidentally.
 
-## Battle surroundings and distinctive props
+## Environment batches
 
-These are candidates derived from current map labels, terrain and battle lore. They are not verified reconstructions of medieval architecture. Generic kits can establish a readable scene; named landmarks require period references before detailed modelling. Modern castle/church appearances should not be copied unquestioningly.
-
-| Scenario | Main scenery need | Available foundation / remaining gap |
+| Batch | Pieces | Generator and references |
 | --- | --- | --- |
-| Živohošť 1419 | Červenka hill, Vltava ford, pilgrim procession | Terrain/trees and civilian models exist; ford treatment remains environment work. Lore explicitly excludes a wagon fort here. |
-| Nekmíř 1419 | Small fortified manor at Nekmíř, road and wagon position | Generic manor, gate, square tower, walls and palisade now placed at the labelled site. Exact medieval architecture and battlefield layout remain uncertain. |
-| Sudoměř 1420 | Pond, drained muddy basin, narrow embankment, wagon line | Strongest existing authored coverage. Civilian and dismounted assets are available; consider optional reeds/pond-edge details and authored civilian scenery; no castle needed for the central scene. |
-| Vítkov 1420 | Narrow ridge, timber blockhouses and defensive wall | Terrain and the fixed blockhouse/garrison unit exist; site-specific fieldwork composition remains environment work. Prague skyline could be distant context, not a substitute for the ridge defences. |
-| Vyšehrad 1420 | Fortress, Vltava/Botič, Pankrác plain, Podolí slope, siege lines | Wall/tower/gate kit now available; still needs a researched fortress composition and earthworks. |
-| Žatec 1421 | Fortified town on promontory, Ohře, western attack front | Town wall/gate/tower kit, dense houses and besiegers' camp. Optional camp-fire state from scenario events. |
-| Kutná Hora 1421 | Town, Kaňk hill, roads and breakout route | Town kit and winter/night scene treatment. Cattle are optional tradition-related scenery, not a required combat unit. |
-| Německý Brod 1422 | Town, Sázava crossing, bridge and ice | Timber bridge exists but generic scenery does not automatically place it at this crossing. Add crossing placement and readable intact/broken-ice surface states. |
-| Most 1421 | Hněvín castle, town, monastery | Fortification parts available, but hilltop castle assembly and monastery compound still missing; reuse church only as a generic starting piece. |
-| Ústí 1426 | Na Běhání slope, double wagon line, distant town | Reuse wagon/terrain; extend town backdrop. Maintain separation between the two wagon rows. |
-| Tachov 1427 | Town edge, roads toward Bavaria/Stříbro, retreating camp | Reuse terrain/houses; add gate/walls and abandoned baggage. Current battle precedes the subsequent siege. |
-| Nisa 1428 | Fortified city, suburbs, river and church | Wall/gate kit and varied suburb houses. Lore distinguishes the suburb attack from capture of the entire city. |
-| Domažlice 1431 | Baldov, town, wooded escape corridor, camp | Camp tents, baggage carts, dropped flags and abandoned guns can support the rout narrative. |
-| Plzeň 1433–34 | City walls, St Bartholomew landmark, Mže, siege trenches/camp | Town kit, period-appropriate church variant, gun positions and camp. Camel is an optional lore prop, not a unit or necessary objective. |
-| Lipany 1434 | Two wagon armies, Lipská hora, Hřiby village | Same wagon kit in clearly opposed appearances, both able to retain Hussite symbols. Barns optional village scenery; no need to stage disputed aftermath stories. |
-| Sion 1437 | Rocky castle core, bailey, three defensive banks, Vrchlice and siege positions | Castle kit plus rock base, earthen banks/ditches and artillery positions. Do not reduce all defences to a single stone wall. |
-| Hořice 1423 | Gothard hill, church, town and summit wagon position | Church, terrain, wagons and dismounted knight assets exist. The scenario’s charge-block event alone does not set the explicit dismount flag. |
-| Malešov 1424 | Valley, Bohynka brook and fortified manor | Generic residential keep, gate, round tower, walls and palisade now placed at the labelled site. Stream crossing and slope composition remain. Stone-filled rolling wagons should not be a core asset requirement: repository lore flags the story as doubtful. |
+| Settlement (9) | Timber/plaster houses, townhouse, barn, shed, monastery wing, Gothic church, fence gate and well | `tools/art/blender/settlement_batch.py`; [references](../tools/art/blender/settlement-references.md); `render_settlement_batch.py` |
+| Camp (11) | Small/pavilion tents, baggage cart, barrels, sacks, cold cooking fire, ammunition, haystack, timber pile, discarded equipment and abandoned wagon | `tools/art/blender/camp_batch.py`; [references](../tools/art/blender/camp-references.md); `render_camp_batch.py` |
+| Landscape (8) | Rock foundation, field shelter, low wall, firing platform, bridge approach, ford stones, reeds and bank rocks | `tools/art/blender/landscape_batch.py`; [references](../tools/art/blender/landscape-references.md); `render_landscape_batch.py` |
 
-## Reusable environment kit
+The batch builders register their outputs through `tools/art/blender/build_assets.py`; the shared model catalog and measured manifest are maintained at `assets/3d/model-paths.json` and `assets/3d/models/manifest.json`. Houses and camp pieces present their fronts along source Blender −Y, which exports as glTF +Z. Functional landscape pieces such as the shelter, firing bed and bridge approach face source +X and retain glTF +X.
 
-| Kit | Proposed pieces | Priority |
-| --- | --- | --- |
-| Fortifications | Straight/corner walls, open gatehouse, square/round tower, timber palisade and manor keep complete. Rock foundations and further site-specific assemblies remain. | High: first two manor sites placed; castles and fortified towns still need authored arrangements. |
-| Fieldworks | Blockhouse, low wall, earth bank, ditch, firing platform | High: Vítkov, Vyšehrad, Plzeň and Sion. Earthworks should follow terrain, not float above it. |
-| Settlement | Two or three house variants, barn, shed, fence, courtyard/gate; monastery wing | Medium: current repeated farmhouse does not distinguish city, village and monastery. |
-| Military camp | Small/large tent, baggage cart, barrels, sacks/crates, cooking fire, ammunition pile | Medium: sieges and routed armies; avoid clutter on playable positions. |
-| Crossings and wetlands | Bridge end/approach, ford stones, reeds/rushes, bank rocks, shallow water/ice states | Medium: reuse current bridge and procedural water where possible. |
-| Battlefield states | Empty/damaged wagon, abandoned gun, dropped shield/banner, smoke/fire | Later: reuse crewless wagon; most states can share intact assets. |
-| Rural accents | Haystack, timber pile, hedges, orchard variation, well, livestock | Later: add only when composition benefits. Existing trees/grass already provide substantial coverage. |
-| Lore-specific extras | Plzeň camel, optional cattle herd | Optional: clearly separate tradition and decorative context from historical/gameplay requirements. |
+## Optional refinements
 
-## Remaining work
-
-Basic unit coverage and the first seven-piece fortification kit are finished. Environment work continues with rock foundations and terrain-following earthworks, settlement variety, camps, crossings and rural props, plus authored fortifications for the remaining battles. Nekmíř and Malešov have initial manor compositions; the other sixteen scenarios have not received this kit. The current blockhouse covers the playable fieldwork unit, not a complete siege landscape.
-
-Unit refinements can follow separately: individual commander likenesses and heraldry, regional clothing/equipment, a lighter men-at-arms variant, planted pavises, braced spears, at-ease figures, loading/firing artillery crews and damaged props. These are additions to a complete baseline rather than missing representations of roster types.
+The environment and roster baselines are complete. Follow-up art can add optional unit poses and equipment variation, personal heraldry after source checks, more exact archaeological/site-specific detail, or decorative livestock and lore props such as the Plzeň camel and Kutná Hora cattle. These are refinements, not missing map or roster coverage; no gameplay unit or rule depends on them.
 
 ## Evidence and verification
 
-- Roster: `js/data/unitTypes.js`; scenario placements and labels: `js/data/scenarios.js`.
-- Narrative context and uncertainty: `js/data/battleLore.js`; historical source registry: `js/data/historicalSources.js`.
-- Actual model selection: `views/3d/src/unit-recipes.ts`; placement and appearance lifecycle: `views/3d/src/units.ts`.
-- Loading/material reuse: sibling `assets.ts`; scenery coverage: `generated-scenery.ts`, `scenery.ts`, `landscape-details.ts`; authored map registration: `scenario-art.ts`.
-- Asset descriptions and conventions: `tools/art/blender/README.md`; shared GLBs and manifests under `assets/3d/models/`; experimental exports under `experiments/sudomer-diorama/assets/models/`.
+- Roster and scenarios: `js/data/unitTypes.js`, `js/data/scenarios.js`, and `js/data/battleLore.js`.
+- Environment placement and terrain shaping: `views/3d/src/environment-plan.ts`, `generated-scenery.ts`, `scenery.ts`, `landscape-details.ts`, and `topography.ts`.
+- Ice observation and save state: `js/core/game.js`, `js/systems/SaveGameSystem.js`, and `views/3d/src/generated-scenery.ts`.
+- Unit recipes and appearance lifecycle: `views/3d/src/unit-recipes.ts` and `views/3d/src/units.ts`.
+- Asset sources, references and conventions: `tools/art/blender/README.md`; shared GLBs and manifests under `assets/3d/`; experimental exports under `experiments/sudomer-diorama/assets/models/`.
 
-The original inventory checked live source definitions, the original 27 GLB JSON headers/material/animation lists, and the renderer mappings. The first infantry batch subsequently added three models with linked visual/historical references, inspected Blender previews and an exported-model comparison in both side colours. GLB loading, dimensions, grounding, static geometry, faction material isolation and unit mappings have automated coverage; the 3D build and browser formation checks passed. The artillery batch also passed exported-geometry checks for open muzzles, ground contact and the combined gun/crew picking footprint, followed by browser rendering and selection checks. The spear/bow pair passed the same export and browser checks, including the height of the raised spear tips within the picking volume. Cavalry checks also cover static exports, four planted hooves, all eight mappings and the full geometry of two-mount formations within the selectable area. The final pass loads all 59 roster definitions with real GLBs, checks figure counts and independent standards, and exercises dismounted states. Full project checks, 90 renderer tests, the build and browser transition checks passed. Battle-specific architectural details remain research work before modelling.
-
-The first environment batch adds exported-geometry checks for the open gate passage, grounded static models and triangle budgets. Its two manor compositions are checked against the real scenario labels, with clearance around hex centres, normal explored-cell fog visibility and fallback when the expected town terrain changes. All 93 renderer tests, the build and GLB validation passed; Blender previews and both manor layouts were inspected in the integrated browser, including fog and selection beside the walls. The broader gameplay suite was not rerun for this scenery-only batch; rules and scenario data were unchanged.
+The implementation pass verified all 28 environment exports for grounded static geometry, bounds and usage; the shared export validator and 3D build passed. The full project gate passed. After the final terrain and winter refinements, the production build and all 98 renderer tests passed; twelve targeted environment/topography checks also passed during the final corrections. All 18 campaign scenes loaded to Ready with their actual rosters and no errors or warnings. Representative scenes and all three canonical galleries were visually reviewed, but not every map was inspected from every angle. Environment changes are presentation-only: they do not change battle rosters, movement, combat or drowning rules.
 
 ## Complete roster mapping
 

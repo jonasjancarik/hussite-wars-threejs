@@ -195,6 +195,9 @@ class ThreeBattleMapView {
             objectiveKind: game.hexGrid.escapeZoneKind,
             visibleHexes: [...game.visibleHexes],
             exploredHexes: [...game.exploredHexes],
+            brokenIceHexes: [...(game.brokenIceHexes || [])].filter(key =>
+                !game.fogOfWar || game.visibleHexes.has(key) || game.exploredHexes.has(key)
+            ),
             events: this.effects,
             // Zero HP can also mean leaving the field. Only the shared death
             // handler confirms a casualty; never infer death from disappearance.
@@ -226,7 +229,8 @@ class ThreeBattleMapView {
     }
 
     getTerrainSignature(snapshot) {
-        return snapshot.tiles.map(tile => `${tile.col},${tile.row}:${tile.terrain}`).join('|');
+        return `${snapshot.scenario ?? 'battle'}:${snapshot.seed ?? 1}|` +
+            snapshot.tiles.map(tile => `${tile.col},${tile.row}:${tile.terrain}`).join('|');
     }
 
     handleRendererFailure(error) {

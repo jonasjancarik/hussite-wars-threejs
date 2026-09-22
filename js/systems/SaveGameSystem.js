@@ -56,6 +56,17 @@ const SaveGameSystem = {
         for (const key of ['processedEvents', 'exploredHexes']) {
             if (data[key] !== undefined && (!Array.isArray(data[key]) || !data[key].every(item => typeof item === 'string'))) invalid();
         }
+        if (data.brokenIceHexes !== undefined) {
+            if (!Array.isArray(data.brokenIceHexes)) invalid();
+            const brokenIce = new Set();
+            for (const key of data.brokenIceHexes) {
+                const match = typeof key === 'string' && /^(0|[1-9]\d*),(0|[1-9]\d*)$/.exec(key);
+                if (!match) invalid();
+                const col = Number(match[1]), row = Number(match[2]);
+                if (!position(col, row) || brokenIce.has(key)) invalid();
+                brokenIce.add(key);
+            }
+        }
         if (data.stats !== undefined && (!object(data.stats) || !nonnegative(data.stats.totalDamage) ||
             !nonnegative(data.stats.damageTaken) || !counts(data.stats.unitKills) || !counts(data.stats.unitDamage))) invalid();
         if (data.aiStance !== undefined && (!object(data.aiStance) ||

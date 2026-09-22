@@ -28,7 +28,7 @@ function loadTexture(baseUrl: string, path: string, repeat: number): THREE.Textu
   return texture;
 }
 
-export function createGeneratedSurfaceMaterials(assetBase?: string): {
+export function createGeneratedSurfaceMaterials(assetBase?: string, winter = false): {
   materials: THREE.MeshStandardMaterial[];
   textures: THREE.Texture[];
 } {
@@ -39,7 +39,7 @@ export function createGeneratedSurfaceMaterials(assetBase?: string): {
     textures.push(result);
     return result;
   };
-  const meadowMap = texture("textures/procedural-worlds/T_ConceptBGroundCalm.webp", 1.0);
+  const meadowMap = winter ? null : texture("textures/procedural-worlds/T_ConceptBGroundCalm.webp", 1.0);
   const earthMap = texture("textures/sudomer-pond-mud.png", 1.25);
   const slopeMap = texture("textures/earth-grain.png", 2.8);
   const material = (name: SurfaceMaterialKind, map: THREE.Texture | null, roughness: number): THREE.MeshStandardMaterial => {

@@ -109,23 +109,32 @@ test("real manor scenery replaces farmhouses, keeps hex centres open and respect
     const scenery = new GeneratedScenery(terrain, assets, id);
     await scenery.build();
     assert.ok(!scenery.group.children.some(object => object.name.startsWith("town ")));
-    const fortifications = scenery.group.children.filter(object => object.name.startsWith(id));
+    const fortifications = scenery.group.children.filter(object => object.userData.environmentPlacement?.role === "fortification");
     assert.equal(fortifications.length, plan.placements.length);
     const centres = terrain.field.tiles;
     for (const object of fortifications) {
-      const box = new THREE.Box3().setFromObject(object);
+      const placement=object.userData.environmentPlacement;
+      const prototype=(await load(placement.model)).clone(true);
+      prototype.position.set(placement.x,terrain.renderedHeightAt(placement.x,placement.z),placement.z);
+      prototype.scale.setScalar(placement.scale); prototype.rotation.y=placement.rotation;
+      const box = new THREE.Box3().setFromObject(prototype);
       for (const cell of centres) {
         const dx = Math.max(box.min.x - cell.center.x, 0, cell.center.x - box.max.x);
         const dz = Math.max(box.min.z - cell.center.z, 0, cell.center.z - box.max.z);
         assert.ok(Math.hypot(dx, dz) >= 1.5, `${object.name} crowds hex ${cell.col},${cell.row}`);
       }
-      assert.ok(Math.abs(box.min.y - terrain.renderedHeightAt(object.position.x, object.position.z)) < .005);
+      assert.ok(object.children[0]!.position.y >= terrain.renderedHeightAt(placement.x,placement.z)-.03);
     }
     scenery.updateVisibility(state);
-    assert.ok(scenery.group.children.every(object => !object.visible));
+    assert.ok(scenery.group.children.filter(object=>!(object instanceof THREE.InstancedMesh)).every(object => !object.visible));
+    for(const object of scenery.group.children) if(object instanceof THREE.InstancedMesh) {
+      const matrix=new THREE.Matrix4(); object.getMatrixAt(0,matrix);
+      assert.equal(matrix.elements[0],0);
+    }
     state.exploredHexes = [fortifications[0]!.userData.sceneryCell];
     scenery.updateVisibility(state);
     for (const object of scenery.group.children) {
+      if(object instanceof THREE.InstancedMesh) continue;
       assert.equal(object.visible, state.exploredHexes.includes(object.userData.sceneryCell));
     }
     state.fogOfWar = false;

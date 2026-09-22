@@ -79,6 +79,8 @@ export interface BattleSnapshot {
   /** Visible, confirmed losses only; omission means a normal banner removal. */
   eliminatedUnitIds?: number[];
   pausedAt?: number;
+  /** Confirmed, explored ice breaks from the game; absent in older snapshots/saves. */
+  brokenIceHexes?: string[];
 }
 
 export interface TerrainSurface {

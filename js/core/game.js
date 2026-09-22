@@ -66,6 +66,7 @@ class Game {
         this.fogOfWar = true; // Zapnuto defaultně
         this.visibleHexes = new Set(); // Hexy viditelné hráčem
         this.exploredHexes = new Set(); // Hexy které hráč někdy viděl
+        this.brokenIceHexes = new Set(); // Kosmetické stopy po propadlém ledu
 
         // Morální zlom - útěk nepřátel
         this.moraleBroken = false;
@@ -125,6 +126,7 @@ class Game {
     // Inicializace nové hry (výchozí bez scénáře)
     initGame() {
         this.units = [];
+        this.brokenIceHexes = new Set();
         this.currentFaction = 'hussites';
         this.turnNumber = 1;
         this.selectedUnit = null;
@@ -222,6 +224,7 @@ class Game {
     // Inicializace hry se scénářem
     initGameWithScenario(scenario, { restoring = false } = {}) {
         this.units = [];
+        this.brokenIceHexes = new Set();
         this.currentFaction = 'hussites';
         this.turnNumber = 1;
         this.selectedUnit = null;
@@ -935,6 +938,10 @@ class Game {
         const drownChance = isHeavy ? 0.4 : 0.1; // 40% pro těžké, 10% pro lehké
 
         if (Math.random() < drownChance) {
+            const key = `${unit.col},${unit.row}`;
+            if (!this.fogOfWar || unit.faction === 'hussites' || this.visibleHexes.has(key)) {
+                this.brokenIceHexes.add(key);
+            }
             this.addLog(i18n.t('gameLog.iceBroke', {unit: unit.name}), 'combat');
             this.showEventNotification(
                 i18n.t('messages.iceBreakTitle'),
@@ -1421,6 +1428,7 @@ class Game {
                 // Mlha války
                 fogOfWar: this.fogOfWar,
                 exploredHexes: [...this.exploredHexes],
+                brokenIceHexes: [...this.brokenIceHexes],
                 savedAt: new Date().toISOString()
             };
             const raw = SaveGameSystem.write(saveData, { automatic });
@@ -1513,6 +1521,7 @@ class Game {
             this.fogOfWar = saveData.fogOfWar;
         }
         this.exploredHexes = new Set(saveData.exploredHexes || []);
+        this.brokenIceHexes = new Set(saveData.brokenIceHexes || []);
         this.visibleHexes = new Set();
 
         // Routující jednotky - stav je per-unit (isRouting), Set jen sleduje

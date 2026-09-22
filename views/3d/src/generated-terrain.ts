@@ -4,6 +4,7 @@ import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, isFieldTerrain, type TerrainRegions } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
+import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
 
 const COLORS: Record<string, number> = {
   plains: 0xdfe6b3, forest: 0xb3c68f, hills: 0xcfce98, water: 0x78aaa4,
@@ -11,6 +12,7 @@ const COLORS: Record<string, number> = {
   mud: 0xb28f78, swamp: 0x9ba589, slope: 0xc3b59b, trenches: 0xa88972,
   church: 0xcab79e, field: 0xddc47d, fields: 0xddc47d, farmland: 0xddc47d, cropland: 0xddc47d,
 };
+const FROST_COLOR = new THREE.Color(0xe2e5dc);
 
 export class GeneratedTerrain implements BattleTerrain {
   public readonly group = new THREE.Group();
@@ -19,6 +21,7 @@ export class GeneratedTerrain implements BattleTerrain {
   public readonly layout: HexLayout;
   public readonly bounds;
   public readonly topography: TopographyPlan;
+  public readonly environmentPlan: EnvironmentPlan;
   private surfaceMesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial[]>;
   private readonly surfaceTextures: THREE.Texture[] = [];
   private basePositions!: Float32Array;
@@ -37,7 +40,8 @@ export class GeneratedTerrain implements BattleTerrain {
     this.layout = new HexLayout(cols, rows);
     this.field = createTerrainRegions({ cols, rows, tiles: snapshot.tiles, scenario: snapshot.scenario ?? "battle",
       seed: snapshot.seed ?? 1, hexRadius: this.layout.radius, coreCoverage: 0.76, boundaryNoise: 0.75 });
-    this.topography = new TopographyPlan(this.field);
+    this.environmentPlan = planEnvironment(snapshot.scenario, this.field.tiles);
+    this.topography = new TopographyPlan(this.field,this.environmentPlan.raisedCells);
     this.bounds = this.layout.bounds();
     this.group.name = `Generated ${snapshot.scenario ?? "battle"} landscape`;
     this.createSurface(assetBase);
@@ -48,15 +52,16 @@ export class GeneratedTerrain implements BattleTerrain {
     const input = this.field.heightInputAt(x, z);
     const terrain = this.field.classify(x, z);
     const elevation = this.topography.elevationAt(x, z);
+    const relief = earthworkRelief(x, z, this.environmentPlan.earthworks)+bridgeRelief(x,z,this.environmentPlan.bridge);
     const weights = this.field.weightsAt(x, z);
     const waterWeight = Object.entries(weights).reduce((total, [name, weight]) =>
       total + (["water", "river", "lake"].includes(name.toLowerCase()) ? weight : 0), 0);
     if (waterWeight > 0) {
       const dryVariation = (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
-      return elevation + input.variation * THREE.MathUtils.lerp(dryVariation, 0.035, waterWeight);
+      return elevation + input.variation * THREE.MathUtils.lerp(dryVariation, 0.035, waterWeight) + relief;
     }
-    if (terrain === "road" || terrain === "road2" || terrain === "dam") return elevation + input.variation * 0.24;
-    return elevation + input.variation * (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
+    if (terrain === "road" || terrain === "road2" || terrain === "dam") return elevation + input.variation * 0.24 + relief;
+    return elevation + input.variation * (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45) + relief;
   }
 
   public updateVisibility(snapshot: BattleSnapshot): void {
@@ -178,6 +183,9 @@ export class GeneratedTerrain implements BattleTerrain {
         let total = 0;
         for (const [terrain, weight] of Object.entries(weights)) {
           sampleColor.setHex(COLORS[terrain.toLowerCase()] ?? 0x8d8b6a);
+          if (this.environmentPlan.winter && !["water", "mud", "swamp", "road", "road2", "dam", "town", "church"].includes(terrain)) {
+            sampleColor.lerp(FROST_COLOR, .79);
+          }
           if (isFieldTerrain(terrain)) {
             const furrow = 0.86 + 0.14 * (0.5 + 0.5 * Math.sin((x + z * 0.18) * 2.3));
             sampleColor.multiplyScalar(furrow);
@@ -218,7 +226,7 @@ export class GeneratedTerrain implements BattleTerrain {
       groupStart += bucket.length;
     });
     geometry.computeVertexNormals();
-    const surface = createGeneratedSurfaceMaterials(assetBase);
+    const surface = createGeneratedSurfaceMaterials(assetBase, this.environmentPlan.winter);
     this.surfaceTextures.push(...surface.textures);
     const mesh = new THREE.Mesh(geometry, surface.materials);
     mesh.name = `Continuous terrain regions: ${this.field.terrainTypes.join(", ")}`;

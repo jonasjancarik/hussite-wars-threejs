@@ -117,6 +117,9 @@ class IntegratedThreeBattle {
   public async applySnapshot(snapshot: BattleSnapshot): Promise<void> {
     if (this.disposed) return;
     this.options.snapshot = snapshot;
+    const night = snapshot.scenario === "kutna_hora_1421" && snapshot.round >= 3;
+    this.lighting.setNight(night);
+    this.sky.setNight(night);
     const revision = snapshot.revision;
     this.snapshotRevision = Math.max(this.snapshotRevision, revision);
     this.terrain.updateVisibility(snapshot);
@@ -249,6 +252,7 @@ class IntegratedThreeBattle {
     this.banners.dispose();
     this.wagonConnections.dispose();
     this.sky.dispose();
+    this.assets.dispose();
     this.terrain.dispose();
     this.pipeline.dispose();
     this.scene.clear();
