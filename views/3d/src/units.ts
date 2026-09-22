@@ -16,6 +16,9 @@ const TEAM_MATERIAL_COLORS = {
 } as const;
 const TEAM_MATERIAL_NAMES = new Set(["team_cloth", "team_paint"]);
 
+type MovementSnapshot = NonNullable<BattleSnapshot["movement"]>;
+type MovementPosition = (movement: MovementSnapshot) => { x: number; z: number } | null;
+
 export class UnitPresentation {
   public readonly group = new THREE.Group();
   public readonly casualties = new CasualtyFades();
@@ -26,13 +29,20 @@ export class UnitPresentation {
   private readonly terrain: TerrainSurface;
   private readonly layout: HexLayout;
   private readonly assets: Pick<BattleAssets, "load" | "clone">;
+  private readonly movementPosition?: MovementPosition;
   private readonly variants = new Map<string, Promise<THREE.Group>>();
   private readonly ownedMaterials = new Set<THREE.Material>();
 
-  public constructor(terrain: TerrainSurface, layout: HexLayout, assets: Pick<BattleAssets, "load" | "clone">) {
+  public constructor(
+    terrain: TerrainSurface,
+    layout: HexLayout,
+    assets: Pick<BattleAssets, "load" | "clone">,
+    movementPosition?: MovementPosition,
+  ) {
     this.terrain = terrain;
     this.layout = layout;
     this.assets = assets;
+    this.movementPosition = movementPosition;
     this.group.name = "Visible battle formations";
   }
 
@@ -51,7 +61,7 @@ export class UnitPresentation {
         this.removeVisual(id, visual);
       }
     }
-    await Promise.all(visibleUnits.map(unit => this.updateUnit(unit, revision)));
+    await Promise.all(visibleUnits.map(unit => this.updateUnit(unit, revision, snapshot)));
   }
 
   public worldPosition(unitId: number): THREE.Vector3 | null {
@@ -85,7 +95,7 @@ export class UnitPresentation {
     this.variants.clear();
   }
 
-  private async updateUnit(unit: UnitSnapshot, revision: number): Promise<void> {
+  private async updateUnit(unit: UnitSnapshot, revision: number, snapshot: BattleSnapshot): Promise<void> {
     let visual = this.visuals.get(unit.id);
     const appearance = recipeSignature(unit);
     if (visual && visual.appearance !== appearance) {
@@ -147,7 +157,12 @@ export class UnitPresentation {
       this.hitTargets.push(hit);
       this.group.add(root);
     }
-    const center = this.layout.center(unit.col, unit.row);
+    const target = this.layout.center(unit.col, unit.row);
+    const movement = snapshot.movement?.unitId === unit.id ? snapshot.movement : null;
+    const routed = movement && this.movementPosition ? this.movementPosition(movement) : null;
+    // Missing routes, including a wall-blocked callback result, settle at the
+    // authoritative target tile rather than guessing a straight path.
+    const center = routed ?? target;
     const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
     visual.root.position.set(center.x, heightAt(center.x, center.z), center.z);
     visual.root.scale.setScalar(unit.isRouting ? 0.92 : 1);

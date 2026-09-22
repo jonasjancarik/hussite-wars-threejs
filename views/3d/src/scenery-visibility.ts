@@ -25,7 +25,11 @@ export class SceneryVisibility {
   public constructor(layout: HexLayout) { this.layout = layout; }
 
   public trackObject(object: THREE.Object3D, x: number, z: number): void {
-    const key = this.keyAt(x, z);
+    this.trackCell(object, this.keyAt(x, z));
+  }
+
+  /** Track geometry whose ownership is supplied by a semantic planner. */
+  public trackCell(object: THREE.Object3D, key: string): void {
     object.userData.sceneryCell = key;
     this.objects.push({ object, key });
     this.visibilityKey = null;

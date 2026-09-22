@@ -407,6 +407,75 @@ test('klidná mapa neplánuje snímky; RAF běží jen do konce projektilu', () 
     game.destroy();
 });
 
+test('3D snapshot sdílí průběh pohybu a neprozradí skrytého nepřítele', () => {
+    const h = createHarness({ browserView: true }), game = h.newGame();
+    const enemy = game.unitFactory.createUnit('TEZKY_RYTIR', 6, 5);
+    enemy.faction = 'crusaders';
+    game.units = [enemy];
+    game.fogOfWar = true;
+    game.fogOfWarSystem.isEnemyVisible = () => true;
+    const view = game.view;
+    view.moveAnimation = {
+        unit: enemy, fromCol: 5, fromRow: 5, toCol: 6, toRow: 5,
+        fromHex: { col: 5, row: 5 }, toHex: { col: 6, row: 5 },
+        from: game.hexGrid.hexToPixel(5, 5), to: game.hexGrid.hexToPixel(6, 5),
+        elapsed: 110, lastFrameAt: Date.now(), duration: 220
+    };
+    const adapter = Object.create(h.ThreeBattleMapView.prototype);
+    Object.assign(adapter, { view, game, revision: 0, effects: [] });
+    const visible = adapter.snapshot();
+    assert.equal(visible.movement.from.col, 5);
+    assert.equal(visible.movement.from.row, 5);
+    assert.equal(visible.movement.to.col, 6);
+    assert.equal(visible.movement.to.row, 5);
+    assert.equal(visible.movement.unitId, enemy.id);
+    assert.ok(Math.abs(visible.movement.progress - 0.5) < 0.03);
+
+    game.fogOfWarSystem.isEnemyVisible = () => false;
+    const hidden = adapter.snapshot();
+    assert.equal(hidden.units.length, 0);
+    assert.equal(hidden.movement, undefined, 'movement facts for a hidden unit are redacted too');
+    game.destroy();
+});
+
+test('3D movement alone enables the shared timed RAF and pause lifecycle', async () => {
+    const h = createHarness({ browserView: true });
+    const frames = new Map(); let nextFrame = 1;
+    h.context.requestAnimationFrame = callback => { const id = nextFrame++; frames.set(id, callback); return id; };
+    h.context.cancelAnimationFrame = id => frames.delete(id);
+    const game = h.newGame();
+    const mover = game.unitFactory.createUnit('CEPNICI', 5, 5);
+    game.units = [mover];
+    game.view.viewMode = '3d';
+    game.view.animationEnabled = false;
+    game.view.threeMap.render = () => {};
+    const move = game.moveUnit(mover, 6, 5);
+    assert.equal(game.view.animationEnabled, false, '3D movement does not enable the idle 2D animation loop');
+    assert.equal(game.view.moveAnimation.duration, 220);
+    assert.equal(game.view.moveAnimation.fromHex.col, 5);
+    assert.equal(game.view.moveAnimation.fromHex.row, 5);
+    assert.equal(game.view.moveAnimation.toHex.col, 6);
+    assert.equal(game.view.moveAnimation.toHex.row, 5);
+    assert.equal(frames.size, 1);
+
+    await h.advance(100);
+    const [frameId, frame] = frames.entries().next().value;
+    frames.delete(frameId); frame();
+    const elapsed = game.view.moveAnimation.elapsed;
+    assert.ok(elapsed > 0 && elapsed < 220);
+    game.setPaused(true);
+    assert.equal(frames.size, 0);
+    await h.advance(500);
+    assert.equal(game.view.moveAnimation.elapsed, elapsed);
+    game.setPaused(false);
+    assert.equal(frames.size, 1);
+    await h.advance(120);
+    await move;
+    assert.equal(game.view.moveAnimation, null);
+    assert.equal(frames.size, 0);
+    game.destroy();
+});
+
 test('pohyb žetonu dojede před reakcí a nechá herní pozici i další rozkazy bezpečné', async () => {
     const h = createHarness({ browserView: true });
     const frames = new Map(); let nextFrame = 1;

@@ -200,6 +200,7 @@ class BattleView {
             this.threeMap.setBannerDetails?.(this.bannerDetails);
             this.threeMap.setUnitLabelsVisible?.(this.unitLabelsVisible);
             this.threeMap.mount();
+            if (this.moveAnimation) this.scheduleAnimationFrame();
             this.minimap.canvas?.classList.remove('map-open');
         } else {
             this.threeMap.unmount();
@@ -412,13 +413,15 @@ class BattleView {
     // Stavové změny volají render() přímo. Celou mapu překreslujeme v RAF
     // jen po dobu pohybu žetonu, projektilu či exploze, ne v klidné bitvě.
     scheduleAnimationFrame() {
-        if (!this.animationEnabled || this.animationLoop !== null ||
-            (this.game.hexGrid.animations.length === 0 &&
+        const threeDimensionalMove = this.viewMode === '3d' && this.moveAnimation && !this.game.actions.paused;
+        if ((!this.animationEnabled && !threeDimensionalMove) || this.animationLoop !== null ||
+            (this.animationEnabled && this.game.hexGrid.animations.length === 0 &&
                 (!this.moveAnimation || this.game.actions.paused)) || document.hidden) return;
 
         this.animationLoop = requestAnimationFrame(() => {
             this.animationLoop = null;
-            if (!this.animationEnabled || document.hidden) return;
+            const threeDimensionalMove = this.viewMode === '3d' && this.moveAnimation && !this.game.actions.paused;
+            if ((!this.animationEnabled && !threeDimensionalMove) || document.hidden) return;
             this.render();
             this.scheduleAnimationFrame();
         });
@@ -449,12 +452,16 @@ class BattleView {
         const hiddenEnemy = this.game.fogOfWar && unit.faction !== 'hussites' &&
             (!this.game.fogOfWarSystem.isHexVisible(fromCol, fromRow) ||
                 !this.game.fogOfWarSystem.isEnemyVisible(unit));
-        if (!this.animationEnabled || document.hidden || reducedMotion || hiddenEnemy ||
+        const movementViewActive = this.animationEnabled || this.viewMode === '3d';
+        if (!movementViewActive || document.hidden || reducedMotion || hiddenEnemy ||
             (this.game.currentFaction === 'crusaders' && this.game.fastForwardAI)) return true;
 
         const grid = this.game.hexGrid;
         const animation = {
-            unit, from: grid.hexToPixel(fromCol, fromRow), to: grid.hexToPixel(toCol, toRow),
+            unit,
+            fromCol, fromRow, toCol, toRow,
+            fromHex: { col: fromCol, row: fromRow }, toHex: { col: toCol, row: toRow },
+            from: grid.hexToPixel(fromCol, fromRow), to: grid.hexToPixel(toCol, toRow),
             elapsed: 0, lastFrameAt: Date.now(), duration: unit.faction === 'crusaders' ? 180 : 220
         };
         this.moveAnimation = animation;

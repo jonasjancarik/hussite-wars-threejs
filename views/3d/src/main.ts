@@ -4,6 +4,7 @@ import { createBattleCamera } from "./camera.ts";
 import { BattlefieldEffects, focusSmoothingAlpha } from "./effects.ts";
 import { GeneratedScenery } from "./generated-scenery.ts";
 import { GeneratedTerrain } from "./generated-terrain.ts";
+import { TownWallRoutes } from "./town-wall-routes.ts";
 import { createBattleLighting } from "./lighting.ts";
 import { TacticalOverlays } from "./overlays.ts";
 import { BattlePicker } from "./picking.ts";
@@ -82,7 +83,13 @@ class IntegratedThreeBattle {
     this.pipeline = new BattleRenderPipeline(canvas, this.scene, this.cameraRig.camera, {
       ambientOcclusion: true, depthOfFieldMode: "compact", effects: true, gtaoSamples: 12, maxPixelRatio: 2,
     });
-    this.units = new UnitPresentation(this.terrain, this.terrain.layout, this.assets);
+    const wallRoutes=this.terrain instanceof GeneratedTerrain && this.terrain.environmentPlan.walls.length
+      ? new TownWallRoutes(this.terrain.field.tiles,this.terrain.layout,this.terrain.environmentPlan.walls,this.terrain.environmentPlan.frozenRiver) : null;
+    this.units = new UnitPresentation(this.terrain, this.terrain.layout, this.assets, movement=>{
+      if(wallRoutes) return wallRoutes.position(movement.from,movement.to,movement.progress);
+      const from=this.terrain.layout.center(movement.from.col,movement.from.row),to=this.terrain.layout.center(movement.to.col,movement.to.row);
+      return {x:from.x+(to.x-from.x)*movement.progress,z:from.z+(to.z-from.z)*movement.progress};
+    });
     this.banners = new UnitBanners(canvas, coord => this.options.onHex?.(coord));
     this.wagonConnections = new WagonConnections(this.terrain, this.terrain.layout);
     this.overlays = new TacticalOverlays(this.terrain, this.terrain.layout);

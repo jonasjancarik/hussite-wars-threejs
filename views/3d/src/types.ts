@@ -47,6 +47,14 @@ export interface CosmeticEvent extends HexCoord {
 }
 
 export interface BattleSnapshot {
+  /** Eased visual movement for a single visible unit; rules still own its target tile. */
+  movement?: {
+    unitId: number;
+    from: HexCoord;
+    to: HexCoord;
+    /** Smoothstep progress in [0, 1], shared with the 2D token animation. */
+    progress: number;
+  };
   protocolVersion: number;
   generation: number;
   revision: number;

@@ -98,9 +98,9 @@ test("all campaign profiles use real assets, deterministic placement and clear h
 test("named landmarks and Sion's three defensive fronts match actual map terrain",()=>{
   const required:Record<string,string[]>={
     most_1421:["rock_foundation","fort_manor","monastery_wing","church_gothic"],
-    vysehrad_1420:["fort_gatehouse","fort_wall","fort_manor","church_gothic"],
+    vysehrad_1420:["fort_manor","church_gothic"],
     vitkov_1420:["field_shelter","low_stone_wall"], nemecky_brod_1422:["bridge","bridge_approach"],
-    nisa_1428:["church_gothic","house_timber","fort_gatehouse"],
+    nisa_1428:["church_gothic","house_timber"],
     oblehani_plzne_1433:["church_gothic","tent_small","firing_platform"],
     domazlice_1431:["wagon_abandoned","discarded_equipment","artillery_tarasnice"],
     lipany_1434:["barn","haystack"], malesov_1424:["ford_stones"],
@@ -108,6 +108,9 @@ test("named landmarks and Sion's three defensive fronts match actual map terrain
   for(const [id,names]of Object.entries(required)) {
     const plan=planEnvironment(id,field(id));
     for(const model of names) assert.ok(plan.placements.some(p=>p.model===model),`${id}: ${model}`);
+    if(["vysehrad_1420","nisa_1428"].includes(id)) {
+      assert.ok(plan.walls.some(wall=>wall.segments.length>0&&wall.gates.length>0),`${id}: connected walls and open gates`);
+    }
   }
   const sion=planEnvironment("sion_1437",field("sion_1437"));
   assert.equal(sion.raisedCells.get("5,7"),6,"castle core must remain on its promontory");

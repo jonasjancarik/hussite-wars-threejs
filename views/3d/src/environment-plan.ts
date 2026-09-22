@@ -2,6 +2,7 @@ import { planFortifications } from "./fortification-scenery.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { TerrainCell } from "./terrain-regions.ts";
 import { planSettlement, type SettlementPlan } from "./settlement-plan.ts";
+import { planTownWalls, WALL_THICKNESS, type TownWallPlan } from "./town-wall-plan.ts";
 import { settlementAuthoring } from "./settlement-authoring.ts";
 
 export interface EnvironmentPlacement {
@@ -32,6 +33,7 @@ export interface EnvironmentPlan {
   raisedCells: Map<string, number>;
   bridge?: { x: number; z: number };
   settlement?: SettlementPlan;
+  walls: TownWallPlan[];
 }
 
 /** Art profiles cover the current campaign. They never change semantic terrain or rules. */
@@ -44,7 +46,7 @@ const key = (cell: { col: number; row: number }): string => `${cell.col},${cell.
 const wet = (terrain: string): boolean => ["water", "mud", "swamp"].includes(terrain);
 
 export function planEnvironment(scenario: string | null, tiles: readonly TerrainCell[]): EnvironmentPlan {
-  const plan: EnvironmentPlan = { scenario, placements: [], replacedCells: new Set(), earthworks: [],
+  const plan: EnvironmentPlan = { scenario, placements: [], replacedCells: new Set(), earthworks: [], walls: [],
     raisedCells: new Map(),
     winter: scenario === "kutna_hora_1421" || scenario === "nemecky_brod_1422",
     frozenRiver: scenario === "nemecky_brod_1422" };
@@ -86,33 +88,15 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
   function replace(region: TerrainCell[]): void { region.forEach(cell => plan.replacedCells.add(key(cell))); }
   function townWalls(region: TerrainCell[], prefix: string): void {
     if (!region.length) return;
-    const regionKeys = new Set(region.map(key));
-    const edges: Array<{ x: number; z: number; angle: number; access: boolean }> = [];
-    for (const cell of region) {
-      for (let side = 0; side < 6; side++) {
-        const angle = (side+.5)*Math.PI/3;
-        const outwardX = Math.cos(angle), outwardZ = Math.sin(angle);
-        const beyond = layout.coordAt(cell.center.x + outwardX*4.5, cell.center.z + outwardZ*4.5);
-        if (beyond && (regionKeys.has(key(beyond)) || cells.get(key(beyond))?.terrain === "church")) continue;
-        // +Z is the module's outward face. Keep small breaks between modules.
-        edges.push({ x: cell.center.x+outwardX*Math.sqrt(3)*2,
-          z: cell.center.z+outwardZ*Math.sqrt(3)*2, angle: Math.PI/2-angle,
-          access: !!beyond && ["road","road2","dam"].includes(cells.get(key(beyond))?.terrain ?? "") });
-      }
+    const walls=planTownWalls(prefix,region,tiles,layout,plan.frozenRiver);
+    plan.walls.push(walls);
+    for(const segment of walls.segments) {
+      const length=Math.hypot(segment.b.x-segment.a.x,segment.b.z-segment.a.z),steps=Math.max(1,Math.ceil(length/.6));
+      for(let i=0;i<=steps;i++) occupied.push({x:segment.a.x+(segment.b.x-segment.a.x)*i/steps,
+        z:segment.a.z+(segment.b.z-segment.a.z)*i/steps,radius:WALL_THICKNESS/2+.08});
     }
-    const west = [...edges].sort((a,b) => a.x-b.x || a.z-b.z);
-    const gate = west[Math.min(west.length-1, Math.floor(west.length*.12))];
-    edges.forEach((edge, index) => {
-      const entrance = edge.access || edge === gate;
-      add(entrance ? "fort_gatehouse" : "fort_wall", edge.x, edge.z,
-        entrance ? .48 : .57, edge.angle, { id: `${prefix}:perimeter:${index}`, role: "fortification" }, 1.25);
-    });
-    // A few towers provide a readable city silhouette without repeating one on every hex.
-    for (const edge of edges.filter((_, i) => i % 9 === 4)) {
-      const point = { ...edge, x: edge.x+Math.cos(edge.angle)*1.8, z: edge.z-Math.sin(edge.angle)*1.8 };
-      if (occupied.some(other => Math.hypot(point.x-other.x,point.z-other.z)<1.3)) continue;
-      add("fort_tower_square", point.x, point.z, .43, edge.angle, { role: "fortification" }, 1);
-    }
+    for(const tower of walls.towers) occupied.push({...tower.centre,radius:tower.radius});
+    for(const gate of walls.gates) occupied.push({...gate.centre,radius:0});
   }
   function camp(col: number, row: number, abandoned = false, fromRound = 1): void {
     const centre = cells.get(`${col},${row}`);
@@ -243,7 +227,8 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     const art = scenario ? settlementAuthoring(scenario) : undefined;
     if (art && scenario) {
       const settlement = planSettlement(scenario, tiles, layout, occupied.map(obstacle => ({ ...obstacle,
-        entrance: plan.placements.some(p => p.model === "fort_gatehouse" && p.x === obstacle.x && p.z === obstacle.z),
+        entrance: plan.placements.some(p => p.model === "fort_gatehouse" && p.x === obstacle.x && p.z === obstacle.z)
+          || plan.walls.some(wall=>wall.gates.some(gate=>gate.centre.x===obstacle.x&&gate.centre.z===obstacle.z)),
       })), art);
       plan.settlement = settlement;
       settlement.cells.forEach(cell => plan.replacedCells.add(cell));

@@ -6,11 +6,13 @@ import { mulberry32 } from "./geometry-utils.ts";
 import type { GeneratedTerrain } from "./generated-terrain.ts";
 import { SceneryVisibility } from "./scenery-visibility.ts";
 import type { BattleScenery, BattleSnapshot } from "./types.ts";
+import { TownWallScenery } from "./town-wall-scenery.ts";
 import { batchStaticMeshes } from "./static-batching.ts";
 
 export class GeneratedScenery implements BattleScenery {
   public readonly group = new THREE.Group();
   private disposed = false;
+  private walls: TownWallScenery | null = null;
   private readonly visibility: SceneryVisibility;
   private readonly terrain: GeneratedTerrain;
   private readonly assets: Pick<BattleAssets, "preload" | "clone">;
@@ -86,6 +88,11 @@ export class GeneratedScenery implements BattleScenery {
         this.phaseObjects.push({object:model,fromRound:placement.fromRound});
       }
     }
+    if(plan.walls.length) {
+      this.walls=new TownWallScenery(plan.walls,this.terrain,this.visibility);
+      this.group.add(this.walls.group);
+    }
+    for(const wall of plan.walls) for(const issue of wall.issues) console.warn(`[Hussite 3D] ${issue}`);
     const batches=batchStaticMeshes(this.group,object=>{
       for(let parent:THREE.Object3D|null=object;parent;parent=parent.parent) {
         if(parent.userData.dynamicEnvironment) return null;
@@ -106,6 +113,7 @@ export class GeneratedScenery implements BattleScenery {
     this.disposed = true;
     this.visibility.clear();
     this.details.dispose();
+    this.walls?.dispose();this.walls=null;
     this.phaseObjects.length=0;
     this.group.traverse(object=>{if(object instanceof THREE.InstancedMesh) object.dispose();});
     this.group.clear();

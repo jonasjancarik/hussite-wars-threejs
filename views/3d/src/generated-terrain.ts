@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import { createGeneratedSurfaceMaterials, surfaceMaterialIndex } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
-import { createTerrainRegions, isFieldTerrain, isWaterTerrain, type TerrainRegions } from "./terrain-regions.ts";
+import { createTerrainRegions, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
 import { isRoadTerrain } from "./road-corridors.ts";
 import { nearestOnStreet } from "./settlement-plan.ts";
 import { clipPolygon, triangulatePolygon } from "./water-geometry.ts";
+import { pointInPolygon } from "./geometry-utils.ts";
 
 const COLORS: Record<string, number> = {
   plains: 0xdfe6b3, forest: 0xb3c68f, hills: 0xcfce98, water: 0x78aaa4,
@@ -26,6 +27,8 @@ export class GeneratedTerrain implements BattleTerrain {
   public readonly topography: TopographyPlan;
   public readonly environmentPlan: EnvironmentPlan;
   private bridgeBaseHeight = 0;
+  private readonly cityLoops: Array<{points:Array<[number,number]>;minX:number;maxX:number;minZ:number;maxZ:number}>;
+  private readonly cityCells: readonly TerrainCell[];
   private surfaceMesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial[]>;
   private readonly surfaceTextures: THREE.Texture[] = [];
   private basePositions!: Float32Array;
@@ -48,6 +51,12 @@ export class GeneratedTerrain implements BattleTerrain {
     this.field = createTerrainRegions({ cols, rows, tiles: snapshot.tiles, scenario: snapshot.scenario ?? "battle",
       seed: snapshot.seed ?? 1, hexRadius: this.layout.radius, coreCoverage: 0.76, boundaryNoise: 0.75 });
     this.environmentPlan = planEnvironment(snapshot.scenario, this.field.tiles);
+    this.cityLoops=this.environmentPlan.walls.flatMap(wall=>wall.loops.map(loop=>({
+      points:loop.points.map(p=>[p.x,p.z] as [number,number]),minX:Math.min(...loop.points.map(p=>p.x)),maxX:Math.max(...loop.points.map(p=>p.x)),
+      minZ:Math.min(...loop.points.map(p=>p.z)),maxZ:Math.max(...loop.points.map(p=>p.z)),
+    })));
+    const enclosed=new Set(this.environmentPlan.walls.flatMap(wall=>wall.enclosedCells));
+    this.cityCells=this.field.tiles.filter(cell=>enclosed.has(`${cell.col},${cell.row}`)&&["town","church"].includes(cell.terrain));
     for (const issue of this.environmentPlan.settlement?.issues ?? []) console.warn(`[Hussite 3D] ${issue}`);
     this.topography = new TopographyPlan(this.field,this.environmentPlan.raisedCells);
     if(this.environmentPlan.bridge) {
@@ -63,16 +72,26 @@ export class GeneratedTerrain implements BattleTerrain {
   public heightAt(x: number, z: number): number {
     const input = this.field.heightInputAt(x, z);
     const terrain = this.field.classify(x, z);
-    const elevation = this.topography.elevationAt(x, z);
+    let elevation = this.topography.elevationAt(x, z);
     const relief = earthworkRelief(x, z, this.environmentPlan.earthworks);
-    const weights = this.field.weightsAt(x, z);
+    const originalWeights = this.field.weightsAt(x, z);
+    const insideCity=this.insideCity(x,z);
+    const weights = this.surfaceWeightsAt(x,z,originalWeights,insideCity);
+    if(insideCity && Object.entries(originalWeights).some(([name,weight])=>isWaterTerrain(name)&&weight>0)) {
+      let closest:TerrainCell|undefined,minimum=Infinity;
+      for(const cell of this.cityCells) {
+        const d=(x-cell.center.x)**2+(z-cell.center.z)**2;
+        if(d<minimum) {minimum=d;closest=cell;}
+      }
+      if(closest) elevation=this.topography.cellElevation(closest.col,closest.row);
+    }
     const waterWeight = Object.entries(weights).reduce((total, [name, weight]) =>
       total + (["water", "river", "lake"].includes(name.toLowerCase()) ? weight : 0), 0);
     const dryWeight = Math.max(0, ...Object.entries(weights).filter(([name])=>!isWaterTerrain(name)).map(([,weight])=>weight));
     if (waterWeight > 0 && waterWeight >= dryWeight) return -.7;
     const crossing = terrain === "road" || terrain === "road2" || terrain === "dam";
     const variation = crossing ? .24 : (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
-    const bank = THREE.MathUtils.smoothstep(Math.max(waterWeight, crossing ? 0 : this.field.waterInfluenceAt(x,z)), 0, .5);
+    const bank = THREE.MathUtils.smoothstep(Math.max(waterWeight, crossing||insideCity ? 0 : this.field.waterInfluenceAt(x,z)), 0, .5);
     const ground=THREE.MathUtils.lerp(elevation + input.variation * variation, -.7, bank) + relief;
     const bridge=this.environmentPlan.bridge;
     if(!bridge) return ground;
@@ -83,6 +102,18 @@ export class GeneratedTerrain implements BattleTerrain {
     // independently beneath each end of the bridge.
     const deck=this.bridgeBaseHeight+bridgeRelief(bridge.x,z,bridge);
     return THREE.MathUtils.lerp(ground,deck,blend);
+  }
+
+  private insideCity(x:number,z:number):boolean {
+    return this.cityLoops.some(loop=>x>=loop.minX&&x<=loop.maxX&&z>=loop.minZ&&z<=loop.maxZ&&pointInPolygon(x,z,loop.points));
+  }
+
+  private surfaceWeightsAt(x:number,z:number,source:TerrainWeights=this.field.weightsAt(x,z),inside=this.insideCity(x,z)):TerrainWeights {
+    if(!inside) return source;
+    const weights:Record<string,number>={...source};let water=0;
+    for(const name of Object.keys(weights)) if(isWaterTerrain(name)) {water+=weights[name]!;weights[name]=0;}
+    if(water>0) weights.town=(weights.town??0)+water;
+    return weights;
   }
 
   public updateVisibility(snapshot: BattleSnapshot): void {
@@ -234,7 +265,7 @@ export class GeneratedTerrain implements BattleTerrain {
         uvs.push(x / 34, z / 34);
         const coord = this.layout.coordAt(x, z);
         this.vertexKeys.push(coord ? `${coord.col},${coord.row}` : null);
-        let weights = this.field.weightsAt(x, z);
+        let weights = this.surfaceWeightsAt(x, z);
         if (Object.keys(weights).length === 0) {
           // Continue the nearest terrain to the diorama rim. An empty weight
           // vector must never count as water through a 0 >= 0 comparison.

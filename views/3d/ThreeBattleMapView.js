@@ -135,7 +135,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.27';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.28';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -174,6 +174,18 @@ class ThreeBattleMapView {
             tiles: [...game.hexGrid.hexes.values()].map(tile => ({
                 col: tile.col, row: tile.row, terrain: tile.terrain
             })),
+            movement: (() => {
+                const animation = this.view.moveAnimation;
+                if (!animation || !visibleUnits.some(unit => unit.id === animation.unit.id)) return undefined;
+                this.view.moveTokenPosition();
+                const progress = animation.elapsed / animation.duration;
+                return {
+                    unitId: animation.unit.id,
+                    from: { col: animation.fromHex.col, row: animation.fromHex.row },
+                    to: { col: animation.toHex.col, row: animation.toHex.row },
+                    progress: progress * progress * (3 - 2 * progress)
+                };
+            })(),
             units: visibleUnits.map(unit => ({
                 id: unit.id, type: unit.type, name: unit.name, faction: unit.faction,
                 unitClass: unit.unitClass, col: unit.col, row: unit.row,
