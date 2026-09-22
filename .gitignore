@@ -67,6 +67,7 @@ Desktop.ini
 # Three.js diorama build outputs
 /experiments/sudomer-diorama/web/dist/
 /views/3d/dist/
+/pages-dist/
 /experiments/sudomer-diorama/target/
 !/views/3d/package-lock.json
 

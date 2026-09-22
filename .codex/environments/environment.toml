@@ -1,0 +1,16 @@
+# Codex Desktop project actions. The app runs these from the repository root.
+version = 1
+name = "hussite-wars-threejs"
+
+[setup]
+script = ""
+
+[[actions]]
+name = "Run locally"
+icon = "run"
+command = "./scripts/run-local.sh"
+
+[[actions]]
+name = "Build and deploy Pages"
+icon = "run"
+command = "CLOUDFLARE_ACCOUNT_ID=7756b12931ecfb3900a31049e157d706 ./scripts/build-and-deploy-pages.sh"
