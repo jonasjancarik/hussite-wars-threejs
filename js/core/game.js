@@ -47,6 +47,9 @@ class Game {
             unitKills: {},       // Zabití podle jednotky { unitId: počet }
             unitDamage: {}       // Poškození podle jednotky { unitId: celkem }
         };
+        this.battleReview = typeof BattleReviewSystem !== 'undefined'
+            ? BattleReviewSystem.createState()
+            : { version: 1, events: [] };
 
         // Undo systém - uložení posledního pohybu
         this.lastMove = null;  // { unit, fromCol, fromRow }
@@ -127,6 +130,9 @@ class Game {
     initGame() {
         this.units = [];
         this.brokenIceHexes = new Set();
+        this.battleReview = typeof BattleReviewSystem !== 'undefined'
+            ? BattleReviewSystem.createState()
+            : { version: 1, events: [] };
         this.currentFaction = 'hussites';
         this.turnNumber = 1;
         this.selectedUnit = null;
@@ -225,6 +231,9 @@ class Game {
     initGameWithScenario(scenario, { restoring = false } = {}) {
         this.units = [];
         this.brokenIceHexes = new Set();
+        this.battleReview = typeof BattleReviewSystem !== 'undefined'
+            ? BattleReviewSystem.createState()
+            : { version: 1, events: [] };
         this.currentFaction = 'hussites';
         this.turnNumber = 1;
         this.selectedUnit = null;
@@ -779,6 +788,10 @@ class Game {
         const oldCol = unit.col;
         const oldRow = unit.row;
 
+        if (typeof BattleReviewSystem !== 'undefined') {
+            BattleReviewSystem.recordMove(this, unit, { col: oldCol, row: oldRow }, { col, row });
+        }
+
         // Uložení pozice pro možnost undo (pouze pokud jednotka ještě neútočila)
         if (!unit.hasAttacked) {
             this.lastMove = {
@@ -976,6 +989,9 @@ class Game {
         }
 
         // Vrácení jednotky na původní pozici
+        if (typeof BattleReviewSystem !== 'undefined') {
+            BattleReviewSystem.cancelLastMove(this, unit);
+        }
         unit.col = fromCol;
         unit.row = fromRow;
         unit.hasMoved = false;
@@ -1031,6 +1047,10 @@ class Game {
         // Pokud hra již skončila, neděláme nic
         if (!this.canStartAction()) return false;
 
+        if (typeof BattleReviewSystem !== 'undefined') {
+            BattleReviewSystem.recordTurnEnd(this, this.currentFaction,
+                this.units.filter(unit => unit.faction === this.currentFaction));
+        }
         this.autoDefendUnusedUnits();
         this.deselectUnit();
 
@@ -1429,6 +1449,9 @@ class Game {
                 fogOfWar: this.fogOfWar,
                 exploredHexes: [...this.exploredHexes],
                 brokenIceHexes: [...this.brokenIceHexes],
+                battleReview: typeof BattleReviewSystem !== 'undefined'
+                    ? BattleReviewSystem.serialize(this.battleReview)
+                    : this.battleReview,
                 savedAt: new Date().toISOString()
             };
             const raw = SaveGameSystem.write(saveData, { automatic });
@@ -1522,6 +1545,9 @@ class Game {
         }
         this.exploredHexes = new Set(saveData.exploredHexes || []);
         this.brokenIceHexes = new Set(saveData.brokenIceHexes || []);
+        this.battleReview = typeof BattleReviewSystem !== 'undefined'
+            ? BattleReviewSystem.prepareStoredState(saveData.battleReview)
+            : (saveData.battleReview || { version: 1, events: [] });
         this.visibleHexes = new Set();
 
         // Routující jednotky - stav je per-unit (isRouting), Set jen sleduje
@@ -2275,6 +2301,9 @@ class Game {
         this.lastMove = null;
         Sound.playWagonFort();
         for (const { w, col, row } of targets) {
+            if (typeof BattleReviewSystem !== 'undefined') {
+                BattleReviewSystem.recordMove(this, w, { col: w.col, row: w.row }, { col, row });
+            }
             w.col = col;
             w.row = row;
             w.hasMoved = true;

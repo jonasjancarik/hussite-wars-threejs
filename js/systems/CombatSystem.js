@@ -133,6 +133,14 @@ class CombatSystem {
         const defenderTerrain = this.game.hexGrid.getTerrain(defender.col, defender.row);
         const attackerTerrain = this.game.hexGrid.getTerrain(attacker.col, attacker.row);
         const hasMovedThisTurn = attacker.hasMoved;
+        const defenderWasDefending = defender.isDefending;
+        const linkedWagons = defender.isWagon && defender.isWagon()
+            ? this.game.hexGrid.getNeighbors(defender.col, defender.row).filter(position => {
+                const neighbor = this.game.getUnitAt(position.col, position.row);
+                return neighbor && neighbor !== defender && neighbor.faction === defender.faction &&
+                    neighbor.isWagon && neighbor.isWagon() && neighbor.formationClosed !== false;
+            }).length
+            : 0;
 
         // Zrušit možnost undo - útok je nevratná akce
         this.game.lastMove = null;
@@ -154,6 +162,15 @@ class CombatSystem {
         // Časovače už nikdy nerozhodují, zda jednotka zemřela.
         const result = attacker.attackTarget(defender, defenderTerrain, attackerTerrain, hasMovedThisTurn, gameContext);
         this.trackDamage(attacker, defender, result.damage);
+        if (typeof BattleReviewSystem !== 'undefined') {
+            BattleReviewSystem.recordAttack(this.game, attacker, defender, result, {
+                reaction: options.reaction,
+                movedBeforeAttack: hasMovedThisTurn,
+                defenderWasDefending,
+                defenderTerrain,
+                linkedWagons
+            });
+        }
         for (const areaDmg of result.areaDamage || []) {
             this.trackDamage(attacker, areaDmg.unit, areaDmg.damage);
             this.game.addLog(i18n.t(areaDmg.killed ? 'gameLog.areaKill' : 'gameLog.areaHit', {

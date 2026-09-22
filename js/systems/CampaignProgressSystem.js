@@ -31,7 +31,28 @@ const CampaignProgressSystem = {
         return [];
     },
 
+    _developmentUnlockEnabled() {
+        const search = typeof location === 'undefined' ? '' : String(location.search || '');
+        return /(?:^|[?&])dev=1(?:&|$)/.test(search);
+    },
+
+    _developmentProgress() {
+        const battles = Object.fromEntries(this._acts().flatMap(act =>
+            act.battles.map(battle => [battle.id, { result: 'victory' }])
+        ));
+        return {
+            version: this.VERSION,
+            reputation: 100,
+            battles,
+            completedActs: this._acts().map(act => act.id),
+            lipanyBreakApplied: true
+        };
+    },
+
     load() {
+        // A query-scoped fixture for reviewing later campaign content locally.
+        // It never writes to, or changes the meaning of, normal saved progress.
+        if (this._developmentUnlockEnabled()) return this._developmentProgress();
         const storage = this._storage();
         if (!storage) return this._emptyProgress();
         try {

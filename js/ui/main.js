@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function reviewBattlefield() {
+        if (typeof BattleReviewView !== 'undefined') BattleReviewView.cancel();
         gameoverModal.classList.add('hidden');
         gameoverModal.setAttribute('aria-hidden', 'true');
         game?.view?.orders?.cancel();
@@ -183,6 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function resetPostBattleReview() {
+        if (typeof BattleReviewView !== 'undefined') BattleReviewView.cancel();
         setPostBattleReview(false);
         gameoverModal.classList.add('hidden');
         gameoverModal.setAttribute('aria-hidden', 'true');
@@ -1655,6 +1657,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 chronicleEl.classList.add('hidden');
             }
+        }
+
+        if (typeof BattleReviewView !== 'undefined') {
+            BattleReviewView.mount(game, isVictory, stats || {});
         }
 
         HistoricalNotesView.mount(document.getElementById('gameover-sources'), stats?.scenarioId || selectedScenario?.id);

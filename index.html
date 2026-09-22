@@ -926,6 +926,18 @@
                     </div>
                 </div>
 
+                <section id="gameover-advisor" class="gameover-advisor hidden" aria-labelledby="battle-review-title">
+                    <h3 id="battle-review-title" data-i18n="battleReview.title">Rozbor bitvy</h3>
+                    <p data-i18n="battleReview.intro">Co se podařilo a na co se zaměřit při dalším pokusu.</p>
+                    <ul id="battle-review-findings"></ul>
+                    <div class="battle-review-actions">
+                        <button id="btn-ai-battle-review" type="button" class="btn-secondary hidden"
+                                data-i18n="battleReview.askAdvisor">Požádat poradce o podrobný rozbor</button>
+                        <span id="battle-review-status" role="status"></span>
+                    </div>
+                    <div id="battle-review-ai-output" class="battle-review-ai-output hidden"></div>
+                </section>
+
                 <!-- WP2a: Vy vs. kronika -->
                 <div id="gameover-chronicle" class="gameover-chronicle hidden">
                     <div class="chronicle-line" id="chronicle-yours"></div>
@@ -1089,10 +1101,11 @@
     <script src="js/data/battleLore.js?v=8.17"></script>
     <script src="js/data/historicalSources.js?v=8.17"></script>
     <script src="js/data/campaign.js?v=8.0"></script>
-    <script src="js/systems/CampaignProgressSystem.js?v=8.9"></script>
+    <script src="js/systems/CampaignProgressSystem.js?v=9.0"></script>
     <script src="js/data/scenarios.js?v=8.23"></script>
     <script src="js/systems/CombatSystem.js?v=8.2"></script>
     <script src="js/systems/BattleActionSystem.js?v=8.8"></script>
+    <script src="js/systems/BattleReviewSystem.js?v=1.0"></script>
     <script src="js/systems/SaveGameSystem.js?v=8.18"></script>
     <script src="js/systems/ScenarioEventSystem.js?v=8.7"></script>
     <script src="js/systems/FogOfWarSystem.js?v=3.9"></script>
@@ -1102,6 +1115,7 @@
     <script src="js/systems/ChronicleSystem.js?v=8.9"></script>
     <script src="js/ui/HistoricalNotesView.js?v=8.17"></script>
     <script src="js/ui/ChronicleView.js?v=8.17"></script>
+    <script src="js/ui/BattleReviewView.js?v=1.0"></script>
     <script src="js/ui/BattlePanels.js?v=8.19"></script>
     <script src="js/ui/BattleTooltip.js?v=8.16"></script>
     <script src="js/ui/BattleMapInput.js?v=8.8"></script>

@@ -453,6 +453,31 @@
     "bonusObjectives": "Bonus Objectives",
     "trivia": "Did you know...?"
   },
+  "battleReview": {
+    "title": "Battle review",
+    "intro": "What worked, and what to focus on in your next attempt.",
+    "askAdvisor": "Ask the advisor for a detailed review",
+    "askAgain": "Generate another review",
+    "thinking": "The advisor is reviewing the battle...",
+    "generatedNote": "Generated from this battle’s recorded actions. The game’s verified findings remain above.",
+    "offlineNote": "The local review works offline. A detailed advisor appears when an endpoint is configured.",
+    "error": "The advisor could not complete the review. The verified local findings are still available.",
+    "strengths": "What worked",
+    "improvements": "What to reconsider",
+    "nextFocus": "Next battle:",
+    "findings": {
+      "preservedArmy": "You lost {lost} of {total} units. Preserving the army gave you more options late in the battle.",
+      "heavyLosses": "You lost {lost} of {total} units. Look for the first round in which several units became exposed at once.",
+      "damageImbalance": "Your army dealt {dealt} damage and received {taken}. Concentrate attacks while limiting how many enemy units can answer at once.",
+      "cavalryHeavyTerrain": "Cavalry entered forest, mud, or swamp {count} times. Those hexes slow mounted units and reduce the value of their mobility.",
+      "enteredRangedThreat": "Units moved into additional enemy firing arcs {count} times. Check hostile ranges before committing the move.",
+      "preparedDefense": "You attacked prepared defenders or connected wagons {count} times. Consider another target, ranged fire, or an exposed end of the line.",
+      "usedCoveringFire": "Your prepared ranged units fired {count} covering-fire reactions. Holding their position paid off.",
+      "missedObjectives": "You left {count} bonus objectives incomplete. Decide early whether their reward is worth dividing your force.",
+      "steadyVictory": "The recorded actions do not reveal one dominant mistake. Review the battlefield and repeat the formation that carried the victory.",
+      "reviewBasics": "The recorded actions do not reveal one dominant cause. Start with unit preservation, terrain, and the primary objective on the next attempt."
+    }
+  },
   "chronicle": {
     "subtitle": "What you lived through. What the chronicler wrote. And where their stories diverge.",
     "close": "Close",

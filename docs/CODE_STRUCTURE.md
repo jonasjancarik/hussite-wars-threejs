@@ -13,6 +13,11 @@ systémy. `CombatSystem` provádí souboje; `ScenarioEventSystem` spravuje průb
 scénářových událostí. Žádná z těchto tříd přímo nepracuje s DOM nebo s animační
 smyčkou prohlížeče.
 
+`BattleReviewSystem` uchovává omezený strukturovaný záznam rozhodujících akcí a po
+bitvě z něj sestaví ověřitelná místní zjištění. Volitelný model pouze tato fakta
+vysvětluje; není zdrojem herního stavu ani rozhodčím pravidel. Konfigurace a bezpečný
+provoz jsou popsány v [dokumentaci poradce](AFTER_BATTLE_ADVISOR.md).
+
 Prezentace bitvy je rozdělena podle odpovědností:
 
 - `BattleView` překládá vstupy prohlížeče na příkazy hry, vykresluje mapu a minimapu,

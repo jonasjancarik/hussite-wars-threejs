@@ -363,6 +363,29 @@ test('kampaň odemyká akty a opakováním nefarmí pověst', () => {
     assert.strictEqual(completion.actCompleted, 1);
 });
 
+test('dev=1 odemkne celou kampaň bez zápisu do uloženého postupu', () => {
+    CampaignProgressSystem.reset();
+    const originalLocation = global.location;
+    global.location = { search: '?dev=1' };
+    try {
+        const progress = CampaignProgressSystem.load();
+        assert.strictEqual(progress.reputation, 100);
+        assert.deepStrictEqual(progress.completedActs, [1, 2, 3, 4]);
+        for (const act of Campaign.acts) {
+            assert.strictEqual(CampaignProgressSystem.isActUnlocked(act.id), true);
+            for (const battle of act.battles) {
+                assert.strictEqual(progress.battles[battle.id].result, 'victory');
+                assert.strictEqual(CampaignProgressSystem.isBattleUnlocked(battle.id), true);
+            }
+        }
+        assert.strictEqual(storageValues.has(CampaignProgressSystem.STORAGE_KEY), false);
+    } finally {
+        if (originalLocation === undefined) delete global.location;
+        else global.location = originalLocation;
+    }
+    assert.strictEqual(CampaignProgressSystem.isActUnlocked(2), false);
+});
+
 test('pověst mění morálku, paniku a zlomí se u Lipan', () => {
     assert.ok(CampaignProgressSystem.getStartingMoraleModifier('tachov_1427', 80) < 0);
     assert.ok(CampaignProgressSystem.getStartingMoraleModifier('tachov_1427', 20) > 0);

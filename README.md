@@ -278,6 +278,7 @@ Nejde o úplný rozbor kritických edic ani odborné potvrzení každého detail
 ### Známé limity
 
 - AI používá čitelné historické doktríny, ale nenahrazuje lidského soupeře.
+- Výsledek bitvy obsahuje místní rozbor podle herních pravidel; vlastní instalace může volitelně připojit podrobnějšího [poradce přes OpenAI kompatibilní rozhraní](docs/AFTER_BATTLE_ADVISOR.md).
 - Balanc scénářů, hlavně v pozdějších aktech, potřebuje ověřit reálnými hráči.
 - Dotykové ovládání funguje, ale některé texty na úzkých telefonech ještě potřebují ověřit a upravit.
 - Postup i savy jsou v `localStorage`; vymazání dat webu je odstraní a mezi prohlížeči se nesynchronizují.

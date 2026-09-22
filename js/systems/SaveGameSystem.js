@@ -67,6 +67,9 @@ const SaveGameSystem = {
                 brokenIce.add(key);
             }
         }
+        if (typeof BattleReviewSystem !== 'undefined') {
+            BattleReviewSystem.prepareStoredState(data.battleReview);
+        }
         if (data.stats !== undefined && (!object(data.stats) || !nonnegative(data.stats.totalDamage) ||
             !nonnegative(data.stats.damageTaken) || !counts(data.stats.unitKills) || !counts(data.stats.unitDamage))) invalid();
         if (data.aiStance !== undefined && (!object(data.aiStance) ||

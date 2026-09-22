@@ -74,13 +74,13 @@ function createHarness({ browserView = false, pathname = '/', storage = new Map(
         'data/scenarios.js', 'data/campaign.js', 'systems/CampaignProgressSystem.js',
         'systems/CombatSystem.js', 'systems/FogOfWarSystem.js', 'systems/MoraleSystem.js',
         'systems/VictoryConditionsSystem.js', 'systems/TutorialSystem.js',
-        'systems/BattleActionSystem.js', 'systems/SaveGameSystem.js', 'systems/ScenarioEventSystem.js',
+        'systems/BattleActionSystem.js', 'systems/BattleReviewSystem.js', 'systems/SaveGameSystem.js', 'systems/ScenarioEventSystem.js',
         'ui/BattlePanels.js', 'ui/BattleTooltip.js', 'ui/BattleMapInput.js', 'ui/BattleOrders.js', '../views/3d/ThreeBattleMapView.js', 'ui/BattleView.js', 'core/game.js', 'ai.js'
     ]) {
         const filename = path.join(__dirname, '../../js', file);
         vm.runInContext(fs.readFileSync(filename, 'utf8'), context, { filename });
     }
-    const api = vm.runInContext('({ Game, GameStorage, CampaignProgressSystem, HexGrid, Unit, UnitFactory, Scenarios, ScenarioManager, SaveGameSystem, ScenarioEventSystem, AI, BattleView, BattlePanels, BattleTooltip, BattleMapInput, BattleOrders, ThreeBattleMapView })', context);
+    const api = vm.runInContext('({ Game, GameStorage, CampaignProgressSystem, HexGrid, Unit, UnitFactory, Scenarios, ScenarioManager, SaveGameSystem, ScenarioEventSystem, BattleReviewSystem, AI, BattleView, BattlePanels, BattleTooltip, BattleMapInput, BattleOrders, ThreeBattleMapView })', context);
     const viewFactory = game => {
         if (!browserView) return new TestBattleView(game);
         // UI testy používají skutečný adaptér a DOM double; Canvas drawing není jejich předmět.

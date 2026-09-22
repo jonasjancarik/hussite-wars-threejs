@@ -90,6 +90,67 @@ test("each figure rests on rendered terrain after movement, rotation and routing
   }
 });
 
+function facingOf(formation: THREE.Object3D): THREE.Vector3 {
+  const figure = formation.children.find(child => child instanceof THREE.Group)!;
+  return new THREE.Vector3(1, 0, 0).applyQuaternion(figure.getWorldQuaternion(new THREE.Quaternion()));
+}
+
+function formationFor(units: UnitPresentation, id: number): THREE.Object3D {
+  return units.group.children.find(child => child.name.endsWith(`(${id})`))!;
+}
+
+async function settleFacing(units: UnitPresentation): Promise<void> {
+  for (let step = 0; step < 24; step += 1) units.advance(64);
+}
+
+test("formations turn toward movement, attacks and visible threats without changing the snapshot", async () => {
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(4, 3), new TestAssets());
+  const hussite = unit(1, "KOPINICI_HUSITI", "hussites"); hussite.col = 0; hussite.row = 0;
+  const crusader = unit(2, "KOPINICI", "crusaders"); crusader.col = 1; crusader.row = 0;
+  const threatened = snapshotWithUnits([hussite, crusader]);
+  const before = JSON.stringify(threatened);
+  await units.update(threatened);
+  await settleFacing(units);
+  const idleFacing = facingOf(formationFor(units, hussite.id));
+  assert.ok(idleFacing.x > 0.8, `idle unit faces its visible enemy: ${idleFacing.toArray()}`);
+  assert.equal(JSON.stringify(threatened), before, "facing is presentation-only");
+
+  const moving = snapshotWithUnits([{ ...hussite, col: 1, row: 0 }, { ...crusader, col: 1, row: 2 }]);
+  moving.movement = { unitId: hussite.id, from: { col: 0, row: 0 }, to: { col: 1, row: 0 }, progress: 0.5 };
+  await units.update(moving);
+  await settleFacing(units);
+  assert.ok(facingOf(formationFor(units, hussite.id)).x > 0.8, "moving unit faces along its route");
+
+  const attacking = snapshotWithUnits([{ ...hussite, col: 0, row: 0 }, { ...crusader, col: 0, row: 2 }]);
+  attacking.events = [{ id: "attack-east", type: "attack", col: 1, row: 0, fromCol: 0, fromRow: 0 }];
+  await units.update(attacking);
+  await settleFacing(units);
+  assert.ok(facingOf(formationFor(units, hussite.id)).x > 0.8, "attack direction temporarily overrides idle threat facing");
+});
+
+test("routing formations turn away from the nearest visible enemy", async () => {
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(4, 2), new TestAssets());
+  const routing = { ...unit(1, "KOPINICI_HUSITI", "hussites"), col: 1, row: 0, isRouting: true };
+  const enemy = { ...unit(2, "KOPINICI", "crusaders"), col: 2, row: 0 };
+  await units.update(snapshotWithUnits([routing, enemy]));
+  await settleFacing(units);
+  const routingFacing = facingOf(formationFor(units, routing.id));
+  assert.ok(routingFacing.x < -0.8, routingFacing.toArray().join(","));
+});
+
+test("adjacent idle troops share a local threat direction", async () => {
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(5, 3), new TestAssets());
+  const first = { ...unit(1, "KOPINICI_HUSITI", "hussites"), col: 0, row: 1 };
+  const second = { ...unit(2, "CEPNICI", "hussites"), col: 1, row: 1 };
+  const enemy = { ...unit(3, "KOPINICI", "crusaders"), col: 4, row: 1 };
+  await units.update(snapshotWithUnits([first, second, enemy]));
+  await settleFacing(units);
+  assert.ok(facingOf(formationFor(units, first.id)).dot(facingOf(formationFor(units, second.id))) > 0.999);
+});
+
 test("selection cylinder is excluded from rendering but remains clickable", async () => {
   const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
     new HexLayout(3, 2), new TestAssets());
