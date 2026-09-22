@@ -75,6 +75,8 @@ export interface BattleSnapshot {
   inspection?: (HexCoord & { terrain: string; unit: UnitSnapshot | null }) | null;
   legalMoves: HexCoord[];
   legalAttacks: Array<HexCoord & { unitId: number }>;
+  /** Geometric attack reach for the selected unit, including empty tiles. */
+  attackRangeHexes?: HexCoord[];
   marchTargets: HexCoord[];
   objectiveHexes?: HexCoord[];
   objectiveKind?: string;

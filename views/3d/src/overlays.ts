@@ -127,6 +127,7 @@ export class TacticalOverlays {
     const selected = this.snapshot?.units.find(unit => unit.id === this.snapshot?.selectedUnitId) ?? null;
     const moves = new Set(this.snapshot?.legalMoves.map(key) ?? []);
     const attacks = new Set(this.snapshot?.legalAttacks.map(key) ?? []);
+    const attackRange = new Set(this.snapshot?.attackRangeHexes?.map(key) ?? []);
     const march = new Set(this.snapshot?.marchTargets.map(key) ?? []);
     const objectives = new Set(this.snapshot?.objectiveHexes?.map(key) ?? []);
     const explored = new Set(this.snapshot?.exploredHexes ?? []);
@@ -136,23 +137,36 @@ export class TacticalOverlays {
       const paleGround = this.winter && !["mud", "swamp", "marsh", "road", "road2", "dam", "trenches"].includes(terrains.get(coordKey) ?? "plains");
       let opacity = this.gridVisible ? (paleGround ? .65 : .30) : 0;
       let fillOpacity = 0;
-      let color = paleGround ? 0x506277 : 0xb5ae91;
+      let ringColor = paleGround ? 0x506277 : 0xb5ae91;
+      let fillColor = ringColor;
       if (objectives.has(coordKey)) {
         opacity = Math.max(opacity, 0.72);
         fillOpacity = 0.10;
-        color = this.snapshot?.objectiveKind === "objective" ? 0xe1b65c : 0x75cbe3;
+        ringColor = this.snapshot?.objectiveKind === "objective" ? 0xe1b65c : 0x75cbe3;
+        fillColor = ringColor;
       }
-      if (moves.has(coordKey) || march.has(coordKey)) { opacity = 0.92; fillOpacity = 0.22; color = 0x72e0ab; }
-      if (attacks.has(coordKey)) { opacity = 1; fillOpacity = 0.30; color = 0xff735d; }
-      if (selected && coordKey === `${selected.col},${selected.row}`) { opacity = 1; fillOpacity = 0.34; color = 0xffd45f; }
+      if (moves.has(coordKey) || march.has(coordKey)) {
+        opacity = 0.92; fillOpacity = 0.22; ringColor = 0x72e0ab; fillColor = ringColor;
+      }
+      if (attackRange.has(coordKey) && !attacks.has(coordKey)) {
+        opacity = Math.max(opacity, 0.62);
+        ringColor = 0xe4776b;
+      }
+      if (attacks.has(coordKey)) { opacity = 1; fillOpacity = 0.30; ringColor = 0xff735d; fillColor = ringColor; }
+      if (selected && coordKey === `${selected.col},${selected.row}`) {
+        opacity = 1; fillOpacity = 0.34; ringColor = 0xffd45f; fillColor = ringColor;
+      }
       if (this.hovered && coordKey === key(this.hovered)) { opacity = 1; fillOpacity = Math.max(fillOpacity, 0.34);
-        if (!moves.has(coordKey) && !march.has(coordKey) && !attacks.has(coordKey) && !(selected && coordKey === `${selected.col},${selected.row}`)) color = 0xfff1ca; }
-      material.color.setHex(color);
+        if (!moves.has(coordKey) && !march.has(coordKey) && !attacks.has(coordKey) && !(selected && coordKey === `${selected.col},${selected.row}`)) {
+          fillColor = 0xfff1ca;
+          if (!attackRange.has(coordKey)) ringColor = fillColor;
+        } }
+      material.color.setHex(ringColor);
       material.opacity = opacity;
       ring.visible = opacity > 0;
       const fill = this.fills.get(coordKey)!;
       const fillMaterial = fill.material as THREE.MeshBasicMaterial;
-      fillMaterial.color.setHex(color);
+      fillMaterial.color.setHex(fillColor);
       fillMaterial.opacity = fillOpacity;
       fill.visible = fillOpacity > 0;
       this.fogCovers.get(coordKey)!.visible = Boolean(this.snapshot?.fogOfWar && !explored.has(coordKey));

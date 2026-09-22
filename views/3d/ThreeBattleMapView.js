@@ -160,6 +160,18 @@ class ThreeBattleMapView {
         const legalAttacks = game.hexGrid.attackableHexes.map(target => ({
             col: target.col, row: target.row, unitId: target.id ?? game.getUnitAt(target.col, target.row)?.id ?? -1
         }));
+        const attackRangeHexes = [];
+        if (selected?.canAttack() && selected.faction === game.currentFaction && game.gameState === 'playing') {
+            attackRangeHexes.push(...game.hexGrid.getHexesInRange(selected.col, selected.row, selected.range));
+            if (selected.special === 'reach' && selected.range === 1) {
+                for (const hex of game.hexGrid.getHexesInRange(selected.col, selected.row, 2)) {
+                    if (game.hexGrid.getDistance(selected.col, selected.row, hex.col, hex.row) === 2 &&
+                        game.combatSystem.canReachThrough(selected, hex)) {
+                        attackRangeHexes.push(hex);
+                    }
+                }
+            }
+        }
         return {
             protocolVersion: 2,
             generation: 1,
@@ -207,6 +219,7 @@ class ThreeBattleMapView {
             selectedUnitId: selected?.id ?? null,
             legalMoves: game.hexGrid.highlightedHexes.map(({ col, row }) => ({ col, row })),
             legalAttacks,
+            attackRangeHexes,
             marchTargets: selected?.isWagon() && selected.marching
                 ? game.hexGrid.highlightedHexes.map(({ col, row }) => ({ col, row })) : [],
             objectiveHexes: game.hexGrid.escapeZoneHexes.map(({ col, row }) => ({ col, row })),

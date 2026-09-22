@@ -12865,9 +12865,9 @@ var fp = class {
 		this.snapshot = e, this.refresh();
 	}
 	refresh() {
-		let e = this.snapshot?.units.find((e) => e.id === this.snapshot?.selectedUnitId) ?? null, t = new Set(this.snapshot?.legalMoves.map(lp) ?? []), n = new Set(this.snapshot?.legalAttacks.map(lp) ?? []), r = new Set(this.snapshot?.marchTargets.map(lp) ?? []), i = new Set(this.snapshot?.objectiveHexes?.map(lp) ?? []), a = new Set(this.snapshot?.exploredHexes ?? []), o = new Map(this.snapshot?.tiles.map((e) => [lp(e), e.terrain.toLowerCase()]) ?? []);
-		for (let [s, c] of this.rings) {
-			let l = c.material, u = this.winter && ![
+		let e = this.snapshot?.units.find((e) => e.id === this.snapshot?.selectedUnitId) ?? null, t = new Set(this.snapshot?.legalMoves.map(lp) ?? []), n = new Set(this.snapshot?.legalAttacks.map(lp) ?? []), r = new Set(this.snapshot?.attackRangeHexes?.map(lp) ?? []), i = new Set(this.snapshot?.marchTargets.map(lp) ?? []), a = new Set(this.snapshot?.objectiveHexes?.map(lp) ?? []), o = new Set(this.snapshot?.exploredHexes ?? []), s = new Map(this.snapshot?.tiles.map((e) => [lp(e), e.terrain.toLowerCase()]) ?? []);
+		for (let [c, l] of this.rings) {
+			let u = l.material, d = this.winter && ![
 				"mud",
 				"swamp",
 				"marsh",
@@ -12875,10 +12875,10 @@ var fp = class {
 				"road2",
 				"dam",
 				"trenches"
-			].includes(o.get(s) ?? "plains"), d = this.gridVisible ? u ? .65 : .3 : 0, f = 0, p = u ? 5268087 : 11906705;
-			i.has(s) && (d = Math.max(d, .72), f = .1, p = this.snapshot?.objectiveKind === "objective" ? 14792284 : 7719907), (t.has(s) || r.has(s)) && (d = .92, f = .22, p = 7528619), n.has(s) && (d = 1, f = .3, p = 16741213), e && s === `${e.col},${e.row}` && (d = 1, f = .34, p = 16766047), this.hovered && s === lp(this.hovered) && (d = 1, f = Math.max(f, .34), !t.has(s) && !r.has(s) && !n.has(s) && !(e && s === `${e.col},${e.row}`) && (p = 16773578)), l.color.setHex(p), l.opacity = d, c.visible = d > 0;
-			let m = this.fills.get(s), h = m.material;
-			h.color.setHex(p), h.opacity = f, m.visible = f > 0, this.fogCovers.get(s).visible = !!(this.snapshot?.fogOfWar && !a.has(s));
+			].includes(s.get(c) ?? "plains"), f = this.gridVisible ? d ? .65 : .3 : 0, p = 0, m = d ? 5268087 : 11906705, h = m;
+			a.has(c) && (f = Math.max(f, .72), p = .1, m = this.snapshot?.objectiveKind === "objective" ? 14792284 : 7719907, h = m), (t.has(c) || i.has(c)) && (f = .92, p = .22, m = 7528619, h = m), r.has(c) && !n.has(c) && (f = Math.max(f, .62), m = 14972779), n.has(c) && (f = 1, p = .3, m = 16741213, h = m), e && c === `${e.col},${e.row}` && (f = 1, p = .34, m = 16766047, h = m), this.hovered && c === lp(this.hovered) && (f = 1, p = Math.max(p, .34), !t.has(c) && !i.has(c) && !n.has(c) && !(e && c === `${e.col},${e.row}`) && (h = 16773578, r.has(c) || (m = h))), u.color.setHex(m), u.opacity = f, l.visible = f > 0;
+			let g = this.fills.get(c), _ = g.material;
+			_.color.setHex(h), _.opacity = p, g.visible = p > 0, this.fogCovers.get(c).visible = !!(this.snapshot?.fogOfWar && !o.has(c));
 		}
 	}
 }, pp = class {
