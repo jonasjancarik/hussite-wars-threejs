@@ -320,6 +320,7 @@ class ThreeBattleMapView {
         this.terrainSignature = null;
         this.setLoading(false);
         this.canvas.hidden = true;
+        this.game.hexGrid.canvas.hidden = false;
         this.surface.classList.remove('three-view-active');
     }
 }

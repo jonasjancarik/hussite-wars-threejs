@@ -11,6 +11,27 @@ const test = (name, run) => tests.push({ name, run });
 
 const domainFiles = ['js/core/game.js', 'js/systems/CombatSystem.js', 'js/systems/ScenarioEventSystem.js'];
 
+test('destroying a 3D battle restores the shared 2D canvas for the next battle', () => {
+    const h = createHarness({ browserView: true });
+    const game = h.newGame();
+    const canvas2d = h.document.getElementById('game-canvas');
+    const canvas3d = h.document.getElementById('game-canvas-3d');
+    const surface = h.document.getElementById('map-surface');
+    canvas2d.hidden = true;
+    canvas3d.hidden = false;
+    surface.classList.add('three-view-active');
+
+    game.destroy();
+
+    assert.equal(canvas2d.hidden, false);
+    assert.equal(canvas3d.hidden, true);
+    assert.equal(surface.classList.contains('three-view-active'), false);
+    const nextGame = h.newGame();
+    assert.equal(nextGame.view.viewMode, '2d');
+    assert.equal(canvas2d.hidden, false);
+    nextGame.destroy();
+});
+
 test('map options opens accessibly, retains toggles, and closes with Escape or an action', () => {
     const h = createHarness({ browserView: true }), game = h.newGame();
     const toggle = h.document.getElementById('map-options-toggle');
