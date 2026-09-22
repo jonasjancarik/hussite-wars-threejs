@@ -1,11 +1,12 @@
 import * as THREE from "three";
 import { createGeneratedSurfaceMaterials, surfaceMaterialIndex } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
-import { createTerrainRegions, isFieldTerrain, type TerrainRegions } from "./terrain-regions.ts";
+import { createTerrainRegions, isFieldTerrain, isWaterTerrain, type TerrainRegions } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
 import { nearestOnStreet } from "./settlement-plan.ts";
+import { clipPolygon, triangulatePolygon } from "./water-geometry.ts";
 
 const COLORS: Record<string, number> = {
   plains: 0xdfe6b3, forest: 0xb3c68f, hills: 0xcfce98, water: 0x78aaa4,
@@ -23,6 +24,7 @@ export class GeneratedTerrain implements BattleTerrain {
   public readonly bounds;
   public readonly topography: TopographyPlan;
   public readonly environmentPlan: EnvironmentPlan;
+  private bridgeBaseHeight = 0;
   private surfaceMesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial[]>;
   private readonly surfaceTextures: THREE.Texture[] = [];
   private basePositions!: Float32Array;
@@ -31,7 +33,10 @@ export class GeneratedTerrain implements BattleTerrain {
   private visibilityKey = "";
   private gridWidth = 0;
   private gridHeight = 0;
-  private readonly visualWeights = new Map<string, Float32Array>();
+  private readonly visualWeights = new Map<string, number[]>();
+  private readonly shorelineTriangles = new Map<string, number[][]>();
+  private waterIndices: number[] = [];
+  private readonly waterCellIndices = new Map<string, number[]>();
 
   public get terrainTypes(): readonly string[] { return this.field.terrainTypes; }
 
@@ -44,6 +49,10 @@ export class GeneratedTerrain implements BattleTerrain {
     this.environmentPlan = planEnvironment(snapshot.scenario, this.field.tiles);
     for (const issue of this.environmentPlan.settlement?.issues ?? []) console.warn(`[Hussite 3D] ${issue}`);
     this.topography = new TopographyPlan(this.field,this.environmentPlan.raisedCells);
+    if(this.environmentPlan.bridge) {
+      const {x,z}=this.environmentPlan.bridge;
+      this.bridgeBaseHeight=this.topography.elevationAt(x,z)+this.field.heightInputAt(x,z).variation*.24;
+    }
     this.bounds = this.layout.bounds();
     this.group.name = `Generated ${snapshot.scenario ?? "battle"} landscape`;
     this.createSurface(assetBase);
@@ -54,16 +63,25 @@ export class GeneratedTerrain implements BattleTerrain {
     const input = this.field.heightInputAt(x, z);
     const terrain = this.field.classify(x, z);
     const elevation = this.topography.elevationAt(x, z);
-    const relief = earthworkRelief(x, z, this.environmentPlan.earthworks)+bridgeRelief(x,z,this.environmentPlan.bridge);
+    const relief = earthworkRelief(x, z, this.environmentPlan.earthworks);
     const weights = this.field.weightsAt(x, z);
     const waterWeight = Object.entries(weights).reduce((total, [name, weight]) =>
       total + (["water", "river", "lake"].includes(name.toLowerCase()) ? weight : 0), 0);
-    if (waterWeight > 0) {
-      const dryVariation = (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
-      return elevation + input.variation * THREE.MathUtils.lerp(dryVariation, 0.035, waterWeight) + relief;
-    }
-    if (terrain === "road" || terrain === "road2" || terrain === "dam") return elevation + input.variation * 0.24 + relief;
-    return elevation + input.variation * (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45) + relief;
+    const dryWeight = Math.max(0, ...Object.entries(weights).filter(([name])=>!isWaterTerrain(name)).map(([,weight])=>weight));
+    if (waterWeight > 0 && waterWeight >= dryWeight) return -.7;
+    const crossing = terrain === "road" || terrain === "road2" || terrain === "dam";
+    const variation = crossing ? .24 : (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
+    const bank = THREE.MathUtils.smoothstep(Math.max(waterWeight, crossing ? 0 : this.field.waterInfluenceAt(x,z)), 0, .5);
+    const ground=THREE.MathUtils.lerp(elevation + input.variation * variation, -.7, bank) + relief;
+    const bridge=this.environmentPlan.bridge;
+    if(!bridge) return ground;
+    const across=Math.abs(x-bridge.x), along=Math.abs(z-bridge.z);
+    const blend=(1-THREE.MathUtils.smoothstep(across,1.35,2.4))*(1-THREE.MathUtils.smoothstep(along,7,10));
+    // The rigid deck and both approach models share one vertical datum. Ease
+    // the surrounding bank into that profile instead of adding terrain noise
+    // independently beneath each end of the bridge.
+    const deck=this.bridgeBaseHeight+bridgeRelief(bridge.x,z,bridge);
+    return THREE.MathUtils.lerp(ground,deck,blend);
   }
 
   public updateVisibility(snapshot: BattleSnapshot): void {
@@ -113,7 +131,37 @@ export class GeneratedTerrain implements BattleTerrain {
     } else {
       vertices = [a, d, b]; barycentric = [1 - tx, tz, tx - tz];
     }
+    const shoreline = this.shorelineTriangles.get([...vertices].sort((a,b)=>a-b).join(","));
+    if (shoreline) for (const triangle of shoreline) {
+      const [a,b,c]=triangle as [number,number,number];
+      const ax=this.basePositions[a*3]!,az=this.basePositions[a*3+2]!;
+      const bx=this.basePositions[b*3]!,bz=this.basePositions[b*3+2]!;
+      const cx=this.basePositions[c*3]!,cz=this.basePositions[c*3+2]!;
+      const denominator=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);
+      if(Math.abs(denominator)<1e-10) continue;
+      const u=((bz-cz)*(x-cx)+(cx-bx)*(z-cz))/denominator;
+      const v=((cz-az)*(x-cx)+(ax-cx)*(z-cz))/denominator;
+      if(u>=-1e-6 && v>=-1e-6 && u+v<=1+1e-6) return {vertices:[a,b,c],barycentric:[u,v,1-u-v]};
+    }
     return { vertices, barycentric };
+  }
+
+  /** Actual continuous water mesh, partitioned only for ice state and explored-cell fog. */
+  public waterTrianglesForCell(col: number, row: number): readonly number[] {
+    const centre=this.layout.center(col,row), apothem=this.layout.radius*Math.sqrt(3)/2;
+    const result:number[]=[];
+    const indices=this.waterCellIndices.get(`${col},${row}`) ?? [];
+    for(let i=0;i<indices.length;i+=3) {
+      let polygon=indices.slice(i,i+3).map(index=>Array.from(this.basePositions.slice(index*3,index*3+3)));
+      if(polygon.every(p=>p[0]!<centre.x-this.layout.radius) || polygon.every(p=>p[0]!>centre.x+this.layout.radius)
+        || polygon.every(p=>p[2]!<centre.z-apothem) || polygon.every(p=>p[2]!>centre.z+apothem)) continue;
+      for(let side=0;side<6 && polygon.length;side++) {
+        const angle=(side+.5)*Math.PI/3;
+        polygon=clipPolygon(polygon,p=>(p[0]!-centre.x)*Math.cos(angle)+(p[2]!-centre.z)*Math.sin(angle)-apothem);
+      }
+      result.push(...triangulatePolygon(polygon));
+    }
+    return result;
   }
 
   /** Project overlays onto the actual triangles rather than the unsampled height function. */
@@ -130,14 +178,20 @@ export class GeneratedTerrain implements BattleTerrain {
     if (!sample) return null;
     const { vertices, barycentric } = sample;
     let result: string | null = null, maximum = -Infinity;
+    let waterWeight=0, waterName: string | null=null, largestWater=0;
     for (const terrain of this.field.terrainTypes) {
       const weights = this.visualWeights.get(terrain)!;
       const weight = weights[vertices[0]]! * barycentric[0]
         + weights[vertices[1]]! * barycentric[1]
         + weights[vertices[2]]! * barycentric[2];
+      if(isWaterTerrain(terrain)) {
+        waterWeight+=weight;
+        if(weight>largestWater) {largestWater=weight;waterName=terrain;}
+        continue;
+      }
       if (weight > maximum) { maximum = weight; result = terrain; }
     }
-    return result;
+    return waterName && waterWeight>=maximum ? waterName : result;
   }
 
   public dispose(): void {
@@ -151,6 +205,9 @@ export class GeneratedTerrain implements BattleTerrain {
     this.interactiveMeshes.length = 0;
     this.vertexKeys.length = 0;
     this.visualWeights.clear();
+    this.shorelineTriangles.clear();
+    this.waterIndices.length=0;
+    this.waterCellIndices.clear();
     for (const texture of this.surfaceTextures) texture.dispose();
     this.surfaceTextures.length = 0;
   }
@@ -162,7 +219,7 @@ export class GeneratedTerrain implements BattleTerrain {
     const nz = Math.ceil((this.bounds.maxZ - this.bounds.minZ) / step) + 1;
     this.gridWidth = nx;
     this.gridHeight = nz;
-    for (const terrain of this.field.terrainTypes) this.visualWeights.set(terrain, new Float32Array(nx * nz));
+    for (const terrain of this.field.terrainTypes) this.visualWeights.set(terrain, new Array<number>(nx * nz).fill(0));
     const positions: number[] = [];
     const colors: number[] = [];
     const uvs: number[] = [];
@@ -176,7 +233,18 @@ export class GeneratedTerrain implements BattleTerrain {
         uvs.push(x / 34, z / 34);
         const coord = this.layout.coordAt(x, z);
         this.vertexKeys.push(coord ? `${coord.col},${coord.row}` : null);
-        const weights = this.field.weightsAt(x, z);
+        let weights = this.field.weightsAt(x, z);
+        if (Object.keys(weights).length === 0) {
+          // Continue the nearest terrain to the diorama rim. An empty weight
+          // vector must never count as water through a 0 >= 0 comparison.
+          let nearest=this.field.tiles[0]!, minimum=Infinity;
+          for(const cell of this.field.tiles) {
+            const distance=(x-cell.center.x)**2+(z-cell.center.z)**2;
+            if(distance<minimum) {minimum=distance;nearest=cell;}
+          }
+          weights={[nearest.terrain]:1};
+          if(isWaterTerrain(nearest.terrain)) positions[positions.length-2]=-.7;
+        }
         const vertexIndex = iz * nx + ix;
         for (const terrain of this.field.terrainTypes) {
           this.visualWeights.get(terrain)![vertexIndex] = weights[terrain] ?? 0;
@@ -185,6 +253,7 @@ export class GeneratedTerrain implements BattleTerrain {
         let total = 0;
         for (const [terrain, weight] of Object.entries(weights)) {
           sampleColor.setHex(COLORS[terrain.toLowerCase()] ?? 0x8d8b6a);
+          if(this.environmentPlan.frozenRiver && isWaterTerrain(terrain)) sampleColor.setHex(0xbad1d1);
           if (this.environmentPlan.winter && !["water", "mud", "swamp", "road", "road2", "dam", "town", "church"].includes(terrain)) {
             sampleColor.lerp(FROST_COLOR, .79);
           }
@@ -213,18 +282,86 @@ export class GeneratedTerrain implements BattleTerrain {
       }
     }
     const materialIndices: number[][] = [[], [], [], [], [], []];
+    const waterTypes=this.field.terrainTypes.filter(isWaterTerrain);
+    const dryTypes=this.field.terrainTypes.filter(name=>!isWaterTerrain(name));
+    const waterAt=(index:number):number=>waterTypes.reduce((total,name)=>total+this.visualWeights.get(name)![index]!,0);
+    const margin=(index:number,dry:string):number=>waterAt(index)-this.visualWeights.get(dry)![index]!;
+    const crossings=new Map<string,number>();
+    const intersect=(a:number,b:number,dry:string):number=>{
+      const key=`${dry}:${[a,b].sort((a,b)=>a-b).join(",")}`;
+      const known=crossings.get(key); if(known!==undefined) return known;
+      const t=margin(a,dry)/(margin(a,dry)-margin(b,dry)), index=positions.length/3;
+      const x=THREE.MathUtils.lerp(positions[a*3]!,positions[b*3]!,t);
+      const z=THREE.MathUtils.lerp(positions[a*3+2]!,positions[b*3+2]!,t);
+      positions.push(x,-.7,z);
+      for(let axis=0;axis<3;axis++) colors.push(THREE.MathUtils.lerp(colors[a*3+axis]!,colors[b*3+axis]!,t));
+      for(let axis=0;axis<2;axis++) uvs.push(THREE.MathUtils.lerp(uvs[a*2+axis]!,uvs[b*2+axis]!,t));
+      for(const weights of this.visualWeights.values()) weights.push(THREE.MathUtils.lerp(weights[a]!,weights[b]!,t));
+      const coord=this.layout.coordAt(x,z); this.vertexKeys.push(coord ? `${coord.col},${coord.row}` : null);
+      crossings.set(key,index); return index;
+    };
+    const cut=(polygon:number[],dry:string,keepWater:boolean):number[]=>{
+      const result:number[]=[];
+      for(let i=0;i<polygon.length;i++) {
+        const a=polygon[i]!,b=polygon[(i+1)%polygon.length]!;
+        const insideA=margin(a,dry)>=0,insideB=margin(b,dry)>=0;
+        if(insideA===keepWater) result.push(a);
+        if(insideA!==insideB) result.push(intersect(a,b,dry));
+      }
+      return result;
+    };
+    const dryMaterial=(triangle:number[]):number=>{
+      const dry=[...dryTypes].sort((a,b)=>triangle.reduce((sum,v)=>sum+this.visualWeights.get(b)![v]!-this.visualWeights.get(a)![v]!,0))[0] ?? "plains";
+      return dry==="town" && this.environmentPlan.settlement ? 5 : surfaceMaterialIndex(dry);
+    };
     const addTriangle = (a: number, b: number, c: number): void => {
-      const x = (positions[a * 3]! + positions[b * 3]! + positions[c * 3]!) / 3;
-      const z = (positions[a * 3 + 2]! + positions[b * 3 + 2]! + positions[c * 3 + 2]!) / 3;
-      const terrain = this.field.classify(x, z) ?? "plains";
-      const index = terrain === "town" && this.environmentPlan.settlement ? 5 : surfaceMaterialIndex(terrain);
-      materialIndices[index]!.push(a, b, c);
+      const original=[a,b,c];
+      if(original.every(index=>waterAt(index)<=1e-12)) { materialIndices[dryMaterial(original)]!.push(a,b,c);return; }
+      if(waterTypes.length && original.every(index=>dryTypes.every(dry=>margin(index,dry)>=0))) {
+        materialIndices[4]!.push(a,b,c);return;
+      }
+      if(waterTypes.length && !dryTypes.some(dry=>original.every(index=>margin(index,dry)<0))) {
+        const pieces:number[][]=[];
+        const emit=(polygon:number[],water:boolean):void=>{
+          for(let i=1;i<polygon.length-1;i++) {
+            const triangle=[polygon[0]!,polygon[i]!,polygon[i+1]!];
+            const [a,b,c]=triangle as [number,number,number];
+            if(Math.abs((positions[b*3]!-positions[a*3]!)*(positions[c*3+2]!-positions[a*3+2]!)
+              -(positions[c*3]!-positions[a*3]!)*(positions[b*3+2]!-positions[a*3+2]!))<1e-10) continue;
+            materialIndices[water ? 4 : dryMaterial(triangle)]!.push(...triangle); pieces.push(triangle);
+          }
+        };
+        let polygon=original;
+        // Water must outweigh every dry kind, not their sum: clip all of those
+        // linear constraints, including a water pocket inside three dry corners.
+        for(const dry of dryTypes) {
+          emit(cut(polygon,dry,false),false);
+          polygon=cut(polygon,dry,true);
+          if(polygon.length<3) break;
+        }
+        emit(polygon,true);
+        this.shorelineTriangles.set([...original].sort((a,b)=>a-b).join(","),pieces);
+        return;
+      }
+      materialIndices[dryMaterial(original)]!.push(a,b,c);
     };
     for (let iz = 0; iz < nz - 1; iz += 1) {
       for (let ix = 0; ix < nx - 1; ix += 1) {
         const a = iz * nx + ix, b = a + 1, c = a + nx, d = c + 1;
         if ((ix + iz) % 2 === 0) { addTriangle(a, c, b); addTriangle(b, c, d); }
         else { addTriangle(a, c, d); addTriangle(a, d, b); }
+      }
+    }
+    this.waterIndices = materialIndices[4]!;
+    for(let i=0;i<this.waterIndices.length;i+=3) {
+      const triangle=this.waterIndices.slice(i,i+3);
+      const x=triangle.reduce((sum,index)=>sum+positions[index*3]!,0)/3;
+      const z=triangle.reduce((sum,index)=>sum+positions[index*3+2]!,0)/3;
+      const cell=this.layout.coordAt(x,z);
+      if(!cell) continue;
+      for(const coord of [cell,...this.layout.neighbours(cell)]) {
+        const key=`${coord.col},${coord.row}`, bucket=this.waterCellIndices.get(key) ?? [];
+        bucket.push(...triangle); this.waterCellIndices.set(key,bucket);
       }
     }
     const indices = materialIndices.flat();

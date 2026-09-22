@@ -157,6 +157,10 @@ export function isFieldTerrain(terrain: TerrainType): boolean {
   return ["field", "fields", "farmland", "cropland"].includes(terrain.toLowerCase());
 }
 
+export function isWaterTerrain(terrain: TerrainType): boolean {
+  return ["water", "river", "lake"].includes(terrain.toLowerCase());
+}
+
 function terrainBaseHeight(terrain: TerrainType): number {
   const name = terrain.toLowerCase();
   if (name === "water" || name === "river" || name === "lake") return -0.7;
@@ -322,11 +326,12 @@ export class TerrainRegions {
     const cell = this.cellAt(x, z);
     if (!cell) return {};
     const edgeDistance = this.hexEdgeDistance(x, z, cell.col, cell.row);
-    if (edgeDistance >= this.coreInset - EPSILON) return { [cell.terrain]: 1 };
-
     const candidates = this.nearbyCells(x, z);
+    const coastal = candidates.some(candidate => isWaterTerrain(candidate.terrain));
+    if (edgeDistance >= this.coreInset + (coastal ? this.hexRadius*.15 : 0) - EPSILON) return { [cell.terrain]: 1 };
     const scores = new Map<TerrainType, number>();
-    const temperature = 0.13;
+    const temperature = coastal ? 0.42 : 0.13;
+    const coastNoise = coastal ? fractalNoise(this.seed, x / (this.hexRadius * 3.6), z / (this.hexRadius * 2.8), 3) : 0;
     let maximum = -Infinity;
     for (const candidate of candidates) {
       const distance = Math.hypot(x - candidate.center.x, z - candidate.center.z) / this.hexRadius;
@@ -334,12 +339,20 @@ export class TerrainRegions {
       const localSeed = hashUint(this.seed, candidate.col + 101, candidate.row + 503);
       const offsetX = (localSeed & 255) * 0.037;
       const offsetZ = ((localSeed >>> 8) & 255) * 0.041;
-      const noise = fractalNoise(localSeed, x / (this.hexRadius * 5.6) + offsetX, z / (this.hexRadius * 5.1) + offsetZ, 3);
+      const noise = coastal ? (isWaterTerrain(candidate.terrain) ? coastNoise : 0)
+        : fractalNoise(localSeed, x / (this.hexRadius * 5.6) + offsetX, z / (this.hexRadius * 5.1) + offsetZ, 3);
       // Scores are normalized by radius, making the same API useful for
       // miniature and large maps. A shared terrain type is aggregated below,
       // so same-type neighbours never create a visible internal boundary.
-      const score = -(distance * distance) + this.boundaryNoise * noise;
-      scores.set(candidate.terrain, Math.max(scores.get(candidate.terrain) ?? -Infinity, score));
+      const noiseStrength = coastal ? Math.min(this.boundaryNoise, .25) * 2 : this.boundaryNoise;
+      const score = -(distance * distance) + noiseStrength * noise;
+      const previous = scores.get(candidate.terrain) ?? -Infinity;
+      // Sum neighbouring water contributions so a shared shoreline follows the
+      // connected region, rather than a different displaced edge for every hex.
+      if (coastal && Number.isFinite(previous)) {
+        const highest = Math.max(previous, score);
+        scores.set(candidate.terrain, highest + temperature * Math.log(Math.exp((previous-highest)/temperature) + Math.exp((score-highest)/temperature)));
+      } else scores.set(candidate.terrain, Math.max(previous, score));
       maximum = Math.max(maximum, score);
     }
     if (scores.size === 0) return { [cell.terrain]: 1 };
@@ -355,9 +368,29 @@ export class TerrainRegions {
     // Ease into the protected cell interior. An abrupt switch to weight 1 at
     // coreInset made mud banks jump in height, producing tall triangular teeth.
     const coreBlend = smooth(Math.max(0, Math.min(1, edgeDistance / this.coreInset)));
-    for (const terrain of Object.keys(weights)) weights[terrain]! *= 1 - coreBlend;
-    weights[cell.terrain] = (weights[cell.terrain] ?? 0) + coreBlend;
+    const current=weights[cell.terrain] ?? 0;
+    // At coasts, protect the cell's majority without snapping its blend to a
+    // solid hex-shaped patch. A strict majority still guarantees its full core.
+    const interior=smooth(Math.max(0,Math.min(1,(edgeDistance-this.coreInset)/(this.hexRadius*.15))));
+    const target=coastal ? Math.max(current,.501+.499*interior) : 1;
+    const next=current+(target-current)*coreBlend;
+    for (const terrain of Object.keys(weights)) weights[terrain]! *= current<1 ? (1-next)/(1-current) : 1;
+    weights[cell.terrain] = next;
     return weights;
+  }
+
+  /** Broad bank influence, independent of protected material cores. */
+  public waterInfluenceAt(x: number, z: number): number {
+    if (!this.terrainTypes.some(isWaterTerrain)) return 0;
+    let wet = 0, total = 0;
+    for (const cell of this.nearbyCells(x, z)) {
+      const distance = Math.hypot(x-cell.center.x, z-cell.center.z)/this.hexRadius;
+      if (distance > 2.3) continue;
+      const weight = Math.exp(-distance*distance/.65);
+      total += weight;
+      if (isWaterTerrain(cell.terrain)) wet += weight;
+    }
+    return total > 0 ? wet/total : 0;
   }
 
   public classify(x: number, z: number): TerrainType | null {

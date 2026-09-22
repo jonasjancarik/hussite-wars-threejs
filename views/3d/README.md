@@ -64,3 +64,13 @@ Edit the committed JSON to refine the generated result, then run `npm --prefix v
 Německý Brod demonstrates a townhouse replacement, a pinned well, an open bridge-side square and removal of a shed beside the approach. Žatec uses the same generator without manual adjustments. These are illustrative compositions, not surveyed historical reconstructions. The JSON is the authoring source; the generated bundle is not edited directly.
 
 Malformed profile data fails validation. Unsafe edits report their identity in `EnvironmentPlan.settlement.issues` and the browser console; a rejected edit leaves the procedural slot available. Inspect these diagnostics after editing instead of assuming every requested placement was accepted. Available model dimensions, origins and front directions are in `src/settlement-models.ts`, checked against the shared GLB manifest. Full terrain-aware placement is still conservative: a model may be omitted at rendering time if its footprint crosses too steep a slope. There is no visual editor in this pass.
+
+## Generated rivers and banks
+
+Read when changing water geometry, ice, bridge grounding or terrain coverage.
+
+Generated coasts combine neighbouring terrain contributions into one continuous field, with coherent seeded variation. A protected majority inside each hex retains its gameplay terrain; the existing 75% minimum is checked across all campaign maps. Banks ease down to a level water surface. Surface triangles are split at the contour where water outweighs each land type, so shorelines no longer inherit the jagged edges of whole mesh triangles. `renderedHeightAt` uses those split triangles for grounded figures and overlays. Terrain continues to the diorama rim without treating empty samples as water.
+
+Frozen rivers use the same clipped water geometry, partitioned by gameplay hex for explored-cell fog and individual ice breakage. Unbroken ice shares one material across hex edges; only the small central patch opens when the game reports broken ice. Adjacent land hexes own any water contour that extends into their outer margin, so this scenery follows their visibility too. Rivers and ponds keep their original rules, movement costs and ice state.
+
+The existing bridge profile and its approach models share one vertical datum, with a smooth blend into the adjoining bank. This improves seating without moving the crossing or changing the road terrain beneath it. The authored Sudoměř landscape remains on its separate terrain implementation. Woodland composition and landscape authoring controls are separate future passes.
