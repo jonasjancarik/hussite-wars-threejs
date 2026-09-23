@@ -7,11 +7,12 @@ import type { BattleScenery, BattleSnapshot } from "./types.ts";
 import { TownWallScenery } from "./town-wall-scenery.ts";
 import { batchStaticMeshes, INSTANCE_TINT } from "./static-batching.ts";
 import { planWoodland } from "./woodland-plan.ts";
+import { FOLIAGE_MATERIALS } from "./model-merge.ts";
 import { createTuftMesh, planTufts } from "./ground-tufts.ts";
 
-const FOLIAGE_MATERIALS = new Set(["olive", "olive_light", "gold", "cypress"]);
 /** Leaf meshes of the shared tree kit; trunks and branches are left untinted. */
 function isFoliage(mesh: THREE.Mesh): boolean {
+  if (mesh.userData.foliage === true) return true;
   if (mesh.name.startsWith("tree-batch-") || mesh.name.startsWith("shrub-batch-")) return true;
   const material = mesh.material as THREE.Material | THREE.Material[];
   return !Array.isArray(material) && FOLIAGE_MATERIALS.has(material.name);

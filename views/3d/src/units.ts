@@ -6,6 +6,7 @@ import { visibleSnapshotUnits } from "./unit-visibility.ts";
 import { CasualtyFades } from "./casualties.ts";
 import { BROADSIDE_YAW, recipeSignature, unitRecipe } from "./unit-recipes.ts";
 import { commandAuraGeometry } from "./command-aura.ts";
+import { recolorTeamSlots } from "./model-merge.ts";
 
 interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number;
@@ -82,6 +83,7 @@ export class UnitPresentation {
   private readonly movementPosition?: MovementPosition;
   private readonly variants = new Map<string, Promise<THREE.Group>>();
   private readonly ownedMaterials = new Set<THREE.Material>();
+  private readonly ownedGeometries = new Set<THREE.BufferGeometry>();
   private readonly seenAttackEvents = new Set<string>();
   private readonly attackFacing = new Map<number, { yaw: number; until: number }>();
   private readonly commanderAuras = new Map<number, CommandAura>();
@@ -216,6 +218,8 @@ export class UnitPresentation {
     this.group.clear();
     for (const material of this.ownedMaterials) material.dispose();
     this.ownedMaterials.clear();
+    for (const geometry of this.ownedGeometries) geometry.dispose();
+    this.ownedGeometries.clear();
     this.variants.clear();
   }
 
@@ -500,9 +504,17 @@ export class UnitPresentation {
       variant = this.assets.load(model).then(prototype => {
         const materials = new Map<THREE.Material, THREE.Material>();
         const result = prototype.clone(true);
+        const teamColors = { 1: new THREE.Color(TEAM_MATERIAL_COLORS[faction].team_cloth),
+          2: new THREE.Color(TEAM_MATERIAL_COLORS[faction].team_paint) };
         result.traverse(object => {
           const mesh = object as THREE.Mesh;
           if (!mesh.isMesh) return;
+          // Merged models (model-merge.ts) carry team colours per vertex.
+          const recolored = recolorTeamSlots(mesh.geometry, teamColors);
+          if (recolored) {
+            mesh.geometry = recolored;
+            if (this.disposed) recolored.dispose(); else this.ownedGeometries.add(recolored);
+          }
           const sourceMaterials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           const mappedMaterials = sourceMaterials.map(source => {
             if (!TEAM_MATERIAL_NAMES.has(source.name)) return source;
