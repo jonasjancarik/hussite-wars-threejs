@@ -27,9 +27,16 @@ export function compactMiniatureFocusProfile(strength: number): { blurRadiusPixe
   };
 }
 
+interface Burst { sprite: THREE.Sprite; material: THREE.SpriteMaterial; origin: THREE.Vector3; age: number }
+const BURST_MS = 620;
+
+/** Short cosmetic bursts, advanced by the renderer's own frame loop. */
 export class BattlefieldEffects {
   public readonly group = new THREE.Group();
+  private readonly bursts = new Set<Burst>();
   private paused = false;
+
+  public get active(): boolean { return this.bursts.size > 0; }
 
   public setPaused(paused: boolean): void { this.paused = paused; }
 
@@ -41,16 +48,27 @@ export class BattlefieldEffects {
     sprite.position.copy(position).add(new THREE.Vector3(0, 2.1, 0));
     sprite.scale.setScalar(type === "explosion" ? 4.2 : 2.5);
     this.group.add(sprite);
-    const start = performance.now();
-    const animate = (now: number): void => {
-      if (!sprite.parent) return;
-      const t = Math.min(1, (now - start) / 620);
-      sprite.position.y = position.y + 2.1 + t * 2.4;
-      sprite.scale.multiplyScalar(1.008);
-      material.opacity = (1 - t) * 0.52;
-      if (t < 1) requestAnimationFrame(animate);
-      else { this.group.remove(sprite); material.dispose(); }
-    };
-    requestAnimationFrame(animate);
+    this.bursts.add({ sprite, material, origin: position.clone(), age: 0 });
+  }
+
+  public advance(deltaMs: number): void {
+    if (this.paused || deltaMs <= 0) return;
+    for (const burst of this.bursts) {
+      burst.age += deltaMs;
+      const t = Math.min(1, burst.age / BURST_MS);
+      burst.sprite.position.y = burst.origin.y + 2.1 + t * 2.4;
+      burst.sprite.scale.multiplyScalar(1.008);
+      burst.material.opacity = (1 - t) * 0.52;
+      if (t === 1) this.remove(burst);
+    }
+  }
+
+  public clear(): void { for (const burst of this.bursts) this.remove(burst); }
+  public dispose(): void { this.clear(); }
+
+  private remove(burst: Burst): void {
+    this.group.remove(burst.sprite);
+    burst.material.dispose();
+    this.bursts.delete(burst);
   }
 }

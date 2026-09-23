@@ -19,6 +19,12 @@ export class BattlePicker {
     return hit ? this.layout.coordAt(hit.point.x, hit.point.z) : null;
   }
 
+  /** One terrain ray for both the hovered hex and the depth-of-field focus. */
+  public surfaceAt(clientX: number, clientY: number, terrainTargets: THREE.Object3D[]): { point: THREE.Vector3; coord: HexCoord | null } | null {
+    const hit = this.worldHitAt(clientX, clientY, terrainTargets);
+    return hit ? { point: hit.point, coord: this.layout.coordAt(hit.point.x, hit.point.z) } : null;
+  }
+
   public worldPointAt(clientX: number, clientY: number, targets: THREE.Object3D[]): THREE.Vector3 | null {
     return this.worldHitAt(clientX, clientY, targets)?.point.clone() ?? null;
   }

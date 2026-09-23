@@ -21,6 +21,14 @@ import { UnitPresentation } from "./units.ts";
 import { UnitBanners } from "./unit-banners.ts";
 import { WagonConnections } from "./wagon-connections.ts";
 
+// Textures stream in after the first frame. With on-demand rendering every
+// live battle must redraw once they arrive, so share the default manager.
+const loadListeners = new Set<() => void>();
+const notifyLoaded = (): void => { for (const listener of loadListeners) listener(); };
+THREE.DefaultLoadingManager.onProgress = notifyLoaded;
+THREE.DefaultLoadingManager.onLoad = notifyLoaded;
+const DIAGNOSTIC_CAPTURE_FRAMES = 240;
+
 class IntegratedThreeBattle {
   private readonly scene = new THREE.Scene();
   private readonly assets: BattleAssets;
@@ -59,6 +67,12 @@ class IntegratedThreeBattle {
   private listenerCount = 0;
   private snapshotRevision = -1;
   private readonly openingDistance: number;
+  /** Continuous frames requested by `resetDiagnostics` for a 240-frame capture. */
+  private captureFramesRemaining = 0;
+  private resumingFromIdle = true;
+  /** Frames wait for the GPU backend; resize and load callbacks can arrive first. */
+  private ready = false;
+  private readonly requestFrame = (): void => this.scheduleFrame();
 
   private constructor(private readonly canvas: HTMLCanvasElement, private readonly options: IntegratedRendererOptions,
     art: ScenarioArtManifest | null) {
@@ -102,6 +116,7 @@ class IntegratedThreeBattle {
       this.overlays.group, this.effects.group);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement ?? canvas);
+    loadListeners.add(this.requestFrame);
     this.installInput();
   }
 
@@ -115,6 +130,7 @@ class IntegratedThreeBattle {
       await Promise.all([battle.sky.load(), battle.scenery.build()]);
       await battle.applySnapshot(options.snapshot);
       battle.lighting.invalidateShadows();
+      battle.ready = true;
       battle.scheduleFrame();
       return battle;
     } catch (error) {
@@ -161,8 +177,7 @@ class IntegratedThreeBattle {
       this.frameRequest = null;
     }
     if (active) {
-      this.lastFrame = performance.now();
-      this.performanceTracker.skipNextFrameInterval();
+      this.resumingFromIdle = true;
       this.resize(); this.scheduleFrame();
     }
   }
@@ -173,11 +188,11 @@ class IntegratedThreeBattle {
     this.focusOn(this.cameraRig.controls.target.clone());
   }
 
-  public setGridVisible(visible: boolean): void { this.overlays.setGridVisible(visible); }
-  public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); }
+  public setGridVisible(visible: boolean): void { this.overlays.setGridVisible(visible); this.scheduleFrame(); }
+  public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); this.scheduleFrame(); }
   public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
   public setUnitLabelsVisible(visible: boolean): void { this.banners.setLabelsVisible(visible); this.scheduleFrame(); }
-  public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); }
+  public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); this.scheduleFrame(); }
   public setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void {
     this.depthOfFieldEnabled = enabled;
     this.closeupFocusStrength = THREE.MathUtils.clamp(closeupStrength, 0, 1);
@@ -212,6 +227,7 @@ class IntegratedThreeBattle {
     this.cameraRig.resize(rect.width, rect.height);
     this.pipeline.resize(rect.width, rect.height);
     this.banners.resize();
+    this.scheduleFrame();
   }
 
   public diagnostics(): Record<string, unknown> {
@@ -248,7 +264,9 @@ class IntegratedThreeBattle {
     this.performanceTracker.reset();
     this.performanceTracker.skipNextFrameInterval();
     this.lastRendererCounters = {};
+    this.captureFramesRemaining = DIAGNOSTIC_CAPTURE_FRAMES;
     this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
+    this.scheduleFrame();
   }
 
   public dispose(): void {
@@ -257,10 +275,13 @@ class IntegratedThreeBattle {
     this.active = false;
     if (this.frameRequest !== null) cancelAnimationFrame(this.frameRequest);
     this.frameRequest = null;
+    loadListeners.delete(this.requestFrame);
     this.abortController.abort();
     this.resizeObserver.disconnect();
     this.cameraRig.controls.dispose();
     this.scenery.dispose();
+    this.overlays.dispose();
+    this.effects.dispose();
     this.units.dispose();
     this.banners.dispose();
     this.wagonConnections.dispose();
@@ -278,7 +299,10 @@ class IntegratedThreeBattle {
   }
 
   private installInput(): void {
-    this.cameraRig.controls.addEventListener("change", () => this.reportZoom());
+    this.cameraRig.controls.addEventListener("change", () => { this.reportZoom(); this.scheduleFrame(); });
+    // Gesture handlers call controls.update(), which emits "change"; damping
+    // then keeps the loop awake until the camera settles.
+    this.cameraRig.controls.addEventListener("start", this.requestFrame);
     this.addListener(this.canvas, "contextmenu", ((event: Event) => {
       event.preventDefault(); if (this.active) this.options.onContext?.();
     }) as EventListener);
@@ -309,6 +333,7 @@ class IntegratedThreeBattle {
     this.addListener(this.canvas, "pointerleave", (() => {
       this.focusPointer = null; this.overlays.setHovered(null); this.options.onHover?.(null);
       this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);
+      this.scheduleFrame();
     }) as EventListener);
   }
 
@@ -318,10 +343,10 @@ class IntegratedThreeBattle {
     const gesture = this.gestures.get(event.pointerId);
     if (gesture) recordPointerGestureMovement(gesture, event);
     if (this.gestures.size > 0 || event.pointerType !== "mouse") return;
-    const focusPoint = this.picker.worldPointAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
-    if (focusPoint) this.focusOn(focusPoint);
-    const coord = this.picker.hexAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
-    this.overlays.setHovered(coord);
+    const surface = this.picker.surfaceAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
+    if (surface) this.focusOn(surface.point);
+    const coord = surface?.coord ?? null;
+    if (this.overlays.setHovered(coord)) this.scheduleFrame();
     this.options.onHover?.(coord ? { ...coord, clientX: event.clientX, clientY: event.clientY } : null);
   }
 
@@ -338,11 +363,19 @@ class IntegratedThreeBattle {
   private focusOn(worldPoint: THREE.Vector3): void {
     this.cameraRig.camera.updateMatrixWorld();
     const cameraSpace = worldPoint.applyMatrix4(this.cameraRig.camera.matrixWorldInverse);
-    this.targetFocusDistance = Math.max(1, -cameraSpace.z);
+    const next = Math.max(1, -cameraSpace.z);
+    if (Math.abs(next - this.targetFocusDistance) < 0.01) return;
+    this.targetFocusDistance = next;
+    this.scheduleFrame();
   }
 
+  /**
+   * Frames are drawn on demand: after input, a snapshot, a loaded asset or while
+   * something is still animating. A turn-based battle is mostly idle, and the
+   * AO/DOF/SMAA graph should not run at display rate when nothing changes.
+   */
   private scheduleFrame(): void {
-    if (!this.active || this.disposed || this.frameRequest !== null) return;
+    if (!this.ready || !this.active || this.disposed || this.frameRequest !== null) return;
     this.frameRequest = requestAnimationFrame(this.animate);
   }
 
@@ -350,7 +383,12 @@ class IntegratedThreeBattle {
     this.frameRequest = null;
     if (!this.active || this.disposed) return;
     const frameMs = now - this.lastFrame;
-    const delta = Math.min(64, frameMs);
+    // Waking from idle is not a long frame: advance animations by one nominal
+    // frame and keep the idle gap out of the performance samples.
+    const resumed = this.resumingFromIdle;
+    this.resumingFromIdle = false;
+    if (resumed) this.performanceTracker.skipNextFrameInterval();
+    const delta = resumed ? 16.7 : Math.min(64, frameMs);
     this.lastFrame = now;
     this.frameCount += 1;
     const renderStartedAt = performance.now();
@@ -380,7 +418,8 @@ class IntegratedThreeBattle {
     this.sky.update(this.cameraRig.camera);
     if (this.reducedMotion.matches) this.units.casualties.clear();
     else this.units.casualties.advance(delta, this.options.snapshot.paused);
-    this.units.advance(delta, this.options.snapshot.paused || this.reducedMotion.matches);
+    const turning = this.units.advance(delta, this.options.snapshot.paused || this.reducedMotion.matches);
+    this.effects.advance(delta);
     this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id));
     this.lighting.updateShadows();
     const rendererStartedAt = performance.now();
@@ -397,7 +436,15 @@ class IntegratedThreeBattle {
       this.performanceTracker.skipNextFrameInterval();
     }
     if (this.frameCount % 120 === 0) this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
-    this.scheduleFrame();
+    if (this.captureFramesRemaining > 0) this.captureFramesRemaining -= 1;
+    const paused = this.options.snapshot.paused;
+    const settling = controlsChanged
+      || Math.abs(this.focusDistance - this.targetFocusDistance) > 0.01
+      || Math.abs(this.focusStrength - desiredFocusStrength) > 0.0005
+      || turning
+      || (!paused && (this.units.casualties.active || this.effects.active));
+    if (settling || this.captureFramesRemaining > 0) this.scheduleFrame();
+    else this.resumingFromIdle = true;
   };
 }
 

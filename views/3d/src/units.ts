@@ -103,17 +103,20 @@ export class UnitPresentation {
     return Number.isInteger(id) ? id : null;
   }
 
-  /** Advance visual turns without changing any game state or movement rules. */
-  public advance(deltaMs: number, paused = false): void {
-    if (paused || deltaMs <= 0) return;
+  /** Advance visual turns without changing any game state or movement rules. Returns whether any formation is still turning. */
+  public advance(deltaMs: number, paused = false): boolean {
+    if (paused || deltaMs <= 0) return false;
     const alpha = 1 - Math.exp(-Math.min(deltaMs, 64) / TURN_RESPONSE_MS);
+    let turning = false;
     for (const visual of this.visuals.values()) {
       const delta = angleDelta(visual.yaw, visual.targetYaw);
       if (Math.abs(delta) < 0.0001) continue;
-      visual.yaw += delta * alpha;
+      turning = true;
+      visual.yaw = Math.abs(delta) < 0.002 ? visual.targetYaw : visual.yaw + delta * alpha;
       visual.root.rotation.y = visual.yaw - visual.baseYaw + visual.marchingYaw;
       this.groundFigures(visual);
     }
+    return turning;
   }
 
   public dispose(): void {

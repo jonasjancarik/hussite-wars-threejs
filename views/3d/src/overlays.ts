@@ -117,11 +117,23 @@ export class TacticalOverlays {
   }
 
   public setGridVisible(visible: boolean): void { this.gridVisible = visible; this.refresh(); }
-  public setHovered(coord: HexCoord | null): void {
-    if (this.hovered?.col === coord?.col && this.hovered?.row === coord?.row) return;
+  /** Returns whether the highlighted hex changed and a new frame is needed. */
+  public setHovered(coord: HexCoord | null): boolean {
+    if (this.hovered?.col === coord?.col && this.hovered?.row === coord?.row) return false;
     this.hovered = coord; this.refresh();
+    return true;
   }
   public update(snapshot: BattleSnapshot): void { this.snapshot = snapshot; this.refresh(); }
+
+  public dispose(): void {
+    for (const mesh of [...this.rings.values(), ...this.fills.values(), ...this.fogCovers.values()]) {
+      mesh.geometry.dispose();
+      (mesh.material as THREE.Material).dispose();
+    }
+    this.rings.clear(); this.fills.clear(); this.fogCovers.clear();
+    this.group.clear();
+    this.snapshot = null;
+  }
 
   private refresh(): void {
     const selected = this.snapshot?.units.find(unit => unit.id === this.snapshot?.selectedUnitId) ?? null;

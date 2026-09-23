@@ -21,6 +21,8 @@ export class CasualtyFades {
 
   public constructor() { this.group.name = "Casualty fades"; }
 
+  public get active(): boolean { return this.fading.size > 0; }
+
   public setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     if (!enabled) this.clear();
