@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createGeneratedSurfaceMaterials, surfaceMaterialIndex } from "./generated-materials.ts";
+import { createGeneratedSurfaceMaterials, createPuddleMaterial, GROUND_SPLAT, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, fractalNoise, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
@@ -16,10 +16,14 @@ const MEMORY_TINT = new THREE.Color(0.62, 0.66, 0.72);
 const COLORS: Record<string, number> = {
   plains: 0xdfe6b3, forest: 0xb3c68f, hills: 0xcfce98, water: 0x78aaa4,
   town: 0xd1b99d, road: 0xd9c7a0, road2: 0xc7b28f, dam: 0xdacaa2,
-  mud: 0xb28f78, swamp: 0x9ba589, slope: 0xc3b59b, trenches: 0xa88972,
+  mud: 0xd9b891, swamp: 0xb3bd8a, slope: 0xc3b59b, trenches: 0xa88972,
   church: 0xcab79e, field: 0xddc47d, fields: 0xddc47d, farmland: 0xddc47d, cropland: 0xddc47d,
 };
 const FROST_COLOR = new THREE.Color(0xe2e5dc);
+const WETLAND = new Set(["mud", "swamp", "marsh"]);
+/** Deepest puddle hollow in metres; the water sheet sits PUDDLE_FILL below the undipped ground. */
+export const PUDDLE_DEPTH = .24;
+const PUDDLE_FILL = .07;
 /** Grassland drifts between cured straw and cooler sage, like late-summer pasture. */
 const STRAW_TINT = new THREE.Color(0xffe3a2);
 const SAGE_TINT = new THREE.Color(0xd3deae);
@@ -77,6 +81,51 @@ export class GeneratedTerrain implements BattleTerrain {
     this.group.name = `Generated ${snapshot.scenario ?? "battle"} landscape`;
     this.createSurface(assetBase);
     this.createPlinth();
+    this.createPuddles();
+  }
+
+  /**
+   * Standing water in the wetland hollows: a sheet that follows the undipped
+   * ground a few centimetres down, so it shows only where a hollow dips below
+   * it and the puddle outlines follow the noise, not the hexes.
+   */
+  private createPuddles(): void {
+    const wetCells = this.field.tiles.filter(cell => WETLAND.has(cell.terrain.toLowerCase())
+      && !this.environmentPlan.replacedCells.has(`${cell.col},${cell.row}`));
+    if (!wetCells.length) return;
+    const positions: number[] = [], step = .32, reach = this.layout.radius + 1;
+    const steps = Math.ceil(reach * 2 / step);
+    for (const cell of wetCells) {
+      const heights: number[] = [], dips: number[] = [];
+      for (let iz = 0; iz <= steps; iz += 1) for (let ix = 0; ix <= steps; ix += 1) {
+        const x = cell.center.x - reach + ix * step, z = cell.center.z - reach + iz * step;
+        const dip = this.puddleDip(x, z);
+        dips.push(dip);
+        const level = dip > 0 ? this.heightAt(x, z) + dip - PUDDLE_FILL : NaN;
+        // Water lies level: skip ground that tilts more than a gentle hollow does.
+        const tilt = dip > 0 ? Math.hypot(this.heightAt(x + .3, z) - this.heightAt(x - .3, z),
+          this.heightAt(x, z + .3) - this.heightAt(x, z - .3)) / .6 : 0;
+        heights.push(tilt < .22 ? level : NaN);
+      }
+      const vertex = (ix: number, iz: number): number[] => [cell.center.x - reach + ix * step,
+        heights[iz * (steps + 1) + ix]!, cell.center.z - reach + iz * step];
+      for (let iz = 0; iz < steps; iz += 1) for (let ix = 0; ix < steps; ix += 1) {
+        const corners = [[ix, iz], [ix + 1, iz], [ix, iz + 1], [ix + 1, iz + 1]] as const;
+        const indices = corners.map(([cx, cz]) => cz * (steps + 1) + cx);
+        if (indices.some(index => Number.isNaN(heights[index]!))) continue;
+        if (Math.max(...indices.map(index => dips[index]!)) < PUDDLE_FILL * .8) continue;
+        const [a, b, c, d] = corners.map(([cx, cz]) => vertex(cx, cz));
+        positions.push(...a!, ...c!, ...b!, ...b!, ...c!, ...d!);
+      }
+    }
+    if (!positions.length) return;
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, createPuddleMaterial(this.environmentPlan.winter));
+    mesh.name = "Wetland puddles";
+    mesh.receiveShadow = true;
+    this.group.add(mesh);
   }
 
   public heightAt(x: number, z: number): number {
@@ -102,7 +151,8 @@ export class GeneratedTerrain implements BattleTerrain {
     const crossing = terrain === "road" || terrain === "road2" || terrain === "dam";
     const variation = crossing ? .24 : (0.42 + input.roughness * 0.34) * (1 - input.wetness * 0.45);
     const bank = THREE.MathUtils.smoothstep(Math.max(waterWeight, crossing||insideCity ? 0 : this.field.waterInfluenceAt(x,z)), 0, .5);
-    const ground=THREE.MathUtils.lerp(elevation + input.variation * variation, -.7, bank) + relief;
+    const ground=THREE.MathUtils.lerp(elevation + input.variation * variation, -.7, bank) + relief
+      - (insideCity ? 0 : this.puddleDip(x, z, weights));
     const bridge=this.environmentPlan.bridge;
     if(!bridge) return ground;
     const across=Math.abs(x-bridge.x), along=Math.abs(z-bridge.z);
@@ -112,6 +162,20 @@ export class GeneratedTerrain implements BattleTerrain {
     // independently beneath each end of the bridge.
     const deck=this.bridgeBaseHeight+bridgeRelief(bridge.x,z,bridge);
     return THREE.MathUtils.lerp(ground,deck,blend);
+  }
+
+  /**
+   * Shallow hollows in mud and swamp where standing water collects. The dip is
+   * visual only and never deeper than PUDDLE_DEPTH, so units stay ankle-deep.
+   */
+  public puddleDip(x: number, z: number, weights: TerrainWeights = this.field.weightsAt(x, z)): number {
+    let wet = 0;
+    for (const [terrain, weight] of Object.entries(weights)) if (WETLAND.has(terrain.toLowerCase())) wet += weight;
+    if (wet <= 0) return 0;
+    // Earthwork banks and ditches are too steep to hold a sheet of water.
+    if (earthworkRelief(x, z, this.environmentPlan.earthworks) !== 0) return 0;
+    const hollow = THREE.MathUtils.smoothstep(fractalNoise(this.field.seed ^ 0x5be0cd19, x / 3.4, z / 3.4, 2), .16, .5);
+    return PUDDLE_DEPTH * hollow * THREE.MathUtils.smoothstep(wet, .35, .85);
   }
 
   private insideCity(x:number,z:number):boolean {
@@ -271,6 +335,44 @@ export class GeneratedTerrain implements BattleTerrain {
     // Keep each terrain's own brightness so hills and forest stay distinct.
     const brightness = (base.r + base.g + base.b) / ((tint.r + tint.g + tint.b) || 1);
     return tint.multiplyScalar(THREE.MathUtils.lerp(1, brightness, 0.6));
+  }
+
+  /**
+   * Meadow/earth/grain texture weights per vertex. Region weights already ease
+   * between terrains; noise then breaks up each transition so it does not
+   * trace the hex it came from. Swamp is vegetated ground mottled with mud.
+   */
+  private groundSplat(positions: readonly number[]): Float32Array {
+    const count = positions.length / 3, splat = new Float32Array(count * 3);
+    const seed = this.field.seed ^ 0x1f83d9ab;
+    const channels = this.field.terrainTypes.map(terrain => ({
+      weights: this.visualWeights.get(terrain)!,
+      channel: groundSplatChannel(surfaceMaterialKind(terrain)),
+      marsh: ["swamp", "marsh"].includes(terrain.toLowerCase()),
+    }));
+    for (let index = 0; index < count; index += 1) {
+      const x = positions[index * 3]!, z = positions[index * 3 + 2]!;
+      const mix = [0, 0, 0];
+      for (const { weights, channel, marsh } of channels) {
+        const weight = weights[index] ?? 0;
+        if (weight <= 0) continue;
+        if (marsh) {
+          const mud = THREE.MathUtils.smoothstep(fractalNoise(seed + 7, x / 5.5, z / 5.5, 3), -.05, .4) * .75;
+          mix[0] += weight * (1 - mud); mix[1] += weight * mud;
+        } else mix[channel] += weight;
+      }
+      let total = mix[0]! + mix[1]! + mix[2]!;
+      if (total <= 0) { splat[index * 3] = 1; continue; }
+      for (let channel = 0; channel < 3; channel += 1) {
+        const share = mix[channel]! / total;
+        // Only partial shares move: interiors stay pure, borders become ragged.
+        const breakup = fractalNoise(seed + channel * 101, x / 2.6, z / 2.6, 3) * .55 * 4 * share * (1 - share);
+        mix[channel] = Math.max(0, share + breakup) ** 1.6;
+      }
+      total = mix[0]! + mix[1]! + mix[2]! || 1;
+      for (let channel = 0; channel < 3; channel += 1) splat[index * 3 + channel] = mix[channel]! / total;
+    }
+    return splat;
   }
 
   private createSurface(assetBase?: string): void {
@@ -474,6 +576,7 @@ export class GeneratedTerrain implements BattleTerrain {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute(GROUND_SPLAT, new THREE.Float32BufferAttribute(this.groundSplat(positions), 3));
     geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices);
     let groupStart = 0;

@@ -1,0 +1,77 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import test from "node:test";
+import * as THREE from "three";
+import { earthworkRelief } from "../src/environment-plan.ts";
+import { GROUND_SPLAT } from "../src/generated-materials.ts";
+import { GeneratedTerrain, PUDDLE_DEPTH } from "../src/generated-terrain.ts";
+import type { BattleSnapshot } from "../src/types.ts";
+
+const root = new URL("../../../", import.meta.url);
+const scenarios = runInNewContext(`${readFileSync(new URL("js/data/scenarios.js", root), "utf8")}; Scenarios`) as
+  Record<string, { mapSize: { width: number; height: number }; terrain: Record<string, string | number[][]> }>;
+
+function terrain(id: string): GeneratedTerrain {
+  const scenario = scenarios[id]!, assigned = new Map<string, string>();
+  for (const [kind, coords] of Object.entries(scenario.terrain)) if (Array.isArray(coords)) {
+    for (const [col, row] of coords) assigned.set(`${col},${row}`, kind);
+  }
+  const tiles = [];
+  for (let col = 0; col < scenario.mapSize.width; col++) for (let row = 0; row < scenario.mapSize.height; row++) {
+    tiles.push({ col, row, terrain: assigned.get(`${col},${row}`) ?? "plains" });
+  }
+  return new GeneratedTerrain({ scenario: id, seed: 1, cols: scenario.mapSize.width, rows: scenario.mapSize.height,
+    tiles } as unknown as BattleSnapshot);
+}
+
+function surface(ground: GeneratedTerrain): THREE.Mesh {
+  return ground.interactiveMeshes[0] as THREE.Mesh;
+}
+
+test("dry land blends ground textures per vertex; swamp mixes meadow with mud", () => {
+  const ground = terrain("malesov_1424");
+  const geometry = surface(ground).geometry;
+  const splat = geometry.getAttribute(GROUND_SPLAT);
+  const positions = geometry.getAttribute("position");
+  assert.equal(splat.count, positions.count);
+  let swampMeadow = 0, swampEarth = 0, swampSamples = 0;
+  for (let index = 0; index < splat.count; index += 1) {
+    const sum = splat.getX(index) + splat.getY(index) + splat.getZ(index);
+    assert.ok(Math.abs(sum - 1) < 1e-5, `vertex ${index} weights sum to ${sum}`);
+    const weights = ground.field.weightsAt(positions.getX(index), positions.getZ(index));
+    if ((weights.swamp ?? 0) > .99) {
+      swampMeadow += splat.getX(index); swampEarth += splat.getY(index); swampSamples += 1;
+    }
+  }
+  assert.ok(swampSamples > 100);
+  assert.ok(swampMeadow / swampSamples > .4, "swamp stays mostly vegetated");
+  assert.ok(swampEarth / swampSamples > .1, "swamp is mottled with mud");
+  const materials = surface(ground).material as Array<THREE.Material & { colorNode?: unknown }>;
+  for (const index of [0, 1, 2, 3]) assert.ok(materials[index]!.colorNode, `land material ${index} samples the blend`);
+  ground.dispose();
+});
+
+test("wetlands hold shallow puddles that stay off earthworks", () => {
+  const swamp = terrain("malesov_1424");
+  const puddles = swamp.group.children.find(child => child.name === "Wetland puddles") as THREE.Mesh | undefined;
+  assert.ok(puddles, "swamp map has standing water");
+  assert.ok(puddles.geometry.getAttribute("position").count > 100);
+  swamp.dispose();
+
+  const neck = terrain("vitkov_1420");
+  let wetSamples = 0;
+  for (const cell of neck.field.tiles.filter(tile => tile.terrain === "mud")) {
+    for (let dx = -3; dx <= 3; dx += .5) for (let dz = -3; dz <= 3; dz += .5) {
+      const x = cell.center.x + dx, z = cell.center.z + dz;
+      const dip = neck.puddleDip(x, z);
+      assert.ok(dip >= 0 && dip <= PUDDLE_DEPTH + 1e-9);
+      if (earthworkRelief(x, z, neck.environmentPlan.earthworks) !== 0) assert.equal(dip, 0, "no puddle on a bank or ditch");
+      wetSamples += 1;
+    }
+  }
+  assert.ok(wetSamples > 0);
+  assert.equal(terrain("zivohost_1419").group.children.some(child => child.name === "Wetland puddles"), false,
+    "maps without mud or swamp get no puddles");
+  neck.dispose();
+});

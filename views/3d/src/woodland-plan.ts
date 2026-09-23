@@ -1,7 +1,7 @@
 /**
  * Terrain-derived woodland for generated battles. Forest hexes become mixed
  * stands of the shared low-poly tree kit, shrubs soften the woodland edge,
- * and hills carry the odd rock outcrop. Everything keeps clear of the largest
+ * hills carry the odd rock outcrop and swamps grow reed beds. Everything keeps clear of the largest
  * formation footprint on every hex, so trees frame units instead of hiding
  * them. Presentation only: no rule or terrain type changes.
  */
@@ -45,6 +45,7 @@ const BROADLEAF: Species[] = [
 ];
 const SHRUB: Species = { model: "procedural-worlds/pw_shrub_01", weight: 1, scale: [.75, 1.15], crown: .9, deciduous: false };
 const ROCK: Species = { model: "bank_rocks", weight: 1, scale: [.55, .85], crown: .95, deciduous: false };
+const REEDS: Species = { model: "reeds", weight: 1, scale: [.75, 1.15], crown: .6, deciduous: false };
 
 /** Leaf colour drifts across a wood; each tree adds a little of its own. */
 const FOLIAGE: Array<[number, number, number]> = [
@@ -65,7 +66,7 @@ const key = (cell: { col: number; row: number }): string => `${cell.col},${cell.
 
 export function woodlandModels(winter: boolean): string[] {
   return [...new Set([...BROADLEAF.filter(species => !winter || species.model.startsWith("procedural-worlds") || !species.deciduous)
-    .map(species => species.model), ...(winter ? [] : [SHRUB.model]), ROCK.model])];
+    .map(species => species.model), ...(winter ? [] : [SHRUB.model]), ROCK.model, REEDS.model])];
 }
 
 /** Distance from (x, z) to the nearest formation outline of `cells`; negative inside one. */
@@ -142,6 +143,11 @@ export function planWoodland(source: WoodlandSource): WoodlandPlacement[] {
         place(cell, pickSpecies(species, random(), stand), random, 1, 6, name => name === "forest");
       }
       place(cell, SHRUB, random, 2, 12, name => name === "forest");
+    } else if (terrain === "swamp" || terrain === "marsh") {
+      // Reed beds in clumps around the formation clearing.
+      const marsh = (name: string): boolean => name === "swamp" || name === "marsh";
+      const clumps = 2 + Math.floor(random() * 3);
+      for (let clump = 0; clump < clumps; clump += 1) place(cell, REEDS, random, 1 + Math.floor(random() * 3), 10, marsh);
     } else if (open(terrain)) {
       const woods = neighbours(cell).filter(other => other.terrain.toLowerCase() === "forest");
       // Scrub and the odd sapling spill out of a wood onto the open ground beside it.

@@ -92,7 +92,7 @@ test("static batching carries foliage tints as instance colours and leaves other
   assert.deepEqual(color.toArray(), [1, 1, 1]);
 });
 
-test("grass tufts cluster at transitions, avoid roads and water and mostly spare formations", () => {
+test("grass tufts cluster at transitions and in swamp sedge, avoid roads, mud and water and mostly spare formations", () => {
   const { terrain, source, woodland } = plan("malesov_1424");
   const tuftSource = { field: terrain.field, layout: terrain.layout, replacedCells: source.replacedCells,
     features: [...woodland, ...source.obstacles] };
@@ -102,7 +102,7 @@ test("grass tufts cluster at transitions, avoid roads and water and mostly spare
   let underFormations = 0;
   for (const tuft of tufts) {
     const terrainAt = terrain.field.classify(tuft.x, tuft.z)?.toLowerCase() ?? "";
-    assert.ok(!["water", "river", "lake", "road", "road2", "town", "church", "mud", "swamp"].includes(terrainAt), `tuft on ${terrainAt}`);
+    assert.ok(!["water", "river", "lake", "road", "road2", "town", "church", "mud"].includes(terrainAt), `tuft on ${terrainAt}`);
     if (formationClearance(tuft.x, tuft.z, terrain.field.tiles) < 0) underFormations += 1;
   }
   assert.ok(underFormations / tufts.length < .25, `${underFormations} of ${tufts.length} tufts under formations`);

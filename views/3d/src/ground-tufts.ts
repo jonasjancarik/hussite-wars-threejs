@@ -29,7 +29,8 @@ export interface TuftSource {
   features: ReadonlyArray<{ x: number; z: number }>;
 }
 
-const GRASSY = new Set(["plains", "hills", "hill", "ridge", "highland", "slope", "steep_slope", "forest", "field", "fields"]);
+const GRASSY = new Set(["plains", "hills", "hill", "ridge", "highland", "slope", "steep_slope", "forest", "field", "fields",
+  "swamp", "marsh"]);
 /** Lush sage-to-olive, a little deeper and greener than the ground so tufts read as growth, not specks. */
 const PALETTE: Array<[number, number, number]> = [
   [.10, .14, .045], [.14, .17, .055], [.18, .18, .06], [.22, .20, .075], [.09, .12, .05],
@@ -72,6 +73,8 @@ export function planTufts(source: TuftSource): TuftPlacement[] {
     if (water > .04) score += .7;
     const weights = field.weightsAt(x, z);
     if (Object.keys(weights).length > 1) score += .25;
+    // Sedge grows thick in a swamp.
+    if ((weights.swamp ?? 0) + (weights.marsh ?? 0) > .3) score += .8;
     // Broad patches: some meadows are lusher than others.
     score *= .55 + .9 * THREE.MathUtils.smoothstep(fractalNoise(field.seed ^ 0x6a09e667, x / 13, z / 13, 2), -.3, .45);
     return score;
