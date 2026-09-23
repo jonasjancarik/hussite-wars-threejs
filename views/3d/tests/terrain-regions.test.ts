@@ -137,3 +137,33 @@ test("arbitrary odd-q dimensions and omitted cells are supported", () => {
   assert.equal(regions.classify(10_000, 10_000), null);
   assert.equal(regions.coverageForCell(2, 1, 0.2) >= 0.75, true);
 });
+
+test("shorelines round off hex corners: a lone pond is round and its centre stays water", () => {
+  const tiles = [];
+  for (let col = 0; col < 5; col += 1) for (let row = 0; row < 5; row += 1) {
+    tiles.push({ col, row, terrain: col === 2 && row === 2 ? "water" : "plains" });
+  }
+  const regions = createTerrainRegions({ cols: 5, rows: 5, seed: 4, tiles });
+  const pond = regions.getCell(2, 2)!;
+  assert.equal(regions.classify(pond.center.x, pond.center.z), "water");
+  for (const neighbour of tiles.filter(tile => tile.terrain === "plains")) {
+    const cell = regions.getCell(neighbour.col, neighbour.row)!;
+    assert.equal(regions.classify(cell.center.x, cell.center.z), "plains", "land centres stay land");
+  }
+  // Radius of the pond's waterline in twelve directions. A hex-shaped pond
+  // reaches about 0.2 m further toward its corners (every 60°) than toward its
+  // edge midpoints; a rounded one reaches both about equally.
+  const reach: number[] = [];
+  for (let step = 0; step < 12; step += 1) {
+    const angle = step * Math.PI / 6;
+    let radius = 0;
+    for (let r = 0; r <= 5; r += .02) {
+      if (regions.classify(pond.center.x + Math.cos(angle) * r, pond.center.z + Math.sin(angle) * r) !== "water") break;
+      radius = r;
+    }
+    reach.push(radius);
+  }
+  const corners = reach.filter((_, step) => step % 2 === 0), edges = reach.filter((_, step) => step % 2 === 1);
+  const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+  assert.ok(mean(corners) < mean(edges) + .1, `corners ${mean(corners).toFixed(2)} vs edges ${mean(edges).toFixed(2)}: pond is still hexagonal`);
+});

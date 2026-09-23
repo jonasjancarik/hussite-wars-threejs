@@ -89,6 +89,16 @@ const DEFAULT_CORE_COVERAGE = 0.82;
 const DEFAULT_BOUNDARY_NOISE = 0.18;
 const DEFAULT_SAMPLE_STEP = 0.1;
 const EPSILON = 1e-9;
+/** Squared (in hex radii) spread of each centre's say in the water share near a shore. */
+const SHORE_SPREAD = 0.6;
+/** Half-width of the water-share band over which a shore blends from land to water. */
+const SHORE_BAND = 0.06;
+/** Coherent displacement of the water share, so shorelines wander rather than run straight. */
+const SHORE_NOISE = 0.16;
+
+function smoothstep(value: number, edge0: number, edge1: number): number {
+  return smooth(Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0))));
+}
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
@@ -356,13 +366,18 @@ export class TerrainRegions {
   }
 
   private baseWeightsAt(x:number,z:number,cell:TerrainCell):TerrainWeights {
-    const edgeDistance = this.hexEdgeDistance(x, z, cell.col, cell.row);
     const candidates = this.nearbyCells(x, z);
-    const coastal = candidates.some(candidate => isWaterTerrain(candidate.terrain));
-    if (edgeDistance >= this.coreInset + (coastal ? this.hexRadius*.15 : 0) - EPSILON) return { [cell.terrain]: 1 };
+    return candidates.some(candidate => isWaterTerrain(candidate.terrain))
+      ? this.shoreWeightsAt(x, z, cell, candidates)
+      : this.inlandWeightsAt(x, z, cell, candidates);
+  }
+
+  /** Dry-land blending: seeded noisy boundaries that ease into each protected cell core. */
+  private inlandWeightsAt(x:number,z:number,cell:TerrainCell,candidates:readonly TerrainCell[]):TerrainWeights {
+    const edgeDistance = this.hexEdgeDistance(x, z, cell.col, cell.row);
+    if (edgeDistance >= this.coreInset - EPSILON) return { [cell.terrain]: 1 };
     const scores = new Map<TerrainType, number>();
-    const temperature = coastal ? 0.42 : 0.13;
-    const coastNoise = coastal ? fractalNoise(this.seed, x / (this.hexRadius * 3.6), z / (this.hexRadius * 2.8), 3) : 0;
+    const temperature = 0.13;
     let maximum = -Infinity;
     for (const candidate of candidates) {
       const distance = Math.hypot(x - candidate.center.x, z - candidate.center.z) / this.hexRadius;
@@ -370,20 +385,12 @@ export class TerrainRegions {
       const localSeed = hashUint(this.seed, candidate.col + 101, candidate.row + 503);
       const offsetX = (localSeed & 255) * 0.037;
       const offsetZ = ((localSeed >>> 8) & 255) * 0.041;
-      const noise = coastal ? (isWaterTerrain(candidate.terrain) ? coastNoise : 0)
-        : fractalNoise(localSeed, x / (this.hexRadius * 5.6) + offsetX, z / (this.hexRadius * 5.1) + offsetZ, 3);
+      const noise = fractalNoise(localSeed, x / (this.hexRadius * 5.6) + offsetX, z / (this.hexRadius * 5.1) + offsetZ, 3);
       // Scores are normalized by radius, making the same API useful for
       // miniature and large maps. A shared terrain type is aggregated below,
       // so same-type neighbours never create a visible internal boundary.
-      const noiseStrength = coastal ? Math.min(this.boundaryNoise, .25) * 2 : this.boundaryNoise;
-      const score = -(distance * distance) + noiseStrength * noise;
-      const previous = scores.get(candidate.terrain) ?? -Infinity;
-      // Sum neighbouring water contributions so a shared shoreline follows the
-      // connected region, rather than a different displaced edge for every hex.
-      if (coastal && Number.isFinite(previous)) {
-        const highest = Math.max(previous, score);
-        scores.set(candidate.terrain, highest + temperature * Math.log(Math.exp((previous-highest)/temperature) + Math.exp((score-highest)/temperature)));
-      } else scores.set(candidate.terrain, Math.max(previous, score));
+      const score = -(distance * distance) + this.boundaryNoise * noise;
+      scores.set(candidate.terrain, Math.max(scores.get(candidate.terrain) ?? -Infinity, score));
       maximum = Math.max(maximum, score);
     }
     if (scores.size === 0) return { [cell.terrain]: 1 };
@@ -400,13 +407,42 @@ export class TerrainRegions {
     // coreInset made mud banks jump in height, producing tall triangular teeth.
     const coreBlend = smooth(Math.max(0, Math.min(1, edgeDistance / this.coreInset)));
     const current=weights[cell.terrain] ?? 0;
-    // At coasts, protect the cell's majority without snapping its blend to a
-    // solid hex-shaped patch. A strict majority still guarantees its full core.
-    const interior=smooth(Math.max(0,Math.min(1,(edgeDistance-this.coreInset)/(this.hexRadius*.15))));
-    const target=coastal ? Math.max(current,.501+.499*interior) : 1;
-    const next=current+(target-current)*coreBlend;
+    const next=current+(1-current)*coreBlend;
     for (const terrain of Object.keys(weights)) weights[terrain]! *= current<1 ? (1-next)/(1-current) : 1;
     weights[cell.terrain] = next;
+    return weights;
+  }
+
+  /**
+   * Near water the shoreline is the half-way contour of a smooth, distance-
+   * weighted share of water among the surrounding cell centres, displaced by
+   * coherent noise. Water centres stay water and land centres stay land, but
+   * the outline no longer follows hex edges: a single pond is round and a
+   * chain of water hexes is one channel. The dry side keeps inland blending.
+   */
+  private shoreWeightsAt(x:number,z:number,cell:TerrainCell,candidates:readonly TerrainCell[]):TerrainWeights {
+    let wet = 0, total = 0, nearestWater: TerrainCell | null = null, nearestDry: TerrainCell | null = null;
+    let waterDistance = Infinity, dryDistance = Infinity;
+    for (const candidate of candidates) {
+      const distance = Math.hypot(x - candidate.center.x, z - candidate.center.z) / this.hexRadius;
+      const water = isWaterTerrain(candidate.terrain);
+      if (water && distance < waterDistance) { waterDistance = distance; nearestWater = candidate; }
+      if (!water && distance < dryDistance) { dryDistance = distance; nearestDry = candidate; }
+      if (distance > 2.3) continue;
+      const weight = Math.exp(-distance * distance / SHORE_SPREAD);
+      total += weight;
+      if (water) wet += weight;
+    }
+    const noise = fractalNoise(this.seed, x / (this.hexRadius * 3.6), z / (this.hexRadius * 2.8), 3) * SHORE_NOISE
+      + fractalNoise(this.seed ^ 0x3c6ef372, x / (this.hexRadius * .9), z / (this.hexRadius * .9), 2) * SHORE_NOISE * .35;
+    const share = total > 0 ? wet / total : 0;
+    const water = smoothstep(share + noise, .5 - SHORE_BAND, .5 + SHORE_BAND);
+    const dryCandidates = candidates.filter(candidate => !isWaterTerrain(candidate.terrain));
+    const dry = !nearestDry ? {} : this.inlandWeightsAt(x, z, isWaterTerrain(cell.terrain) ? nearestDry : cell, dryCandidates);
+    const weights: Record<string, number> = {};
+    for (const [terrain, weight] of Object.entries(dry)) weights[terrain] = weight * (1 - water);
+    if (nearestWater && water > 0) weights[nearestWater.terrain] = (weights[nearestWater.terrain] ?? 0) + (nearestDry ? water : 1);
+    if (!nearestDry && nearestWater) return { [nearestWater.terrain]: 1 };
     return weights;
   }
 
