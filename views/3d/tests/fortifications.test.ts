@@ -4,7 +4,7 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { planEnvironment } from "../src/environment-plan.ts";
+import { earthworkRelief, planEnvironment } from "../src/environment-plan.ts";
 import { pointInPolygon } from "../src/geometry-utils.ts";
 import { GeneratedScenery } from "../src/generated-scenery.ts";
 import { GeneratedTerrain } from "../src/generated-terrain.ts";
@@ -105,6 +105,7 @@ test("fortification labels become walled manors with a gate, a ditch outside and
       const dx = ditch.bx - ditch.ax, dz = ditch.bz - ditch.az, length = Math.hypot(dx, dz);
       const x = (ditch.ax + ditch.bx) / 2 + dz / length * ditch.ditchOffset!, z = (ditch.az + ditch.bz) / 2 - dx / length * ditch.ditchOffset!;
       assert.ok(!pointInPolygon(x, z, loop), `${id}: ditch ${ditch.id} lies outside the wall`);
+      assert.ok(earthworkRelief(x, z, [ditch]) < -1, `${id}: the ditch is deep enough to read`);
     }
     const manor = plan.placements.find(placement => placement.model === "fort_manor");
     assert.ok(manor && pointInPolygon(manor.x, manor.z, loop), `${id}: the manor stands inside`);

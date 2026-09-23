@@ -1,4 +1,4 @@
-import { ditchAlong, innerVertices, TVRZ_DITCH_OFFSET, TVRZ_DITCH_WIDTH } from "./fortification-plan.ts";
+import { ditchAlong, innerVertices, TVRZ_DITCH_DEPTH, TVRZ_DITCH_FLOOR, TVRZ_DITCH_OFFSET, TVRZ_DITCH_WIDTH } from "./fortification-plan.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { TerrainCell } from "./terrain-regions.ts";
 import { planSettlement, type SettlementPlan } from "./settlement-plan.ts";
@@ -26,6 +26,10 @@ export interface Earthwork {
   /** Distance of the ditch from the line and its half-width; a field earthwork uses 1.7 and .75. */
   ditchOffset?: number;
   ditchWidth?: number;
+  /** Depth at the ditch's middle; a field earthwork's ditch is .35. */
+  ditchDepth?: number;
+  /** Share of the half-width that is a level floor; 0 (a field earthwork) is a V-shaped trench. */
+  ditchFloor?: number;
 }
 export interface EnvironmentPlan {
   scenario: string | null;
@@ -148,7 +152,7 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     const walls = plan.walls.at(-1)!;
     plan.fortifications.add(walls.id);
     ditchAlong(walls).forEach((ditch, part) => plan.earthworks.push({ id: `${id}:ditch:${part}`, ...ditch, height: 0,
-      ditch: true, ditchOffset: TVRZ_DITCH_OFFSET, ditchWidth: TVRZ_DITCH_WIDTH }));
+      ditch: true, ditchOffset: TVRZ_DITCH_OFFSET, ditchWidth: TVRZ_DITCH_WIDTH, ditchDepth: TVRZ_DITCH_DEPTH, ditchFloor: TVRZ_DITCH_FLOOR }));
     const gate = walls.gates[0]?.centre;
     const [manor, yard] = innerVertices(region, layout, gate);
     // Face the gate, snapped to the hex directions so the footprint stays between the formations.
@@ -307,7 +311,12 @@ export function earthworkRelief(x: number, z: number, works: readonly Earthwork[
     if (across < -(offset+width+.25) || across > 1.2) continue;
     const end=Math.max(0,Math.min(1,(along+.8)/.8,(length+.8-along)/.8));
     bank=Math.max(bank,Math.max(0,1-Math.abs(across)/1.15)**2*work.height*end);
-    if (work.ditch) ditch=Math.min(ditch,-(Math.max(0,1-Math.abs(across+offset)/width)**2)*.35*end);
+    if (work.ditch) {
+      const floor=work.ditchFloor??0, t=Math.abs(across+offset)/width;
+      const profile=floor>0 ? 1-Math.max(0,Math.min(1,(t-floor)/(1-floor)))**2*(3-2*Math.max(0,Math.min(1,(t-floor)/(1-floor))))
+        : Math.max(0,1-t)**2;
+      ditch=Math.min(ditch,-profile*(work.ditchDepth??.35)*end);
+    }
   }
   return bank+ditch;
 }

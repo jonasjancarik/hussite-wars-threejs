@@ -13,9 +13,11 @@ import type { TownWallPlan } from "./town-wall-plan.ts";
 
 export interface DitchSegment { ax: number; az: number; bx: number; bz: number }
 
-/** How far outside the wall line the ditch runs, and its half-width. */
-export const TVRZ_DITCH_OFFSET = 1.15;
-export const TVRZ_DITCH_WIDTH = .7;
+/** How far outside the wall line the ditch runs, its half-width, depth and level floor (share of the half-width). */
+export const TVRZ_DITCH_OFFSET = 1.75;
+export const TVRZ_DITCH_WIDTH = 1.5;
+export const TVRZ_DITCH_DEPTH = 1.1;
+export const TVRZ_DITCH_FLOOR = .45;
 
 /**
  * One ditch run per wall segment, oriented so the ditch lies outside the
