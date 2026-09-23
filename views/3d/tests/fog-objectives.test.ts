@@ -90,7 +90,7 @@ test("fog cover follows elevated hills instead of leaking terrain above it", () 
   const terrain = new GeneratedTerrain(hidden);
   const overlays = new TacticalOverlays(terrain, terrain.layout);
   overlays.update(hidden);
-  const cover = overlays.group.children[2] as THREE.Mesh;
+  const cover = overlays.fogCover;
   const positions = cover.geometry.getAttribute("position") as THREE.BufferAttribute;
   for (let index = 0; index < positions.count; index += 1) {
     const ground = terrain.heightAt(positions.getX(index), positions.getZ(index));
@@ -113,8 +113,9 @@ test("fog cover follows local peaks without lifting low neighbouring cells", () 
     { col: 0, row: 0, terrain: "hills" }, { col: 1, row: 0, terrain: "plains" },
   ],
     visibleHexes: [], exploredHexes: [], objectiveHexes: [] }));
-  const highCover = overlays.group.children[2] as THREE.Mesh;
-  const lowCover = overlays.group.children[5] as THREE.Mesh;
+  // One merged cover: each cell's centre vertex is still its own nearest vertex.
+  const highCover = overlays.fogCover;
+  const lowCover = overlays.fogCover;
   const highPositions = highCover.geometry.getAttribute("position") as THREE.BufferAttribute;
   const lowPositions = lowCover.geometry.getAttribute("position") as THREE.BufferAttribute;
   const highCenterIndex = nearestVertex(highCover, peakCenter.x, peakCenter.z);
@@ -130,7 +131,7 @@ test("fog cover stays above a separately rendered authored water surface", () =>
   const overlays = new TacticalOverlays({ group, interactiveMeshes: [], heightAt: () => -1.2 }, layout);
   overlays.update(snapshot({ cols: 1, rows: 1, tiles: [{ col: 0, row: 0, terrain: "water" }],
     visibleHexes: [], exploredHexes: [], objectiveHexes: [] }));
-  const positions = (overlays.group.children[2] as THREE.Mesh).geometry.getAttribute("position") as THREE.BufferAttribute;
+  const positions = overlays.fogCover.geometry.getAttribute("position") as THREE.BufferAttribute;
   for (let index = 0; index < positions.count; index += 1) {
     assert.ok(positions.getY(index) > -0.52, `${index}: fog ${positions.getY(index)} is below water`);
   }
@@ -159,14 +160,13 @@ test("fog cover hides unknown cells while objective marker remains above it", ()
   const terrain = new GeneratedTerrain(snapshot());
   const overlays = new TacticalOverlays(terrain, terrain.layout);
   overlays.update(snapshot());
-  // Each cell contributes ring, action fill, then fog cover.
-  const knownCover = overlays.group.children[2] as THREE.Mesh;
-  const hiddenRing = overlays.group.children[3] as THREE.Mesh;
-  const hiddenCover = overlays.group.children[5] as THREE.Mesh;
-  assert.equal(knownCover.visible, false);
-  assert.equal(hiddenCover.visible, true);
+  // Each cell contributes a ring and an action fill; all fog covers are one mesh.
+  const hiddenRing = overlays.group.children[2] as THREE.Mesh;
+  assert.equal(overlays.fogCovers(0, 0), false);
+  assert.equal(overlays.fogCovers(1, 0), true);
+  assert.equal(overlays.fogCover.visible, true);
   assert.equal(hiddenRing.visible, true, "scenario objective remains visible through fog");
-  assert.ok(hiddenRing.renderOrder > hiddenCover.renderOrder);
+  assert.ok(hiddenRing.renderOrder > overlays.fogCover.renderOrder);
   terrain.dispose();
 });
 

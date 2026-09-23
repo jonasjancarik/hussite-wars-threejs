@@ -7,13 +7,12 @@ import type { BattleSnapshot, HexCoord, TerrainSurface } from "./types.ts";
 function key(coord: HexCoord): string { return `${coord.col},${coord.row}`; }
 
 export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt" | "renderedHeightAt">, fill = false,
-  layout = new HexLayout(20, 12), radiusScale = 1, lineWidth = .055): THREE.BufferGeometry {
+  layout = new HexLayout(20, 12), radiusScale = 1, lineWidth = .055, segments = 96, fillBands = 16): THREE.BufferGeometry {
   const center = layout.center(coord.col, coord.row);
   const vertices: number[] = [];
   const indices: number[] = [];
-  const segments = 96;
   const sideSegments = segments / 6;
-  const bands = fill ? 16 : 1;
+  const bands = fill ? fillBands : 1;
   for (let band = 0; band <= bands; band += 1) {
     // Adjacent half-width strips meet at the actual shared edge, without a gap.
     const radius = fill ? layout.radius * radiusScale * band / bands : layout.radius * radiusScale - band * lineWidth;
@@ -82,7 +81,9 @@ const tsl = (factory: unknown): TslFactory => factory as TslFactory;
 
 function fogOverlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt">,
   layout: HexLayout): THREE.BufferGeometry {
-  const geometry = overlayGeometry(coord, terrain, true, layout, 1.04);
+  // The opaque cover needs no edge gradient, and floats half a metre above the
+  // ground: a coarser sampling (about 0.5 m apart) keeps it clear of the terrain.
+  const geometry = overlayGeometry(coord, terrain, true, layout, 1.04, .055, 48, 8);
   const positions = geometry.getAttribute("position") as THREE.BufferAttribute;
   for (let index = 0; index < positions.count; index += 1) {
     // overlayGeometry already sampled the shared surface oracle and applied
@@ -101,16 +102,23 @@ export class TacticalOverlays {
   public readonly group = new THREE.Group();
   private readonly rings = new Map<string, THREE.Mesh>();
   private readonly fills = new Map<string, THREE.Mesh>();
-  private readonly fogCovers = new Map<string, THREE.Mesh>();
+  /** Unexplored hexes under fog, one draw: the index is rebuilt from `fogRanges` when the set changes. */
+  public readonly fogCover: THREE.Mesh;
+  private readonly fogRanges = new Map<string, Uint32Array>();
+  private fogKey = "";
   /** Every plain hex outline in one draw, faded around the grid focus. */
   public readonly grid: THREE.Mesh;
   private readonly gridColors: THREE.BufferAttribute;
   private readonly gridRanges = new Map<string, { start: number; count: number }>();
+  /** Last colour and alpha written per hex, so refreshes upload only what changed. */
+  private readonly gridWritten = new Map<string, { hex: number; alpha: number }>();
   private readonly gridFocus = tsl(uniform)(new THREE.Vector2(Infinity, Infinity));
   private gridVisible = true;
   private hovered: HexCoord | null = null;
   private pulsing: Array<{ material: THREE.MeshBasicMaterial; opacity: number }> = [];
   private snapshot: BattleSnapshot | null = null;
+  /** Hex sets derived once per snapshot rather than on every hover change. */
+  private derived: DerivedHexes = deriveHexes(null);
   private readonly winter: boolean;
   /** Terrain without its own fog shading gets a translucent memory tint here. */
   private readonly shadeRemembered: boolean;
@@ -121,6 +129,7 @@ export class TacticalOverlays {
     this.shadeRemembered = !terrain.shadesRememberedHexes;
     this.group.name = "Tactical overlays";
     const gridPositions: number[] = [], gridIndices: number[] = [];
+    const fogPositions: number[] = [];
     for (let col = 0; col < layout.cols; col += 1) {
       for (let row = 0; row < layout.rows; row += 1) {
         const material = new THREE.MeshBasicMaterial({
@@ -153,14 +162,10 @@ export class TacticalOverlays {
         this.fills.set(`${col},${row}`, fill);
         this.group.add(fill);
         const fogGeometry = fogOverlayGeometry({ col, row }, terrain, layout);
-        const fogCover = new THREE.Mesh(fogGeometry, new THREE.MeshBasicMaterial({
-          color: 0xa5a58f, transparent: false, depthWrite: true, depthTest: true,
-          toneMapped: false, fog: false, side: THREE.DoubleSide,
-        }));
-        fogCover.renderOrder = 7;
-        fogCover.visible = false;
-        this.fogCovers.set(`${col},${row}`, fogCover);
-        this.group.add(fogCover);
+        const fogStart = fogPositions.length / 3;
+        fogPositions.push(...(fogGeometry.getAttribute("position").array as Float32Array));
+        this.fogRanges.set(`${col},${row}`, Uint32Array.from(fogGeometry.getIndex()!.array, index => index + fogStart));
+        fogGeometry.dispose();
       }
     }
     const gridGeometry = new THREE.BufferGeometry();
@@ -173,6 +178,17 @@ export class TacticalOverlays {
     this.grid.renderOrder = 8;
     this.grid.frustumCulled = false;
     this.group.add(this.grid);
+    const fogGeometry = new THREE.BufferGeometry();
+    fogGeometry.setAttribute("position", new THREE.Float32BufferAttribute(fogPositions, 3));
+    fogGeometry.setIndex(new THREE.BufferAttribute(new Uint32Array(0), 1));
+    this.fogCover = new THREE.Mesh(fogGeometry, new THREE.MeshBasicMaterial({
+      color: 0xa5a58f, transparent: false, depthWrite: true, depthTest: true,
+      toneMapped: false, fog: false, side: THREE.DoubleSide,
+    }));
+    this.fogCover.name = "Unexplored hexes";
+    this.fogCover.renderOrder = 7;
+    this.fogCover.visible = false;
+    this.group.add(this.fogCover);
     this.refresh();
   }
 
@@ -209,7 +225,7 @@ export class TacticalOverlays {
     this.hovered = coord; this.refresh();
     return true;
   }
-  public update(snapshot: BattleSnapshot): void { this.snapshot = snapshot; this.refresh(); }
+  public update(snapshot: BattleSnapshot): void { this.snapshot = snapshot; this.derived = deriveHexes(snapshot); this.refresh(); }
 
   /** Whether any highlight is pulsing and needs further frames. */
   public get pulsingActive(): boolean { return this.pulsing.length > 0; }
@@ -221,26 +237,19 @@ export class TacticalOverlays {
   }
 
   public dispose(): void {
-    for (const mesh of [...this.rings.values(), ...this.fills.values(), ...this.fogCovers.values(), this.grid]) {
+    for (const mesh of [...this.rings.values(), ...this.fills.values(), this.fogCover, this.grid]) {
       mesh.geometry.dispose();
       (mesh.material as THREE.Material).dispose();
     }
-    this.rings.clear(); this.fills.clear(); this.fogCovers.clear();
+    this.rings.clear(); this.fills.clear(); this.fogRanges.clear(); this.gridWritten.clear();
     this.group.clear();
     this.snapshot = null;
   }
 
   private refresh(): void {
-    const selected = this.snapshot?.units.find(unit => unit.id === this.snapshot?.selectedUnitId) ?? null;
-    const moves = new Set(this.snapshot?.legalMoves.map(key) ?? []);
-    const attacks = new Set(this.snapshot?.legalAttacks.map(key) ?? []);
-    const attackRange = new Set(this.snapshot?.attackRangeHexes?.map(key) ?? []);
-    const march = new Set(this.snapshot?.marchTargets.map(key) ?? []);
-    const objectives = new Set(this.snapshot?.objectiveHexes?.map(key) ?? []);
-    const explored = new Set(this.snapshot?.exploredHexes ?? []);
-    const visible = new Set(this.snapshot?.visibleHexes ?? []);
-    const terrains = new Map(this.snapshot?.tiles.map(tile => [key(tile), tile.terrain.toLowerCase()]) ?? []);
+    const { selected, moves, attacks, attackRange, march, objectives, explored, visible, terrains } = this.derived;
     this.pulsing = [];
+    const fogged: string[] = [];
     for (const [coordKey, ring] of this.rings) {
       const material = ring.material as THREE.MeshBasicMaterial;
       const paleGround = this.winter && !["mud", "swamp", "marsh", "road", "road2", "dam", "trenches"].includes(terrains.get(coordKey) ?? "plains");
@@ -290,17 +299,58 @@ export class TacticalOverlays {
       fill.visible = fillOpacity > 0;
       const hoveredHere = this.hovered && coordKey === key(this.hovered);
       if (attacks.has(coordKey) && !hoveredHere) this.pulsing.push({ material: fillMaterial, opacity: fillOpacity });
-      this.fogCovers.get(coordKey)!.visible = Boolean(this.snapshot?.fogOfWar && !explored.has(coordKey));
+      if (this.snapshot?.fogOfWar && !explored.has(coordKey)) fogged.push(coordKey);
     }
-    this.gridColors.needsUpdate = true;
     this.grid.visible = this.gridVisible;
+    this.updateFogCover(fogged);
+  }
+
+  /** Whether the fog cover currently hides this hex. */
+  public fogCovers(col: number, row: number): boolean { return this.fogKey.split("|").includes(`${col},${row}`); }
+
+  private updateFogCover(fogged: string[]): void {
+    const fogKey = fogged.join("|");
+    if (fogKey === this.fogKey) return;
+    this.fogKey = fogKey;
+    const ranges = fogged.map(coordKey => this.fogRanges.get(coordKey)!);
+    const index = new Uint32Array(ranges.reduce((sum, range) => sum + range.length, 0));
+    let offset = 0;
+    for (const range of ranges) { index.set(range, offset); offset += range.length; }
+    this.fogCover.geometry.setIndex(new THREE.BufferAttribute(index, 1));
+    this.fogCover.visible = index.length > 0;
   }
 
   private setGridColor(coordKey: string, hex: number, alpha: number): void {
+    const written = this.gridWritten.get(coordKey);
+    if (written?.hex === hex && written.alpha === alpha) return;
+    this.gridWritten.set(coordKey, { hex, alpha });
     const range = this.gridRanges.get(coordKey)!;
     const color = GRID_SCRATCH.setHex(hex);
     for (let index = range.start; index < range.start + range.count; index += 1) {
       this.gridColors.setXYZW(index, color.r, color.g, color.b, alpha);
     }
+    // Hovering changes one or two hexes; upload just those ranges.
+    this.gridColors.addUpdateRange(range.start * 4, range.count * 4);
+    this.gridColors.needsUpdate = true;
   }
+}
+
+interface DerivedHexes {
+  selected: BattleSnapshot["units"][number] | null;
+  moves: Set<string>; attacks: Set<string>; attackRange: Set<string>; march: Set<string>; objectives: Set<string>;
+  explored: Set<string>; visible: Set<string>; terrains: Map<string, string>;
+}
+
+function deriveHexes(snapshot: BattleSnapshot | null): DerivedHexes {
+  return {
+    selected: snapshot?.units.find(unit => unit.id === snapshot.selectedUnitId) ?? null,
+    moves: new Set(snapshot?.legalMoves.map(key) ?? []),
+    attacks: new Set(snapshot?.legalAttacks.map(key) ?? []),
+    attackRange: new Set(snapshot?.attackRangeHexes?.map(key) ?? []),
+    march: new Set(snapshot?.marchTargets.map(key) ?? []),
+    objectives: new Set(snapshot?.objectiveHexes?.map(key) ?? []),
+    explored: new Set(snapshot?.exploredHexes ?? []),
+    visible: new Set(snapshot?.visibleHexes ?? []),
+    terrains: new Map(snapshot?.tiles.map(tile => [key(tile), tile.terrain.toLowerCase()]) ?? []),
+  };
 }

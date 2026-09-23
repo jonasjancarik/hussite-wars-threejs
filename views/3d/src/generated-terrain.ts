@@ -56,7 +56,8 @@ export class GeneratedTerrain implements BattleTerrain {
   private gridWidth = 0;
   private gridHeight = 0;
   private readonly visualWeights = new Map<string, number[]>();
-  private readonly surfaceTriangles = new Map<string, number[][]>();
+  /** Grid triangles split at a shore or road contour, keyed by `triangleKey` of their corners. */
+  private readonly surfaceTriangles = new Map<number, number[][]>();
   private waterIndices: number[] = [];
   private readonly waterCellIndices = new Map<string, number[]>();
 
@@ -201,30 +202,38 @@ export class GeneratedTerrain implements BattleTerrain {
       : "clear";
     if (signature === this.visibilityKey) return;
     this.visibilityKey = signature;
-    const positions = this.surfaceMesh.geometry.getAttribute("position") as THREE.BufferAttribute;
+    // Only colours change with fog; positions are static and not re-uploaded.
     const colors = this.surfaceMesh.geometry.getAttribute("color") as THREE.BufferAttribute;
     const explored = new Set(snapshot.exploredHexes);
     const visible = new Set(snapshot.visibleHexes);
     const fog = new THREE.Color(0xa5a58f);
-    const shaded = new THREE.Color();
-    for (let index = 0; index < positions.count; index += 1) {
+    const shaded = new THREE.Color(), tint = new THREE.Color();
+    // Per-hex fog state, looked up once per key rather than per vertex.
+    const states = new Map<string | null, 0 | 1 | 2>();
+    const stateOf = (key: string | null): 0 | 1 | 2 => {
+      let state = states.get(key);
+      if (state === undefined) {
+        state = !snapshot.fogOfWar ? 0 : !key || !explored.has(key) ? 2 : !visible.has(key) ? 1 : 0;
+        states.set(key, state);
+      }
+      return state;
+    };
+    for (let index = 0; index < colors.count; index += 1) {
       const offset = index * 3;
-      const key = this.vertexKeys[index];
       let r = this.baseColors[offset]!, g = this.baseColors[offset + 1]!, b = this.baseColors[offset + 2]!;
-      if (snapshot.fogOfWar && (!key || !explored.has(key))) {
+      const state = stateOf(this.vertexKeys[index] ?? null);
+      if (state === 2) {
         r = fog.r; g = fog.g; b = fog.b;
-      } else if (snapshot.fogOfWar && key && !visible.has(key)) {
+      } else if (state === 1) {
         // Remembered but unobserved ground: desaturated and dimmed, so it
         // reads as the last known state rather than as live terrain.
         shaded.setRGB(r, g, b);
         const grey = shaded.r * 0.3 + shaded.g * 0.59 + shaded.b * 0.11;
-        shaded.lerp(MEMORY_TINT.clone().multiplyScalar(grey * 1.6), 0.72).multiplyScalar(0.74);
+        shaded.lerp(tint.copy(MEMORY_TINT).multiplyScalar(grey * 1.6), 0.72).multiplyScalar(0.74);
         r = shaded.r; g = shaded.g; b = shaded.b;
       }
-      positions.setY(index, this.basePositions[offset + 1]!);
       colors.setXYZ(index, r, g, b);
     }
-    positions.needsUpdate = true;
     colors.needsUpdate = true;
   }
 
@@ -246,7 +255,7 @@ export class GeneratedTerrain implements BattleTerrain {
     } else {
       vertices = [a, d, b]; barycentric = [1 - tx, tz, tx - tz];
     }
-    const shoreline = this.surfaceTriangles.get([...vertices].sort((a,b)=>a-b).join(","));
+    const shoreline = this.surfaceTriangles.get(this.triangleKey(vertices[0], vertices[1], vertices[2]));
     if (shoreline) for (const triangle of shoreline) {
       const [a,b,c]=triangle as [number,number,number];
       const ax=this.basePositions[a*3]!,az=this.basePositions[a*3+2]!;
@@ -259,6 +268,13 @@ export class GeneratedTerrain implements BattleTerrain {
       if(u>=-1e-6 && v>=-1e-6 && u+v<=1+1e-6) return {vertices:[a,b,c],barycentric:[u,v,1-u-v]};
     }
     return { vertices, barycentric };
+  }
+
+  /** Order-independent numeric key of a grid triangle; the grid has about 130k vertices, so it stays below 2^53. */
+  private triangleKey(a: number, b: number, c: number): number {
+    const size = this.gridWidth * this.gridHeight;
+    const low = Math.min(a, b, c), high = Math.max(a, b, c), middle = a + b + c - low - high;
+    return (low * size + middle) * size + high;
   }
 
   /** Actual continuous water mesh, partitioned only for ice state and explored-cell fog. */
@@ -529,7 +545,7 @@ export class GeneratedTerrain implements BattleTerrain {
     };
     const addLand=(original:number[]):void=>{
       const pieces=emitLand(original);
-      if(pieces.length!==1 || pieces[0]!==original) this.surfaceTriangles.set([...original].sort((a,b)=>a-b).join(","),pieces);
+      if(pieces.length!==1 || pieces[0]!==original) this.surfaceTriangles.set(this.triangleKey(original[0]!,original[1]!,original[2]!),pieces);
     };
     const addTriangle = (a: number, b: number, c: number): void => {
       const original=[a,b,c];
@@ -558,7 +574,7 @@ export class GeneratedTerrain implements BattleTerrain {
           if(polygon.length<3) break;
         }
         emit(polygon,true);
-        this.surfaceTriangles.set([...original].sort((a,b)=>a-b).join(","),pieces);
+        this.surfaceTriangles.set(this.triangleKey(original[0]!,original[1]!,original[2]!),pieces);
         return;
       }
       addLand(original);

@@ -13,6 +13,7 @@ class ThreeBattleMapView {
         this.pageVisible = !document.hidden;
         this.destroyed = false;
         this.revision = 0;
+        this.renderQueued = false;
         this.effectCounter = 0;
         this.effects = [];
         this.terrainSignature = null;
@@ -148,7 +149,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.55';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.56';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -267,6 +268,7 @@ class ThreeBattleMapView {
     }
 
     render() {
+        this.renderQueued = false;
         if (!this.active || this.destroyed) return;
         const snapshot = this.snapshot();
         const terrainSignature = this.getTerrainSignature(snapshot);
@@ -318,7 +320,16 @@ class ThreeBattleMapView {
             type, col, row, ...extra
         });
         if (this.effects.length > 48) this.effects.shift();
-        this.render();
+        this.queueRender();
+    }
+
+    // An attack reports several effects in one go (attack, damage,
+    // explosion). Each full snapshot re-reads every tile and unit, so they
+    // share one snapshot, built once the current task has finished.
+    queueRender() {
+        if (this.renderQueued) return;
+        this.renderQueued = true;
+        queueMicrotask(() => { if (this.renderQueued) this.render(); });
     }
 
     resize() { if (this.active) this.renderer?.resize(); }

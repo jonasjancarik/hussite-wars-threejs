@@ -15,6 +15,9 @@ interface MarkerElements {
   detailHealth: HTMLSpanElement;
   detailMorale: HTMLSpanElement;
   leader: HTMLSpanElement;
+  /** Last content and position written, so unchanged banners cost no DOM writes. */
+  contentKey: string;
+  written: { zIndex: string; transform: string; leaderHidden: boolean; leaderHeight: string; leaderTransform: string };
 }
 
 /** Crisp screen-space symbols; mouse gestures stay on the existing 3D canvas. */
@@ -33,6 +36,9 @@ export class UnitBanners {
   private detailsVisible = false;
   private labelsVisible = true;
   private obstacles: MarkerObstacle[] = [];
+  /** Anchors of the last layout; an unchanged view (snow, pulse frames) skips it. */
+  private lastAnchors: MarkerAnchor[] = [];
+  private layoutDirty = true;
 
   public constructor(private readonly canvas: HTMLCanvasElement,
     private readonly onChoose: (coord: HexCoord) => void) {
@@ -58,6 +64,7 @@ export class UnitBanners {
     // Old hit rectangles must never target a removed or newly hidden enemy.
     this.placements = this.placements.filter(marker => ids.has(marker.id));
     for (const unit of this.units) this.updateMarker(unit);
+    this.layoutDirty = true;
   }
 
   public resize(): void {
@@ -70,7 +77,7 @@ export class UnitBanners {
         || box.bottom <= rect.top || box.top >= rect.bottom) return [];
       return [{ left: box.left - rect.left, top: box.top - rect.top, width: box.width, height: box.height }];
     });
-
+    this.layoutDirty = true;
   }
 
   public setAvoidance(enabled: boolean): void {
@@ -83,6 +90,7 @@ export class UnitBanners {
     if (this.detailsVisible === visible) return;
     this.detailsVisible = visible;
     for (const unit of this.units) this.updateMarker(unit);
+    this.layoutDirty = true;
   }
 
   /** Show or hide every floating marker without changing the retained display options. */
@@ -99,12 +107,14 @@ export class UnitBanners {
     } else {
       for (const marker of this.markers.values()) marker.button.tabIndex = 0;
     }
+    this.layoutDirty = true;
   }
 
   public setActive(active: boolean): void {
     this.active = active;
     this.layer.hidden = !active || !this.labelsVisible;
     if (!active) this.placements = [];
+    this.layoutDirty = true;
   }
 
   public position(camera: THREE.Camera, worldPosition: (id: number) => THREE.Vector3 | null): void {
@@ -118,6 +128,9 @@ export class UnitBanners {
       anchors.push({ id: unit.id, x: (ndc.x + 1) * this.width / 2, y: (1 - ndc.y) * this.height / 2,
         selected: unit.id === this.snapshot.selectedUnitId, depth: ndc.z });
     }
+    if (!this.layoutDirty && sameAnchors(anchors, this.lastAnchors)) return;
+    this.layoutDirty = false;
+    this.lastAnchors = anchors;
     const dimensions = unitMarkerDimensions(this.detailsVisible);
     const direct = layoutUnitMarkers(anchors, this.width, this.height, dimensions);
     this.placements = this.avoidance
@@ -127,17 +140,26 @@ export class UnitBanners {
     // not silently lose labels just because their optional separated slots fill up.
     if (this.avoidance) this.placements = completeDetailMarkerPlacements(this.placements, direct, this.detailsVisible);
     const visible = new Set(this.placements.map(marker => marker.id));
-    for (const [id, marker] of this.markers) marker.button.hidden = !visible.has(id);
+    for (const [id, marker] of this.markers) {
+      const hidden = !visible.has(id);
+      if (marker.button.hidden !== hidden) marker.button.hidden = hidden;
+    }
     for (const [order, placement] of this.placements.entries()) {
       const marker = this.markers.get(placement.id)!;
-      marker.button.style.zIndex = String(order + 1);
-      marker.button.style.transform = `translate(${placement.left.toFixed(1)}px, ${placement.top.toFixed(1)}px)`;
+      const written = marker.written;
+      const zIndex = String(order + 1);
+      const transform = `translate(${placement.left.toFixed(1)}px, ${placement.top.toFixed(1)}px)`;
+      if (written.zIndex !== zIndex) marker.button.style.zIndex = written.zIndex = zIndex;
+      if (written.transform !== transform) marker.button.style.transform = written.transform = transform;
       const dx = placement.x - placement.left - placement.width / 2;
       const dy = placement.y - placement.top - placement.height;
       const distance = Math.hypot(dx, dy);
-      marker.leader.hidden = distance < 14;
-      marker.leader.style.height = `${distance}px`;
-      marker.leader.style.transform = `rotate(${-Math.atan2(dx, dy)}rad)`;
+      const leaderHidden = distance < 14;
+      if (written.leaderHidden !== leaderHidden) marker.leader.hidden = written.leaderHidden = leaderHidden;
+      if (leaderHidden) continue;
+      const leaderHeight = `${distance.toFixed(1)}px`, leaderTransform = `rotate(${(-Math.atan2(dx, dy)).toFixed(4)}rad)`;
+      if (written.leaderHeight !== leaderHeight) marker.leader.style.height = written.leaderHeight = leaderHeight;
+      if (written.leaderTransform !== leaderTransform) marker.leader.style.transform = written.leaderTransform = leaderTransform;
     }
   }
 
@@ -199,7 +221,8 @@ export class UnitBanners {
       if (this.active && !button.disabled && unit) this.onChoose({ col: unit.col, row: unit.row });
     }, { signal: this.abort.signal });
     this.layer.append(button);
-    const marker = { button, path, health, badges, action, details, detailName, detailHealth, detailMorale, leader };
+    const marker = { button, path, health, badges, action, details, detailName, detailHealth, detailMorale, leader, contentKey: "",
+      written: { zIndex: "", transform: "", leaderHidden: false, leaderHeight: "", leaderTransform: "" } };
     this.markers.set(id, marker);
     return marker;
   }
@@ -207,6 +230,12 @@ export class UnitBanners {
   private updateMarker(unit: UnitSnapshot): void {
     const marker = this.markers.get(unit.id) ?? this.createMarker(unit.id);
     const presentation = unit.presentation!;
+    const disabled = Boolean(this.snapshot?.busy || this.snapshot?.paused || this.snapshot?.aiRunning);
+    const contentKey = JSON.stringify([unit.faction, unit.name, unit.health, unit.maxHealth, unit.morale, unit.maxMorale,
+      unit.id === this.snapshot?.selectedUnitId, unit.faction === this.snapshot?.faction, this.detailsVisible, disabled, presentation]);
+    // Snapshots arrive for every selection change and effect; most banners are unchanged.
+    if (marker.contentKey === contentKey) return;
+    marker.contentKey = contentKey;
     marker.button.dataset.faction = unit.faction;
     marker.button.dataset.commander = String(presentation.commander);
     marker.button.dataset.selected = String(unit.id === this.snapshot?.selectedUnitId);
@@ -229,7 +258,7 @@ export class UnitBanners {
     marker.button.setAttribute("aria-label", summary);
     marker.button.title = summary;
     // The shared game also accepts read-only inspection after victory.
-    marker.button.disabled = Boolean(this.snapshot?.busy || this.snapshot?.paused || this.snapshot?.aiRunning);
+    marker.button.disabled = disabled;
     marker.badges.replaceChildren(...presentation.badges.slice(0, 3).map(badge => {
       const span = this.canvas.ownerDocument.createElement("span");
       span.className = "marker-badge";
@@ -240,4 +269,14 @@ export class UnitBanners {
       return span;
     }));
   }
+}
+
+function sameAnchors(a: readonly MarkerAnchor[], b: readonly MarkerAnchor[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let index = 0; index < a.length; index += 1) {
+    const p = a[index]!, q = b[index]!;
+    if (p.id !== q.id || p.selected !== q.selected || Math.abs(p.x - q.x) > 0.05 || Math.abs(p.y - q.y) > 0.05
+      || Math.abs((p.depth ?? 0) - (q.depth ?? 0)) > 1e-6) return false;
+  }
+  return true;
 }
