@@ -94,6 +94,7 @@ class IntegratedThreeBattle {
   private cameraTween: { from: CameraPose; to: CameraPose; elapsed: number; duration: number } | null = null;
   private readonly heldPanKeys = new Set<string>();
   private lastSelectedUnitId: number | null = null;
+  private terrainBox: THREE.Box3 | null = null;
   private readonly markerScratch = new THREE.Vector3();
   /** Frames wait for the GPU backend; resize and load callbacks can arrive first. */
   private ready = false;
@@ -304,7 +305,8 @@ class IntegratedThreeBattle {
 
   public diagnostics(): Record<string, unknown> {
     const performanceSnapshot = this.performanceTracker.snapshot();
-    const terrainBox = new THREE.Box3().setFromObject(this.terrain.group);
+    // Terrain geometry is static for the renderer's lifetime.
+    const terrainBox = this.terrainBox ??= new THREE.Box3().setFromObject(this.terrain.group);
     const drawingBuffer = this.pipeline.renderer.getDrawingBufferSize(new THREE.Vector2());
     const rect = this.canvas.getBoundingClientRect();
     const capture = { version: 1, capturedAt: new Date().toISOString(),

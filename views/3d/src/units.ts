@@ -78,7 +78,8 @@ export class UnitPresentation {
   private readonly ownedMaterials = new Set<THREE.Material>();
   private readonly seenAttackEvents = new Set<string>();
   private readonly attackFacing = new Map<number, { yaw: number; until: number }>();
-  private readonly commanderAuras = new Map<number, { group: THREE.Group; geometry: THREE.BufferGeometry; material: THREE.MeshBasicMaterial }>();
+  private readonly commanderAuras = new Map<number, { group: THREE.Group; geometry: THREE.BufferGeometry;
+    material: THREE.MeshBasicMaterial; key: string }>();
   private shadowsDirty = true;
   private readonly scratch = new THREE.Vector3();
 
@@ -246,7 +247,7 @@ export class UnitPresentation {
           side: THREE.DoubleSide,
         });
         const geometry = new THREE.BufferGeometry();
-        aura = { group, geometry, material };
+        aura = { group, geometry, material, key: "" };
         this.commanderAuras.set(commander.id, aura);
         this.group.add(group);
       }
@@ -258,6 +259,10 @@ export class UnitPresentation {
       const offsetZ = moving ? moving.z - commanderCenter.z : 0;
       aura.group.visible = range > 0;
       aura.material.opacity = visible.has(commander.id) ? 0.78 : 0.45;
+      // The outline only depends on the commander's (moving) position and range.
+      const key = `${commander.col},${commander.row},${range},${offsetX.toFixed(3)},${offsetZ.toFixed(3)}`;
+      if (key === aura.key) continue;
+      aura.key = key;
       const cells: Array<{ col: number; row: number }> = [];
       for (let col = Math.max(0, commander.col - range); col <= Math.min(this.layout.cols - 1, commander.col + range); col += 1) {
         for (let row = Math.max(0, commander.row - range - 1); row <= Math.min(this.layout.rows - 1, commander.row + range + 1); row += 1) {

@@ -34344,21 +34344,25 @@ var gU = class {
 				t = {
 					group: n,
 					geometry: new ai(),
-					material: r
+					material: r,
+					key: ""
 				}, this.commanderAuras.set(e.id, t), this.group.add(n);
 			}
 			let n = a?.unitId === e.id && this.movementPosition ? this.movementPosition(a) : null, r = e.commanderAbilities?.auraRange ?? 0, o = this.layout.center(e.col, e.row), s = n ? n.x - o.x : 0, c = n ? n.z - o.z : 0;
 			t.group.visible = r > 0, t.material.opacity = i.has(e.id) ? .78 : .45;
-			let l = [];
+			let l = `${e.col},${e.row},${r},${s.toFixed(3)},${c.toFixed(3)}`;
+			if (l === t.key) continue;
+			t.key = l;
+			let u = [];
 			for (let t = Math.max(0, e.col - r); t <= Math.min(this.layout.cols - 1, e.col + r); t += 1) for (let n = Math.max(0, e.row - r - 1); n <= Math.min(this.layout.rows - 1, e.row + r + 1); n += 1) {
 				let i = t - e.col, a = n - Math.floor(t / 2) - (e.row - Math.floor(e.col / 2));
-				Math.max(Math.abs(i), Math.abs(a), Math.abs(i + a)) > r || l.push({
+				Math.max(Math.abs(i), Math.abs(a), Math.abs(i + a)) > r || u.push({
 					col: t,
 					row: n
 				});
 			}
-			let u = /* @__PURE__ */ new Map();
-			for (let t of l) {
+			let d = /* @__PURE__ */ new Map();
+			for (let t of u) {
 				let n = this.layout.center(t.col, t.row), i = Array.from({ length: 6 }, (e, t) => {
 					let r = t * Math.PI / 3;
 					return {
@@ -34372,21 +34376,21 @@ var gU = class {
 						let t = l.col - e.col, n = l.row - Math.floor(l.col / 2) - (e.row - Math.floor(e.col / 2));
 						if (Math.max(Math.abs(t), Math.abs(n), Math.abs(t + n)) <= r) continue;
 					}
-					let d = `${a.x.toFixed(3)},${a.z.toFixed(3)}`, f = `${o.x.toFixed(3)},${o.z.toFixed(3)}`;
-					u.set(d < f ? `${d}|${f}` : `${f}|${d}`, {
+					let u = `${a.x.toFixed(3)},${a.z.toFixed(3)}`, f = `${o.x.toFixed(3)},${o.z.toFixed(3)}`;
+					d.set(u < f ? `${u}|${f}` : `${f}|${u}`, {
 						a,
 						b: o
 					});
 				}
 			}
-			let d = [];
-			for (let { a: e, b: t } of u.values()) for (let n of [e, t]) {
+			let f = [];
+			for (let { a: e, b: t } of d.values()) for (let n of [e, t]) {
 				let e = Math.max(this.terrain.renderedHeightAt?.(n.x, n.z) ?? this.terrain.heightAt(n.x, n.z), -.52);
-				d.push(n.x + s, e + .12, n.z + c);
+				f.push(n.x + s, e + .12, n.z + c);
 			}
-			t.geometry.setAttribute("position", new M(d, 3)), t.geometry.computeBoundingSphere();
-			let f = t.group.children[0];
-			if (f) f.geometry = t.geometry;
+			t.geometry.setAttribute("position", new M(f, 3)), t.geometry.computeBoundingSphere();
+			let p = t.group.children[0];
+			if (p) p.geometry = t.geometry;
 			else {
 				let e = new Ha(t.geometry, t.material);
 				e.name = "Outer command range hex edges", e.renderOrder = 8, t.group.add(e);
@@ -35044,6 +35048,7 @@ var qU = 240, JU = {
 	cameraTween = null;
 	heldPanKeys = /* @__PURE__ */ new Set();
 	lastSelectedUnitId = null;
+	terrainBox = null;
 	markerScratch = new k();
 	ready = !1;
 	requestFrame = () => this.scheduleFrame();
@@ -35176,7 +35181,7 @@ var qU = 240, JU = {
 		this.viewportWidth = e.width, this.viewportHeight = e.height, this.cameraRig.resize(e.width, e.height), this.pipeline.resize(e.width, e.height), this.banners.resize(), this.scheduleFrame();
 	}
 	diagnostics() {
-		let e = this.performanceTracker.snapshot(), t = new Sr().setFromObject(this.terrain.group), n = this.pipeline.renderer.getDrawingBufferSize(new O()), r = this.canvas.getBoundingClientRect(), i = {
+		let e = this.performanceTracker.snapshot(), t = this.terrainBox ??= new Sr().setFromObject(this.terrain.group), n = this.pipeline.renderer.getDrawingBufferSize(new O()), r = this.canvas.getBoundingClientRect(), i = {
 			version: 1,
 			capturedAt: (/* @__PURE__ */ new Date()).toISOString(),
 			provenance: "procedural-worlds@bada861a8d5c8cb7275a1b3d6e6a3f4ea4844cf4",
