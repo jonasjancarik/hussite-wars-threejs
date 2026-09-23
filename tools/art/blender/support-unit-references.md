@@ -28,13 +28,13 @@ Blender 5.2 measurements on 21 September 2026, before export consolidation. Dime
 
 | Asset | Dimensions | Radius | Triangles |
 | --- | --- | --- | --- |
-| `infantry_polearm` | 1.337 × 0.825 × 2.956 | 1.075 | 1,272 |
-| `infantry_halberd` | 1.393 × 0.826 × 2.596 | 1.130 | 1,276 |
-| `infantry_handgun` | 1.288 × 0.774 × 1.834 | 1.000 | 1,400 |
-| `infantry_shield` | 0.781 × 0.979 × 1.861 | 0.695 | 1,404 |
+| `infantry_polearm` | 1.337 × 0.843 × 2.956 | 1.075 | 1,320 |
+| `infantry_halberd` | 1.393 × 0.843 × 2.596 | 1.130 | 1,324 |
+| `infantry_handgun` | 1.288 × 0.780 × 1.834 | 1.000 | 1,448 |
+| `infantry_shield` | 0.781 × 0.985 × 1.861 | 0.695 | 1,452 |
 | `war_wagon` | 5.305 × 2.960 × 3.941 | 3.195 | 6,156 |
 | `commander_standard` | 0.088 × 0.990 × 3.500 | 0.941 | 292 |
-| `field_blockhouse` | 3.004 × 3.090 × 2.720 | 2.133 | 5,420 |
+| `field_blockhouse` | 3.004 × 3.090 × 2.720 | 2.133 | 5,516 |
 
 The fieldwork fits inside a hex with inradius 3.46 m. Its 2.133 m radius also fits the existing 2.15 m picking radius tightly; the renderer must cover the 2.72 m roof height rather than assuming infantry height. The wagon keeps its pre-existing larger envelope.
 

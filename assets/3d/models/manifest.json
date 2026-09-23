@@ -45,17 +45,17 @@
     "file": "units/infantry_polearm.glb",
     "dimensions_blender_xyz_m": [
       1.337,
-      0.825,
+      0.843,
       2.956
     ],
     "dimensions_gltf_xyz_m": [
       1.337,
       2.956,
-      0.825
+      0.843
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 42,
-    "triangles": 1272,
+    "editable_source_mesh_objects": 44,
+    "triangles": 1320,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -65,17 +65,17 @@
     "file": "units/infantry_handgun.glb",
     "dimensions_blender_xyz_m": [
       1.288,
-      0.774,
+      0.78,
       1.834
     ],
     "dimensions_gltf_xyz_m": [
       1.288,
       1.834,
-      0.774
+      0.78
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 47,
-    "triangles": 1400,
+    "editable_source_mesh_objects": 49,
+    "triangles": 1448,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -85,17 +85,17 @@
     "file": "units/infantry_shield.glb",
     "dimensions_blender_xyz_m": [
       0.781,
-      0.979,
+      0.985,
       1.861
     ],
     "dimensions_gltf_xyz_m": [
       0.781,
       1.861,
-      0.979
+      0.985
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 52,
-    "triangles": 1404,
+    "editable_source_mesh_objects": 54,
+    "triangles": 1452,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -265,17 +265,17 @@
     "file": "units/infantry_flail.glb",
     "dimensions_blender_xyz_m": [
       1.396,
-      0.829,
+      0.85,
       2.352
     ],
     "dimensions_gltf_xyz_m": [
       1.396,
       2.352,
-      0.829
+      0.85
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 51,
-    "triangles": 1544,
+    "editable_source_mesh_objects": 53,
+    "triangles": 1592,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -294,8 +294,8 @@
       0.999
     ],
     "mesh_objects": 12,
-    "editable_source_mesh_objects": 68,
-    "triangles": 1830,
+    "editable_source_mesh_objects": 70,
+    "triangles": 1878,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -305,17 +305,17 @@
     "file": "units/infantry_pavise.glb",
     "dimensions_blender_xyz_m": [
       0.898,
-      1.028,
+      1.037,
       1.891
     ],
     "dimensions_gltf_xyz_m": [
       0.898,
       1.891,
-      1.028
+      1.037
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 62,
-    "triangles": 1656,
+    "editable_source_mesh_objects": 64,
+    "triangles": 1704,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -385,17 +385,17 @@
     "file": "units/artillery_gunner.glb",
     "dimensions_blender_xyz_m": [
       0.819,
-      0.761,
+      0.773,
       2.006
     ],
     "dimensions_gltf_xyz_m": [
       0.819,
       2.006,
-      0.761
+      0.773
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 41,
-    "triangles": 1256,
+    "editable_source_mesh_objects": 43,
+    "triangles": 1304,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -405,17 +405,17 @@
     "file": "units/infantry_spear.glb",
     "dimensions_blender_xyz_m": [
       0.962,
-      0.834,
+      0.851,
       3.448
     ],
     "dimensions_gltf_xyz_m": [
       0.962,
       3.448,
-      0.834
+      0.851
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 41,
-    "triangles": 1236,
+    "editable_source_mesh_objects": 43,
+    "triangles": 1284,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -424,18 +424,18 @@
   "infantry_archer": {
     "file": "units/infantry_archer.glb",
     "dimensions_blender_xyz_m": [
-      1.411,
-      0.824,
+      1.425,
+      0.827,
       2.317
     ],
     "dimensions_gltf_xyz_m": [
-      1.411,
+      1.425,
       2.317,
-      0.824
+      0.827
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 62,
-    "triangles": 1552,
+    "editable_source_mesh_objects": 64,
+    "triangles": 1600,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -454,8 +454,8 @@
       1.087
     ],
     "mesh_objects": 14,
-    "editable_source_mesh_objects": 95,
-    "triangles": 2906,
+    "editable_source_mesh_objects": 97,
+    "triangles": 2954,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -474,8 +474,8 @@
       1.087
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 95,
-    "triangles": 3004,
+    "editable_source_mesh_objects": 97,
+    "triangles": 3052,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -494,8 +494,8 @@
       1.087
     ],
     "mesh_objects": 13,
-    "editable_source_mesh_objects": 116,
-    "triangles": 3290,
+    "editable_source_mesh_objects": 118,
+    "triangles": 3338,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -565,17 +565,17 @@
     "file": "units/commander_captain.glb",
     "dimensions_blender_xyz_m": [
       0.867,
-      0.819,
+      0.831,
       1.834
     ],
     "dimensions_gltf_xyz_m": [
       0.867,
       1.834,
-      0.819
+      0.831
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 44,
-    "triangles": 1296,
+    "editable_source_mesh_objects": 46,
+    "triangles": 1344,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -585,17 +585,17 @@
     "file": "units/commander_noble.glb",
     "dimensions_blender_xyz_m": [
       0.96,
-      0.935,
+      0.938,
       2.061
     ],
     "dimensions_gltf_xyz_m": [
       0.96,
       2.061,
-      0.935
+      0.938
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 52,
-    "triangles": 1340,
+    "editable_source_mesh_objects": 54,
+    "triangles": 1388,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -625,17 +625,17 @@
     "file": "units/infantry_dismounted.glb",
     "dimensions_blender_xyz_m": [
       0.775,
-      0.935,
+      0.938,
       2.061
     ],
     "dimensions_gltf_xyz_m": [
       0.775,
       2.061,
-      0.935
+      0.938
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 53,
-    "triangles": 1344,
+    "editable_source_mesh_objects": 55,
+    "triangles": 1392,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -645,17 +645,17 @@
     "file": "units/infantry_halberd.glb",
     "dimensions_blender_xyz_m": [
       1.393,
-      0.826,
+      0.843,
       2.596
     ],
     "dimensions_gltf_xyz_m": [
       1.393,
       2.596,
-      0.826
+      0.843
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 43,
-    "triangles": 1276,
+    "editable_source_mesh_objects": 45,
+    "triangles": 1324,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -694,8 +694,8 @@
       3.09
     ],
     "mesh_objects": 28,
-    "editable_source_mesh_objects": 188,
-    "triangles": 5420,
+    "editable_source_mesh_objects": 192,
+    "triangles": 5516,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],

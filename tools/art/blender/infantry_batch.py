@@ -69,16 +69,20 @@ class InfantryBatch:
             k.box(prefix+'_ankle_shoe', (foot_x+.055, side*stance, .080), (.255, .15, .16), 'leather', .035)
             shoulder = Vector((0, side*.225, 1.255))
             elbow, hand = Vector(elbows[side]), Vector(hands[side])
-            # Rounded shoulder caps join the sleeve to the jack. Sleeves carry
-            # the side colour to the wrist; only a narrow linen cuff remains.
+            # Rounded shoulder caps join the side-colour sleeve to the jack.
             k.ico(prefix+'_upper_sleeve_shoulder', shoulder, (.105, .10, .095), 'team_cloth', 1)
             k.beam(prefix+'_upper_sleeve', shoulder, elbow, .092, 'team_cloth', 7, radius2=.078)
-            k.ico(prefix+'_upper_sleeve_elbow', elbow, (.074, .074, .074), 'team_cloth', 1)
+            # Padded forearm defences with an elbow cop and quilted ridges.
+            # Armoured variants turn every `_lower_sleeve` part to steel.
             reach = hand-elbow
-            wrist = hand-reach.normalized()*min(.075, reach.length*.4)
-            k.beam(prefix+'_lower_sleeve', elbow, wrist, .074, 'team_cloth', 7, radius2=.060)
-            k.beam(prefix+'_lower_sleeve_cuff', wrist-reach.normalized()*.045, wrist,
-                   .068, 'padded_linen', 7, radius2=.066)
+            axis = reach.normalized()
+            wrist = hand-axis*min(.06, reach.length*.3)
+            k.ico(prefix+'_lower_sleeve_elbow', elbow, (.090, .088, .088), 'padded_linen', 1)
+            k.beam(prefix+'_lower_sleeve', elbow, wrist, .084, 'padded_linen', 7, radius2=.066)
+            for fraction, radius in ((.38, .083), (.72, .075)):
+                centre = elbow.lerp(wrist, fraction)
+                k.beam(prefix+'_lower_sleeve_quilt', centre-axis*.016, centre+axis*.016,
+                       radius, 'padded_linen', 7)
             k.ico(prefix+'_hand', hand, (.078, .066, .070), 'skin', 1)
         # Visible coif beneath a kettle hat or cloth cap. No fine chainmail
         # texture. The head is slightly enlarged about the neck, in miniature
