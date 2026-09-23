@@ -165,6 +165,7 @@ declare global {
     HussiteBattle3D?: {
       create(canvas: HTMLCanvasElement, options: IntegratedRendererOptions): Promise<{
         applySnapshot(snapshot: BattleSnapshot): void;
+        applyMovement(movement: BattleSnapshot["movement"]): void;
         setActive(active: boolean): void;
         resize(): void;
         frameScene(): void;

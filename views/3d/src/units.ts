@@ -24,6 +24,23 @@ const TURN_RESPONSE_MS = 180;
 const ATTACK_FACING_HOLD_MS = 520;
 const IDLE_TURN_THRESHOLD = Math.PI / 12;
 type FacingIntent = { yaw: number; decisive: boolean };
+type PlacedUnit = { unit: UnitSnapshot; x: number; z: number };
+interface FacingContext { byFaction: Map<UnitSnapshot["faction"], PlacedUnit[]> }
+
+/** Closest candidate, ties broken by the lower unit id for deterministic facing. */
+function nearestTo(origin: { x: number; z: number }, candidates: PlacedUnit[]): PlacedUnit | null {
+  let closest: PlacedUnit | null = null;
+  let closestDistance = Infinity;
+  for (const candidate of candidates) {
+    const distance = (candidate.x - origin.x) ** 2 + (candidate.z - origin.z) ** 2;
+    if (distance < closestDistance - 0.0001 || (Math.abs(distance - closestDistance) < 0.0001
+      && candidate.unit.id < (closest?.unit.id ?? Infinity))) {
+      closest = candidate;
+      closestDistance = distance;
+    }
+  }
+  return closest;
+}
 
 function defaultFacing(unit: Pick<UnitSnapshot, "faction">): number {
   return unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
@@ -55,6 +72,8 @@ export class UnitPresentation {
   private readonly seenAttackEvents = new Set<string>();
   private readonly attackFacing = new Map<number, { yaw: number; until: number }>();
   private readonly commanderAuras = new Map<number, { group: THREE.Group; geometry: THREE.BufferGeometry; material: THREE.MeshBasicMaterial }>();
+  private shadowsDirty = true;
+  private readonly scratch = new THREE.Vector3();
 
   public constructor(
     terrain: TerrainSurface,
@@ -84,18 +103,45 @@ export class UnitPresentation {
         this.removeVisual(id, visual);
       }
     }
-    await Promise.all(visibleUnits.map(unit => this.updateUnit(unit, revision, snapshot)));
+    this.recordAttackFacings(snapshot, performance.now());
+    const context = this.facingContext(visibleUnits);
+    await Promise.all(visibleUnits.map(unit => this.updateUnit(unit, revision, snapshot, context)));
     if (this.disposed || revision !== this.updateRevision) return;
     this.updateCommanderAuras(visibleUnits, snapshot);
+  }
+
+  /**
+   * Per-frame movement update: repositions only the moving formation (and its
+   * command aura). Returns false when a full update is needed instead.
+   */
+  public updateMovement(snapshot: BattleSnapshot): boolean {
+    if (this.disposed) return true;
+    const unitId = snapshot.movement?.unitId;
+    const unit = unitId === undefined ? undefined : snapshot.units.find(candidate => candidate.id === unitId);
+    const visual = unit ? this.visuals.get(unit.id) : undefined;
+    if (!unit || !visual || visual.appearance !== recipeSignature(unit)) return false;
+    this.placeUnit(visual, unit, snapshot, this.facingContext(visibleSnapshotUnits(snapshot)));
+    if (unit.unitClass === "commander" || unit.special === "commander") {
+      this.updateCommanderAuras(visibleSnapshotUnits(snapshot), snapshot);
+    }
+    return true;
+  }
+
+  /** True once after any change that moves, turns, shows or hides a shadow caster. */
+  public consumeShadowChange(): boolean {
+    const changed = this.shadowsDirty;
+    this.shadowsDirty = false;
+    return changed;
   }
 
   public worldPosition(unitId: number): THREE.Vector3 | null {
     return this.visuals.get(unitId)?.root.position.clone() ?? null;
   }
 
-  public markerPosition(unitId: number): THREE.Vector3 | null {
+  /** Marker anchor in world space. `target` avoids a per-frame allocation. */
+  public markerPosition(unitId: number, target = new THREE.Vector3()): THREE.Vector3 | null {
     const visual = this.visuals.get(unitId);
-    return visual ? visual.root.localToWorld(new THREE.Vector3(0, visual.markerHeight + 0.45, 0)) : null;
+    return visual ? visual.root.localToWorld(target.set(0, visual.markerHeight + 0.45, 0)) : null;
   }
 
   public unitIdFromHit(object: THREE.Object3D): number | null {
@@ -112,6 +158,7 @@ export class UnitPresentation {
       const delta = angleDelta(visual.yaw, visual.targetYaw);
       if (Math.abs(delta) < 0.0001) continue;
       turning = true;
+      this.shadowsDirty = true;
       visual.yaw = Math.abs(delta) < 0.002 ? visual.targetYaw : visual.yaw + delta * alpha;
       visual.root.rotation.y = visual.yaw - visual.baseYaw + visual.marchingYaw;
       this.groundFigures(visual);
@@ -239,7 +286,7 @@ export class UnitPresentation {
     }
   }
 
-  private async updateUnit(unit: UnitSnapshot, revision: number, snapshot: BattleSnapshot): Promise<void> {
+  private async updateUnit(unit: UnitSnapshot, revision: number, snapshot: BattleSnapshot, context: FacingContext): Promise<void> {
     let visual = this.visuals.get(unit.id);
     const appearance = recipeSignature(unit);
     if (visual && visual.appearance !== appearance) {
@@ -301,7 +348,13 @@ export class UnitPresentation {
       this.visuals.set(unit.id, visual);
       this.hitTargets.push(hit);
       this.group.add(root);
+      this.shadowsDirty = true;
     }
+    this.placeUnit(visual, unit, snapshot, context);
+    visual.revision = revision;
+  }
+
+  private placeUnit(visual: UnitVisual, unit: UnitSnapshot, snapshot: BattleSnapshot, context: FacingContext): void {
     const target = this.layout.center(unit.col, unit.row);
     const movement = snapshot.movement?.unitId === unit.id ? snapshot.movement : null;
     const routed = movement && this.movementPosition ? this.movementPosition(movement) : null;
@@ -309,15 +362,19 @@ export class UnitPresentation {
     // authoritative target tile rather than guessing a straight path.
     const center = routed ?? target;
     const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
+    const previousX = visual.root.position.x, previousZ = visual.root.position.z;
     visual.root.position.set(center.x, heightAt(center.x, center.z), center.z);
-    const facing = this.desiredFacing(unit, snapshot);
+    if (previousX !== center.x || previousZ !== center.z) this.shadowsDirty = true;
+    const facing = this.desiredFacing(unit, snapshot, context);
     // Idle formations retain their bearing through small threat changes. Orders,
     // attacks and flight are decisive and always take precedence.
     if (facing && (facing.decisive || Math.abs(angleDelta(visual.targetYaw, facing.yaw)) >= IDLE_TURN_THRESHOLD)) {
       visual.targetYaw = facing.yaw;
     }
-    visual.marchingYaw = unit.marching ? 0.06 : 0;
-    visual.root.scale.setScalar(unit.isRouting ? 0.92 : 1);
+    const marchingYaw = unit.marching ? 0.06 : 0, scale = unit.isRouting ? 0.92 : 1;
+    if (visual.marchingYaw !== marchingYaw || visual.root.scale.x !== scale) this.shadowsDirty = true;
+    visual.marchingYaw = marchingYaw;
+    visual.root.scale.setScalar(scale);
     visual.root.rotation.y = visual.yaw - visual.baseYaw + visual.marchingYaw;
     visual.root.updateMatrixWorld(true);
     const troopCount = visual.figures.filter(figure => figure.depletes).length;
@@ -329,21 +386,31 @@ export class UnitPresentation {
     for (const { object, bottom, top, depletes } of visual.figures) {
       // Stable slots retain gaps after losses; healing restores those same slots.
       const survives = !depletes || troopIndex++ < survivors;
-      const world = visual.root.localToWorld(new THREE.Vector3(object.position.x, 0, object.position.z));
+      const world = visual.root.localToWorld(this.scratch.set(object.position.x, 0, object.position.z));
       object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
       if (!survives && object.visible && unit.health < visual.health) this.casualties.add(object, unit);
+      if (object.visible !== survives) this.shadowsDirty = true;
       object.visible = survives;
       if (object.visible) visual.markerHeight = Math.max(visual.markerHeight, object.position.y + top);
     }
     visual.root.updateMatrixWorld(true);
-    visual.revision = revision;
     visual.health = unit.health;
     visual.unit = { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row };
   }
 
-  private desiredFacing(unit: UnitSnapshot, snapshot: BattleSnapshot): FacingIntent | null {
+  private facingContext(visibleUnits: UnitSnapshot[]): FacingContext {
+    const byFaction = new Map<UnitSnapshot["faction"], Array<{ unit: UnitSnapshot; x: number; z: number }>>();
+    for (const unit of visibleUnits) {
+      const point = this.layout.center(unit.col, unit.row);
+      const list = byFaction.get(unit.faction) ?? [];
+      list.push({ unit, x: point.x, z: point.z });
+      byFaction.set(unit.faction, list);
+    }
+    return { byFaction };
+  }
+
+  private desiredFacing(unit: UnitSnapshot, snapshot: BattleSnapshot, context: FacingContext): FacingIntent | null {
     const now = performance.now();
-    this.recordAttackFacings(snapshot, now);
     const attack = this.attackFacing.get(unit.id);
     if (attack && attack.until > now) return { yaw: attack.yaw, decisive: true };
     if (attack) this.attackFacing.delete(unit.id);
@@ -354,12 +421,23 @@ export class UnitPresentation {
       return yaw === null ? null : { yaw, decisive: true };
     }
 
-    const threat = this.nearestThreat(unit, snapshot);
-    if (unit.isRouting && threat) {
-      const away = this.yawBetween(threat, unit);
-      return away === null ? null : { yaw: away, decisive: true };
+    const origin = this.layout.center(unit.col, unit.row);
+    const enemies = [...context.byFaction.entries()].filter(([faction]) => faction !== unit.faction).flatMap(([, list]) => list);
+    if (unit.isRouting) {
+      const threat = nearestTo(origin, enemies);
+      const away = threat ? yawTowards(threat, origin) : null;
+      if (threat) return away === null ? null : { yaw: away, decisive: true };
     }
-    const idleYaw = this.localThreatFacing(unit, snapshot);
+    // Nearby allies read as a small line: they share one local threat direction.
+    const allies = (context.byFaction.get(unit.faction) ?? [])
+      .filter(ally => Math.hypot(ally.x - origin.x, ally.z - origin.z) <= this.layout.radius * 1.8);
+    const cohort = allies.length ? allies : [{ unit, x: origin.x, z: origin.z }];
+    const center = { x: 0, z: 0 };
+    for (const ally of cohort) { center.x += ally.x; center.z += ally.z; }
+    center.x /= cohort.length;
+    center.z /= cohort.length;
+    const threat = nearestTo(center, enemies);
+    const idleYaw = threat ? yawTowards(center, threat) : null;
     return idleYaw === null ? null : { yaw: idleYaw, decisive: false };
   }
 
@@ -376,51 +454,6 @@ export class UnitPresentation {
     while (this.seenAttackEvents.size > 96) this.seenAttackEvents.delete(this.seenAttackEvents.values().next().value!);
   }
 
-  private nearestThreat(unit: UnitSnapshot, snapshot: BattleSnapshot): UnitSnapshot | null {
-    const origin = this.layout.center(unit.col, unit.row);
-    let closest: UnitSnapshot | null = null;
-    let closestDistance = Infinity;
-    for (const candidate of visibleSnapshotUnits(snapshot)) {
-      if (candidate.faction === unit.faction) continue;
-      const point = this.layout.center(candidate.col, candidate.row);
-      const distance = (point.x - origin.x) ** 2 + (point.z - origin.z) ** 2;
-      if (distance < closestDistance - 0.0001 || (Math.abs(distance - closestDistance) < 0.0001
-        && candidate.id < (closest?.id ?? Infinity))) {
-        closest = candidate;
-        closestDistance = distance;
-      }
-    }
-    return closest;
-  }
-
-  /** Nearby allies read as a small line: they share one local threat direction. */
-  private localThreatFacing(unit: UnitSnapshot, snapshot: BattleSnapshot): number | null {
-    const origin = this.layout.center(unit.col, unit.row);
-    const allies = visibleSnapshotUnits(snapshot).filter(candidate => candidate.faction === unit.faction
-      && Math.hypot(this.layout.center(candidate.col, candidate.row).x - origin.x,
-        this.layout.center(candidate.col, candidate.row).z - origin.z) <= this.layout.radius * 1.8);
-    const cohort = allies.length ? allies : [unit];
-    const center = cohort.reduce((sum, ally) => {
-      const point = this.layout.center(ally.col, ally.row);
-      return { x: sum.x + point.x, z: sum.z + point.z };
-    }, { x: 0, z: 0 });
-    center.x /= cohort.length;
-    center.z /= cohort.length;
-    let threat: UnitSnapshot | null = null;
-    let distance = Infinity;
-    for (const candidate of visibleSnapshotUnits(snapshot)) {
-      if (candidate.faction === unit.faction) continue;
-      const point = this.layout.center(candidate.col, candidate.row);
-      const candidateDistance = (point.x - center.x) ** 2 + (point.z - center.z) ** 2;
-      if (candidateDistance < distance - 0.0001 || (Math.abs(candidateDistance - distance) < 0.0001
-        && candidate.id < (threat?.id ?? Infinity))) {
-        threat = candidate;
-        distance = candidateDistance;
-      }
-    }
-    return threat ? yawTowards(center, this.layout.center(threat.col, threat.row)) : null;
-  }
-
   private yawBetween(from: { col: number; row: number }, to: { col: number; row: number }): number | null {
     return yawTowards(this.layout.center(from.col, from.row), this.layout.center(to.col, to.row));
   }
@@ -429,7 +462,7 @@ export class UnitPresentation {
     const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
     visual.markerHeight = 0;
     for (const { object, bottom, top } of visual.figures) {
-      const world = visual.root.localToWorld(new THREE.Vector3(object.position.x, 0, object.position.z));
+      const world = visual.root.localToWorld(this.scratch.set(object.position.x, 0, object.position.z));
       object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
       if (object.visible) visual.markerHeight = Math.max(visual.markerHeight, object.position.y + top);
     }
@@ -438,6 +471,7 @@ export class UnitPresentation {
 
   private removeVisual(id: number, visual: UnitVisual): void {
     this.group.remove(visual.root);
+    this.shadowsDirty = true;
     const hitIndex = this.hitTargets.indexOf(visual.hit);
     if (hitIndex >= 0) this.hitTargets.splice(hitIndex, 1);
     visual.hit.geometry.dispose();

@@ -14,7 +14,7 @@ class BattleView {
         this.orders = new BattleOrders(this);
         this.mapInput = new BattleMapInput(this);
         this.threeMap = typeof ThreeBattleMapView !== 'undefined' ? new ThreeBattleMapView(this) : {
-            mount: async () => false, unmount() {}, destroy() {}, render() {}, resize() {},
+            mount: async () => false, unmount() {}, destroy() {}, render() {}, renderMovement() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
             setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setFocusSettings() {}, setPageVisible() {},
             depthOfFieldEnabled: true, closeupFocusStrength: 0.8, focusQuality: 'compact'
@@ -459,7 +459,8 @@ class BattleView {
             this.animationLoop = null;
             const threeDimensionalMove = this.viewMode === '3d' && this.moveAnimation && !this.game.actions.paused;
             if ((!this.animationEnabled && !threeDimensionalMove) || document.hidden) return;
-            this.render();
+            if (threeDimensionalMove && !this.animationEnabled) this.renderMoveFrame();
+            else this.render();
             this.scheduleAnimationFrame();
         });
     }
@@ -725,6 +726,19 @@ class BattleView {
         }
         this.game.hexGrid.addExplosionAnimation(col, row);
         this.scheduleAnimationFrame();
+    }
+
+    // 3D move frames update only the moving token: the minimap and the 3D
+    // formation. The hidden 2D canvas and panels are refreshed when it lands.
+    renderMoveFrame() {
+        const unit = this.moveAnimation?.unit;
+        const visible = unit && (!this.game.fogOfWar || unit.faction === 'hussites' ||
+            this.game.fogOfWarSystem.isEnemyVisible(unit));
+        const tokenPositions = visible ? new Map([[unit.id, this.moveTokenPosition()]]) : null;
+        const visibleUnits = this.game.units.filter(u => u.health > 0 &&
+            (!this.game.fogOfWar || u.faction === 'hussites' || this.game.fogOfWarSystem.isEnemyVisible(u)));
+        this.minimap.render(visibleUnits, tokenPositions);
+        this.threeMap.renderMovement();
     }
 
     render() {

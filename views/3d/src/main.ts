@@ -70,6 +70,8 @@ class IntegratedThreeBattle {
   /** Continuous frames requested by `resetDiagnostics` for a 240-frame capture. */
   private captureFramesRemaining = 0;
   private resumingFromIdle = true;
+  private sceneryShadowKey = "";
+  private readonly markerScratch = new THREE.Vector3();
   /** Frames wait for the GPU backend; resize and load callbacks can arrive first. */
   private ready = false;
   private readonly requestFrame = (): void => this.scheduleFrame();
@@ -162,7 +164,26 @@ class IntegratedThreeBattle {
       this.showEvent(event);
     }
     while (this.consumedEvents.size > 96) this.consumedEvents.delete(this.consumedEvents.values().next().value!);
-    this.lighting.invalidateShadows();
+    // Shadow casters: formations report their own changes each frame; scenery
+    // only changes when exploration (monotonic), battle phase or ice changes.
+    const sceneryKey = `${snapshot.fogOfWar ? snapshot.exploredHexes.length : "clear"}:${snapshot.round}:${snapshot.brokenIceHexes?.length ?? 0}`;
+    if (sceneryKey !== this.sceneryShadowKey) {
+      this.sceneryShadowKey = sceneryKey;
+      this.lighting.invalidateShadows();
+    }
+    this.scheduleFrame();
+  }
+
+  /**
+   * Cheap per-frame path while one formation animates between two hexes. The
+   * rest of the snapshot is unchanged until the move completes and the
+   * campaign sends a full snapshot again.
+   */
+  public applyMovement(movement: BattleSnapshot["movement"]): void {
+    if (this.disposed) return;
+    const snapshot = { ...this.options.snapshot, movement };
+    if (!movement || !this.units.updateMovement(snapshot)) { void this.applySnapshot({ ...snapshot, revision: snapshot.revision + 1 }); return; }
+    this.options.snapshot = snapshot;
     this.scheduleFrame();
   }
 
@@ -420,7 +441,8 @@ class IntegratedThreeBattle {
     else this.units.casualties.advance(delta, this.options.snapshot.paused);
     const turning = this.units.advance(delta, this.options.snapshot.paused || this.reducedMotion.matches);
     this.effects.advance(delta);
-    this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id));
+    this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id, this.markerScratch));
+    if (this.units.consumeShadowChange()) this.lighting.invalidateShadows();
     this.lighting.updateShadows();
     const rendererStartedAt = performance.now();
     this.pipeline.renderer.info.reset();

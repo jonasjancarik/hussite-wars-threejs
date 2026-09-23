@@ -33795,17 +33795,25 @@ var NH = {
 		team_paint: 4151410
 	}
 }, PH = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]), FH = 180, IH = 520, LH = Math.PI / 12;
-function RH(e) {
+function RH(e, t) {
+	let n = null, r = Infinity;
+	for (let i of t) {
+		let t = (i.x - e.x) ** 2 + (i.z - e.z) ** 2;
+		(t < r - 1e-4 || Math.abs(t - r) < 1e-4 && i.unit.id < (n?.unit.id ?? Infinity)) && (n = i, r = t);
+	}
+	return n;
+}
+function zH(e) {
 	return e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
 }
-function zH(e, t) {
+function BH(e, t) {
 	let n = t.x - e.x, r = t.z - e.z;
 	return n * n + r * r > 1e-4 ? Math.atan2(-r, n) : null;
 }
-function BH(e, t) {
+function VH(e, t) {
 	return Math.atan2(Math.sin(t - e), Math.cos(t - e));
 }
-var VH = class {
+var HH = class {
 	group = new Qn();
 	casualties = new xH();
 	hitTargets = [];
@@ -33821,6 +33829,8 @@ var VH = class {
 	seenAttackEvents = /* @__PURE__ */ new Set();
 	attackFacing = /* @__PURE__ */ new Map();
 	commanderAuras = /* @__PURE__ */ new Map();
+	shadowsDirty = !0;
+	scratch = new k();
 	constructor(e, t, n, r) {
 		this.terrain = e, this.layout = t, this.assets = n, this.movementPosition = r, this.group.name = "Visible battle formations";
 	}
@@ -33832,14 +33842,25 @@ var VH = class {
 			if (i.has(e)) for (let e of t.figures) this.casualties.add(e.object, t.unit);
 			this.removeVisual(e, t);
 		}
-		await Promise.all(n.map((n) => this.updateUnit(n, t, e))), !(this.disposed || t !== this.updateRevision) && this.updateCommanderAuras(n, e);
+		this.recordAttackFacings(e, performance.now());
+		let a = this.facingContext(n);
+		await Promise.all(n.map((n) => this.updateUnit(n, t, e, a))), !(this.disposed || t !== this.updateRevision) && this.updateCommanderAuras(n, e);
+	}
+	updateMovement(e) {
+		if (this.disposed) return !0;
+		let t = e.movement?.unitId, n = t === void 0 ? void 0 : e.units.find((e) => e.id === t), r = n ? this.visuals.get(n.id) : void 0;
+		return !n || !r || r.appearance !== MH(n) ? !1 : (this.placeUnit(r, n, e, this.facingContext(bH(e))), (n.unitClass === "commander" || n.special === "commander") && this.updateCommanderAuras(bH(e), e), !0);
+	}
+	consumeShadowChange() {
+		let e = this.shadowsDirty;
+		return this.shadowsDirty = !1, e;
 	}
 	worldPosition(e) {
 		return this.visuals.get(e)?.root.position.clone() ?? null;
 	}
-	markerPosition(e) {
-		let t = this.visuals.get(e);
-		return t ? t.root.localToWorld(new k(0, t.markerHeight + .45, 0)) : null;
+	markerPosition(e, t = new k()) {
+		let n = this.visuals.get(e);
+		return n ? n.root.localToWorld(t.set(0, n.markerHeight + .45, 0)) : null;
 	}
 	unitIdFromHit(e) {
 		let t = e.userData.unitId;
@@ -33849,8 +33870,8 @@ var VH = class {
 		if (t || e <= 0) return !1;
 		let n = 1 - Math.exp(-Math.min(e, 64) / FH), r = !1;
 		for (let e of this.visuals.values()) {
-			let t = BH(e.yaw, e.targetYaw);
-			Math.abs(t) < 1e-4 || (r = !0, e.yaw = Math.abs(t) < .002 ? e.targetYaw : e.yaw + t * n, e.root.rotation.y = e.yaw - e.baseYaw + e.marchingYaw, this.groundFigures(e));
+			let t = VH(e.yaw, e.targetYaw);
+			Math.abs(t) < 1e-4 || (r = !0, this.shadowsDirty = !0, e.yaw = Math.abs(t) < .002 ? e.targetYaw : e.yaw + t * n, e.root.rotation.y = e.yaw - e.baseYaw + e.marchingYaw, this.groundFigures(e));
 		}
 		return r;
 	}
@@ -33936,24 +33957,24 @@ var VH = class {
 			t.group.position.set(0, 0, 0);
 		}
 	}
-	async updateUnit(e, t, n) {
-		let r = this.visuals.get(e.id), i = MH(e);
-		if (r && r.appearance !== i && (this.removeVisual(e.id, r), r = void 0), !r) {
+	async updateUnit(e, t, n, r) {
+		let i = this.visuals.get(e.id), a = MH(e);
+		if (i && i.appearance !== a && (this.removeVisual(e.id, i), i = void 0), !i) {
 			let n = new Qn();
 			n.name = `${e.name} (${e.id})`;
-			let a = RH(e), o = [], s = jH(e), c = Math.max(2.15, ...s.map((e) => e.pickRadius ?? 0));
-			for (let r of s) {
-				let i = await this.variant(r.model, e.faction);
+			let r = zH(e), o = [], s = jH(e), c = Math.max(2.15, ...s.map((e) => e.pickRadius ?? 0));
+			for (let i of s) {
+				let a = await this.variant(i.model, e.faction);
 				if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
-				for (let [t, s] of r.offsets) {
-					let c = i.clone(!0), l = r.rotateOffsetsWithFacing ? new k(t, 0, s).applyAxisAngle(new k(0, 1, 0), a) : new k(t, 0, s);
-					c.position.set(l.x, 0, l.z), c.rotation.y = a, c.scale.setScalar(r.scale);
+				for (let [t, s] of i.offsets) {
+					let c = a.clone(!0), l = i.rotateOffsetsWithFacing ? new k(t, 0, s).applyAxisAngle(new k(0, 1, 0), r) : new k(t, 0, s);
+					c.position.set(l.x, 0, l.z), c.rotation.y = r, c.scale.setScalar(i.scale);
 					let u = new Sr().setFromObject(c);
 					o.push({
 						object: c,
 						bottom: u.min.y,
 						top: u.max.y,
-						depletes: e.unitClass !== "commander" && e.special !== "commander" && e.unitClass !== "fortification" && (/^(infantry_|cavalry_|civilian_)/.test(r.model) || r.model === "artillery_gunner")
+						depletes: e.unitClass !== "commander" && e.special !== "commander" && e.unitClass !== "fortification" && (/^(infantry_|cavalry_|civilian_)/.test(i.model) || i.model === "artillery_gunner")
 					}), n.add(c);
 				}
 			}
@@ -33975,17 +33996,17 @@ var VH = class {
 				opacity: 0,
 				depthWrite: !1
 			}));
-			l.position.y = 2, l.visible = !1, l.userData.unitId = e.id, n.add(l), r = {
+			l.position.y = 2, l.visible = !1, l.userData.unitId = e.id, n.add(l), i = {
 				root: n,
 				hit: l,
 				figures: o,
 				revision: t,
 				markerHeight: 0,
-				appearance: i,
+				appearance: a,
 				health: e.health,
-				yaw: a,
-				targetYaw: a,
-				baseYaw: a,
+				yaw: r,
+				targetYaw: r,
+				baseYaw: r,
 				marchingYaw: 0,
 				unit: {
 					id: e.id,
@@ -33993,55 +34014,80 @@ var VH = class {
 					col: e.col,
 					row: e.row
 				}
-			}, this.visuals.set(e.id, r), this.hitTargets.push(l), this.group.add(n);
+			}, this.visuals.set(e.id, i), this.hitTargets.push(l), this.group.add(n), this.shadowsDirty = !0;
 		}
-		let a = this.layout.center(e.col, e.row), o = n.movement?.unitId === e.id ? n.movement : null, s = (o && this.movementPosition ? this.movementPosition(o) : null) ?? a, c = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
-		r.root.position.set(s.x, c(s.x, s.z), s.z);
-		let l = this.desiredFacing(e, n);
-		l && (l.decisive || Math.abs(BH(r.targetYaw, l.yaw)) >= LH) && (r.targetYaw = l.yaw), r.marchingYaw = e.marching ? .06 : 0, r.root.scale.setScalar(e.isRouting ? .92 : 1), r.root.rotation.y = r.yaw - r.baseYaw + r.marchingYaw, r.root.updateMatrixWorld(!0);
-		let u = r.figures.filter((e) => e.depletes).length, d = e.maxHealth > 0 ? Math.min(1, Math.max(0, e.health / e.maxHealth)) : 0, f = Math.max(1, Math.ceil(u * d));
-		e.health > r.health && this.casualties.cancelUnit(e.id);
-		let p = 0;
-		r.markerHeight = 0;
-		for (let { object: t, bottom: n, top: i, depletes: a } of r.figures) {
-			let o = !a || p++ < f, s = r.root.localToWorld(new k(t.position.x, 0, t.position.z));
-			t.position.y = (c(s.x, s.z) - r.root.position.y) / r.root.scale.y - n, !o && t.visible && e.health < r.health && this.casualties.add(t, e), t.visible = o, t.visible && (r.markerHeight = Math.max(r.markerHeight, t.position.y + i));
+		this.placeUnit(i, e, n, r), i.revision = t;
+	}
+	placeUnit(e, t, n, r) {
+		let i = this.layout.center(t.col, t.row), a = n.movement?.unitId === t.id ? n.movement : null, o = (a && this.movementPosition ? this.movementPosition(a) : null) ?? i, s = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t), c = e.root.position.x, l = e.root.position.z;
+		e.root.position.set(o.x, s(o.x, o.z), o.z), (c !== o.x || l !== o.z) && (this.shadowsDirty = !0);
+		let u = this.desiredFacing(t, n, r);
+		u && (u.decisive || Math.abs(VH(e.targetYaw, u.yaw)) >= LH) && (e.targetYaw = u.yaw);
+		let d = t.marching ? .06 : 0, f = t.isRouting ? .92 : 1;
+		(e.marchingYaw !== d || e.root.scale.x !== f) && (this.shadowsDirty = !0), e.marchingYaw = d, e.root.scale.setScalar(f), e.root.rotation.y = e.yaw - e.baseYaw + e.marchingYaw, e.root.updateMatrixWorld(!0);
+		let p = e.figures.filter((e) => e.depletes).length, m = t.maxHealth > 0 ? Math.min(1, Math.max(0, t.health / t.maxHealth)) : 0, h = Math.max(1, Math.ceil(p * m));
+		t.health > e.health && this.casualties.cancelUnit(t.id);
+		let g = 0;
+		e.markerHeight = 0;
+		for (let { object: n, bottom: r, top: i, depletes: a } of e.figures) {
+			let o = !a || g++ < h, c = e.root.localToWorld(this.scratch.set(n.position.x, 0, n.position.z));
+			n.position.y = (s(c.x, c.z) - e.root.position.y) / e.root.scale.y - r, !o && n.visible && t.health < e.health && this.casualties.add(n, t), n.visible !== o && (this.shadowsDirty = !0), n.visible = o, n.visible && (e.markerHeight = Math.max(e.markerHeight, n.position.y + i));
 		}
-		r.root.updateMatrixWorld(!0), r.revision = t, r.health = e.health, r.unit = {
-			id: e.id,
-			faction: e.faction,
-			col: e.col,
-			row: e.row
+		e.root.updateMatrixWorld(!0), e.health = t.health, e.unit = {
+			id: t.id,
+			faction: t.faction,
+			col: t.col,
+			row: t.row
 		};
 	}
-	desiredFacing(e, t) {
-		let n = performance.now();
-		this.recordAttackFacings(t, n);
-		let r = this.attackFacing.get(e.id);
-		if (r && r.until > n) return {
-			yaw: r.yaw,
+	facingContext(e) {
+		let t = /* @__PURE__ */ new Map();
+		for (let n of e) {
+			let e = this.layout.center(n.col, n.row), r = t.get(n.faction) ?? [];
+			r.push({
+				unit: n,
+				x: e.x,
+				z: e.z
+			}), t.set(n.faction, r);
+		}
+		return { byFaction: t };
+	}
+	desiredFacing(e, t, n) {
+		let r = performance.now(), i = this.attackFacing.get(e.id);
+		if (i && i.until > r) return {
+			yaw: i.yaw,
 			decisive: !0
 		};
-		r && this.attackFacing.delete(e.id);
-		let i = t.movement?.unitId === e.id ? t.movement : null;
-		if (i) {
-			let e = this.yawBetween(i.from, i.to);
+		i && this.attackFacing.delete(e.id);
+		let a = t.movement?.unitId === e.id ? t.movement : null;
+		if (a) {
+			let e = this.yawBetween(a.from, a.to);
 			return e === null ? null : {
 				yaw: e,
 				decisive: !0
 			};
 		}
-		let a = this.nearestThreat(e, t);
-		if (e.isRouting && a) {
-			let t = this.yawBetween(a, e);
-			return t === null ? null : {
+		let o = this.layout.center(e.col, e.row), s = [...n.byFaction.entries()].filter(([t]) => t !== e.faction).flatMap(([, e]) => e);
+		if (e.isRouting) {
+			let e = RH(o, s), t = e ? BH(e, o) : null;
+			if (e) return t === null ? null : {
 				yaw: t,
 				decisive: !0
 			};
 		}
-		let o = this.localThreatFacing(e, t);
-		return o === null ? null : {
-			yaw: o,
+		let c = (n.byFaction.get(e.faction) ?? []).filter((e) => Math.hypot(e.x - o.x, e.z - o.z) <= this.layout.radius * 1.8), l = c.length ? c : [{
+			unit: e,
+			x: o.x,
+			z: o.z
+		}], u = {
+			x: 0,
+			z: 0
+		};
+		for (let e of l) u.x += e.x, u.z += e.z;
+		u.x /= l.length, u.z /= l.length;
+		let d = RH(u, s), f = d ? BH(u, d) : null;
+		return f === null ? null : {
+			yaw: f,
 			decisive: !1
 		};
 	}
@@ -34059,49 +34105,20 @@ var VH = class {
 		}
 		for (; this.seenAttackEvents.size > 96;) this.seenAttackEvents.delete(this.seenAttackEvents.values().next().value);
 	}
-	nearestThreat(e, t) {
-		let n = this.layout.center(e.col, e.row), r = null, i = Infinity;
-		for (let a of bH(t)) {
-			if (a.faction === e.faction) continue;
-			let t = this.layout.center(a.col, a.row), o = (t.x - n.x) ** 2 + (t.z - n.z) ** 2;
-			(o < i - 1e-4 || Math.abs(o - i) < 1e-4 && a.id < (r?.id ?? Infinity)) && (r = a, i = o);
-		}
-		return r;
-	}
-	localThreatFacing(e, t) {
-		let n = this.layout.center(e.col, e.row), r = bH(t).filter((t) => t.faction === e.faction && Math.hypot(this.layout.center(t.col, t.row).x - n.x, this.layout.center(t.col, t.row).z - n.z) <= this.layout.radius * 1.8), i = r.length ? r : [e], a = i.reduce((e, t) => {
-			let n = this.layout.center(t.col, t.row);
-			return {
-				x: e.x + n.x,
-				z: e.z + n.z
-			};
-		}, {
-			x: 0,
-			z: 0
-		});
-		a.x /= i.length, a.z /= i.length;
-		let o = null, s = Infinity;
-		for (let n of bH(t)) {
-			if (n.faction === e.faction) continue;
-			let t = this.layout.center(n.col, n.row), r = (t.x - a.x) ** 2 + (t.z - a.z) ** 2;
-			(r < s - 1e-4 || Math.abs(r - s) < 1e-4 && n.id < (o?.id ?? Infinity)) && (o = n, s = r);
-		}
-		return o ? zH(a, this.layout.center(o.col, o.row)) : null;
-	}
 	yawBetween(e, t) {
-		return zH(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
+		return BH(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
 	}
 	groundFigures(e) {
 		let t = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		e.markerHeight = 0;
 		for (let { object: n, bottom: r, top: i } of e.figures) {
-			let a = e.root.localToWorld(new k(n.position.x, 0, n.position.z));
+			let a = e.root.localToWorld(this.scratch.set(n.position.x, 0, n.position.z));
 			n.position.y = (t(a.x, a.z) - e.root.position.y) / e.root.scale.y - r, n.visible && (e.markerHeight = Math.max(e.markerHeight, n.position.y + i));
 		}
 		e.root.updateMatrixWorld(!0);
 	}
 	removeVisual(e, t) {
-		this.group.remove(t.root);
+		this.group.remove(t.root), this.shadowsDirty = !0;
 		let n = this.hitTargets.indexOf(t.hit);
 		n >= 0 && this.hitTargets.splice(n, 1), t.hit.geometry.dispose(), t.hit.material.dispose(), this.visuals.delete(e);
 	}
@@ -34126,21 +34143,21 @@ var VH = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, HH = {
+}, UH = {
 	width: 64,
 	height: 58
-}, UH = {
+}, WH = {
 	width: 152,
 	height: 114
 };
-function WH(e = !1) {
-	return e ? UH : HH;
+function GH(e = !1) {
+	return e ? WH : UH;
 }
-function GH(e, t) {
+function KH(e, t) {
 	return Number(e.selected) - Number(t.selected) || (t.depth ?? 0) - (e.depth ?? 0) || e.id - t.id;
 }
-function KH(e, t, n, r = HH) {
-	return t <= 0 || n <= 0 ? [] : [...e].sort(GH).map((e) => ({
+function qH(e, t, n, r = UH) {
+	return t <= 0 || n <= 0 ? [] : [...e].sort(KH).map((e) => ({
 		...e,
 		width: r.width,
 		height: r.height,
@@ -34148,8 +34165,8 @@ function KH(e, t, n, r = HH) {
 		top: e.y - r.height - 6
 	}));
 }
-var qH = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
-function JH(e, t, n, r = [], i = HH) {
+var JH = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
+function YH(e, t, n, r = [], i = UH) {
 	let a = [];
 	for (let o of [...e].sort((e, t) => Number(t.selected) - Number(e.selected) || e.y - t.y || e.id - t.id)) {
 		let { width: e, height: s } = i;
@@ -34176,26 +34193,26 @@ function JH(e, t, n, r = [], i = HH) {
 				left: Math.max(4, Math.min(t - e - 4, o.x - e / 2 + i)),
 				top: Math.max(4, Math.min(n - s - 4, o.y - s - 6 + d))
 			};
-			if (![...a, ...r].some((e) => qH(l, e))) {
+			if (![...a, ...r].some((e) => JH(l, e))) {
 				c = l;
 				break;
 			}
 		}
 		c && a.push(c);
 	}
-	return a.sort(GH);
-}
-function YH(e, t, n) {
-	if (!n || e.length === t.length) return e;
-	let r = new Set(e.map((e) => e.id));
-	return [...e, ...t.filter((e) => !r.has(e.id))].sort(GH);
+	return a.sort(KH);
 }
 function XH(e, t, n) {
-	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + HH.height || Math.abs(t - e.left - e.width / 2) <= HH.width / 2))?.id ?? null;
+	if (!n || e.length === t.length) return e;
+	let r = new Set(e.map((e) => e.id));
+	return [...e, ...t.filter((e) => !r.has(e.id))].sort(KH);
+}
+function ZH(e, t, n) {
+	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + UH.height || Math.abs(t - e.left - e.width / 2) <= UH.width / 2))?.id ?? null;
 }
 //#endregion
 //#region src/unit-marker-styles.ts
-var ZH = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", QH = class {
+var QH = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", $H = class {
 	canvas;
 	onChoose;
 	layer;
@@ -34217,7 +34234,7 @@ var ZH = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		let n = e.ownerDocument;
 		this.layer = n.createElement("div"), this.layer.className = "three-unit-markers";
 		let r = n.createElement("style");
-		r.textContent = ZH, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
+		r.textContent = QH, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
 	}
 	update(e) {
 		if (this.disposed) return;
@@ -34273,8 +34290,8 @@ var ZH = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 				depth: a.z
 			});
 		}
-		let r = WH(this.detailsVisible), i = KH(n, this.width, this.height, r);
-		this.placements = this.avoidance ? JH(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = YH(this.placements, i, this.detailsVisible));
+		let r = GH(this.detailsVisible), i = qH(n, this.width, this.height, r);
+		this.placements = this.avoidance ? YH(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = XH(this.placements, i, this.detailsVisible));
 		let a = new Set(this.placements.map((e) => e.id));
 		for (let [e, t] of this.markers) t.button.hidden = !a.has(e);
 		for (let [e, t] of this.placements.entries()) {
@@ -34286,7 +34303,7 @@ var ZH = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 	}
 	unitAt(e, t) {
 		if (!this.active || !this.labelsVisible || this.disposed) return null;
-		let n = this.canvas.getBoundingClientRect(), r = XH(this.placements, e - n.left, t - n.top);
+		let n = this.canvas.getBoundingClientRect(), r = ZH(this.placements, e - n.left, t - n.top);
 		return this.units.find((e) => e.id === r) ?? null;
 	}
 	dispose() {
@@ -34354,18 +34371,18 @@ var ZH = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 			return t.className = "marker-badge", t.dataset.status = e.id, t.textContent = e.text, t.title = e.label, t.style.backgroundColor = e.color, t;
 		}));
 	}
-}, $H = 10, eU = 5, tU = 1.3, nU = .48, rU = .24, iU = .065;
-function aU(e) {
+}, eU = 10, tU = 5, nU = 1.3, rU = .48, iU = .24, aU = .065;
+function oU(e) {
 	return `${e.col},${e.row}`;
 }
-function oU(e, t) {
+function sU(e, t) {
 	return `${Math.min(e.id, t.id)}:${Math.max(e.id, t.id)}`;
 }
-var sU = class {
+var cU = class {
 	group = new Qn();
 	terrain;
 	layout;
-	linkGeometry = new Es(rU, iU, 8, 8);
+	linkGeometry = new Es(iU, aU, 8, 8);
 	closedMaterial = new ks({
 		color: 5917215,
 		roughness: .88,
@@ -34387,11 +34404,11 @@ var sU = class {
 	}
 	update(e) {
 		if (this.disposed) return;
-		let t = bH(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [aU(e), e])), r = /* @__PURE__ */ new Set();
+		let t = bH(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [oU(e), e])), r = /* @__PURE__ */ new Set();
 		for (let e of t) for (let t of this.layout.neighbours(e)) {
 			let i = n.get(`${t.col},${t.row}`);
 			if (!i || e.faction !== i.faction || e.id >= i.id) continue;
-			let a = oU(e, i);
+			let a = sU(e, i);
 			r.add(a);
 			let o = e.marching || i.marching, s = `${a}|${e.col},${e.row}|${i.col},${i.row}|${o ? "marching" : "closed"}`, c = this.connections.get(a);
 			if (c?.stateKey === s) continue;
@@ -34405,11 +34422,11 @@ var sU = class {
 		this.disposed || (this.disposed = !0, this.connections.clear(), this.group.clear(), this.linkGeometry.dispose(), this.closedMaterial.dispose(), this.marchingMaterial.dispose());
 	}
 	createConnection(e, t, n) {
-		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new k(a / s, 0, o / s), l = new k(-c.z, 0, c.x), u = new k(0, 1, 0), d = Math.max(0, s - tU * 2), f = n ? eU : $H, p = n ? this.marchingMaterial : this.closedMaterial, m = new Qn();
+		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new k(a / s, 0, o / s), l = new k(-c.z, 0, c.x), u = new k(0, 1, 0), d = Math.max(0, s - nU * 2), f = n ? tU : eU, p = n ? this.marchingMaterial : this.closedMaterial, m = new Qn();
 		m.name = `Wagon chain ${Math.min(e.id, t.id)}-${Math.max(e.id, t.id)}`, m.userData.wagonIds = [e.id, t.id];
 		let h = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		for (let e = 0; e < f; e += 1) {
-			let t = tU + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + nU, o = new qi(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
+			let t = nU + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + rU, o = new qi(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
 			o.position.set(n, a, i), o.quaternion.setFromUnitVectors(new k(0, 0, 1), s), o.castShadow = !0, o.receiveShadow = !0, o.userData.connectionLink = !0, m.add(o);
 		}
 		return {
@@ -34417,11 +34434,11 @@ var sU = class {
 			stateKey: ""
 		};
 	}
-}, cU = /* @__PURE__ */ new Set(), lU = () => {
-	for (let e of cU) e();
+}, lU = /* @__PURE__ */ new Set(), uU = () => {
+	for (let e of lU) e();
 };
-ac.onProgress = lU, ac.onLoad = lU;
-var uU = 240, dU = class e {
+ac.onProgress = uU, ac.onLoad = uU;
+var dU = 240, fU = class e {
 	canvas;
 	options;
 	scene = new sr();
@@ -34463,6 +34480,8 @@ var uU = 240, dU = class e {
 	openingDistance;
 	captureFramesRemaining = 0;
 	resumingFromIdle = !0;
+	sceneryShadowKey = "";
+	markerScratch = new k();
 	ready = !1;
 	requestFrame = () => this.scheduleFrame();
 	constructor(e, t, n) {
@@ -34484,14 +34503,14 @@ var uU = 240, dU = class e {
 			maxPixelRatio: 2
 		});
 		let a = this.terrain instanceof ap && this.terrain.environmentPlan.walls.length ? new cp(this.terrain.field.tiles, this.terrain.layout, this.terrain.environmentPlan.walls, this.terrain.environmentPlan.frozenRiver) : null;
-		this.units = new VH(this.terrain, this.terrain.layout, this.assets, (e) => {
+		this.units = new HH(this.terrain, this.terrain.layout, this.assets, (e) => {
 			if (a) return a.position(e.from, e.to, e.progress);
 			let t = this.terrain.layout.center(e.from.col, e.from.row), n = this.terrain.layout.center(e.to.col, e.to.row);
 			return {
 				x: t.x + (n.x - t.x) * e.progress,
 				z: t.z + (n.z - t.z) * e.progress
 			};
-		}), this.banners = new QH(e, (e) => this.options.onHex?.(e)), this.wagonConnections = new sU(this.terrain, this.terrain.layout), this.overlays = new pp(this.terrain, this.terrain.layout), this.lighting = lp(this.scene), this.picker = new mp(e, this.cameraRig.camera, this.terrain.layout), this.sky = new hH(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), cU.add(this.requestFrame), this.installInput();
+		}), this.banners = new $H(e, (e) => this.options.onHex?.(e)), this.wagonConnections = new cU(this.terrain, this.terrain.layout), this.overlays = new pp(this.terrain, this.terrain.layout), this.lighting = lp(this.scene), this.picker = new mp(e, this.cameraRig.camera, this.terrain.layout), this.sky = new hH(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), lU.add(this.requestFrame), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await Nf(n.snapshot, r), a = new e(t, n, i);
@@ -34507,12 +34526,27 @@ var uU = 240, dU = class e {
 		let t = e.scenario === "kutna_hora_1421" && e.round >= 3;
 		this.lighting.setNight(t), this.sky.setNight(t);
 		let n = e.revision;
-		if (this.snapshotRevision = Math.max(this.snapshotRevision, n), this.terrain.updateVisibility(e), this.scenery.updateVisibility(e), this.overlays.update(e), this.banners.update(e), this.wagonConnections.update(e), this.units.casualties.setEnabled(this.active && !this.reducedMotion.matches), await this.units.update(e), !(this.disposed || n !== this.snapshotRevision)) {
-			this.effects.setPaused(e.paused || !this.active);
-			for (let t of e.events) this.consumedEvents.has(t.id) || (this.consumedEvents.add(t.id), this.showEvent(t));
-			for (; this.consumedEvents.size > 96;) this.consumedEvents.delete(this.consumedEvents.values().next().value);
-			this.lighting.invalidateShadows(), this.scheduleFrame();
+		if (this.snapshotRevision = Math.max(this.snapshotRevision, n), this.terrain.updateVisibility(e), this.scenery.updateVisibility(e), this.overlays.update(e), this.banners.update(e), this.wagonConnections.update(e), this.units.casualties.setEnabled(this.active && !this.reducedMotion.matches), await this.units.update(e), this.disposed || n !== this.snapshotRevision) return;
+		this.effects.setPaused(e.paused || !this.active);
+		for (let t of e.events) this.consumedEvents.has(t.id) || (this.consumedEvents.add(t.id), this.showEvent(t));
+		for (; this.consumedEvents.size > 96;) this.consumedEvents.delete(this.consumedEvents.values().next().value);
+		let r = `${e.fogOfWar ? e.exploredHexes.length : "clear"}:${e.round}:${e.brokenIceHexes?.length ?? 0}`;
+		r !== this.sceneryShadowKey && (this.sceneryShadowKey = r, this.lighting.invalidateShadows()), this.scheduleFrame();
+	}
+	applyMovement(e) {
+		if (this.disposed) return;
+		let t = {
+			...this.options.snapshot,
+			movement: e
+		};
+		if (!e || !this.units.updateMovement(t)) {
+			this.applySnapshot({
+				...t,
+				revision: t.revision + 1
+			});
+			return;
 		}
+		this.options.snapshot = t, this.scheduleFrame();
 	}
 	setActive(e) {
 		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.resumingFromIdle = !0, this.resize(), this.scheduleFrame()));
@@ -34608,10 +34642,10 @@ var uU = 240, dU = class e {
 		};
 	}
 	resetDiagnostics() {
-		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = uU, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
+		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = dU, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
 	}
 	dispose() {
-		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, cU.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
+		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, lU.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
 	}
 	addListener(e, t, n, r) {
 		e.addEventListener(t, n, {
@@ -34691,7 +34725,7 @@ var uU = 240, dU = class e {
 		let o = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), s = Math.max(this.openingDistance - this.cameraRig.controls.minDistance, .001), c = D.clamp((this.openingDistance - o) / s, 0, 1), l = D.smoothstep(c, .55, .95), u = D.lerp(.04, D.clamp(this.closeupFocusStrength, 0, 1), l), d = this.depthOfFieldEnabled ? u : 0;
 		this.focusStrength = D.lerp(this.focusStrength, d, Hu(r, this.focusStrength < d ? 220 : 140)), this.pipeline.setDepthOfField(this.depthOfFieldEnabled, this.focusDistance, this.focusStrength), this.sky.update(this.cameraRig.camera), this.reducedMotion.matches ? this.units.casualties.clear() : this.units.casualties.advance(r, this.options.snapshot.paused);
 		let f = this.units.advance(r, this.options.snapshot.paused || this.reducedMotion.matches);
-		this.effects.advance(r), this.banners.position(this.cameraRig.camera, (e) => this.units.markerPosition(e)), this.lighting.updateShadows();
+		this.effects.advance(r), this.banners.position(this.cameraRig.camera, (e) => this.units.markerPosition(e, this.markerScratch)), this.units.consumeShadowChange() && this.lighting.invalidateShadows(), this.lighting.updateShadows();
 		let p = performance.now();
 		this.pipeline.renderer.info.reset(), this.pipeline.render();
 		let m = performance.now();
@@ -34700,8 +34734,8 @@ var uU = 240, dU = class e {
 		a || Math.abs(this.focusDistance - this.targetFocusDistance) > .01 || Math.abs(this.focusStrength - d) > 5e-4 || f || !h && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : this.resumingFromIdle = !0;
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => dU.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function fU() {
+window.HussiteBattle3D = { create: (e, t) => fU.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function pU() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = fH(() => t.takeSnapshot(), window), r = new mH(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -34713,7 +34747,7 @@ async function fU() {
 			action: e,
 			...n
 		}));
-	}, s = await dU.create(e, {
+	}, s = await fU.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -34726,7 +34760,7 @@ async function fU() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-fU().catch((e) => {
+pU().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

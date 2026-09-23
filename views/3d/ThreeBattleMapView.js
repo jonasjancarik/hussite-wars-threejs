@@ -97,7 +97,7 @@ class ThreeBattleMapView {
                 throw new Error('battle view was destroyed while 3D was loading');
             }
             this.renderer = renderer;
-            renderer.setFocusSettings(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
+            renderer.setFocusSettings?.(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
             renderer.setGridVisible(this.gridVisible);
             renderer.setBannerAvoidance?.(this.bannerAvoidance);
             renderer.setBannerDetails?.(this.bannerDetails);
@@ -143,7 +143,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.31';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.32';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -194,18 +194,7 @@ class ThreeBattleMapView {
             tiles: [...game.hexGrid.hexes.values()].map(tile => ({
                 col: tile.col, row: tile.row, terrain: tile.terrain
             })),
-            movement: (() => {
-                const animation = this.view.moveAnimation;
-                if (!animation || !visibleUnits.some(unit => unit.id === animation.unit.id)) return undefined;
-                this.view.moveTokenPosition();
-                const progress = animation.elapsed / animation.duration;
-                return {
-                    unitId: animation.unit.id,
-                    from: { col: animation.fromHex.col, row: animation.fromHex.row },
-                    to: { col: animation.toHex.col, row: animation.toHex.row },
-                    progress: progress * progress * (3 - 2 * progress)
-                };
-            })(),
+            movement: ThreeBattleMapView.movementOf(this.view, visibleUnits),
             units: visibleUnits.map(unit => ({
                 id: unit.id, type: unit.type, name: unit.name, faction: unit.faction,
                 unitClass: unit.unitClass, col: unit.col, row: unit.row,
@@ -240,6 +229,30 @@ class ThreeBattleMapView {
                 unit.faction === 'hussites' || !game.fogOfWar || game.fogOfWarSystem.isEnemyVisible(unit)
             )).map(unit => unit.id)
         };
+    }
+
+    static movementOf(view, visibleUnits) {
+        const animation = view?.moveAnimation;
+        if (!animation || !visibleUnits.some(unit => unit.id === animation.unit.id)) return undefined;
+        view.moveTokenPosition();
+        const progress = animation.elapsed / animation.duration;
+        return {
+            unitId: animation.unit.id,
+            from: { col: animation.fromHex.col, row: animation.fromHex.row },
+            to: { col: animation.toHex.col, row: animation.toHex.row },
+            progress: progress * progress * (3 - 2 * progress)
+        };
+    }
+
+    // Animation frames of a move change only the token position. The move's
+    // start and end still send full snapshots through render().
+    renderMovement() {
+        if (!this.active || this.destroyed) return;
+        if (!this.renderer?.applyMovement) { this.render(); return; }
+        const unit = this.view.moveAnimation?.unit;
+        const visible = unit && unit.health > 0 && (unit.faction === 'hussites' || !this.game.fogOfWar ||
+            this.game.fogOfWarSystem.isEnemyVisible(unit));
+        this.renderer.applyMovement(visible ? ThreeBattleMapView.movementOf(this.view, [unit]) : undefined);
     }
 
     render() {
@@ -307,7 +320,7 @@ class ThreeBattleMapView {
         this.depthOfFieldEnabled = Boolean(enabled);
         this.closeupFocusStrength = Math.max(0, Math.min(1, Number(closeupStrength) || 0));
         this.focusQuality = quality === 'bokeh' ? 'bokeh' : 'compact';
-        this.renderer?.setFocusSettings(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
+        this.renderer?.setFocusSettings?.(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
     }
     diagnostics() { return this.renderer?.diagnostics() ?? null; }
     resetDiagnostics() { this.renderer?.resetDiagnostics(); }
