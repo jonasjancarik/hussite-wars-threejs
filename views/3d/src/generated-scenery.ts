@@ -9,6 +9,7 @@ import { batchStaticMeshes, INSTANCE_TINT } from "./static-batching.ts";
 import { planWoodland } from "./woodland-plan.ts";
 import { FOLIAGE_MATERIALS } from "./model-merge.ts";
 import { createTuftMesh, planTufts } from "./ground-tufts.ts";
+import { MergedScenery } from "./scenery-merge.ts";
 
 /** Leaf meshes of the shared tree kit; trunks and branches are left untinted. */
 function isFoliage(mesh: THREE.Mesh): boolean {
@@ -27,6 +28,8 @@ export class GeneratedScenery implements BattleScenery {
   private readonly assets: Pick<BattleAssets, "preload" | "clone">;
   private readonly details = new EnvironmentDetails();
   private readonly phaseObjects: Array<{ object: THREE.Object3D; fromRound: number }> = [];
+  /** Walls, ice and lone buildings drawn as one mesh per material (see scenery-merge.ts). */
+  private merged: MergedScenery | null = null;
 
   public constructor(terrain: GeneratedTerrain, assets: Pick<BattleAssets, "preload" | "clone">, scenario: string | null = null) {
     this.terrain = terrain;
@@ -101,20 +104,21 @@ export class GeneratedScenery implements BattleScenery {
       this.group.add(this.walls.group);
     }
     for(const wall of plan.walls) for(const issue of wall.issues) console.warn(`[Hussite 3D] ${issue}`);
-    const batches=batchStaticMeshes(this.group,object=>{
-      for(let parent:THREE.Object3D|null=object;parent;parent=parent.parent) {
-        if(parent.userData.dynamicEnvironment) return null;
-      }
-      return this.visibility.keyForObject(object);
-    });
+    const dynamic=(object:THREE.Object3D):boolean=>{
+      for(let parent:THREE.Object3D|null=object;parent;parent=parent.parent) if(parent.userData.dynamicEnvironment) return true;
+      return false;
+    };
+    const batches=batchStaticMeshes(this.group,object=>dynamic(object) ? null : this.visibility.keyForObject(object));
     this.visibility.trackBatches(batches.batches);
     this.details.addIce(this.group,this.terrain,this.visibility);
+    this.merged=new MergedScenery(this.group,object=>!dynamic(object));
   }
 
   public updateVisibility(snapshot: BattleSnapshot): void {
     this.visibility.update(snapshot);
     this.details.update(snapshot);
     for(const entry of this.phaseObjects) entry.object.visible=snapshot.round>=entry.fromRound;
+    this.merged?.sync();
   }
 
   public dispose(): void {
@@ -123,6 +127,7 @@ export class GeneratedScenery implements BattleScenery {
     this.details.dispose();
     this.walls?.dispose();this.walls=null;
     this.phaseObjects.length=0;
+    this.merged?.dispose();this.merged=null;
     this.group.traverse(object=>{if(object instanceof THREE.InstancedMesh) object.dispose();});
     this.group.clear();
   }

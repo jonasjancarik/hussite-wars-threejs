@@ -153,7 +153,8 @@ test("the tvrz replaces farmhouses, keeps hex centres open and respects explored
     scenery.updateVisibility(state);
     // Wall pieces hide individually inside their container, like every other fog-owned part.
     const owned = (): THREE.Object3D[] => scenery.group.children.flatMap(object =>
-      object.name === "Procedural town walls" ? object.children : [object]).filter(object => !(object instanceof THREE.InstancedMesh));
+      object.name === "Procedural town walls" ? object.children : [object])
+      .filter(object => !(object instanceof THREE.InstancedMesh) && !object.userData.renderProxy);
     assert.ok(owned().every(object => !object.visible));
     for(const object of scenery.group.children) if(object instanceof THREE.InstancedMesh) {
       const matrix=new THREE.Matrix4(); object.getMatrixAt(0,matrix);

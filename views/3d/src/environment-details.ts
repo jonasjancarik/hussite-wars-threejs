@@ -7,7 +7,7 @@ import type { SceneryVisibility } from "./scenery-visibility.ts";
 export class EnvironmentDetails {
   private readonly geometry = new Set<THREE.BufferGeometry>();
   private readonly materials = new Set<THREE.Material>();
-  private readonly ice = new Map<string, THREE.Object3D>();
+  private readonly ice = new Map<string, { centre: THREE.Object3D; water: THREE.Object3D }>();
 
   public addIce(group: THREE.Group, terrain: GeneratedTerrain, visibility: SceneryVisibility): void {
     if (!terrain.environmentPlan.frozenRiver) return;
@@ -134,12 +134,15 @@ export class EnvironmentDetails {
       root.add(makeMesh(ring, iceMaterial, "Ice around breakable centre"));
       const centreMesh = makeMesh(centreIce, iceMaterial, "Breakable centre ice");
       root.add(centreMesh);
-      root.add(makeMesh(water, waterMaterial, "Water beneath breakable centre"));
+      // The water only shows once the centre breaks; under intact ice it would be pure overdraw.
+      const waterMesh = makeMesh(water, waterMaterial, "Water beneath breakable centre");
+      waterMesh.visible = false;
+      root.add(waterMesh);
       const crackGeometry = new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(cracks, 3));
       this.geometry.add(crackGeometry);
       const crackLines = new THREE.LineSegments(crackGeometry, crackMaterial); crackLines.name = "Ice cracks";
       root.add(crackLines);
-      this.ice.set(`${cell.col},${cell.row}`, centreMesh);
+      this.ice.set(`${cell.col},${cell.row}`, { centre: centreMesh, water: waterMesh });
       group.add(root);
       visibility.trackObject(root, center.x, center.z);
     }
@@ -175,7 +178,7 @@ export class EnvironmentDetails {
 
   public update(snapshot: BattleSnapshot): void {
     const broken=new Set(snapshot.brokenIceHexes ?? []);
-    for (const [key,ice] of this.ice) ice.visible=!broken.has(key);
+    for (const [key,{centre,water}] of this.ice) { centre.visible=!broken.has(key); water.visible=broken.has(key); }
   }
   public dispose(): void {
     this.geometry.forEach(geometry=>geometry.dispose()); this.materials.forEach(material=>material.dispose());
