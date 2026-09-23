@@ -105,7 +105,7 @@ test("open water knows how far it is from the shore; land and the waterline are 
   ground.dispose();
 });
 
-test("the diorama's cut face has rim, lip and bedrock rows, stones, and a walnut base", () => {
+test("the diorama's cut face has rim, lip and bedrock rows, drawn stones, and a walnut base", () => {
   const ground = terrain("malesov_1424");
   const skirt = ground.group.children[1] as THREE.Mesh;
   const rims = skirt.geometry.getAttribute("rimTop");
@@ -120,8 +120,7 @@ test("the diorama's cut face has rim, lip and bedrock rows, stones, and a walnut
   }
   assert.ok(tops > 100 && lip === tops, "every column has a rim row and a turf-lip row");
   assert.ok(bedrock > tops, "columns reach down into the bedrock rows");
-  const stones = ground.group.children.find(child => child.name === "Stones in the diorama's cut face") as THREE.InstancedMesh;
-  assert.ok(stones && stones.count > 100, "stones are set into the face");
+  assert.ok(!ground.group.children.some(child => child instanceof THREE.InstancedMesh), "stones are drawn, not modelled");
   const base = ground.group.children.find(child => child.name === "Battlefield plinth base") as THREE.Mesh;
   const box = new THREE.Box3().setFromObject(base);
   assert.ok(Math.abs(box.max.y - -5.9) < 1e-6, "base top meets the soil face");

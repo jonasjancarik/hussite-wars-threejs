@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { MeshStandardNodeMaterial } from "three/webgpu";
-import { attribute, cameraPosition, mix, mx_noise_float, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, transformNormalToView, uv, vec3, vertexColor } from "three/tsl";
+import { attribute, cameraPosition, mix, mx_noise_float, mx_worley_noise_vec2, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, transformNormalToView, uv, vec3, vertexColor } from "three/tsl";
 import { isFieldTerrain } from "./terrain-regions.ts";
 import { isRoadTerrain } from "./road-corridors.ts";
 
@@ -134,39 +134,56 @@ export const RIM_TOP = "rimTop";
 /** Linear-light colours of the soil profile, top to bottom. */
 const SOIL = {
   turf: new THREE.Color(0x5d6a2c), snow: new THREE.Color(0xe4e8e2), topsoil: new THREE.Color(0x3a2a1e),
-  subsoil: new THREE.Color(0xa47a4a), gravel: new THREE.Color(0x8a7458), bedrock: new THREE.Color(0x6f675c),
+  subsoil: new THREE.Color(0xa47a4a), gravel: new THREE.Color(0x8a7458), bedrock: new THREE.Color(0x857c6e),
+  pebble: new THREE.Color(0x9f927a), joint: new THREE.Color(0x3b3129),
   water: new THREE.Color(0x1f3d44),
 };
 const colourNode = (colour: THREE.Color): any => tsl(vec3)(colour.r, colour.g, colour.b);
 
 /**
- * The cut face around the board, coloured by depth below its
- * rim: a turf lip (snow in winter), dark topsoil, ochre subsoil with faint
- * vertical streaks, then grey-brown bedrock. Colour varies slowly along the
- * face and never repeats; the relief and stones are geometry. Where the rim
- * is water, a band of water shows above the silt.
+ * The cut face around the board, drawn like a textbook cross-section and
+ * coloured by depth below its rim: a turf lip (snow in winter), dark topsoil,
+ * ochre subsoil with faint sediment bands and scattered outlined pebbles, a
+ * band of gravel, then a sheet of bedrock stones with dark joints. The stones
+ * come from cell noise across the face, so nothing tiles or repeats. Where
+ * the rim is water, a band of water shows above the silt.
  */
 function createSoilMaterial(winter: boolean): THREE.Material {
-  // Smooth-shaded: the face's fine grid would turn flat facets into a checker.
-  // The faceted look comes from the stones set into it.
   const material = new MeshStandardNodeMaterial({ color: 0xffffff, roughness: 1, metalness: 0, side: THREE.DoubleSide });
   const world = positionWorld as any;
   const rim = tsl(attribute)(RIM_TOP, "float");
   const along = world.x.add(world.z);
   const depth = rim.sub(world.y);
   const noise = (x: any, y: any): any => tsl(mx_noise_float)(tsl(vec3)(x, y, 0).xy);
+  const cells = (x: any, y: any): any => tsl(mx_worley_noise_vec2)(tsl(vec3)(x, y, 0).xy, .9);
   const wander = (offset: number): any => noise(along.mul(.22), offset).mul(.28).add(noise(along.mul(.9), offset + 3).mul(.06));
   const layer = (from: number, width: number, offset: number): any =>
     tsl(smoothstep)(from - width, from + width, depth.add(wander(offset)));
-  // Slow tonal drift along the face; the subsoil carries faint sediment bands
-  // and a trace of vertical streaking where water ran through it.
-  const drift = noise(along.mul(.15), depth.mul(.5)).mul(.12).add(1);
-  const streaks = noise(along.mul(.25), depth.mul(3.2)).mul(.07)
-    .add(noise(along.mul(2.2), depth.mul(.3)).mul(.03)).add(1);
+  // Slow tonal drift along the face; faint sediment bands in the subsoil.
+  const drift = noise(along.mul(.15), depth.mul(.5)).mul(.1).add(1);
+  const bands = noise(along.mul(.25), depth.mul(3.2)).mul(.07).add(1);
+  // Pebbles: a sparse scatter of small outlined stones in the subsoil.
+  const grit = cells(along.div(.45), depth.div(.38));
+  // Pebbles gather in flat lenses, as sediment settles, not in vertical runs.
+  const scatter = tsl(smoothstep)(.35, .55, noise(along.mul(.45), depth.mul(1.6)));
+  const pebble = tsl(smoothstep)(.24, .18, grit.x).mul(scatter);
+  const outline = tsl(smoothstep)(.18, .22, grit.x).mul(tsl(smoothstep)(.27, .22, grit.x)).mul(scatter);
+  const subsoil = tsl(mix)(tsl(mix)(colourNode(SOIL.subsoil).mul(bands), colourNode(SOIL.pebble), pebble),
+    colourNode(SOIL.joint), outline.mul(.45));
+  // Gravel: small, close-packed stones; bedrock: broad stones laid in courses.
+  const gravelCells = cells(along.div(.35), depth.div(.28));
+  const gravel = tsl(mix)(colourNode(SOIL.gravel), colourNode(SOIL.joint),
+    tsl(smoothstep)(.12, .02, gravelCells.y.sub(gravelCells.x)).mul(.7));
+  // Bedrock blocks, only a little wider than tall so they read as rock, not stretched paving.
+  const stoneCells = cells(along.div(1.5), depth.div(1.15));
+  const stoneTone = noise(along.div(1.5).floor(), depth.div(1.15).floor()).mul(.12)
+    .add(noise(along.mul(.6), depth.mul(.6)).mul(.08)).add(1);
+  const joint = tsl(smoothstep)(.07, .015, stoneCells.y.sub(stoneCells.x));
+  const bedrock = tsl(mix)(colourNode(SOIL.bedrock).mul(stoneTone), colourNode(SOIL.joint), joint.mul(.75));
   let colour = tsl(mix)(colourNode(winter ? SOIL.snow : SOIL.turf), colourNode(SOIL.topsoil), layer(.2, .03, 0));
-  colour = tsl(mix)(colour, colourNode(SOIL.subsoil).mul(streaks), layer(1.0, .15, 11));
-  colour = tsl(mix)(colour, colourNode(SOIL.gravel), layer(3.1, .25, 23));
-  colour = tsl(mix)(colour, colourNode(SOIL.bedrock), layer(3.7, .2, 37));
+  colour = tsl(mix)(colour, subsoil, layer(1.0, .15, 11));
+  colour = tsl(mix)(colour, gravel, layer(3.0, .12, 23));
+  colour = tsl(mix)(colour, bedrock, layer(3.6, .1, 37));
   // Water at the rim: the face shows its depth before the silt below.
   const wet = tsl(smoothstep)(-.62, -.68, rim).mul(tsl(smoothstep)(.95, .8, depth));
   material.colorNode = tsl(mix)(colour.mul(drift), colourNode(winter ? SOIL.snow : SOIL.water), wet);
