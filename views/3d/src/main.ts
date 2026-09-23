@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
 import { applyPose, clampTarget, createBattleCamera, currentPose, fitRadius, interpolatePose, OVERVIEW_DIRECTION,
   snappedBearing, type CameraPose } from "./camera.ts";
-import { attackStyle, BattlefieldEffects, focusSmoothingAlpha, type AttackStyle } from "./effects.ts";
+import { attackStyle, BattlefieldEffects, compactMiniatureFocusProfile, focusSmoothingAlpha, type AttackStyle } from "./effects.ts";
 import { GeneratedScenery } from "./generated-scenery.ts";
 import { GeneratedTerrain } from "./generated-terrain.ts";
 import { TownWallRoutes } from "./town-wall-routes.ts";
@@ -34,6 +34,10 @@ const notifyLoaded = (): void => { for (const listener of loadListeners) listene
 THREE.DefaultLoadingManager.onProgress = notifyLoaded;
 THREE.DefaultLoadingManager.onLoad = notifyLoaded;
 const DIAGNOSTIC_CAPTURE_FRAMES = 240;
+/** Blur radius below which depth of field is invisible, so focus changes need no frames. */
+const FOCUS_VISIBLE_BLUR_PX = 0.5;
+/** Refocusing counts as settled within this fraction of the focus distance. */
+const FOCUS_SETTLED = 0.003;
 const PAN_KEYS: Record<string, "up" | "down" | "left" | "right"> = {
   KeyW: "up", KeyS: "down", KeyA: "left", KeyD: "right",
   ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
@@ -99,6 +103,7 @@ class IntegratedThreeBattle {
   private ambientFrame = false;
   private sceneryShadowKey = "";
   private pulseTimer: number | null = null;
+  private shadowTimer: number | null = null;
   private cameraTween: { from: CameraPose; to: CameraPose; elapsed: number; duration: number } | null = null;
   private readonly heldPanKeys = new Set<string>();
   /** A right-button drag just panned; the context menu that follows it on Windows is not a cancel. */
@@ -371,6 +376,7 @@ class IntegratedThreeBattle {
     if (this.frameRequest !== null) cancelAnimationFrame(this.frameRequest);
     this.frameRequest = null;
     if (this.pulseTimer !== null) window.clearTimeout(this.pulseTimer);
+    if (this.shadowTimer !== null) window.clearTimeout(this.shadowTimer);
     loadListeners.delete(this.requestFrame);
     this.abortController.abort();
     this.resizeObserver.disconnect();
@@ -667,7 +673,12 @@ class IntegratedThreeBattle {
     const next = Math.max(1, -cameraSpace.z);
     if (Math.abs(next - this.targetFocusDistance) < 0.01) return;
     this.targetFocusDistance = next;
-    this.scheduleFrame();
+    if (this.blurVisible(this.focusStrength)) this.scheduleFrame();
+  }
+
+  /** Whether depth of field at this strength blurs anything by a visible amount. */
+  private blurVisible(strength: number): boolean {
+    return this.depthOfFieldEnabled && compactMiniatureFocusProfile(strength).blurRadiusPixels >= FOCUS_VISIBLE_BLUR_PX;
   }
 
   /**
@@ -710,7 +721,6 @@ class IntegratedThreeBattle {
       this.overlays.setGridFocus(focus.x, focus.z);
       this.focusOn(focus);
     }
-    this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, this.targetFocusDistance, focusSmoothingAlpha(delta, 180));
     const cameraDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);
     const zoomSpan = Math.max(this.openingDistance - this.cameraRig.controls.minDistance, 0.001);
     const zoomProgress = THREE.MathUtils.clamp((this.openingDistance - cameraDistance) / zoomSpan, 0, 1);
@@ -726,6 +736,10 @@ class IntegratedThreeBattle {
       desiredFocusStrength,
       focusSmoothingAlpha(delta, this.focusStrength < desiredFocusStrength ? 220 : 140),
     );
+    // While the blur is too faint to see (overview zoom), refocusing need not ease.
+    if (this.blurVisible(this.focusStrength) || this.blurVisible(desiredFocusStrength)) {
+      this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, this.targetFocusDistance, focusSmoothingAlpha(delta, 180));
+    } else this.focusDistance = this.targetFocusDistance;
     this.pipeline.setDepthOfField(this.depthOfFieldEnabled, this.focusDistance, this.focusStrength);
     this.sky.update(this.cameraRig.camera);
     if (this.atmosphere.advance(delta)) this.applyAtmosphere();
@@ -740,8 +754,9 @@ class IntegratedThreeBattle {
     this.effects.position(this.cameraRig.camera, this.viewportWidth, this.viewportHeight);
     const pulsing = this.overlays.pulsingActive && !this.reducedMotion.matches && !this.options.snapshot.paused;
     this.overlays.pulse(pulsing ? now : 0);
-    if (this.units.consumeShadowChange()) this.lighting.invalidateShadows();
-    this.lighting.updateShadows();
+    const shadowChange = this.units.consumeShadowChange();
+    if (shadowChange) this.lighting.invalidateShadows(shadowChange === "turn");
+    const shadowsPending = this.lighting.updateShadows(now);
     const rendererStartedAt = performance.now();
     this.pipeline.renderer.info.reset();
     this.pipeline.render();
@@ -769,7 +784,7 @@ class IntegratedThreeBattle {
     if (this.frameCount % 120 === 0) this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
     if (this.captureFramesRemaining > 0) this.captureFramesRemaining -= 1;
     const settling = this.atmosphere.settling || controlsChanged || this.cameraTween !== null || this.heldPanKeys.size > 0
-      || Math.abs(this.focusDistance - this.targetFocusDistance) > 0.01
+      || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(0.01, this.targetFocusDistance * FOCUS_SETTLED)
       || Math.abs(this.focusStrength - desiredFocusStrength) > 0.0005
       || turning
       || (!paused && (this.units.casualties.active || this.effects.active));
@@ -780,6 +795,10 @@ class IntegratedThreeBattle {
       this.resumingFromIdle = true;
       this.pulseTimer ??= window.setTimeout(() => { this.pulseTimer = null; this.ambientFrame = true; this.scheduleFrame(); }, 42);
     } else this.resumingFromIdle = true;
+    if (shadowsPending && this.frameRequest === null) {
+      // A throttled shadow redraw is still owed once motion has stopped.
+      this.shadowTimer ??= window.setTimeout(() => { this.shadowTimer = null; this.scheduleFrame(); }, 70);
+    }
   };
 }
 

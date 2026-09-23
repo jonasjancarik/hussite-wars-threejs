@@ -9,9 +9,14 @@ export interface BattleLights {
   setShadowMapSize(size: number): void;
   /** Apply a (possibly blended) atmosphere; moving the sun re-renders shadows. */
   apply(state: AtmosphereState): void;
-  invalidateShadows(): void;
-  updateShadows(): void;
+  /** A gradual change (turning formations, the sun easing) may be redrawn at a lower rate. */
+  invalidateShadows(gradual?: boolean): void;
+  /** Redraw the shadow map this frame if due; returns whether a throttled redraw is still pending. */
+  updateShadows(now: number): boolean;
 }
+
+/** Minimum interval between shadow redraws for gradual changes (~15 per second). */
+const GRADUAL_SHADOW_INTERVAL_MS = 66;
 
 export function createBattleLighting(scene: THREE.Scene): BattleLights {
   // Placeholder values; the day preset below sets the actual palette, so the
@@ -46,6 +51,8 @@ export function createBattleLighting(scene: THREE.Scene): BattleLights {
   scene.add(fill);
 
   let dirty = true;
+  let gradualDirty = false;
+  let lastUpdate = -Infinity;
   let nightMode = false;
   const lights: BattleLights = {
     get sun() { return sun; },
@@ -60,7 +67,7 @@ export function createBattleLighting(scene: THREE.Scene): BattleLights {
       hemisphere.intensity = state.hemisphereIntensity;
       sun.color.copy(state.sunColor);
       sun.intensity = state.sunIntensity;
-      if (!sun.position.equals(state.sunPosition)) { sun.position.copy(state.sunPosition); dirty = true; }
+      if (!sun.position.equals(state.sunPosition)) { sun.position.copy(state.sunPosition); gradualDirty = true; }
       fill.intensity = state.fillIntensity;
     },
     setShadowMapSize(size) {
@@ -78,11 +85,14 @@ export function createBattleLighting(scene: THREE.Scene): BattleLights {
       setTimeout(() => previous.dispose(), 1000);
       dirty = true;
     },
-    invalidateShadows() { dirty = true; },
-    updateShadows() {
-      if (!dirty) return;
+    invalidateShadows(gradual = false) { if (gradual) gradualDirty = true; else dirty = true; },
+    updateShadows(now) {
+      // The VSM map is re-rendered and blurred whole; gradual changes need not do that every frame.
+      if (!dirty && !(gradualDirty && now - lastUpdate >= GRADUAL_SHADOW_INTERVAL_MS)) return gradualDirty;
       sun.shadow.needsUpdate = true;
-      dirty = false;
+      dirty = gradualDirty = false;
+      lastUpdate = now;
+      return false;
     },
   };
   lights.apply(ATMOSPHERE_PRESETS.day);

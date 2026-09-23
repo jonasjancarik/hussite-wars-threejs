@@ -37,6 +37,9 @@ type MovementPosition = (movement: MovementSnapshot) => { x: number; z: number }
 const TURN_RESPONSE_MS = 180;
 const ATTACK_FACING_HOLD_MS = 520;
 const IDLE_TURN_THRESHOLD = Math.PI / 12;
+/** Radians from its target at which a turning formation settles. */
+const TURN_SNAP = 0.01;
+export type ShadowChange = "turn" | "move" | null;
 type FacingIntent = { yaw: number; decisive: boolean };
 type PlacedUnit = { unit: UnitSnapshot; x: number; z: number };
 interface FacingContext { byFaction: Map<UnitSnapshot["faction"], PlacedUnit[]> }
@@ -87,7 +90,8 @@ export class UnitPresentation {
   private readonly seenAttackEvents = new Set<string>();
   private readonly attackFacing = new Map<number, { yaw: number; until: number }>();
   private readonly commanderAuras = new Map<number, CommandAura>();
-  private shadowsDirty = true;
+  /** Pending shadow change: "turn" (in place, may be throttled) or "move" (anything else). */
+  private shadowChange: ShadowChange = "move";
   private readonly scratch = new THREE.Vector3();
 
   public constructor(
@@ -142,10 +146,13 @@ export class UnitPresentation {
     return true;
   }
 
-  /** True once after any change that moves, turns, shows or hides a shadow caster. */
-  public consumeShadowChange(): boolean {
-    const changed = this.shadowsDirty;
-    this.shadowsDirty = false;
+  /**
+   * Once after any change to a shadow caster: "turn" when formations only
+   * turned in place, "move" when one moved, appeared, lost figures or vanished.
+   */
+  public consumeShadowChange(): ShadowChange {
+    const changed = this.shadowChange;
+    this.shadowChange = null;
     return changed;
   }
 
@@ -185,7 +192,7 @@ export class UnitPresentation {
     for (const visual of this.visuals.values()) {
       if (visual.strike) {
         turning = true;
-        this.shadowsDirty = true;
+        this.shadowChange = "move";
         visual.strike.age += deltaMs;
         if (visual.strike.age >= STRIKE_MS) visual.strike = null;
         this.applyStrike(visual);
@@ -194,8 +201,9 @@ export class UnitPresentation {
       const delta = angleDelta(visual.yaw, visual.targetYaw);
       if (Math.abs(delta) < 0.0001) continue;
       turning = true;
-      this.shadowsDirty = true;
-      visual.yaw = Math.abs(delta) < 0.002 ? visual.targetYaw : visual.yaw + delta * alpha;
+      this.shadowChange ??= "turn";
+      // The last hundredth of a radian is invisible; snapping there ends a turn ~0.3 s sooner.
+      visual.yaw = Math.abs(delta) < TURN_SNAP ? visual.targetYaw : visual.yaw + delta * alpha;
       visual.root.rotation.y = visual.yaw - visual.baseYaw + visual.marchingYaw;
       this.groundFigures(visual);
     }
@@ -357,7 +365,7 @@ export class UnitPresentation {
       this.visuals.set(unit.id, visual);
       this.hitTargets.push(hit);
       this.group.add(root);
-      this.shadowsDirty = true;
+      this.shadowChange = "move";
     }
     this.placeUnit(visual, unit, snapshot, context);
     visual.revision = revision;
@@ -371,7 +379,7 @@ export class UnitPresentation {
     // authoritative target tile rather than guessing a straight path.
     const center = routed ?? target;
     const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
-    if (visual.base.x !== center.x || visual.base.z !== center.z) this.shadowsDirty = true;
+    if (visual.base.x !== center.x || visual.base.z !== center.z) this.shadowChange = "move";
     visual.base = { x: center.x, z: center.z };
     this.applyStrike(visual);
     const facing = this.desiredFacing(unit, snapshot, context, visual.broadside);
@@ -381,7 +389,7 @@ export class UnitPresentation {
       visual.targetYaw = facing.yaw;
     }
     const marchingYaw = unit.marching ? 0.06 : 0, scale = unit.isRouting ? 0.92 : 1;
-    if (visual.marchingYaw !== marchingYaw || visual.root.scale.x !== scale) this.shadowsDirty = true;
+    if (visual.marchingYaw !== marchingYaw || visual.root.scale.x !== scale) this.shadowChange = "move";
     visual.marchingYaw = marchingYaw;
     visual.root.scale.setScalar(scale);
     visual.root.rotation.y = visual.yaw - visual.baseYaw + visual.marchingYaw;
@@ -398,7 +406,7 @@ export class UnitPresentation {
       const world = visual.root.localToWorld(this.scratch.set(object.position.x, 0, object.position.z));
       object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
       if (!survives && object.visible && unit.health < visual.health) this.casualties.add(object, unit);
-      if (object.visible !== survives) this.shadowsDirty = true;
+      if (object.visible !== survives) this.shadowChange = "move";
       object.visible = survives;
       if (object.visible) visual.markerHeight = Math.max(visual.markerHeight, object.position.y + top);
     }
@@ -489,7 +497,7 @@ export class UnitPresentation {
 
   private removeVisual(id: number, visual: UnitVisual): void {
     this.group.remove(visual.root);
-    this.shadowsDirty = true;
+    this.shadowChange = "move";
     const hitIndex = this.hitTargets.indexOf(visual.hit);
     if (hitIndex >= 0) this.hitTargets.splice(hitIndex, 1);
     visual.hit.geometry.dispose();
