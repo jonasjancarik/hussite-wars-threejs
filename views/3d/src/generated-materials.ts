@@ -130,6 +130,8 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
 
 /** Per-vertex height of the terrain rim above a point of the diorama's cut face. */
 export const RIM_TOP = "rimTop";
+/** 1 where the rim above a point of the cut face is open water, else 0. */
+export const RIM_WATER = "rimWater";
 
 /** Linear-light colours of the soil profile, top to bottom. */
 const SOIL = {
@@ -185,7 +187,7 @@ function createSoilMaterial(winter: boolean): THREE.Material {
   colour = tsl(mix)(colour, gravel, layer(3.0, .12, 23));
   colour = tsl(mix)(colour, bedrock, layer(3.6, .1, 37));
   // Water at the rim: the face shows its depth before the silt below.
-  const wet = tsl(smoothstep)(-.62, -.68, rim).mul(tsl(smoothstep)(.95, .8, depth));
+  const wet = tsl(attribute)(RIM_WATER, "float").mul(tsl(smoothstep)(.95, .8, depth));
   material.colorNode = tsl(mix)(colour.mul(drift), colourNode(winter ? SOIL.snow : SOIL.water), wet);
   material.roughnessNode = tsl(mix)(1, .25, wet);
   material.name = "Diorama soil strata";

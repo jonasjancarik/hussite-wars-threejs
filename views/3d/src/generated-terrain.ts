@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createGeneratedSurfaceMaterials, createPuddleMaterial, createWoodMaterial, GROUND_SPLAT, RIM_TOP, SHORE_DISTANCE, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
+import { createGeneratedSurfaceMaterials, createPuddleMaterial, createWoodMaterial, GROUND_SPLAT, RIM_TOP, RIM_WATER, SHORE_DISTANCE, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, fractalNoise, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
@@ -625,7 +625,8 @@ export class GeneratedTerrain implements BattleTerrain {
     // topsoil; everything below is drawn by the soil material. Rows sit at fixed depths below the rim near the top, then
     // spread evenly down to the base.
     const seed = this.field.seed ^ 0x2545f491;
-    const columns: Array<{ x: number; z: number; top: number; outX: number; outZ: number; along: number }> = [];
+    const columns: Array<{ x: number; z: number; top: number; outX: number; outZ: number; along: number; water: number }> = [];
+    const waterVertices = new Set(this.waterIndices);
     let along = 0;
     for (let index = 0; index < edgeIndices.length; index += 1) {
       const source = edgeIndices[index]!;
@@ -638,9 +639,10 @@ export class GeneratedTerrain implements BattleTerrain {
       let outZ = z <= minZ + 1e-6 ? -1 : z >= maxZ - 1e-6 ? 1 : 0;
       const length = Math.hypot(outX, outZ) || 1;
       outX /= length; outZ /= length;
-      columns.push({ x, z, top: surfacePositions.getY(source), outX, outZ, along });
+      // Only real water shows a water band on the face; a ditch or hollow at the rim is still soil.
+      columns.push({ x, z, top: surfacePositions.getY(source), outX, outZ, along, water: waterVertices.has(source) ? 1 : 0 });
     }
-    const positions: number[] = [], indices: number[] = [], rims: number[] = [];
+    const positions: number[] = [], indices: number[] = [], rims: number[] = [], wet: number[] = [];
     for (const column of columns) {
       const reach = column.top - PLINTH_BOTTOM;
       const depths = SOIL_ROWS.filter(depth => depth < reach - .3);
@@ -650,6 +652,7 @@ export class GeneratedTerrain implements BattleTerrain {
         const offset = row === 0 || row === SOIL_ROW_COUNT - 1 ? 0 : soilRelief(seed, column.along, depth);
         positions.push(column.x + column.outX * offset, column.top - depth, column.z + column.outZ * offset);
         rims.push(column.top);
+        wet.push(column.water);
       }
     }
     for (let index = 0; index < columns.length - 1; index += 1) {
@@ -661,6 +664,7 @@ export class GeneratedTerrain implements BattleTerrain {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute(RIM_TOP, new THREE.Float32BufferAttribute(rims, 1));
+    geometry.setAttribute(RIM_WATER, new THREE.Float32BufferAttribute(wet, 1));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
     const skirt = new THREE.Mesh(geometry, this.soilMaterial);

@@ -178,10 +178,32 @@ export function planTownWalls(id:string,region:readonly TerrainCell[],tiles:read
         .map(cell=>((cell.center.x-candidate.to.center.x)*dx+(cell.center.z-candidate.to.center.z)*dz)/(distance(cell.center,candidate.to.center)*Math.hypot(dx,dz))));
     };
     const middleZ=insideCells.reduce((sum,c)=>sum+c.center.z,0)/Math.max(1,insideCells.length);
-    candidates.sort((a,b)=>Number(b.road)-Number(a.road)||alignment(b)-alignment(a)||a.to.center.x-b.to.center.x
+    // After roads, prefer the crossing that needs the narrowest opening. A marching
+    // formation keeps a fixed pose, so a move between columns sweeps a much wider
+    // path than one along a column, and its gate (and gatehouse) doubles in width.
+    const arcDistance=(a:number,b:number)=>Math.min(Math.abs(a-b),perimeter-Math.abs(a-b));
+    const needed=new Map<Candidate,number>();
+    const opening=(candidate:Candidate):number=>{
+      let half=needed.get(candidate);
+      if(half!==undefined) return half;
+      const {from,to}=candidate,dx=to.center.x-from.center.x,dz=to.center.z-from.center.z,length=Math.hypot(dx,dz);
+      const tangent={x:-dz/length,z:dx/length};
+      half=(formationSupport(tangent.x,tangent.z,FORMATION_TRAVEL_FOOTPRINT)+formationSupport(-tangent.x,-tangent.z,FORMATION_TRAVEL_FOOTPRINT)+.7)/2;
+      const cut=(h:number):WallSegment[]=>raw.flatMap(edge=>{
+        const i=raw.indexOf(edge),start=starts[i]!,end=start+lengths[i]!;
+        const keep=(s:number)=>arcDistance(s,candidate.arc)>=h;
+        const samples=Array.from({length:9},(_,j)=>start+(end-start)*j/8);
+        return samples.slice(0,-1).flatMap((s,j)=>keep((s+samples[j+1]!)/2)
+          ?[{...edge,a:point(edge.a,edge.b,(s-start)/lengths[i]!),b:point(edge.a,edge.b,(samples[j+1]!-start)/lengths[i]!)}]:[]);
+      });
+      while(half<Math.min(12,perimeter*.22)&&!wallRouteSegmentClear(from.center,to.center,cut(half))) half+=.3;
+      needed.set(candidate,half);
+      return half;
+    };
+    candidates.sort((a,b)=>Number(b.road)-Number(a.road)||alignment(b)-alignment(a)
+      ||(a.road||b.road ? 0 : Math.round((opening(a)-opening(b))/.3))||a.to.center.x-b.to.center.x
       ||Math.abs(a.to.center.z-middleZ)-Math.abs(b.to.center.z-middleZ));
     const openings:Array<{arc:number;half:number}>=[];
-    const arcDistance=(a:number,b:number)=>Math.min(Math.abs(a-b),perimeter-Math.abs(a-b));
     const spans=():WallSegment[]=>raw.flatMap((edge,i)=>{
       const start=starts[i]!,end=start+lengths[i]!,cuts=[start,end];
       for(const opening of openings) for(const offset of [-perimeter,0,perimeter]) {

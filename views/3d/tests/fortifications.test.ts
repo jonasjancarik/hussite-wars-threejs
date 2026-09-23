@@ -97,6 +97,8 @@ test("fortification labels become walled manors with a gate, a ditch outside and
       assert.ok(plan.replacedCells.has(`${col},${row}`), `${id}: no generic town houses in the tvrz`);
     }
     assert.ok(walls.gates.length >= 1, `${id}: the tvrz has a gate`);
+    // The gate goes where a formation passes straight through; a diagonal crossing doubles its width.
+    for (const gate of walls.gates) assert.ok(gate.width < 5.5, `${id}: gate ${gate.width.toFixed(1)} m wide`);
     assert.ok(walls.segments.length > 4 && walls.issues.length === 0, `${id}: ${walls.issues.join("; ")}`);
     const loop = walls.loops[0]!.points.map(point => [point.x, point.z] as [number, number]);
     const ditches = plan.earthworks.filter(work => work.id.includes(":ditch:"));
@@ -168,4 +170,22 @@ test("the tvrz replaces farmhouses, keeps hex centres open and respects explored
     scenery.dispose(); terrain.dispose();
     assert.equal(scenery.group.children.length, 0);
   }
+});
+
+test("a tvrz ditch cut by the board edge shows soil in the cut face, not a water band", () => {
+  const nekmir = new GeneratedTerrain(snapshot("nekmir_1419"));
+  const skirt = nekmir.group.children[1] as THREE.Mesh;
+  const rims = skirt.geometry.getAttribute("rimTop"), wet = skirt.geometry.getAttribute("rimWater");
+  let lowRims = 0;
+  for (let index = 0; index < rims.count; index += 1) {
+    if (rims.getX(index) < -.62) lowRims += 1;
+    assert.equal(wet.getX(index), 0, "Nekmíř has no water at its edge");
+  }
+  assert.ok(lowRims > 0, "the ditch reaches the board edge");
+  nekmir.dispose();
+  const malesov = new GeneratedTerrain(snapshot("malesov_1424"));
+  const stream = (malesov.group.children[1] as THREE.Mesh).geometry.getAttribute("rimWater");
+  assert.ok(Array.from({ length: stream.count }, (_, index) => stream.getX(index)).some(value => value === 1),
+    "the stream shows its water band where it meets the edge");
+  malesov.dispose();
 });
