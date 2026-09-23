@@ -80,6 +80,7 @@ class IntegratedThreeBattle {
   private captureFramesRemaining = 0;
   private resumingFromIdle = true;
   private sceneryShadowKey = "";
+  private pulseTimer: number | null = null;
   private cameraTween: { from: CameraPose; to: CameraPose; elapsed: number; duration: number } | null = null;
   private readonly heldPanKeys = new Set<string>();
   private lastSelectedUnitId: number | null = null;
@@ -319,6 +320,7 @@ class IntegratedThreeBattle {
     this.active = false;
     if (this.frameRequest !== null) cancelAnimationFrame(this.frameRequest);
     this.frameRequest = null;
+    if (this.pulseTimer !== null) window.clearTimeout(this.pulseTimer);
     loadListeners.delete(this.requestFrame);
     this.abortController.abort();
     this.resizeObserver.disconnect();
@@ -614,6 +616,8 @@ class IntegratedThreeBattle {
     this.effects.advance(delta);
     this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id, this.markerScratch));
     this.effects.position(this.cameraRig.camera, this.viewportWidth, this.viewportHeight);
+    const pulsing = this.overlays.pulsingActive && !this.reducedMotion.matches && !this.options.snapshot.paused;
+    this.overlays.pulse(pulsing ? now : 0);
     if (this.units.consumeShadowChange()) this.lighting.invalidateShadows();
     this.lighting.updateShadows();
     const rendererStartedAt = performance.now();
@@ -638,7 +642,12 @@ class IntegratedThreeBattle {
       || turning
       || (!paused && (this.units.casualties.active || this.effects.active));
     if (settling || this.captureFramesRemaining > 0) this.scheduleFrame();
-    else this.resumingFromIdle = true;
+    else if (pulsing) {
+      // A slow pulse does not need display rate: about 20 fps keeps it smooth
+      // while the player chooses a target, at a fraction of the GPU cost.
+      this.resumingFromIdle = true;
+      this.pulseTimer ??= window.setTimeout(() => { this.pulseTimer = null; this.scheduleFrame(); }, 50);
+    } else this.resumingFromIdle = true;
   };
 }
 

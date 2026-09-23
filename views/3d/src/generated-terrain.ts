@@ -10,6 +10,9 @@ import { nearestOnStreet } from "./settlement-plan.ts";
 import { clipPolygon, triangulatePolygon } from "./water-geometry.ts";
 import { pointInPolygon } from "./geometry-utils.ts";
 
+/** Cool grey the remembered (explored, not visible) terrain is pulled toward. */
+const MEMORY_TINT = new THREE.Color(0.62, 0.66, 0.72);
+
 const COLORS: Record<string, number> = {
   plains: 0xdfe6b3, forest: 0xb3c68f, hills: 0xcfce98, water: 0x78aaa4,
   town: 0xd1b99d, road: 0xd9c7a0, road2: 0xc7b28f, dam: 0xdacaa2,
@@ -25,6 +28,8 @@ export class GeneratedTerrain implements BattleTerrain {
   public readonly layout: HexLayout;
   public readonly bounds;
   public readonly topography: TopographyPlan;
+  /** Explored-but-unseen hexes are shaded in the vertex colours; overlays need not tint them. */
+  public readonly shadesRememberedHexes = true;
   public readonly environmentPlan: EnvironmentPlan;
   private bridgeBaseHeight = 0;
   private readonly cityLoops: Array<{points:Array<[number,number]>;minX:number;maxX:number;minZ:number;maxZ:number}>;
@@ -135,7 +140,11 @@ export class GeneratedTerrain implements BattleTerrain {
       if (snapshot.fogOfWar && (!key || !explored.has(key))) {
         r = fog.r; g = fog.g; b = fog.b;
       } else if (snapshot.fogOfWar && key && !visible.has(key)) {
-        shaded.setRGB(r, g, b).lerp(fog, 0.45);
+        // Remembered but unobserved ground: desaturated and dimmed, so it
+        // reads as the last known state rather than as live terrain.
+        shaded.setRGB(r, g, b);
+        const grey = shaded.r * 0.3 + shaded.g * 0.59 + shaded.b * 0.11;
+        shaded.lerp(MEMORY_TINT.clone().multiplyScalar(grey * 1.6), 0.72).multiplyScalar(0.74);
         r = shaded.r; g = shaded.g; b = shaded.b;
       }
       positions.setY(index, this.basePositions[offset + 1]!);

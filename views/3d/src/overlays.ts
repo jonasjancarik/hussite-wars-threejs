@@ -46,10 +46,26 @@ export function overlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+  if (fill) {
+    // Edge-weighted fill: highlights glow at the hex border and stay faint in
+    // the middle, where the formation stands.
+    const colors: number[] = [];
+    for (let band = 0; band <= bands; band += 1) {
+      const alpha = FILL_CENTRE_ALPHA + (1 - FILL_CENTRE_ALPHA) * THREE.MathUtils.smoothstep(band / bands, 0.45, 1);
+      for (let i = 0; i < segments; i += 1) colors.push(1, 1, 1, alpha);
+    }
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 4));
+  }
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;
 }
+
+/** Share of a highlight's fill opacity kept at the hex centre. */
+export const FILL_CENTRE_ALPHA = 0.3;
+/** Attackable enemies pulse slowly between these fractions of their fill. */
+const PULSE_MIN = 0.55;
+const PULSE_PERIOD_MS = 1400;
 
 function fogOverlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt">,
   layout: HexLayout): THREE.BufferGeometry {
@@ -73,11 +89,16 @@ export class TacticalOverlays {
   private readonly fogCovers = new Map<string, THREE.Mesh>();
   private gridVisible = true;
   private hovered: HexCoord | null = null;
+  private pulsing: Array<{ material: THREE.MeshBasicMaterial; opacity: number }> = [];
   private snapshot: BattleSnapshot | null = null;
   private readonly winter: boolean;
+  /** Terrain without its own fog shading gets a translucent memory tint here. */
+  private readonly shadeRemembered: boolean;
 
-  public constructor(terrain: TerrainSurface & { environmentPlan?: { winter: boolean } }, layout = new HexLayout(20, 12)) {
+  public constructor(terrain: TerrainSurface & { environmentPlan?: { winter: boolean }; shadesRememberedHexes?: boolean },
+    layout = new HexLayout(20, 12)) {
     this.winter = terrain.environmentPlan?.winter ?? false;
+    this.shadeRemembered = !terrain.shadesRememberedHexes;
     this.group.name = "Tactical overlays";
     for (let col = 0; col < layout.cols; col += 1) {
       for (let row = 0; row < layout.rows; row += 1) {
@@ -98,6 +119,7 @@ export class TacticalOverlays {
         this.rings.set(`${col},${row}`, ring);
         this.group.add(ring);
         const fillMaterial = material.clone();
+        fillMaterial.vertexColors = true;
         const fill = new THREE.Mesh(overlayGeometry({ col, row }, terrain, true, layout), fillMaterial);
         fill.renderOrder = 9;
         fill.visible = false;
@@ -125,6 +147,15 @@ export class TacticalOverlays {
   }
   public update(snapshot: BattleSnapshot): void { this.snapshot = snapshot; this.refresh(); }
 
+  /** Whether any highlight is pulsing and needs further frames. */
+  public get pulsingActive(): boolean { return this.pulsing.length > 0; }
+
+  /** Pulse attackable enemies; `timeMs` is any monotonic clock. */
+  public pulse(timeMs: number): void {
+    const wave = PULSE_MIN + (1 - PULSE_MIN) * (0.5 + 0.5 * Math.cos(timeMs / PULSE_PERIOD_MS * Math.PI * 2));
+    for (const { material, opacity } of this.pulsing) material.opacity = opacity * wave;
+  }
+
   public dispose(): void {
     for (const mesh of [...this.rings.values(), ...this.fills.values(), ...this.fogCovers.values()]) {
       mesh.geometry.dispose();
@@ -143,7 +174,9 @@ export class TacticalOverlays {
     const march = new Set(this.snapshot?.marchTargets.map(key) ?? []);
     const objectives = new Set(this.snapshot?.objectiveHexes?.map(key) ?? []);
     const explored = new Set(this.snapshot?.exploredHexes ?? []);
+    const visible = new Set(this.snapshot?.visibleHexes ?? []);
     const terrains = new Map(this.snapshot?.tiles.map(tile => [key(tile), tile.terrain.toLowerCase()]) ?? []);
+    this.pulsing = [];
     for (const [coordKey, ring] of this.rings) {
       const material = ring.material as THREE.MeshBasicMaterial;
       const paleGround = this.winter && !["mud", "swamp", "marsh", "road", "road2", "dam", "trenches"].includes(terrains.get(coordKey) ?? "plains");
@@ -158,21 +191,24 @@ export class TacticalOverlays {
         fillColor = ringColor;
       }
       if (moves.has(coordKey) || march.has(coordKey)) {
-        opacity = 0.92; fillOpacity = 0.22; ringColor = 0x72e0ab; fillColor = ringColor;
+        opacity = 0.92; fillOpacity = 0.34; ringColor = 0x72e0ab; fillColor = ringColor;
       }
       if (attackRange.has(coordKey) && !attacks.has(coordKey)) {
         opacity = Math.max(opacity, 0.62);
         ringColor = 0xe4776b;
       }
-      if (attacks.has(coordKey)) { opacity = 1; fillOpacity = 0.30; ringColor = 0xff735d; fillColor = ringColor; }
+      if (attacks.has(coordKey)) { opacity = 1; fillOpacity = 0.5; ringColor = 0xff735d; fillColor = ringColor; }
       if (selected && coordKey === `${selected.col},${selected.row}`) {
-        opacity = 1; fillOpacity = 0.34; ringColor = 0xffd45f; fillColor = ringColor;
+        opacity = 1; fillOpacity = 0.5; ringColor = 0xffd45f; fillColor = ringColor;
       }
-      if (this.hovered && coordKey === key(this.hovered)) { opacity = 1; fillOpacity = Math.max(fillOpacity, 0.34);
+      if (this.hovered && coordKey === key(this.hovered)) { opacity = 1; fillOpacity = Math.max(fillOpacity, 0.46);
         if (!moves.has(coordKey) && !march.has(coordKey) && !attacks.has(coordKey) && !(selected && coordKey === `${selected.col},${selected.row}`)) {
           fillColor = 0xfff1ca;
           if (!attackRange.has(coordKey)) ringColor = fillColor;
         } }
+      if (this.shadeRemembered && this.snapshot?.fogOfWar && fillOpacity === 0 && explored.has(coordKey) && !visible.has(coordKey)) {
+        fillOpacity = 0.26; fillColor = 0x3a4048;
+      }
       material.color.setHex(ringColor);
       material.opacity = opacity;
       ring.visible = opacity > 0;
@@ -181,6 +217,8 @@ export class TacticalOverlays {
       fillMaterial.color.setHex(fillColor);
       fillMaterial.opacity = fillOpacity;
       fill.visible = fillOpacity > 0;
+      const hoveredHere = this.hovered && coordKey === key(this.hovered);
+      if (attacks.has(coordKey) && !hoveredHere) this.pulsing.push({ material: fillMaterial, opacity: fillOpacity });
       this.fogCovers.get(coordKey)!.visible = Boolean(this.snapshot?.fogOfWar && !explored.has(coordKey));
     }
   }
