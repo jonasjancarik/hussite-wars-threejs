@@ -69,6 +69,9 @@ npm --prefix views/3d run build
 - **Absolute levels make pits.** Mud or swamp pinned to −0.36 m carved hex-shaped pits into hills; wet ground is now a dip relative to its neighbours. Water keeps one absolute level.
 - **Idle battles draw no frames.** Anything animated needs the low-rate ambient loop (as snowfall uses) or has to stay static.
 - **Tests compare `Float32` geometry.** Use tolerances, not `===`, for derived values.
+- **Models and static scenery are merged for drawing.** `model-merge.ts` bakes each GLB into one mesh per face side on load; `scenery-merge.ts` draws walls, ice and lone buildings through merged proxies. The source pieces keep their names, owners and `visible` flags but sit on layer 31, so a raycast or `Box3` over scenery must account for that.
+- **The browser pane can throttle `requestAnimationFrame` to 1 Hz** even while `document.hidden` is false. Read frame timings only right after a screenshot has fronted the pane, and compare draw calls (`renderer.info` after a steady frame; a shadow redraw adds roughly one draw per caster) rather than frame rates.
+- **Render passes update once per animation frame.** Calling `pipeline.render()` twice in one task redraws only the final quad; to time the GPU, render inside `requestAnimationFrame` and await `device.queue.onSubmittedWorkDone()`.
 
 ## Sharing the checkout
 
