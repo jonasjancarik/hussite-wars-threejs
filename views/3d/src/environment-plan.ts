@@ -1,9 +1,10 @@
-import { planFortifications } from "./fortification-scenery.ts";
+import { ditchAlong, innerVertices, TVRZ_DITCH_OFFSET, TVRZ_DITCH_WIDTH } from "./fortification-plan.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { TerrainCell } from "./terrain-regions.ts";
 import { planSettlement, type SettlementPlan } from "./settlement-plan.ts";
 import { planTownWalls, WALL_THICKNESS, type TownWallPlan } from "./town-wall-plan.ts";
 import { settlementAuthoring } from "./settlement-authoring.ts";
+import type { MapFeature } from "./types.ts";
 
 export interface EnvironmentPlacement {
   id: string;
@@ -22,6 +23,9 @@ export interface Earthwork {
   ax: number; az: number; bx: number; bz: number;
   height: number;
   ditch: boolean;
+  /** Distance of the ditch from the line and its half-width; a field earthwork uses 1.7 and .75. */
+  ditchOffset?: number;
+  ditchWidth?: number;
 }
 export interface EnvironmentPlan {
   scenario: string | null;
@@ -34,6 +38,8 @@ export interface EnvironmentPlan {
   bridge?: { x: number; z: number };
   settlement?: SettlementPlan;
   walls: TownWallPlan[];
+  /** Wall plans that enclose a fortified manor rather than a town. */
+  fortifications: Set<string>;
 }
 
 /** Art profiles cover the current campaign. They never change semantic terrain or rules. */
@@ -45,8 +51,10 @@ export const ENVIRONMENT_SCENARIOS = ["zivohost_1419", "nekmir_1419", "sudomere_
 const key = (cell: { col: number; row: number }): string => `${cell.col},${cell.row}`;
 const wet = (terrain: string): boolean => ["water", "mud", "swamp"].includes(terrain);
 
-export function planEnvironment(scenario: string | null, tiles: readonly TerrainCell[]): EnvironmentPlan {
+export function planEnvironment(scenario: string | null, tiles: readonly TerrainCell[],
+  features: readonly MapFeature[] = []): EnvironmentPlan {
   const plan: EnvironmentPlan = { scenario, placements: [], replacedCells: new Set(), earthworks: [], walls: [],
+    fortifications: new Set(),
     raisedCells: new Map(),
     winter: scenario === "kutna_hora_1421" || scenario === "nemecky_brod_1422",
     frozenRiver: scenario === "nemecky_brod_1422" };
@@ -124,13 +132,32 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     near("fort_tower_round", last, .4, 1, { role: "fortification" });
   }
 
-  // Preserve the two already authored manor arrangements.
-  const manors = planFortifications(scenario, tiles);
-  for (const placement of manors.placements) {
-    add(placement.model, placement.x, placement.z, placement.scale, placement.rotation,
-      { id: `${scenario} ${placement.model}`, role: "fortification" });
+  /**
+   * A fortified manor over the hexes its map label names: a joined wall with
+   * corner towers and a gate toward the approach, a dry ditch broken at the
+   * gate, the manor house on the inner vertex furthest from the gate and a
+   * well on the next. The courtyard is packed earth (see GeneratedTerrain).
+   */
+  function fortification(feature: MapFeature, index: number): void {
+    const region = feature.hexes.map(coord => cells.get(key(coord))).filter((cell): cell is TerrainCell => !!cell);
+    // A label over edited terrain (water, or cells no longer on the map) must not raise a misplaced manor.
+    if (region.length !== feature.hexes.length || region.some(cell => wet(cell.terrain))) return;
+    const id = `${scenario ?? "battle"}-tvrz-${index}`;
+    replace(region);
+    townWalls(region, id);
+    const walls = plan.walls.at(-1)!;
+    plan.fortifications.add(walls.id);
+    ditchAlong(walls).forEach((ditch, part) => plan.earthworks.push({ id: `${id}:ditch:${part}`, ...ditch, height: 0,
+      ditch: true, ditchOffset: TVRZ_DITCH_OFFSET, ditchWidth: TVRZ_DITCH_WIDTH }));
+    const gate = walls.gates[0]?.centre;
+    const [manor, yard] = innerVertices(region, layout, gate);
+    // Face the gate, snapped to the hex directions so the footprint stays between the formations.
+    const facing = (point: { x: number; z: number }): number => gate
+      ? Math.round(Math.atan2(gate.x - point.x, gate.z - point.z) / (Math.PI / 3)) * Math.PI / 3 : 0;
+    if (manor) add("fort_manor", manor.x, manor.z, .44, facing(manor), { role: "fortification" }, 1.6);
+    if (yard) add("well", yard.x, yard.z, .6, facing(yard), {}, .7);
   }
-  manors.replacedCells.forEach(cell => plan.replacedCells.add(cell));
+  features.filter(feature => feature.kind === "fortification").forEach(fortification);
 
   if (named) {
     const town = select(cell => cell.terrain === "town");
@@ -276,10 +303,11 @@ export function earthworkRelief(x: number, z: number, works: readonly Earthwork[
     const along=((x-work.ax)*dx+(z-work.az)*dz)/length;
     if (along < -.8 || along > length+.8) continue;
     const across=((x-work.ax)*-dz+(z-work.az)*dx)/length;
-    if (across < -2.7 || across > 1.2) continue;
+    const offset=work.ditchOffset??1.7, width=work.ditchWidth??.75;
+    if (across < -(offset+width+.25) || across > 1.2) continue;
     const end=Math.max(0,Math.min(1,(along+.8)/.8,(length+.8-along)/.8));
     bank=Math.max(bank,Math.max(0,1-Math.abs(across)/1.15)**2*work.height*end);
-    if (work.ditch) ditch=Math.min(ditch,-(Math.max(0,1-Math.abs(across+1.7)/.75)**2)*.35*end);
+    if (work.ditch) ditch=Math.min(ditch,-(Math.max(0,1-Math.abs(across+offset)/width)**2)*.35*end);
   }
   return bank+ditch;
 }

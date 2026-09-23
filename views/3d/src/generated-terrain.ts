@@ -5,6 +5,7 @@ import { createTerrainRegions, fractalNoise, isFieldTerrain, isWaterTerrain, typ
 import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
+import type { TownWallPlan } from "./town-wall-plan.ts";
 import { isRoadTerrain } from "./road-corridors.ts";
 import { nearestOnStreet } from "./settlement-plan.ts";
 import { clipPolygon, triangulatePolygon } from "./water-geometry.ts";
@@ -42,6 +43,8 @@ export class GeneratedTerrain implements BattleTerrain {
   public readonly environmentPlan: EnvironmentPlan;
   private bridgeBaseHeight = 0;
   private readonly cityLoops: Array<{points:Array<[number,number]>;minX:number;maxX:number;minZ:number;maxZ:number}>;
+  /** Wall loops around a fortified manor: everything inside is its packed-earth courtyard. */
+  private readonly yardLoops: Array<{points:Array<[number,number]>;minX:number;maxX:number;minZ:number;maxZ:number}>;
   private readonly cityCells: readonly TerrainCell[];
   private surfaceMesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial[]>;
   private soilMaterial!: THREE.Material;
@@ -65,11 +68,13 @@ export class GeneratedTerrain implements BattleTerrain {
     this.layout = new HexLayout(cols, rows);
     this.field = createTerrainRegions({ cols, rows, tiles: snapshot.tiles, scenario: snapshot.scenario ?? "battle",
       seed: snapshot.seed ?? 1, hexRadius: this.layout.radius, coreCoverage: 0.76, boundaryNoise: 0.75 });
-    this.environmentPlan = planEnvironment(snapshot.scenario, this.field.tiles);
-    this.cityLoops=this.environmentPlan.walls.flatMap(wall=>wall.loops.map(loop=>({
+    this.environmentPlan = planEnvironment(snapshot.scenario, this.field.tiles, snapshot.features);
+    const loopsOf=(walls:readonly TownWallPlan[])=>walls.flatMap(wall=>wall.loops.map(loop=>({
       points:loop.points.map(p=>[p.x,p.z] as [number,number]),minX:Math.min(...loop.points.map(p=>p.x)),maxX:Math.max(...loop.points.map(p=>p.x)),
       minZ:Math.min(...loop.points.map(p=>p.z)),maxZ:Math.max(...loop.points.map(p=>p.z)),
     })));
+    this.cityLoops=loopsOf(this.environmentPlan.walls);
+    this.yardLoops=loopsOf(this.environmentPlan.walls.filter(wall=>this.environmentPlan.fortifications.has(wall.id)));
     const enclosed=new Set(this.environmentPlan.walls.flatMap(wall=>wall.enclosedCells));
     this.cityCells=this.field.tiles.filter(cell=>enclosed.has(`${cell.col},${cell.row}`)&&["town","church"].includes(cell.terrain));
     for (const issue of this.environmentPlan.settlement?.issues ?? []) console.warn(`[Hussite 3D] ${issue}`);
@@ -183,6 +188,7 @@ export class GeneratedTerrain implements BattleTerrain {
 
   private surfaceWeightsAt(x:number,z:number,source:TerrainWeights=this.field.weightsAt(x,z),inside=this.insideCity(x,z)):TerrainWeights {
     if(!inside) return source;
+    if(this.yardLoops.some(loop=>x>=loop.minX&&x<=loop.maxX&&z>=loop.minZ&&z<=loop.maxZ&&pointInPolygon(x,z,loop.points))) return {town:1};
     const weights:Record<string,number>={...source};let water=0;
     for(const name of Object.keys(weights)) if(isWaterTerrain(name)) {water+=weights[name]!;weights[name]=0;}
     if(water>0) weights.town=(weights.town??0)+water;

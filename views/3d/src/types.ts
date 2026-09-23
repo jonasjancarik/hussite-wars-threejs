@@ -47,6 +47,11 @@ export interface CosmeticEvent extends HexCoord {
   damage?: number;
 }
 
+export interface MapFeature {
+  kind: string;
+  hexes: HexCoord[];
+}
+
 export interface BattleSnapshot {
   /** Eased visual movement for a single visible unit; rules still own its target tile. */
   movement?: {
@@ -71,6 +76,8 @@ export interface BattleSnapshot {
   aiRunning: boolean;
   fogOfWar?: boolean;
   tiles: Array<HexCoord & { terrain: string }>;
+  /** Features named by the 2D map's labels, e.g. a fortification over its hexes. */
+  features?: MapFeature[];
   units: UnitSnapshot[];
   selectedUnitId: number | null;
   inspection?: (HexCoord & { terrain: string; unit: UnitSnapshot | null }) | null;

@@ -4,7 +4,8 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { planFortifications } from "../src/fortification-scenery.ts";
+import { planEnvironment } from "../src/environment-plan.ts";
+import { pointInPolygon } from "../src/geometry-utils.ts";
 import { GeneratedScenery } from "../src/generated-scenery.ts";
 import { GeneratedTerrain } from "../src/generated-terrain.ts";
 import { HexLayout } from "../src/hex-coordinates.ts";
@@ -14,7 +15,7 @@ const root = new URL("../../../", import.meta.url);
 const paths = JSON.parse(readFileSync(new URL("assets/3d/model-paths.json", root), "utf8")) as Record<string, string>;
 const scenarios = runInNewContext(`${readFileSync(new URL("js/data/scenarios.js", root), "utf8")}; Scenarios`) as
   Record<string, { id: string; mapSize: { width: number; height: number };
-    terrain: Record<string, string | number[][]>; mapLabels?: Array<{ hexes: number[][] }> }>;
+    terrain: Record<string, string | number[][]>; mapLabels?: Array<{ hexes: number[][]; kind?: string }> }>;
 const names = ["fort_wall", "fort_wall_corner", "fort_gatehouse", "fort_tower_square", "fort_tower_round", "fort_manor", "timber_palisade"];
 const cache = new Map<string, Promise<THREE.Group>>();
 async function load(name: string): Promise<THREE.Group> {
@@ -47,7 +48,9 @@ function snapshot(id: string): BattleSnapshot {
     cols: scenario.mapSize.width, rows: scenario.mapSize.height, seed: 1,
     round: 1, faction: "hussites", state: "playing", busy: false, paused: false, aiRunning: false,
     fogOfWar: true, tiles, units: [], selectedUnitId: null, legalMoves: [], legalAttacks: [],
-    marchTargets: [], visibleHexes: [], exploredHexes: [], events: [] };
+    marchTargets: [], visibleHexes: [], exploredHexes: [], events: [],
+    features: (scenario.mapLabels ?? []).filter(label => label.kind)
+      .map(label => ({ kind: label.kind!, hexes: label.hexes.map(([col, row]) => ({ col: col!, row: row! })) })) };
 }
 
 test("fortification exports stay grounded, static and compact; the gate passage is genuinely open", async () => {
@@ -78,30 +81,49 @@ test("fortification exports stay grounded, static and compact; the gate passage 
   }
 });
 
-test("only the two labelled manor sites receive fortifications; altered terrain falls back", () => {
+test("fortification labels become walled manors with a gate, a ditch outside and a manor inside", () => {
   const decorated: string[] = [];
   for (const id of Object.keys(scenarios)) {
     const state = snapshot(id);
     const layout = new HexLayout(state.cols!, state.rows!);
     const tiles = state.tiles.map(tile => ({ ...tile, center: layout.center(tile.col, tile.row) }));
-    const plan = planFortifications(id, tiles);
-    if (!plan.placements.length) continue;
+    const plan = planEnvironment(id, tiles, state.features);
+    if (!plan.fortifications.size) continue;
     decorated.push(id);
-    assert.equal(plan.replacedCells.size, 4);
-    assert.ok(scenarios[id]!.mapLabels?.some(label =>
-      label.hexes.length === 4 && label.hexes.every(([col, row]) => plan.replacedCells.has(`${col},${row}`))));
-    const changed = tiles.map(tile => plan.replacedCells.has(`${tile.col},${tile.row}`) ? { ...tile, terrain: "water" } : tile);
-    assert.equal(planFortifications(id, changed).placements.length, 0);
-    assert.equal(planFortifications("custom", tiles).placements.length, 0);
+    const walls = plan.walls.find(wall => plan.fortifications.has(wall.id))!;
+    const label = state.features!.find(feature => feature.kind === "fortification")!;
+    for (const { col, row } of label.hexes) {
+      assert.ok(walls.enclosedCells.includes(`${col},${row}`), `${id}: ${col},${row} inside the wall`);
+      assert.ok(plan.replacedCells.has(`${col},${row}`), `${id}: no generic town houses in the tvrz`);
+    }
+    assert.ok(walls.gates.length >= 1, `${id}: the tvrz has a gate`);
+    assert.ok(walls.segments.length > 4 && walls.issues.length === 0, `${id}: ${walls.issues.join("; ")}`);
+    const loop = walls.loops[0]!.points.map(point => [point.x, point.z] as [number, number]);
+    const ditches = plan.earthworks.filter(work => work.id.includes(":ditch:"));
+    assert.ok(ditches.length > 4, `${id}: a ditch rings the wall`);
+    for (const ditch of ditches) {
+      const dx = ditch.bx - ditch.ax, dz = ditch.bz - ditch.az, length = Math.hypot(dx, dz);
+      const x = (ditch.ax + ditch.bx) / 2 + dz / length * ditch.ditchOffset!, z = (ditch.az + ditch.bz) / 2 - dx / length * ditch.ditchOffset!;
+      assert.ok(!pointInPolygon(x, z, loop), `${id}: ditch ${ditch.id} lies outside the wall`);
+    }
+    const manor = plan.placements.find(placement => placement.model === "fort_manor");
+    assert.ok(manor && pointInPolygon(manor.x, manor.z, loop), `${id}: the manor stands inside`);
+    // A label over edited terrain falls back instead of raising a misplaced manor.
+    const flooded = tiles.map(tile => label.hexes.some(hex => hex.col === tile.col && hex.row === tile.row)
+      ? { ...tile, terrain: "water" } : tile);
+    assert.equal(planEnvironment(id, flooded, state.features).fortifications.size, 0);
+    assert.equal(planEnvironment(id, tiles).fortifications.size, 0, "no label, no tvrz");
   }
   assert.deepEqual(decorated.sort(), ["malesov_1424", "nekmir_1419"]);
 });
 
-test("real manor scenery replaces farmhouses, keeps hex centres open and respects explored fog", async () => {
+test("the tvrz replaces farmhouses, keeps hex centres open and respects explored fog", async () => {
   for (const id of ["nekmir_1419", "malesov_1424"]) {
     const state = snapshot(id);
     const terrain = new GeneratedTerrain(state);
-    const plan = planFortifications(id, terrain.field.tiles);
+    const placements = terrain.environmentPlan.placements.filter(placement => placement.role === "fortification");
+    const yard = terrain.field.tiles.find(tile => tile.col === state.features![0]!.hexes[0]!.col && tile.row === state.features![0]!.hexes[0]!.row)!;
+    assert.equal(terrain.renderedTerrainAt(yard.center.x, yard.center.z), "town", "the courtyard is packed earth");
     const assets = {
       async preload(requested: string[]) { await Promise.all(requested.map(load)); },
       async clone(name: string) { return (await load(name)).clone(true); },
@@ -110,7 +132,7 @@ test("real manor scenery replaces farmhouses, keeps hex centres open and respect
     await scenery.build();
     assert.ok(!scenery.group.children.some(object => object.name.startsWith("town ")));
     const fortifications = scenery.group.children.filter(object => object.userData.environmentPlacement?.role === "fortification");
-    assert.equal(fortifications.length, plan.placements.length);
+    assert.equal(fortifications.length, placements.length);
     const centres = terrain.field.tiles;
     for (const object of fortifications) {
       const placement=object.userData.environmentPlacement;
@@ -126,15 +148,17 @@ test("real manor scenery replaces farmhouses, keeps hex centres open and respect
       assert.ok(object.children[0]!.position.y >= terrain.renderedHeightAt(placement.x,placement.z)-.03);
     }
     scenery.updateVisibility(state);
-    assert.ok(scenery.group.children.filter(object=>!(object instanceof THREE.InstancedMesh)).every(object => !object.visible));
+    // Wall pieces hide individually inside their container, like every other fog-owned part.
+    const owned = (): THREE.Object3D[] => scenery.group.children.flatMap(object =>
+      object.name === "Procedural town walls" ? object.children : [object]).filter(object => !(object instanceof THREE.InstancedMesh));
+    assert.ok(owned().every(object => !object.visible));
     for(const object of scenery.group.children) if(object instanceof THREE.InstancedMesh) {
       const matrix=new THREE.Matrix4(); object.getMatrixAt(0,matrix);
       assert.equal(matrix.elements[0],0);
     }
     state.exploredHexes = [fortifications[0]!.userData.sceneryCell];
     scenery.updateVisibility(state);
-    for (const object of scenery.group.children) {
-      if(object instanceof THREE.InstancedMesh) continue;
+    for (const object of owned()) {
       assert.equal(object.visible, state.exploredHexes.includes(object.userData.sceneryCell));
     }
     state.fogOfWar = false;

@@ -99,6 +99,8 @@ class BattleView {
         // Nastavení map labels (názvy měst, řek, etc.) - s převodem souřadnic
         this.game.hexGrid.mapLabels = (scenario.mapLabels || []).map(label => ({
             text: label.text,
+            // Semantic kind (e.g. "fortification") lets the 3D view build the feature it names.
+            ...(label.kind ? { kind: label.kind } : {}),
             offset: Array.isArray(label.offset) ? [...label.offset] : [0, 0],
             hexes: label.hexes.map(([col, row]) => {
                 const mapped = this.game.hexGrid.scenarioToMap(col, row);

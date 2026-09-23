@@ -148,7 +148,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.40';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.41';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -198,6 +198,10 @@ class ThreeBattleMapView {
             fogOfWar: game.fogOfWar,
             tiles: [...game.hexGrid.hexes.values()].map(tile => ({
                 col: tile.col, row: tile.row, terrain: tile.terrain
+            })),
+            // Map labels that name a feature (a tvrz, say): the 3D generator builds them.
+            features: (game.hexGrid.mapLabels || []).filter(label => label.kind).map(label => ({
+                kind: label.kind, hexes: label.hexes.map(([col, row]) => ({ col, row }))
             })),
             movement: ThreeBattleMapView.movementOf(this.view, visibleUnits),
             units: visibleUnits.map(unit => ({

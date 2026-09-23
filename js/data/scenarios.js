@@ -239,7 +239,7 @@ const Scenarios = {
         },
 
         mapLabels: [
-            { text: 'Tvrz Nekmíř', i18nKey: 'nekmirFortress', hexes: [[18,7], [19,7], [18,8], [19,8]], offset: [-0.45, 0] }
+            { text: 'Tvrz Nekmíř', kind: 'fortification', i18nKey: 'nekmirFortress', hexes: [[18,7], [19,7], [18,8], [19,8]], offset: [-0.45, 0] }
         ],
 
         forces: {
@@ -4096,7 +4096,7 @@ const Scenarios = {
 
         mapLabels: [
             { text: 'Potok Bohynka', i18nKey: 'bohynkaBrook', hexes: [[1,7], [3,7], [5,7], [13,7], [15,7], [17,7]], offset: [0, 0.25] },
-            { text: 'Tvrz Malešov', i18nKey: 'malesovFortress', hexes: [[14,11], [15,11], [14,12], [15,12]], offset: [-0.35, 0] }
+            { text: 'Tvrz Malešov', kind: 'fortification', i18nKey: 'malesovFortress', hexes: [[14,11], [15,11], [14,12], [15,12]], offset: [-0.35, 0] }
         ],
 
         forces: {
