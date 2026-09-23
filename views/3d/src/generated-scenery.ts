@@ -1,13 +1,20 @@
 import * as THREE from "three";
 import type { BattleAssets } from "./assets.ts";
-import { decorationSeed } from "./generated-meadow.ts";
 import { EnvironmentDetails } from "./environment-details.ts";
-import { mulberry32 } from "./geometry-utils.ts";
 import type { GeneratedTerrain } from "./generated-terrain.ts";
 import { SceneryVisibility } from "./scenery-visibility.ts";
 import type { BattleScenery, BattleSnapshot } from "./types.ts";
 import { TownWallScenery } from "./town-wall-scenery.ts";
-import { batchStaticMeshes } from "./static-batching.ts";
+import { batchStaticMeshes, INSTANCE_TINT } from "./static-batching.ts";
+import { planWoodland } from "./woodland-plan.ts";
+
+const FOLIAGE_MATERIALS = new Set(["olive", "olive_light", "gold", "cypress"]);
+/** Leaf meshes of the shared tree kit; trunks and branches are left untinted. */
+function isFoliage(mesh: THREE.Mesh): boolean {
+  if (mesh.name.startsWith("tree-batch-") || mesh.name.startsWith("shrub-batch-")) return true;
+  const material = mesh.material as THREE.Material | THREE.Material[];
+  return !Array.isArray(material) && FOLIAGE_MATERIALS.has(material.name);
+}
 
 export class GeneratedScenery implements BattleScenery {
   public readonly group = new THREE.Group();
@@ -29,39 +36,29 @@ export class GeneratedScenery implements BattleScenery {
   public async build(): Promise<void> {
     const plan = this.terrain.environmentPlan;
     const needed = new Set(plan.placements.map(placement => placement.model));
-    for (const cell of this.terrain.field.tiles) {
-      if (cell.terrain === "forest") needed.add("procedural-worlds/pw_deciduous_02");
-    }
+    const woodland = planWoodland({ field: this.terrain.field, layout: this.terrain.layout, winter: plan.winter,
+      replacedCells: plan.replacedCells, obstacles: plan.placements });
+    for (const placement of woodland) needed.add(placement.model);
     await this.assets.preload([...needed]);
     if (this.disposed) return;
-    for (const cell of this.terrain.field.tiles) {
+    for (const [index, placement] of woodland.entries()) {
+      const model = await this.assets.clone(placement.model);
       if (this.disposed) return;
-      if (plan.replacedCells.has(`${cell.col},${cell.row}`)) continue;
-      const random = mulberry32(decorationSeed(this.terrain.field.seed, cell.col, cell.row, "terrain-models"));
-      const placements = cell.terrain === "forest" ? 3 : 0;
-      for (let index = 0; index < placements; index += 1) {
-        const modelName = "procedural-worlds/pw_deciduous_02";
-        const model = await this.assets.clone(modelName);
-        if (this.disposed) return;
-        if (plan.winter) {
-          const leaves: THREE.Object3D[]=[];
-          model.traverse(object=>{
-            if(object.name.startsWith("tree-batch-") || object.name==="vegetation-ground-tufts-baked") leaves.push(object);
-          });
-          leaves.forEach(object=>object.removeFromParent());
-        }
-        const jitter = cell.terrain === "forest" ? 1.45 : 0.45;
-        const x = cell.center.x + (random() - 0.5) * jitter * 2;
-        const z = cell.center.z + (random() - 0.5) * jitter * 2;
-        if (plan.placements.some(placement => Math.hypot(x-placement.x,z-placement.z)<2.7)) continue;
-        model.position.set(x, this.terrain.heightAt(x, z), z);
-        model.rotation.y = random() * Math.PI * 2;
-        const scale = cell.terrain === "forest" ? 0.48 + random() * 0.16 : cell.terrain === "town" ? 0.62 : 0.72;
-        model.scale.setScalar(scale);
-        model.name = `${cell.terrain} ${cell.col},${cell.row} decoration ${index + 1}`;
-        this.group.add(model);
-        this.visibility.trackObject(model, x, z);
-      }
+      const bare: THREE.Object3D[] = [];
+      model.traverse(object => {
+        if (!(object instanceof THREE.Mesh)) return;
+        if (plan.winter && (object.name.startsWith("tree-batch-") || object.name === "vegetation-ground-tufts-baked")) {
+          bare.push(object);
+        } else if (isFoliage(object)) object.userData[INSTANCE_TINT] = placement.tint;
+      });
+      bare.forEach(object => object.removeFromParent());
+      // Sink the root flare slightly so trunks meet sloping ground.
+      model.position.set(placement.x, this.terrain.heightAt(placement.x, placement.z) - .06, placement.z);
+      model.rotation.y = placement.rotation;
+      model.scale.setScalar(placement.scale);
+      model.name = `${placement.model} ${placement.col},${placement.row} woodland ${index + 1}`;
+      this.group.add(model);
+      this.visibility.trackObject(model, placement.x, placement.z);
     }
     for (const placement of plan.placements) {
       const model = await this.assets.clone(placement.model);

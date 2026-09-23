@@ -10,7 +10,11 @@ interface BatchEntry {
   mesh: THREE.Mesh<THREE.BufferGeometry, THREE.Material>;
   matrix: THREE.Matrix4;
   key: string;
+  tint: readonly [number, number, number] | null;
 }
+
+/** Per-object colour multiplier carried into its batch as an instance colour (linear RGB). */
+export const INSTANCE_TINT = "instanceTint";
 
 export interface StaticBatchResult {
   savedMeshes: number;
@@ -33,7 +37,8 @@ export function batchStaticMeshes(root: THREE.Group,
     const sceneryKey = keyForObject(object);
     if (!sceneryKey) return;
     const entries = groups.get(key) ?? [];
-    entries.push({ mesh: object, matrix: inverseRoot.clone().multiply(object.matrixWorld), key: sceneryKey });
+    const tint = object.userData[INSTANCE_TINT] as BatchEntry["tint"] | undefined;
+    entries.push({ mesh: object, matrix: inverseRoot.clone().multiply(object.matrixWorld), key: sceneryKey, tint: tint ?? null });
     groups.set(key, entries);
   });
 
@@ -47,11 +52,15 @@ export function batchStaticMeshes(root: THREE.Group,
     instanced.castShadow = first.castShadow;
     instanced.receiveShadow = first.receiveShadow;
     instanced.renderOrder = first.renderOrder;
+    const tinted = entries.some(entry => entry.tint);
+    const color = new THREE.Color();
     entries.forEach((entry, index) => {
       instanced.setMatrixAt(index, entry.matrix);
+      if (tinted) instanced.setColorAt(index, entry.tint ? color.setRGB(...entry.tint) : color.set(0xffffff));
       entry.mesh.removeFromParent();
     });
     instanced.instanceMatrix.needsUpdate = true;
+    if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
     root.add(instanced);
     batches.push({ mesh: instanced, matrices: entries.map(entry => entry.matrix), keys: entries.map(entry => entry.key) });
     savedMeshes += entries.length - 1;
