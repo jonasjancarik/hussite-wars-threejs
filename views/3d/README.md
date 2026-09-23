@@ -28,6 +28,13 @@ Banners remain a readable screen size when zooming and stay anchored directly ab
 
 **Camera.** The 3D view opens framed on the visible armies and objective hexes rather than the whole board; **Find unit** without a selection (and the 2D "centre on forces" path) returns to that framing. Focus, zoom buttons, framing and rotation move the camera with a short eased transition; any mouse or touch gesture cancels it, and reduced motion applies moves instantly. Keyboard: WASD or the arrow keys pan relative to the view, Q / E rotate to the next of the six hex-aligned bearings, + / − zoom and Home frames the armies. Keys are ignored while a text field or select has focus. The orbit target cannot leave the map bounds. Selecting one of your own formations that is off-screen (from the army list or with Tab) brings it into view; picks already on screen never move the camera.
 
+**Graphics quality** in the map options chooses Auto (default), High, Medium or Low (`quality.ts`). The tiers change only render cost:
+- ambient-occlusion samples and resolution (off on Low);
+- the pixel-ratio cap (2, 1.5, 1);
+- the sun's shadow-map size (4096, 2048, 1024).
+
+Depth of field keeps its own options. Auto starts on High and steps down one tier when the median interval of 60 consecutive animated frames exceeds 25 ms. Idle wake-ups and ambient 24 fps frames are not counted. It never steps back up within a battle, and the options hint names the tier it settled on. A shadow-size change replaces the sun light rather than resizing its live VSM map, which leaves destroyed textures bound on WebGPU. The scene pass keeps its normal attachment even without AO, because compiled pipelines are keyed to the pass's targets. Like the other display options, the choice persists while switching views and recreating the renderer during the battle.
+
 **Light and weather** (`atmosphere.ts`, `weather.ts`) are presentation profiles keyed by scenario and round, like the art registry. They never change sight, fog-of-war rules or combat.
 - Sudoměř is fought in evening light that turns to dusk from round 6. Mist rises from round 8 and thickens at round 10, where the scenario announces the fog.
 - Kutná Hora starts at dusk and fades into night from round 3.

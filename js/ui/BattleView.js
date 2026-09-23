@@ -17,7 +17,7 @@ class BattleView {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, renderMovement() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
             setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setFocusSettings() {}, setPageVisible() {},
-            setWeatherEnabled() {}, weatherEnabled: true,
+            setWeatherEnabled() {}, weatherEnabled: true, setQuality() {}, qualityTier: () => null, quality: 'auto',
             depthOfFieldEnabled: true, closeupFocusStrength: 0.8, focusQuality: 'compact'
         };
         this.viewMode = '2d';
@@ -185,6 +185,10 @@ class BattleView {
             document.getElementById('focus-closeup-value').value = `${event.currentTarget.value}%`;
             this.threeMap.setFocusSettings?.(this.threeMap.depthOfFieldEnabled, strength, this.threeMap.focusQuality);
         }, { signal });
+        document.getElementById('graphics-quality')?.addEventListener('change', event => {
+            this.threeMap.setQuality?.(event.currentTarget.value);
+            this.updateViewModeControls();
+        }, { signal });
         document.getElementById('weather-effects-enabled')?.addEventListener('change', event => {
             this.threeMap.setWeatherEnabled?.(event.currentTarget.checked);
         }, { signal });
@@ -202,6 +206,7 @@ class BattleView {
         const menu = document.getElementById('map-options');
         const toggle = document.getElementById('map-options-toggle');
         if (!menu || !toggle) return;
+        if (open) this.updateViewModeControls();
         menu.hidden = !open;
         toggle.setAttribute('aria-expanded', String(open));
         if (open) document.getElementById('btn-hex-grid')?.focus();
@@ -278,6 +283,15 @@ class BattleView {
         if (graphicsControls) graphicsControls.hidden = this.viewMode !== '3d';
         const weatherEnabled = document.getElementById('weather-effects-enabled');
         if (weatherEnabled) weatherEnabled.checked = this.threeMap.weatherEnabled !== false;
+        const graphicsQuality = document.getElementById('graphics-quality');
+        if (graphicsQuality) graphicsQuality.value = this.threeMap.quality ?? 'auto';
+        const qualityHint = document.getElementById('graphics-quality-hint');
+        const autoTier = this.threeMap.quality === 'auto' ? this.threeMap.qualityTier?.() : null;
+        if (qualityHint) {
+            // Auto names the tier it settled on, so a lowered picture is explained.
+            qualityHint.textContent = i18n.t('touch.graphicsQualityHint') + (autoTier
+                ? ` (${i18n.t(`touch.graphicsQuality${autoTier[0].toUpperCase()}${autoTier.slice(1)}`)})` : '');
+        }
         const focusEnabled = document.getElementById('depth-of-field-enabled');
         if (focusEnabled) focusEnabled.checked = this.threeMap.depthOfFieldEnabled !== false;
         const closeupStrength = document.getElementById('focus-closeup-strength');

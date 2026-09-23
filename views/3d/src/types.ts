@@ -173,6 +173,8 @@ declare global {
         setBannerAvoidance(enabled: boolean): void;
         setBannerDetails(visible: boolean): void;
         setWeatherEnabled(enabled: boolean): void;
+        setQuality(level: "auto" | "high" | "medium" | "low"): void;
+        qualityTier(): "high" | "medium" | "low";
         setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void;
         focusHex(col: number, row: number): void;
         zoomBy(factor: number): void;

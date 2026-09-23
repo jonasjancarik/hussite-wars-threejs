@@ -13154,26 +13154,36 @@ function jp(e) {
 function Mp(e) {
 	let t = new hc(12835301, 9735272, 1.15);
 	e.add(t);
-	let n = new Pc(16777215, 2.2167);
-	n.color.setRGB(1, .84, .63), n.position.set(-64.2, 65.1, 40.6), n.castShadow = !0, n.shadow.mapSize.set(4096, 4096), n.shadow.camera.left = -86, n.shadow.camera.right = 86, n.shadow.camera.top = 72, n.shadow.camera.bottom = -72, n.shadow.camera.near = 1, n.shadow.camera.far = 190, n.shadow.bias = -35e-5, n.shadow.normalBias = .045, n.shadow.radius = 3, n.shadow.blurSamples = 12, n.shadow.autoUpdate = !1, e.add(n);
-	let r = new Pc(15905434, .13);
-	r.position.set(-56, 20, -40), e.add(r);
-	let i = !0, a = !1, o = {
-		sun: n,
+	let n = (e) => {
+		let t = new Pc(16777215, 2.2167);
+		return t.color.setRGB(1, .84, .63), t.position.set(-64.2, 65.1, 40.6), t.castShadow = !0, t.shadow.mapSize.set(e, e), t.shadow.camera.left = -86, t.shadow.camera.right = 86, t.shadow.camera.top = 72, t.shadow.camera.bottom = -72, t.shadow.camera.near = 1, t.shadow.camera.far = 190, t.shadow.bias = -35e-5, t.shadow.normalBias = .045, t.shadow.radius = 3, t.shadow.blurSamples = 12, t.shadow.autoUpdate = !1, t;
+	}, r = n(4096);
+	e.add(r);
+	let i = new Pc(15905434, .13);
+	i.position.set(-56, 20, -40), e.add(i);
+	let a = !0, o = !1, s = {
+		get sun() {
+			return r;
+		},
 		setNight(e) {
-			e !== a && (a = e, o.apply(wp[e ? "night" : "day"]));
+			e !== o && (o = e, s.apply(wp[e ? "night" : "day"]));
 		},
 		apply(e) {
-			t.color.copy(e.hemisphereSky), t.groundColor.copy(e.hemisphereGround), t.intensity = e.hemisphereIntensity, n.color.copy(e.sunColor), n.intensity = e.sunIntensity, n.position.equals(e.sunPosition) || (n.position.copy(e.sunPosition), i = !0), r.intensity = e.fillIntensity;
+			t.color.copy(e.hemisphereSky), t.groundColor.copy(e.hemisphereGround), t.intensity = e.hemisphereIntensity, r.color.copy(e.sunColor), r.intensity = e.sunIntensity, r.position.equals(e.sunPosition) || (r.position.copy(e.sunPosition), a = !0), i.intensity = e.fillIntensity;
+		},
+		setShadowMapSize(t) {
+			if (r.shadow.mapSize.x === t) return;
+			let i = r;
+			r = n(t), r.color.copy(i.color), r.intensity = i.intensity, r.position.copy(i.position), e.remove(i), e.add(r), setTimeout(() => i.dispose(), 1e3), a = !0;
 		},
 		invalidateShadows() {
-			i = !0;
+			a = !0;
 		},
 		updateShadows() {
-			i &&= (n.shadow.needsUpdate = !0, !1);
+			a &&= (r.shadow.needsUpdate = !0, !1);
 		}
 	};
-	return o;
+	return s;
 }
 //#endregion
 //#region src/overlays.ts
@@ -33376,6 +33386,13 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 			depthOfFieldMode: e
 		}, this.rebuildGraph(), this.resize(this.width, this.height));
 	}
+	setCost(e) {
+		let t = this.quality;
+		t.ambientOcclusion === e.ambientOcclusion && t.gtaoSamples === e.gtaoSamples && t.maxPixelRatio === e.maxPixelRatio && t.aoResolutionScale === e.aoResolutionScale || (this.quality = {
+			...t,
+			...e
+		}, this.rebuildGraph(), this.resize(this.width, this.height));
+	}
 	setEffectsEnabled(e) {
 		this.quality = {
 			...this.quality,
@@ -33391,13 +33408,12 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 	rebuildGraph() {
 		this.disposeEffects();
 		let e = this.scenePass.getTextureNode("output"), t = this.scenePass.getTextureNode("depth"), n = e;
-		if (this.quality.effects && this.quality.ambientOcclusion) {
-			this.scenePass.setMRT(this.normalMrt);
+		if (this.scenePass.setMRT(this.normalMrt), this.quality.effects && this.quality.ambientOcclusion) {
 			let e = _H(t, this.scenePass.getTextureNode("normal"), this.camera);
-			this.track(e), e.resolutionScale = 1, e.radius.value = .24, e.distanceExponent.value = 1.7, e.thickness.value = .62, e.distanceFallOff.value = 1, e.scale.value = .6, e.samples.value = this.quality.gtaoSamples;
+			this.track(e), e.resolutionScale = this.quality.aoResolutionScale ?? 1, e.radius.value = .24, e.distanceExponent.value = 1.7, e.thickness.value = .62, e.distanceFallOff.value = 1, e.scale.value = .6, e.samples.value = this.quality.gtaoSamples;
 			let r = xH(1, e.getTextureNode().r, .28);
 			n = n.mul(MH(r, r, r, 1));
-		} else this.scenePass.setMRT(null);
+		}
 		if (this.quality.effects && this.quality.depthOfFieldMode !== "off") if (this.quality.depthOfFieldMode === "bokeh") {
 			let e = vH(n, this.scenePass.getViewZNode(), this.focusDistanceNode, this.focusRangeNode, this.bokehScaleNode);
 			this.track(e), n = e;
@@ -34920,11 +34936,50 @@ var IU = class {
 	dispose() {
 		this.flakes.geometry.dispose(), this.flakes.material.dispose(), this.flakes.dispose(), this.group.clear();
 	}
-}, HU = /* @__PURE__ */ new Set(), UU = () => {
-	for (let e of HU) e();
+}, HU = {
+	high: {
+		ambientOcclusion: !0,
+		gtaoSamples: 12,
+		aoResolutionScale: 1,
+		maxPixelRatio: 2,
+		shadowMapSize: 4096
+	},
+	medium: {
+		ambientOcclusion: !0,
+		gtaoSamples: 8,
+		aoResolutionScale: .5,
+		maxPixelRatio: 1.5,
+		shadowMapSize: 2048
+	},
+	low: {
+		ambientOcclusion: !1,
+		gtaoSamples: 8,
+		aoResolutionScale: .5,
+		maxPixelRatio: 1,
+		shadowMapSize: 1024
+	}
+}, UU = {
+	high: "medium",
+	medium: "low",
+	low: null
+}, WU = class {
+	samples = [];
+	tier = "high";
+	reset(e = "high") {
+		this.tier = e, this.samples = [];
+	}
+	record(e) {
+		if (!Number.isFinite(e) || e <= 0 || e > 250 || (this.samples.push(e), this.samples.length < 60)) return null;
+		let t = [...this.samples].sort((e, t) => e - t), n = t[Math.floor(t.length / 2)];
+		this.samples = [];
+		let r = UU[this.tier];
+		return n <= 25 || !r ? null : (this.tier = r, r);
+	}
+}, GU = /* @__PURE__ */ new Set(), KU = () => {
+	for (let e of GU) e();
 };
-oc.onProgress = UU, oc.onLoad = UU;
-var WU = 240, GU = {
+oc.onProgress = KU, oc.onLoad = KU;
+var qU = 240, JU = {
 	KeyW: "up",
 	KeyS: "down",
 	KeyA: "left",
@@ -34933,7 +34988,7 @@ var WU = 240, GU = {
 	ArrowDown: "down",
 	ArrowLeft: "left",
 	ArrowRight: "right"
-}, KU = class e {
+}, YU = class e {
 	canvas;
 	options;
 	scene = new sr();
@@ -34951,6 +35006,8 @@ var WU = 240, GU = {
 	weather = new VU();
 	atmosphere;
 	winter;
+	qualityLevel = "auto";
+	qualityGovernor = new WU();
 	incomingStyles = /* @__PURE__ */ new Map();
 	viewportWidth = 1;
 	viewportHeight = 1;
@@ -35002,11 +35059,9 @@ var WU = 240, GU = {
 		}
 		let i = Math.max(this.terrain.bounds.maxX - this.terrain.bounds.minX, this.terrain.bounds.maxZ - this.terrain.bounds.minZ);
 		this.scene.background = new j(8623772), this.scene.fog = new or(12109763, .001), this.cameraRig = Zu(e, i), this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), this.openingDistance = this.focusDistance, this.pipeline = new PH(e, this.scene, this.cameraRig.camera, {
-			ambientOcclusion: !0,
+			...HU.high,
 			depthOfFieldMode: "compact",
-			effects: !0,
-			gtaoSamples: 12,
-			maxPixelRatio: 2
+			effects: !0
 		});
 		let a = this.terrain instanceof vp && this.terrain.environmentPlan.walls.length ? new xp(this.terrain.field.tiles, this.terrain.layout, this.terrain.environmentPlan.walls, this.terrain.environmentPlan.frozenRiver) : null;
 		this.units = new gU(this.terrain, this.terrain.layout, this.assets, (e) => {
@@ -35016,7 +35071,7 @@ var WU = 240, GU = {
 				x: t.x + (n.x - t.x) * e.progress,
 				z: t.z + (n.z - t.z) * e.progress
 			};
-		}), this.banners = new DU(e, (e) => this.options.onHex?.(e)), this.effects = new rd(e), this.wagonConnections = new IU(this.terrain, this.terrain.layout), this.overlays = new zp(this.terrain, this.terrain.layout), this.lighting = Mp(this.scene), this.winter = this.terrain instanceof vp && this.terrain.environmentPlan.winter, this.atmosphere = new Ap(Dp(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new Bp(e, this.cameraRig.camera, this.terrain.layout), this.sky = new VH(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), HU.add(this.requestFrame), this.installInput();
+		}), this.banners = new DU(e, (e) => this.options.onHex?.(e)), this.effects = new rd(e), this.wagonConnections = new IU(this.terrain, this.terrain.layout), this.overlays = new zp(this.terrain, this.terrain.layout), this.lighting = Mp(this.scene), this.winter = this.terrain instanceof vp && this.terrain.environmentPlan.winter, this.atmosphere = new Ap(Dp(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new Bp(e, this.cameraRig.camera, this.terrain.layout), this.sky = new VH(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), GU.add(this.requestFrame), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await Gf(n.snapshot, r), a = new e(t, n, i);
@@ -35071,6 +35126,17 @@ var WU = 240, GU = {
 	}
 	setUnitLabelsVisible(e) {
 		this.banners.setLabelsVisible(e), this.scheduleFrame();
+	}
+	setQuality(e) {
+		this.disposed || ![
+			"auto",
+			"high",
+			"medium",
+			"low"
+		].includes(e) || (this.qualityLevel = e, this.qualityGovernor.reset(), this.applyQualityTier(e === "auto" ? this.qualityGovernor.tier : e));
+	}
+	qualityTier() {
+		return this.qualityLevel === "auto" ? this.qualityGovernor.tier : this.qualityLevel;
 	}
 	setWeatherEnabled(e) {
 		this.weather.setEnabled(e), this.scheduleFrame();
@@ -35131,6 +35197,8 @@ var WU = 240, GU = {
 			backend: this.pipeline.backendName(),
 			active: this.active,
 			disposed: this.disposed,
+			qualityLevel: this.qualityLevel,
+			qualityTier: this.qualityTier(),
 			listenerCount: this.listenerCount,
 			frameRequestActive: this.frameRequest !== null,
 			casualtyCount: this.units.casualties.group.children.length,
@@ -35165,10 +35233,10 @@ var WU = 240, GU = {
 		};
 	}
 	resetDiagnostics() {
-		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = WU, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
+		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = qU, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
 	}
 	dispose() {
-		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), HU.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
+		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), GU.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
 	}
 	addListener(e, t, n, r) {
 		e.addEventListener(t, n, {
@@ -35233,6 +35301,10 @@ var WU = 240, GU = {
 			let t = e.type === "heal";
 			this.effects.number(n.add(new k(0, 3.4, 0)), `${t ? "+" : "−"}${e.damage}`, t);
 		}
+	}
+	applyQualityTier(e) {
+		let t = HU[e];
+		this.pipeline.setCost(t), this.lighting.setShadowMapSize(t.shadowMapSize), this.canvas.dataset.qualityTier = e, this.scheduleFrame();
 	}
 	applyAtmosphere() {
 		this.lighting.apply(this.atmosphere.state), this.sky.apply(this.atmosphere.state);
@@ -35302,7 +35374,7 @@ var WU = 240, GU = {
 	}
 	handleKey(e, t) {
 		if (!this.active || e.ctrlKey || e.metaKey || e.altKey || e.target?.closest?.("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return;
-		let n = GU[e.code] ?? GU[e.key];
+		let n = JU[e.code] ?? JU[e.key];
 		if (n) {
 			t ? this.heldPanKeys.add(n) : this.heldPanKeys.delete(n), e.key.startsWith("Arrow") && e.preventDefault(), t && (this.cameraTween = null, this.scheduleFrame());
 			return;
@@ -35364,13 +35436,17 @@ var WU = 240, GU = {
 		let v = performance.now();
 		this.pipeline.renderer.info.reset(), this.pipeline.render();
 		let y = performance.now();
-		this.lastRendererCounters = Yp(this.pipeline.renderer), this.performanceWarm ? this.performanceTracker.record(t, v - i, y - v, y - i) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.captureFramesRemaining > 0 && --this.captureFramesRemaining, this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > .01 || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
+		if (this.lastRendererCounters = Yp(this.pipeline.renderer), this.qualityLevel === "auto" && !n && this.performanceWarm) {
+			let e = this.qualityGovernor.record(t);
+			e && (console.info(`[Hussite 3D] frames over budget; graphics quality lowered to ${e}`), this.applyQualityTier(e));
+		}
+		this.performanceWarm ? this.performanceTracker.record(t, v - i, y - v, y - i) : (this.performanceWarm = !0, this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.frameCount % 120 == 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.captureFramesRemaining > 0 && --this.captureFramesRemaining, this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > .01 || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
 			this.pulseTimer = null, this.ambientFrame = !0, this.scheduleFrame();
 		}, 42)) : this.resumingFromIdle = !0;
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => KU.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function qU() {
+window.HussiteBattle3D = { create: (e, t) => YU.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function XU() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = RH(() => t.takeSnapshot(), window), r = new BH(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -35382,7 +35458,7 @@ async function qU() {
 			action: e,
 			...n
 		}));
-	}, s = await KU.create(e, {
+	}, s = await YU.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -35395,7 +35471,7 @@ async function qU() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-qU().catch((e) => {
+XU().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

@@ -60,6 +60,8 @@ export interface RenderQuality {
   effects: boolean;
   gtaoSamples: number;
   maxPixelRatio: number;
+  /** GTAO render scale relative to the drawing buffer; 1 when omitted. */
+  aoResolutionScale?: number;
 }
 
 const GRADE = {
@@ -138,6 +140,16 @@ export class BattleRenderPipeline {
     this.resize(this.width, this.height);
   }
 
+  /** Apply a graphics tier's cost settings; depth of field and effects keep their own options. */
+  public setCost(cost: Pick<RenderQuality, "ambientOcclusion" | "gtaoSamples" | "maxPixelRatio" | "aoResolutionScale">): void {
+    const current = this.quality;
+    if (current.ambientOcclusion === cost.ambientOcclusion && current.gtaoSamples === cost.gtaoSamples
+      && current.maxPixelRatio === cost.maxPixelRatio && current.aoResolutionScale === cost.aoResolutionScale) return;
+    this.quality = { ...current, ...cost };
+    this.rebuildGraph();
+    this.resize(this.width, this.height);
+  }
+
   public setEffectsEnabled(enabled: boolean): void {
     this.quality = { ...this.quality, effects: enabled };
     this.gradeAmountNode.value = enabled ? 1 : 0;
@@ -162,11 +174,14 @@ export class BattleRenderPipeline {
     const sceneDepth = this.scenePass.getTextureNode("depth");
     let composed = sceneColor;
 
+    // The normal attachment stays bound even without AO: compiled WebGPU
+    // pipelines are keyed to the pass's targets, and removing one at runtime
+    // (a quality or effects change) invalidates every cached pipeline.
+    this.scenePass.setMRT(this.normalMrt);
     if (this.quality.effects && this.quality.ambientOcclusion) {
-      this.scenePass.setMRT(this.normalMrt);
       const gtao = createAo(sceneDepth, this.scenePass.getTextureNode("normal"), this.camera);
       this.track(gtao);
-      gtao.resolutionScale = 1;
+      gtao.resolutionScale = this.quality.aoResolutionScale ?? 1;
       gtao.radius.value = 0.24;
       gtao.distanceExponent.value = 1.7;
       gtao.thickness.value = 0.62;
@@ -175,8 +190,6 @@ export class BattleRenderPipeline {
       gtao.samples.value = this.quality.gtaoSamples;
       const aoAmount = createMix(1, gtao.getTextureNode().r, 0.28);
       composed = composed.mul(createVec4(aoAmount, aoAmount, aoAmount, 1));
-    } else {
-      this.scenePass.setMRT(null);
     }
 
     if (this.quality.effects && this.quality.depthOfFieldMode !== "off") {

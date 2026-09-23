@@ -23,6 +23,7 @@ import { UnitBanners } from "./unit-banners.ts";
 import { WagonConnections } from "./wagon-connections.ts";
 import { atmosphereProfile, AtmosphereTransition } from "./atmosphere.ts";
 import { BattleWeather } from "./weather.ts";
+import { AutoQualityGovernor, QUALITY_TIERS, type QualityLevel, type QualityTier } from "./quality.ts";
 
 // Textures stream in after the first frame. With on-demand rendering every
 // live battle must redraw once they arrive, so share the default manager.
@@ -52,6 +53,8 @@ class IntegratedThreeBattle {
   private readonly weather = new BattleWeather();
   private readonly atmosphere: AtmosphereTransition;
   private readonly winter: boolean;
+  private qualityLevel: QualityLevel = "auto";
+  private readonly qualityGovernor = new AutoQualityGovernor();
   /** Recent attack style per target hex, so its impact matches the weapon. */
   private readonly incomingStyles = new Map<string, AttackStyle>();
   private viewportWidth = 1;
@@ -119,7 +122,7 @@ class IntegratedThreeBattle {
     this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);
     this.openingDistance = this.focusDistance;
     this.pipeline = new BattleRenderPipeline(canvas, this.scene, this.cameraRig.camera, {
-      ambientOcclusion: true, depthOfFieldMode: "compact", effects: true, gtaoSamples: 12, maxPixelRatio: 2,
+      ...QUALITY_TIERS.high, depthOfFieldMode: "compact", effects: true,
     });
     const wallRoutes=this.terrain instanceof GeneratedTerrain && this.terrain.environmentPlan.walls.length
       ? new TownWallRoutes(this.terrain.field.tiles,this.terrain.layout,this.terrain.environmentPlan.walls,this.terrain.environmentPlan.frozenRiver) : null;
@@ -246,6 +249,17 @@ class IntegratedThreeBattle {
   public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); this.scheduleFrame(); }
   public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
   public setUnitLabelsVisible(visible: boolean): void { this.banners.setLabelsVisible(visible); this.scheduleFrame(); }
+  /** Graphics quality: a fixed tier, or Auto (starts High, steps down on slow frames). */
+  public setQuality(level: QualityLevel): void {
+    if (this.disposed || !["auto", "high", "medium", "low"].includes(level)) return;
+    this.qualityLevel = level;
+    this.qualityGovernor.reset();
+    this.applyQualityTier(level === "auto" ? this.qualityGovernor.tier : level);
+  }
+
+  /** The tier currently rendered (for Auto, the governor's choice). */
+  public qualityTier(): QualityTier { return this.qualityLevel === "auto" ? this.qualityGovernor.tier : this.qualityLevel; }
+
   public setWeatherEnabled(enabled: boolean): void { this.weather.setEnabled(enabled); this.scheduleFrame(); }
   public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); this.scheduleFrame(); }
   public setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void {
@@ -301,6 +315,7 @@ class IntegratedThreeBattle {
       userAgent: navigator.userAgent, timings: performanceSnapshot, renderer: this.lastRendererCounters,
       active: this.active, disposed: this.disposed };
     return { backend: this.pipeline.backendName(), active: this.active, disposed: this.disposed,
+      qualityLevel: this.qualityLevel, qualityTier: this.qualityTier(),
       listenerCount: this.listenerCount, frameRequestActive: this.frameRequest !== null,
       casualtyCount: this.units.casualties.group.children.length,
       scenario: this.options.snapshot.scenario, artMode: this.artMode, terrainTypes: this.terrain.terrainTypes,
@@ -433,6 +448,14 @@ class IntegratedThreeBattle {
       const heal = event.type === "heal";
       this.effects.number(at.add(new THREE.Vector3(0, 3.4, 0)), `${heal ? "+" : "−"}${event.damage}`, heal);
     }
+  }
+
+  private applyQualityTier(tier: QualityTier): void {
+    const settings = QUALITY_TIERS[tier];
+    this.pipeline.setCost(settings);
+    this.lighting.setShadowMapSize(settings.shadowMapSize);
+    this.canvas.dataset.qualityTier = tier;
+    this.scheduleFrame();
   }
 
   private applyAtmosphere(): void {
@@ -649,6 +672,15 @@ class IntegratedThreeBattle {
     this.pipeline.render();
     const rendererFinishedAt = performance.now();
     this.lastRendererCounters = rendererCounters(this.pipeline.renderer);
+    // Auto quality judges only consecutive display-rate frames (drags, zooms,
+    // effects); idle wake-ups and ~24 fps ambient frames say nothing about cost.
+    if (this.qualityLevel === "auto" && !resumed && this.performanceWarm) {
+      const lowered = this.qualityGovernor.record(frameMs);
+      if (lowered) {
+        console.info(`[Hussite 3D] frames over budget; graphics quality lowered to ${lowered}`);
+        this.applyQualityTier(lowered);
+      }
+    }
     if (this.performanceWarm) {
       this.performanceTracker.record(frameMs, rendererStartedAt - renderStartedAt,
         rendererFinishedAt - rendererStartedAt, rendererFinishedAt - renderStartedAt);
