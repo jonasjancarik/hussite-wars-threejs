@@ -23,6 +23,7 @@ class ThreeBattleMapView {
         this.depthOfFieldEnabled = true;
         this.closeupFocusStrength = 0.8;
         this.focusQuality = 'compact';
+        this.weatherEnabled = true;
     }
 
     async mount() {
@@ -102,6 +103,7 @@ class ThreeBattleMapView {
             renderer.setBannerAvoidance?.(this.bannerAvoidance);
             renderer.setBannerDetails?.(this.bannerDetails);
             renderer.setUnitLabelsVisible?.(this.unitLabelsVisible);
+            renderer.setWeatherEnabled?.(this.weatherEnabled);
             this.terrainSignature = this.getTerrainSignature(initialSnapshot);
             if (!this.active || !this.pageVisible) renderer.setActive(false);
             return renderer;
@@ -143,7 +145,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.35';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.36';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -322,6 +324,7 @@ class ThreeBattleMapView {
         this.focusQuality = quality === 'bokeh' ? 'bokeh' : 'compact';
         this.renderer?.setFocusSettings?.(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
     }
+    setWeatherEnabled(enabled) { this.weatherEnabled = Boolean(enabled); this.renderer?.setWeatherEnabled?.(this.weatherEnabled); }
     diagnostics() { return this.renderer?.diagnostics() ?? null; }
     resetDiagnostics() { this.renderer?.resetDiagnostics(); }
     setPageVisible(visible) { this.pageVisible = visible; this.renderer?.setActive(this.active && visible); }

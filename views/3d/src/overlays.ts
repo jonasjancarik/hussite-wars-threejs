@@ -112,7 +112,8 @@ export class TacticalOverlays {
           polygonOffsetFactor: -1,
           polygonOffsetUnits: -1,
           toneMapped: false,
-          fog: false,
+          // Scene fog is faint at normal density; in mist the grid fades with the land.
+          fog: true,
         });
         const ring = new THREE.Mesh(overlayGeometry({ col, row }, terrain, false, layout, 1, this.winter ? .09 : .055), material);
         ring.renderOrder = 10;

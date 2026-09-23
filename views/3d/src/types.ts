@@ -172,6 +172,7 @@ declare global {
         setGridVisible(visible: boolean): void;
         setBannerAvoidance(enabled: boolean): void;
         setBannerDetails(visible: boolean): void;
+        setWeatherEnabled(enabled: boolean): void;
         setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void;
         focusHex(col: number, row: number): void;
         zoomBy(factor: number): void;

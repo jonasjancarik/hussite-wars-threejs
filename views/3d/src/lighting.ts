@@ -1,9 +1,12 @@
 /** Adapted from procedural-worlds scene lighting at commit bada861a. */
 import * as THREE from "three";
+import { ATMOSPHERE_PRESETS, type AtmosphereState } from "./atmosphere.ts";
 
 export interface BattleLights {
   sun: THREE.DirectionalLight;
   setNight(night: boolean): void;
+  /** Apply a (possibly blended) atmosphere; moving the sun re-renders shadows. */
+  apply(state: AtmosphereState): void;
   invalidateShadows(): void;
   updateShadows(): void;
 }
@@ -38,18 +41,21 @@ export function createBattleLighting(scene: THREE.Scene): BattleLights {
 
   let dirty = true;
   let nightMode = false;
-  return {
+  const lights: BattleLights = {
     sun,
     setNight(night) {
       if (night === nightMode) return;
       nightMode = night;
-      hemisphere.color.set(night ? 0x9eb9dd : 0xc3d9e5);
-      hemisphere.groundColor.set(night ? 0x59636f : 0x948c68);
-      hemisphere.intensity = night ? .8 : 1.15;
-      sun.color.setRGB(...(night ? [.52,.65,1] : [1,.84,.63]) as [number,number,number]);
-      sun.intensity = night ? .72 : 2.2167;
-      fill.intensity = night ? .05 : .13;
-      dirty = true;
+      lights.apply(ATMOSPHERE_PRESETS[night ? "night" : "day"]);
+    },
+    apply(state) {
+      hemisphere.color.copy(state.hemisphereSky);
+      hemisphere.groundColor.copy(state.hemisphereGround);
+      hemisphere.intensity = state.hemisphereIntensity;
+      sun.color.copy(state.sunColor);
+      sun.intensity = state.sunIntensity;
+      if (!sun.position.equals(state.sunPosition)) { sun.position.copy(state.sunPosition); dirty = true; }
+      fill.intensity = state.fillIntensity;
     },
     invalidateShadows() { dirty = true; },
     updateShadows() {
@@ -58,4 +64,5 @@ export function createBattleLighting(scene: THREE.Scene): BattleLights {
       dirty = false;
     },
   };
+  return lights;
 }

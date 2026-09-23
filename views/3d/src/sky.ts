@@ -5,6 +5,7 @@
  * sky setup, rotation, color-space handling and restrained background grade.
  */
 import * as THREE from "three";
+import { ATMOSPHERE_PRESETS, type AtmosphereState } from "./atmosphere.ts";
 
 export class BattlePaintedSky {
   private texture: THREE.Texture | null = null;
@@ -61,11 +62,14 @@ export class BattlePaintedSky {
 
   public update(camera: THREE.Camera): void { this.lowerVeil.position.copy(camera.position); }
 
-  public setNight(night: boolean): void {
-    this.scene.backgroundIntensity = night ? .19 : 1.05;
-    this.scene.environmentIntensity = night ? .12 : .20;
-    (this.lowerVeil.material as THREE.MeshBasicMaterial).color.set(night ? 0x334858 : 0xbdccc8);
-    this.scene.fog?.color.set(night ? 0x344b60 : 0xb8c7c3);
+  public setNight(night: boolean): void { this.apply(ATMOSPHERE_PRESETS[night ? "night" : "day"]); }
+
+  public apply(state: AtmosphereState): void {
+    this.scene.backgroundIntensity = state.backgroundIntensity;
+    this.scene.environmentIntensity = state.environmentIntensity;
+    (this.lowerVeil.material as THREE.MeshBasicMaterial).color.copy(state.veilColor);
+    this.scene.fog?.color.copy(state.fogColor);
+    if (this.scene.fog instanceof THREE.FogExp2) this.scene.fog.density = state.fogDensity;
   }
 
   public dispose(): void {

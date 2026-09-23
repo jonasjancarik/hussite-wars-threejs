@@ -21,6 +21,8 @@ import type { BattleScenery, BattleSnapshot, BattleTerrain, CosmeticEvent, HexCo
 import { UnitPresentation } from "./units.ts";
 import { UnitBanners } from "./unit-banners.ts";
 import { WagonConnections } from "./wagon-connections.ts";
+import { atmosphereProfile, AtmosphereTransition } from "./atmosphere.ts";
+import { BattleWeather } from "./weather.ts";
 
 // Textures stream in after the first frame. With on-demand rendering every
 // live battle must redraw once they arrive, so share the default manager.
@@ -47,6 +49,9 @@ class IntegratedThreeBattle {
   private readonly wagonConnections: WagonConnections;
   private readonly overlays: TacticalOverlays;
   private readonly effects: BattlefieldEffects;
+  private readonly weather = new BattleWeather();
+  private readonly atmosphere: AtmosphereTransition;
+  private readonly winter: boolean;
   /** Recent attack style per target hex, so its impact matches the weapon. */
   private readonly incomingStyles = new Map<string, AttackStyle>();
   private viewportWidth = 1;
@@ -79,6 +84,8 @@ class IntegratedThreeBattle {
   /** Continuous frames requested by `resetDiagnostics` for a 240-frame capture. */
   private captureFramesRemaining = 0;
   private resumingFromIdle = true;
+  /** The next frame was woken by the ambient-motion timer and keeps real time. */
+  private ambientFrame = false;
   private sceneryShadowKey = "";
   private pulseTimer: number | null = null;
   private cameraTween: { from: CameraPose; to: CameraPose; elapsed: number; duration: number } | null = null;
@@ -126,10 +133,12 @@ class IntegratedThreeBattle {
     this.wagonConnections = new WagonConnections(this.terrain, this.terrain.layout);
     this.overlays = new TacticalOverlays(this.terrain, this.terrain.layout);
     this.lighting = createBattleLighting(this.scene);
+    this.winter = this.terrain instanceof GeneratedTerrain && this.terrain.environmentPlan.winter;
+    this.atmosphere = new AtmosphereTransition(atmosphereProfile(options.snapshot.scenario, options.snapshot.round, this.winter));
     this.picker = new BattlePicker(canvas, this.cameraRig.camera, this.terrain.layout);
     this.sky = new BattlePaintedSky(this.scene, assetBase, Math.max(500, extent * 3.7));
     this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group,
-      this.overlays.group, this.effects.group);
+      this.overlays.group, this.effects.group, this.weather.group);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement ?? canvas);
     loadListeners.add(this.requestFrame);
@@ -144,6 +153,7 @@ class IntegratedThreeBattle {
       await battle.pipeline.init();
       battle.resize();
       await Promise.all([battle.sky.load(), battle.scenery.build()]);
+      battle.applyAtmosphere();
       await battle.applySnapshot(options.snapshot);
       battle.lighting.invalidateShadows();
       // Open on the armies and objectives rather than an empty corner of the map.
@@ -161,9 +171,11 @@ class IntegratedThreeBattle {
   public async applySnapshot(snapshot: BattleSnapshot): Promise<void> {
     if (this.disposed) return;
     this.options.snapshot = snapshot;
-    const night = snapshot.scenario === "kutna_hora_1421" && snapshot.round >= 3;
-    this.lighting.setNight(night);
-    this.sky.setNight(night);
+    // Scenario light and weather ease in (e.g. nightfall at Kutná Hora); the
+    // first snapshot and reduced motion apply them at once.
+    const profile = atmosphereProfile(snapshot.scenario, snapshot.round, this.winter);
+    if (this.atmosphere.setProfile(profile, !this.ready || this.reducedMotion.matches) && !this.atmosphere.settling) this.applyAtmosphere();
+    this.weather.setPrecipitation(profile.precipitation);
     const revision = snapshot.revision;
     this.snapshotRevision = Math.max(this.snapshotRevision, revision);
     this.terrain.updateVisibility(snapshot);
@@ -234,6 +246,7 @@ class IntegratedThreeBattle {
   public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); this.scheduleFrame(); }
   public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
   public setUnitLabelsVisible(visible: boolean): void { this.banners.setLabelsVisible(visible); this.scheduleFrame(); }
+  public setWeatherEnabled(enabled: boolean): void { this.weather.setEnabled(enabled); this.scheduleFrame(); }
   public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); this.scheduleFrame(); }
   public setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void {
     this.depthOfFieldEnabled = enabled;
@@ -328,6 +341,7 @@ class IntegratedThreeBattle {
     this.scenery.dispose();
     this.overlays.dispose();
     this.effects.dispose();
+    this.weather.dispose();
     this.units.dispose();
     this.banners.dispose();
     this.wagonConnections.dispose();
@@ -419,6 +433,11 @@ class IntegratedThreeBattle {
       const heal = event.type === "heal";
       this.effects.number(at.add(new THREE.Vector3(0, 3.4, 0)), `${heal ? "+" : "−"}${event.damage}`, heal);
     }
+  }
+
+  private applyAtmosphere(): void {
+    this.lighting.apply(this.atmosphere.state);
+    this.sky.apply(this.atmosphere.state);
   }
 
   private groundPoint(col: number, row: number): THREE.Vector3 {
@@ -574,7 +593,8 @@ class IntegratedThreeBattle {
     const resumed = this.resumingFromIdle;
     this.resumingFromIdle = false;
     if (resumed) this.performanceTracker.skipNextFrameInterval();
-    const delta = resumed ? 16.7 : Math.min(64, frameMs);
+    const delta = resumed && !this.ambientFrame ? 16.7 : Math.min(64, frameMs);
+    this.ambientFrame = false;
     this.lastFrame = now;
     this.frameCount += 1;
     const renderStartedAt = performance.now();
@@ -610,6 +630,10 @@ class IntegratedThreeBattle {
     );
     this.pipeline.setDepthOfField(this.depthOfFieldEnabled, this.focusDistance, this.focusStrength);
     this.sky.update(this.cameraRig.camera);
+    if (this.atmosphere.advance(delta)) this.applyAtmosphere();
+    const paused = this.options.snapshot.paused;
+    const weatherFalling = this.weather.active && !this.reducedMotion.matches && !paused;
+    this.weather.advance(delta, this.cameraRig.controls.target, !weatherFalling);
     if (this.reducedMotion.matches) this.units.casualties.clear();
     else this.units.casualties.advance(delta, this.options.snapshot.paused);
     const turning = this.units.advance(delta, this.options.snapshot.paused || this.reducedMotion.matches);
@@ -635,18 +659,17 @@ class IntegratedThreeBattle {
     }
     if (this.frameCount % 120 === 0) this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
     if (this.captureFramesRemaining > 0) this.captureFramesRemaining -= 1;
-    const paused = this.options.snapshot.paused;
-    const settling = controlsChanged || this.cameraTween !== null || this.heldPanKeys.size > 0
+    const settling = this.atmosphere.settling || controlsChanged || this.cameraTween !== null || this.heldPanKeys.size > 0
       || Math.abs(this.focusDistance - this.targetFocusDistance) > 0.01
       || Math.abs(this.focusStrength - desiredFocusStrength) > 0.0005
       || turning
       || (!paused && (this.units.casualties.active || this.effects.active));
     if (settling || this.captureFramesRemaining > 0) this.scheduleFrame();
-    else if (pulsing) {
-      // A slow pulse does not need display rate: about 20 fps keeps it smooth
-      // while the player chooses a target, at a fraction of the GPU cost.
+    else if (pulsing || weatherFalling) {
+      // Slow ambient motion (a target pulse, falling snow) does not need
+      // display rate: ~24 fps keeps it smooth at a fraction of the GPU cost.
       this.resumingFromIdle = true;
-      this.pulseTimer ??= window.setTimeout(() => { this.pulseTimer = null; this.scheduleFrame(); }, 50);
+      this.pulseTimer ??= window.setTimeout(() => { this.pulseTimer = null; this.ambientFrame = true; this.scheduleFrame(); }, 42);
     } else this.resumingFromIdle = true;
   };
 }

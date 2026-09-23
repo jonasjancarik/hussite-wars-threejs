@@ -17,6 +17,7 @@ class BattleView {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, renderMovement() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
             setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setFocusSettings() {}, setPageVisible() {},
+            setWeatherEnabled() {}, weatherEnabled: true,
             depthOfFieldEnabled: true, closeupFocusStrength: 0.8, focusQuality: 'compact'
         };
         this.viewMode = '2d';
@@ -184,6 +185,9 @@ class BattleView {
             document.getElementById('focus-closeup-value').value = `${event.currentTarget.value}%`;
             this.threeMap.setFocusSettings?.(this.threeMap.depthOfFieldEnabled, strength, this.threeMap.focusQuality);
         }, { signal });
+        document.getElementById('weather-effects-enabled')?.addEventListener('change', event => {
+            this.threeMap.setWeatherEnabled?.(event.currentTarget.checked);
+        }, { signal });
         document.getElementById('focus-quality')?.addEventListener('change', event => {
             this.threeMap.setFocusSettings?.(
                 this.threeMap.depthOfFieldEnabled,
@@ -270,6 +274,10 @@ class BattleView {
         if (bannerButton) bannerButton.disabled = !this.unitLabelsVisible;
         const focusControls = document.getElementById('focus-controls');
         if (focusControls) focusControls.hidden = this.viewMode !== '3d';
+        const graphicsControls = document.getElementById('graphics-controls');
+        if (graphicsControls) graphicsControls.hidden = this.viewMode !== '3d';
+        const weatherEnabled = document.getElementById('weather-effects-enabled');
+        if (weatherEnabled) weatherEnabled.checked = this.threeMap.weatherEnabled !== false;
         const focusEnabled = document.getElementById('depth-of-field-enabled');
         if (focusEnabled) focusEnabled.checked = this.threeMap.depthOfFieldEnabled !== false;
         const closeupStrength = document.getElementById('focus-closeup-strength');
