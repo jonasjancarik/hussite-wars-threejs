@@ -23,7 +23,9 @@ Temporary Items
 .apdisk
 
 # Claude Code
-.claude/
+# Local agent settings stay private; repo skills are shared.
+.claude/*
+!.claude/skills/
 
 # Prameny / zdroje (knihy, PDF, EPUB) - copyright, nepublikovat
 zdroje/
