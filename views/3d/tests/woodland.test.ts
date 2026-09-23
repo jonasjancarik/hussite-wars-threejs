@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { GeneratedTerrain } from "../src/generated-terrain.ts";
 import { batchStaticMeshes, INSTANCE_TINT } from "../src/static-batching.ts";
 import { formationClearance, planWoodland, TRUNK_CLEARANCE, woodlandModels } from "../src/woodland-plan.ts";
+import { createTuftMesh, planTufts } from "../src/ground-tufts.ts";
 import type { BattleSnapshot } from "../src/types.ts";
 
 const root = new URL("../../../", import.meta.url);
@@ -89,4 +90,26 @@ test("static batching carries foliage tints as instance colours and leaves other
   assert.deepEqual(color.toArray().map(value => +value.toFixed(3)), [1.2, 1.1, .7]);
   instanced.getColorAt(2, color);
   assert.deepEqual(color.toArray(), [1, 1, 1]);
+});
+
+test("grass tufts cluster at transitions, avoid roads and water and mostly spare formations", () => {
+  const { terrain, source, woodland } = plan("malesov_1424");
+  const tuftSource = { field: terrain.field, layout: terrain.layout, replacedCells: source.replacedCells,
+    features: [...woodland, ...source.obstacles] };
+  const tufts = planTufts(tuftSource);
+  assert.deepEqual(planTufts(tuftSource), tufts, "deterministic");
+  assert.ok(tufts.length > 200, `${tufts.length} tufts`);
+  let underFormations = 0;
+  for (const tuft of tufts) {
+    const terrainAt = terrain.field.classify(tuft.x, tuft.z)?.toLowerCase() ?? "";
+    assert.ok(!["water", "river", "lake", "road", "road2", "town", "church", "mud", "swamp"].includes(terrainAt), `tuft on ${terrainAt}`);
+    if (formationClearance(tuft.x, tuft.z, terrain.field.tiles) < 0) underFormations += 1;
+  }
+  assert.ok(underFormations / tufts.length < .25, `${underFormations} of ${tufts.length} tufts under formations`);
+  const { mesh, matrices } = createTuftMesh(tufts, () => 0);
+  assert.equal(mesh.count, tufts.length);
+  assert.equal(matrices.length, tufts.length);
+  assert.equal(mesh.castShadow, false);
+  mesh.dispose();
+  terrain.dispose();
 });

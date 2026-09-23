@@ -7,6 +7,7 @@ import type { BattleScenery, BattleSnapshot } from "./types.ts";
 import { TownWallScenery } from "./town-wall-scenery.ts";
 import { batchStaticMeshes, INSTANCE_TINT } from "./static-batching.ts";
 import { planWoodland } from "./woodland-plan.ts";
+import { createTuftMesh, planTufts } from "./ground-tufts.ts";
 
 const FOLIAGE_MATERIALS = new Set(["olive", "olive_light", "gold", "cypress"]);
 /** Leaf meshes of the shared tree kit; trunks and branches are left untinted. */
@@ -59,6 +60,15 @@ export class GeneratedScenery implements BattleScenery {
       model.name = `${placement.model} ${placement.col},${placement.row} woodland ${index + 1}`;
       this.group.add(model);
       this.visibility.trackObject(model, placement.x, placement.z);
+    }
+    if (!plan.winter) {
+      const tufts = planTufts({ field: this.terrain.field, layout: this.terrain.layout, replacedCells: plan.replacedCells,
+        features: [...woodland, ...plan.placements] });
+      if (tufts.length) {
+        const { mesh, matrices } = createTuftMesh(tufts, (x, z) => this.terrain.heightAt(x, z));
+        this.group.add(mesh);
+        this.visibility.trackInstances(mesh, matrices);
+      }
     }
     for (const placement of plan.placements) {
       const model = await this.assets.clone(placement.model);
