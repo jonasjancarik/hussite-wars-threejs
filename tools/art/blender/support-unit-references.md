@@ -16,8 +16,8 @@ Read when revising `support_units.py`. Created 21 September 2026. The module sup
 ## Asset decisions
 
 - `infantry_polearm` and `infantry_halberd` reuse the current padded-jack infantry body. Both hands are placed mathematically on the shaft; the former has one pointed blade and a modest hook rather than an extra disconnected spear point. The halberd axe faces forward. Weapon plates are closed solids with outward normals.
-- `infantry_handgun` reuses the original handgonne, flask and body geometry. Coat, skirt and sleeves use `team_cloth`; the powder flask remains ochre. Renderer-selected muted red/blue variants are game readability colours, not a historical uniform claim.
-- `infantry_shield` keeps the original sword pose and body. The board is moved ahead of the left hand and given a connected rear grip; the hand no longer protrudes through its face. Its old cross is removed, `team_paint` covers the board, and a single pale diagonal stripe sits on its surface. The retained rectangular board is a generic game shield, not a specific mercenary company's arms.
+- `infantry_handgun` uses the shared infantry body. The handgonne sits on a long wooden tiller braced under the right arm, with two barrel bands, a touch hole and a match cord looped from the right hand. Coat, skirt and sleeves use `team_cloth`; the powder flask remains ochre. Renderer-selected muted red/blue variants are game readability colours, not a historical uniform claim.
+- `infantry_shield` uses the shared infantry body with a raised arming sword. The slightly curved board has rounded lower corners, a bound rim, a small iron boss and a connected rear grip, and sits ahead of the left hand. `team_paint` covers the board and a single pale diagonal band crosses it. It is a generic game shield, not a specific mercenary company's arms.
 - `war_wagon` calls the original wagon builder. Only named tunic, skirt and sleeve parts plus existing banner cloth use `team_cloth`. Powder flasks, wood, metal and skin retain their original materials. The existing pale chalice remains linen because both Hussite and Prague wagon definitions already use that signal. The shared kit fixes the old polearm blade's collapsed bevel; its outline and the rest of the wagon remain unchanged.
 - `commander_standard` occupies the older banner's 3.5 m high, sub-1 m wide envelope. Two pale bands are material regions on both faces of a closed, gently folded cloth mesh. It has no chalice, cross or personal arms; the stripes are an invented neutral game marker. Cloth ties connect it to the crossbar.
 - `field_blockhouse` combines continuous low stone courses with ground-supported timber walls and a small braced rear shelter. Its open firing bay exposes both static crossbowmen from above, and their weapons clear the front cover. Solid wooden roof planks replace the draft's thin red roof sheet. The shortened roof, open rear and two-person garrison are explicit readability choices, not evidence for the original Vítkov building's plan, roof material or garrison size. No tower, castle or additional environment asset is introduced.
@@ -28,13 +28,13 @@ Blender 5.2 measurements on 21 September 2026, before export consolidation. Dime
 
 | Asset | Dimensions | Radius | Triangles |
 | --- | --- | --- | --- |
-| `infantry_polearm` | 1.311 × 0.839 × 2.956 | 1.075 | 1,092 |
-| `infantry_halberd` | 1.367 × 0.833 × 2.605 | 1.130 | 1,096 |
-| `infantry_handgun` | 1.269 × 0.853 × 1.750 | 1.005 | 652 |
-| `infantry_shield` | 0.981 × 1.001 × 1.852 | 0.766 | 804 |
+| `infantry_polearm` | 1.337 × 0.825 × 2.956 | 1.075 | 1,272 |
+| `infantry_halberd` | 1.393 × 0.826 × 2.596 | 1.130 | 1,276 |
+| `infantry_handgun` | 1.288 × 0.774 × 1.834 | 1.000 | 1,400 |
+| `infantry_shield` | 0.781 × 0.979 × 1.861 | 0.695 | 1,404 |
 | `war_wagon` | 5.305 × 2.960 × 3.941 | 3.195 | 6,156 |
 | `commander_standard` | 0.088 × 0.990 × 3.500 | 0.941 | 292 |
-| `field_blockhouse` | 3.004 × 3.090 × 2.720 | 2.133 | 5,060 |
+| `field_blockhouse` | 3.004 × 3.090 × 2.720 | 2.133 | 5,420 |
 
 The fieldwork fits inside a hex with inradius 3.46 m. Its 2.133 m radius also fits the existing 2.15 m picking radius tightly; the renderer must cover the 2.72 m roof height rather than assuming infantry height. The wagon keeps its pre-existing larger envelope.
 

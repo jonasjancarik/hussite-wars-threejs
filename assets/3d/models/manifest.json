@@ -44,18 +44,18 @@
   "infantry_polearm": {
     "file": "units/infantry_polearm.glb",
     "dimensions_blender_xyz_m": [
-      1.311,
-      0.778,
+      1.337,
+      0.825,
       2.956
     ],
     "dimensions_gltf_xyz_m": [
-      1.311,
+      1.337,
       2.956,
-      0.778
+      0.825
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 33,
-    "triangles": 1092,
+    "editable_source_mesh_objects": 42,
+    "triangles": 1272,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -64,18 +64,18 @@
   "infantry_handgun": {
     "file": "units/infantry_handgun.glb",
     "dimensions_blender_xyz_m": [
-      1.269,
-      0.819,
-      1.75
+      1.288,
+      0.774,
+      1.834
     ],
     "dimensions_gltf_xyz_m": [
-      1.269,
-      1.75,
-      0.819
+      1.288,
+      1.834,
+      0.774
     ],
-    "mesh_objects": 8,
-    "editable_source_mesh_objects": 22,
-    "triangles": 652,
+    "mesh_objects": 11,
+    "editable_source_mesh_objects": 47,
+    "triangles": 1400,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -84,18 +84,18 @@
   "infantry_shield": {
     "file": "units/infantry_shield.glb",
     "dimensions_blender_xyz_m": [
-      0.959,
-      0.984,
-      1.844
+      0.781,
+      0.979,
+      1.861
     ],
     "dimensions_gltf_xyz_m": [
-      0.959,
-      1.844,
-      0.984
+      0.781,
+      1.861,
+      0.979
     ],
-    "mesh_objects": 8,
-    "editable_source_mesh_objects": 26,
-    "triangles": 804,
+    "mesh_objects": 11,
+    "editable_source_mesh_objects": 52,
+    "triangles": 1404,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -264,18 +264,18 @@
   "infantry_flail": {
     "file": "units/infantry_flail.glb",
     "dimensions_blender_xyz_m": [
-      1.369,
-      0.796,
+      1.396,
+      0.829,
       2.352
     ],
     "dimensions_gltf_xyz_m": [
-      1.369,
+      1.396,
       2.352,
-      0.796
+      0.829
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 42,
-    "triangles": 1364,
+    "editable_source_mesh_objects": 51,
+    "triangles": 1544,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -284,18 +284,18 @@
   "infantry_crossbow": {
     "file": "units/infantry_crossbow.glb",
     "dimensions_blender_xyz_m": [
-      1.424,
+      1.45,
       0.999,
-      1.8
+      1.834
     ],
     "dimensions_gltf_xyz_m": [
-      1.424,
-      1.8,
+      1.45,
+      1.834,
       0.999
     ],
     "mesh_objects": 12,
-    "editable_source_mesh_objects": 59,
-    "triangles": 1650,
+    "editable_source_mesh_objects": 68,
+    "triangles": 1830,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -304,18 +304,18 @@
   "infantry_pavise": {
     "file": "units/infantry_pavise.glb",
     "dimensions_blender_xyz_m": [
-      0.872,
-      1.038,
+      0.898,
+      1.028,
       1.891
     ],
     "dimensions_gltf_xyz_m": [
-      0.872,
+      0.898,
       1.891,
-      1.038
+      1.028
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 53,
-    "triangles": 1476,
+    "editable_source_mesh_objects": 62,
+    "triangles": 1656,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -384,18 +384,18 @@
   "artillery_gunner": {
     "file": "units/artillery_gunner.glb",
     "dimensions_blender_xyz_m": [
-      0.793,
-      0.783,
+      0.819,
+      0.761,
       2.006
     ],
     "dimensions_gltf_xyz_m": [
-      0.793,
+      0.819,
       2.006,
-      0.783
+      0.761
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 32,
-    "triangles": 1076,
+    "editable_source_mesh_objects": 41,
+    "triangles": 1256,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -404,18 +404,18 @@
   "infantry_spear": {
     "file": "units/infantry_spear.glb",
     "dimensions_blender_xyz_m": [
-      0.936,
-      0.806,
+      0.962,
+      0.834,
       3.448
     ],
     "dimensions_gltf_xyz_m": [
-      0.936,
+      0.962,
       3.448,
-      0.806
+      0.834
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 32,
-    "triangles": 1056,
+    "editable_source_mesh_objects": 41,
+    "triangles": 1236,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -424,18 +424,18 @@
   "infantry_archer": {
     "file": "units/infantry_archer.glb",
     "dimensions_blender_xyz_m": [
-      1.393,
-      0.835,
+      1.411,
+      0.824,
       2.317
     ],
     "dimensions_gltf_xyz_m": [
-      1.393,
+      1.411,
       2.317,
-      0.835
+      0.824
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 53,
-    "triangles": 1372,
+    "editable_source_mesh_objects": 62,
+    "triangles": 1552,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -454,8 +454,8 @@
       1.087
     ],
     "mesh_objects": 14,
-    "editable_source_mesh_objects": 86,
-    "triangles": 2726,
+    "editable_source_mesh_objects": 95,
+    "triangles": 2906,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -466,16 +466,16 @@
     "dimensions_blender_xyz_m": [
       2.882,
       1.087,
-      2.91
+      2.941
     ],
     "dimensions_gltf_xyz_m": [
       2.882,
-      2.91,
+      2.941,
       1.087
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 86,
-    "triangles": 2824,
+    "editable_source_mesh_objects": 95,
+    "triangles": 3004,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -494,8 +494,8 @@
       1.087
     ],
     "mesh_objects": 13,
-    "editable_source_mesh_objects": 107,
-    "triangles": 3110,
+    "editable_source_mesh_objects": 116,
+    "triangles": 3290,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -564,18 +564,18 @@
   "commander_captain": {
     "file": "units/commander_captain.glb",
     "dimensions_blender_xyz_m": [
-      0.84,
-      0.844,
-      1.8
+      0.867,
+      0.819,
+      1.834
     ],
     "dimensions_gltf_xyz_m": [
-      0.84,
-      1.8,
-      0.844
+      0.867,
+      1.834,
+      0.819
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 35,
-    "triangles": 1116,
+    "editable_source_mesh_objects": 44,
+    "triangles": 1296,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -585,17 +585,17 @@
     "file": "units/commander_noble.glb",
     "dimensions_blender_xyz_m": [
       0.96,
-      0.947,
+      0.935,
       2.061
     ],
     "dimensions_gltf_xyz_m": [
       0.96,
       2.061,
-      0.947
+      0.935
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 43,
-    "triangles": 1160,
+    "editable_source_mesh_objects": 52,
+    "triangles": 1340,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -624,18 +624,18 @@
   "infantry_dismounted": {
     "file": "units/infantry_dismounted.glb",
     "dimensions_blender_xyz_m": [
-      0.795,
-      0.947,
+      0.775,
+      0.935,
       2.061
     ],
     "dimensions_gltf_xyz_m": [
-      0.795,
+      0.775,
       2.061,
-      0.947
+      0.935
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 44,
-    "triangles": 1164,
+    "editable_source_mesh_objects": 53,
+    "triangles": 1344,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -644,18 +644,18 @@
   "infantry_halberd": {
     "file": "units/infantry_halberd.glb",
     "dimensions_blender_xyz_m": [
-      1.367,
-      0.778,
+      1.393,
+      0.826,
       2.596
     ],
     "dimensions_gltf_xyz_m": [
-      1.367,
+      1.393,
       2.596,
-      0.778
+      0.826
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 34,
-    "triangles": 1096,
+    "editable_source_mesh_objects": 43,
+    "triangles": 1276,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -694,8 +694,8 @@
       3.09
     ],
     "mesh_objects": 28,
-    "editable_source_mesh_objects": 170,
-    "triangles": 5060,
+    "editable_source_mesh_objects": 188,
+    "triangles": 5420,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -746,16 +746,16 @@
     "dimensions_blender_xyz_m": [
       6.44,
       3.62,
-      7.5
+      7.521
     ],
     "dimensions_gltf_xyz_m": [
       6.44,
-      7.5,
+      7.521,
       3.62
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 137,
-    "triangles": 4576,
+    "editable_source_mesh_objects": 146,
+    "triangles": 4632,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],
@@ -806,16 +806,16 @@
     "dimensions_blender_xyz_m": [
       6.45,
       5.925,
-      10.0
+      10.021
     ],
     "dimensions_gltf_xyz_m": [
       6.45,
-      10.0,
+      10.021,
       5.925
     ],
     "mesh_objects": 9,
-    "editable_source_mesh_objects": 273,
-    "triangles": 9892,
+    "editable_source_mesh_objects": 282,
+    "triangles": 9948,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],
@@ -1226,16 +1226,16 @@
     "dimensions_blender_xyz_m": [
       5.48,
       4.28,
-      4.2
+      4.228
     ],
     "dimensions_gltf_xyz_m": [
       5.48,
-      4.2,
+      4.228,
       4.28
     ],
     "mesh_objects": 8,
-    "editable_source_mesh_objects": 76,
-    "triangles": 2688,
+    "editable_source_mesh_objects": 85,
+    "triangles": 2744,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],
@@ -1254,8 +1254,8 @@
       4.73
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 59,
-    "triangles": 1972,
+    "editable_source_mesh_objects": 68,
+    "triangles": 2028,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],
@@ -1266,16 +1266,16 @@
     "dimensions_blender_xyz_m": [
       4.64,
       5.87,
-      7.41
+      7.433
     ],
     "dimensions_gltf_xyz_m": [
       4.64,
-      7.41,
+      7.433,
       5.87
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 110,
-    "triangles": 3236,
+    "editable_source_mesh_objects": 119,
+    "triangles": 3292,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],
@@ -1286,16 +1286,16 @@
     "dimensions_blender_xyz_m": [
       6.48,
       4.66,
-      4.9
+      4.926
     ],
     "dimensions_gltf_xyz_m": [
       6.48,
-      4.9,
+      4.926,
       4.66
     ],
     "mesh_objects": 6,
-    "editable_source_mesh_objects": 79,
-    "triangles": 2720,
+    "editable_source_mesh_objects": 88,
+    "triangles": 2776,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],
@@ -1346,16 +1346,16 @@
     "dimensions_blender_xyz_m": [
       8.42,
       4.215,
-      5.57
+      5.595
     ],
     "dimensions_gltf_xyz_m": [
       8.42,
-      5.57,
+      5.595,
       4.215
     ],
     "mesh_objects": 10,
-    "editable_source_mesh_objects": 51,
-    "triangles": 1284,
+    "editable_source_mesh_objects": 60,
+    "triangles": 1340,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],
@@ -1386,16 +1386,16 @@
     "dimensions_blender_xyz_m": [
       2.595,
       2.01,
-      3.04
+      3.068
     ],
     "dimensions_gltf_xyz_m": [
       2.595,
-      3.04,
+      3.068,
       2.01
     ],
     "mesh_objects": 8,
-    "editable_source_mesh_objects": 26,
-    "triangles": 844,
+    "editable_source_mesh_objects": 35,
+    "triangles": 900,
     "forward_axis": "+Z",
     "up_axis": "Y",
     "animations": [],

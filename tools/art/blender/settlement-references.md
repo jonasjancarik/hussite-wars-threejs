@@ -21,15 +21,15 @@ Dimensions include roof overhangs, steps, shutters and open gate leaves. Source 
 
 | Asset | Dimensions, m | Triangles | Form |
 | --- | --- | --- | --- |
-| `house_timber` | 5.480 × 4.280 × 4.200 | 2,688 | 5 × 3.5 m timber cottage, horizontal boards, small shutters and shingle roof. |
-| `house_plaster` | 5.460 × 4.730 × 4.910 | 1,972 | 5 × 4 m lime-plastered cottage, restrained framing, red roof and simple chimney. |
-| `townhouse` | 4.640 × 5.870 × 7.410 | 3,236 | Narrow two-storey house with a modest timber upper-floor projection, front gable and plain shutters; no Renaissance facade. |
-| `barn` | 6.480 × 4.660 × 4.900 | 2,720 | 6 × 4 m timber barn, folded door leaves and an actual open front doorway into a shallow closed-back interior. |
+| `house_timber` | 5.480 × 4.280 × 4.228 | 2,744 | 5 × 3.5 m timber cottage, horizontal boards, small shutters and shingle roof. |
+| `house_plaster` | 5.460 × 4.730 × 4.910 | 2,028 | 5 × 4 m lime-plastered cottage, restrained framing, red roof and simple chimney. |
+| `townhouse` | 4.640 × 5.870 × 7.433 | 3,292 | Narrow two-storey house with a modest timber upper-floor projection, front gable and plain shutters; no Renaissance facade. |
+| `barn` | 6.480 × 4.660 × 4.926 | 2,776 | 6 × 4 m timber barn, folded door leaves and an actual open front doorway into a shallow closed-back interior. |
 | `shed` | 3.320 × 2.420 × 2.680 | 1,304 | Small open-front timber shed with grounded posts and a single-pitch roof. |
 | `fence_gate` | 6.000 × 1.815 × 1.380 | 1,396 | Rustic fence with a roughly 2 m genuine central opening; the gate leaf is folded rearward beside the right post. |
-| `monastery_wing` | 8.420 × 4.215 × 5.570 | 1,284 | 8 × 3.5 m wing with small pointed windows, simple buttresses and a pointed door; intended to pair with a church. |
+| `monastery_wing` | 8.420 × 4.215 × 5.595 | 1,340 | 8 × 3.5 m wing with small pointed windows, simple buttresses and a pointed door; intended to pair with a church. |
 | `church_gothic` | 7.520 × 11.670 × 9.800 | 1,772 | Broad Gothic hall, polygonal choir, high tent-like roof and modest west tower; a town-scale counterpart to the retained village church. |
-| `well` | 2.595 × 2.010 × 3.040 | 844 | Approximately 1.8 m stone rim, real hollow centre, oak roof posts, windlass, crank and rope. |
+| `well` | 2.595 × 2.010 × 3.068 | 900 | Approximately 1.8 m stone rim, real hollow centre, oak roof posts, windlass, crank and rope. |
 
 The building bodies are opaque. Doors and windows are closed surface/reveal models except for the explicitly open barn, shed and fence gateway. The well uses a dark bottom below its hollow stone ring. Game placement and movement rules are separate from these meshes; a visual doorway does not by itself alter pathfinding. There are no animations, colliders, LODs or faction materials.
 

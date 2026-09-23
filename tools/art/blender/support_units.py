@@ -70,8 +70,8 @@ class SupportUnits:
         """Sudlice-like long pole with a narrow glaive blade and forward hook."""
         socket, axis, forward = self._pole(
             'Sudlice',
-            {-1: 1.07, 1: 1.48},
-            {-1: (.04, -.36, 1.05), 1: (.20, .25, 1.38)},
+            {-1: 1.07, 1: 1.33},
+            {-1: (.04, -.36, 1.05), 1: (.13, .33, 1.12)},
             socket_height=2.40,
         )
         base = socket - axis * .02
@@ -91,8 +91,8 @@ class SupportUnits:
         """Distinct axe-led halberd; its broad blade is unlike the sudlice."""
         socket, axis, forward = self._pole(
             'Halberdier',
-            {-1: 1.08, 1: 1.45},
-            {-1: (.03, -.36, 1.05), 1: (.19, .25, 1.34)},
+            {-1: 1.08, 1: 1.32},
+            {-1: (.03, -.36, 1.05), 1: (.13, .33, 1.12)},
             socket_height=2.08,
         )
         base = socket - axis * .04
@@ -110,34 +110,58 @@ class SupportUnits:
                     .039, 'steel', 5, radius2=0)
 
     def handgun(self):
-        """Keep the established handgonne body and equipment silhouette."""
+        """Handgonne on a long tiller, braced under the arm, on the shared body."""
         self.palette()
-        self.k.soldier('Handgunner', weapon='handgun', coat='team_cloth')
-        # The powder flask stays ochre. Only the coat parameter controls cloth.
+        k = self.k
+        InfantryBatch(k).body('Handgunner',
+            {-1: (.50, -.075, 1.155), 1: (.17, -.035, 1.12)},
+            {-1: (.16, -.33, 1.03), 1: (-.06, .30, 1.04)}, stance=.18)
+        # The tiller runs back under the right arm; the iron tube leads it.
+        k.beam('Handgunner_gun_tiller', (-.16, -.055, 1.17), (.56, -.055, 1.235), .050, 'oak_dark', 6, radius2=.042)
+        k.beam('Handgunner_gun_barrel', (.44, -.055, 1.225), (.98, -.055, 1.275), .056, 'iron', 8, radius2=.050)
+        k.beam('Handgunner_barrel_muzzle', (.94, -.055, 1.271), (.99, -.055, 1.276), .066, 'iron', 8)
+        for x in (.47, .62):
+            k.beam('Handgunner_barrel_band', (x-.018, -.055, 1.223+(x-.44)*.09),
+                   (x+.018, -.055, 1.226+(x-.44)*.09), .064, 'iron', 8)
+        k.ico('Handgunner_touch_hole', (.50, -.055, 1.29), (.018, .018, .014), 'black', 1)
+        # Smouldering match cord looped from the right hand.
+        k.beam('Handgunner_match_cord', (.17, -.035, 1.12), (.25, .05, .98), .012, 'linen', 5)
+        k.beam('Handgunner_match_cord', (.25, .05, .98), (.14, .12, .90), .012, 'linen', 5)
+        k.cone('Handgunner_powder_flask', (-.11, -.25, .79), .085, .06, .20, 'ochre')
+        k.box('Handgunner_shot_bag', (-.07, .25, .80), (.13, .11, .15), 'leather', .03)
 
     def shield(self):
         """Plain mercenary sword-and-shield bearer with colourable paint slots."""
         self.palette()
-        before = set(bpy.context.scene.objects)
-        self.k.soldier('Mercenary', weapon='shield', coat='team_cloth')
-        created = self._objects_created(before)
-        for obj in created:
-            if obj.name.startswith('Mercenary_shield'):
-                bpy.data.objects.remove(obj, do_unlink=True)
-        # Retain the old board's size, with a smaller bevel that
-        # cannot collapse its thin edge into zero-area faces. No painted cross.
-        self.k.box('Mercenary_shield', (.49, -.35, 1.02),
-                   (.08, .45, .62), 'team_paint', .025)
-        stripe = self.k.box('Mercenary_shield_pale_stripe', (.532, -.35, 1.02),
-                            (.008, .29, .070), 'linen', .002)
-        stripe.rotation_euler.x = math.radians(35)
-        # The original left hand sat through the painted face. Bring the
-        # shield ahead of it and join the grip to its wooden back.
-        self.k.beam('Mercenary_shield_back_grip', (.395, -.34, 1.12),
-                    (.395, -.16, 1.12), .025, 'leather', 6)
-        for y in (-.34, -.16):
-            self.k.box('Mercenary_shield_grip_block', (.435, y, 1.12),
-                       (.08, .045, .055), 'oak_dark', .009)
+        k = self.k
+        InfantryBatch(k).body('Mercenary',
+            {-1: (.30, -.29, 1.07), 1: (.36, .24, 1.12)},
+            {-1: (.08, -.37, 1.00), 1: (.08, .34, 1.02)}, stance=.19)
+        # A slightly curved board shield with rounded lower corners, held ahead
+        # of the left hand. Plain paint and one pale band, no false heraldry.
+        outline = [(-.25, 1.36), (.25, 1.36), (.25, .87), (.19, .76), (0, .70),
+                   (-.19, .76), (-.25, .87)]
+        centre_y = -.30
+        front = [(.43 - .06*(y/.25)**2, centre_y+y, z) for y, z in outline]
+        back = [(x-.04, y, z) for x, y, z in front]
+        count = len(front)
+        faces = [tuple(range(count)), tuple(reversed(range(count, 2*count)))]
+        faces += [(i, (i+1) % count, (i+1) % count+count, i+count) for i in range(count)]
+        board = self.k.mesh('Mercenary_shield', front+back, faces, 'team_paint')
+        bm = bmesh.new(); bm.from_mesh(board.data)
+        bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+        bm.to_mesh(board.data); bm.free()
+        for a, b in zip(front, front[1:]+front[:1]):
+            k.beam('Mercenary_shield_rim', a, b, .020, 'shield_edge', 5)
+        k.beam('Mercenary_shield_pale_stripe', (.44, centre_y-.21, 1.26), (.44, centre_y+.21, .93),
+               .032, 'linen', 4)
+        k.ico('Mercenary_shield_boss', (.445, centre_y, 1.08), (.05, .075, .075), 'iron', 1)
+        k.beam('Mercenary_shield_back_grip', (.37, -.40, 1.07), (.37, -.20, 1.07), .025, 'leather', 6)
+        # Arming sword raised at the ready in the right hand.
+        k.ico('Mercenary_sword_pommel', (.33, .24, 1.03), (.04, .04, .04), 'iron', 1)
+        k.beam('Mercenary_sword_grip', (.335, .24, 1.05), (.37, .24, 1.19), .026, 'leather', 6)
+        k.beam('Mercenary_sword_guard', (.37, .12, 1.20), (.37, .36, 1.20), .024, 'iron', 6)
+        k.beam('Mercenary_sword_blade', (.372, .24, 1.21), (.47, .24, 1.86), .036, 'steel', 4, radius2=.005)
 
     def war_wagon(self):
         """Reuse the original wagon, adding only shared faction colour slots."""

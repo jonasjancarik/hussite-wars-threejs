@@ -142,6 +142,16 @@ class Fortifications:
                                 .42 if row % 2 else .35, .31),
                                'fort_stone_light', .027)
 
+    def plank(self, name, a, b, across, out, width, thickness, mat):
+        """Oriented board from a to b: `across` spans its width, `out` its thickness."""
+        a, b = Vector(a), Vector(b)
+        across = Vector(across).normalized()*width/2
+        out = Vector(out).normalized()*thickness
+        corners = [a-across, a+across, b+across, b-across]
+        vertices = [tuple(v) for v in corners]+[tuple(v+out) for v in corners]
+        return self.solid(name, vertices, [(0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4),
+                                           (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)], mat)
+
     def gable_roof(self, prefix, length, width, eave, ridge, mat='fort_roof'):
         vertices = [(-length/2, -width/2, eave), (length/2, -width/2, eave),
                     (length/2, width/2, eave), (-length/2, width/2, eave),
@@ -149,20 +159,44 @@ class Fortifications:
         self.solid(prefix+'_closed_roof', vertices,
                    [(0, 1, 5, 4), (3, 4, 5, 2), (0, 4, 3),
                     (1, 2, 5), (3, 2, 1, 0)], mat)
-        # Broad restrained courses, not individual noisy roof tiles.
+        trim = 'fort_roof_light' if mat == 'fort_roof' else 'oak_dark'
+        half = width/2
+        slope = math.hypot(half, ridge-eave)
         for side in (-1, 1):
-            for row in range(1, 5):
-                t = row/5
-                y = side*width/2*t
-                z = ridge-(ridge-eave)*t+.016
-                self.k.beam(prefix+'_roof_course', (-length/2+.035, y, z),
-                            (length/2-.035, y, z), .026,
-                            'fort_roof_light' if mat == 'fort_roof' else 'oak_dark', 4)
-            self.k.beam(prefix+'_eave_beam', (-length/2, side*width/2, eave),
-                        (length/2, side*width/2, eave), .063, 'oak_dark', 5)
-        self.k.beam(prefix+'_ridge_cap', (-length/2, 0, ridge),
-                    (length/2, 0, ridge), .050,
-                    'fort_roof_light' if mat == 'fort_roof' else 'oak_dark', 5)
+            # Stepped tile/shingle courses: each row's lower edge stands proud
+            # of the roof, so the slope reads as layered rows in raking light.
+            down = Vector((0, side*half, eave-ridge)).normalized()
+            normal = Vector((0, side*(ridge-eave), half)).normalized()
+            rows = 7
+            for row in range(1, rows):
+                t = row/rows*slope
+                top = Vector((0, 0, ridge))+down*(t-.16)
+                lip = Vector((0, 0, ridge))+down*t
+                x = length/2-.03
+                course = self.solid(prefix+'_roof_course', [
+                    (-x, top.y, top.z), (x, top.y, top.z),
+                    tuple(Vector((x, lip.y, lip.z))+normal*.055),
+                    tuple(Vector((-x, lip.y, lip.z))+normal*.055),
+                    (-x, lip.y, lip.z), (x, lip.y, lip.z)],
+                    [(0, 1, 2, 3), (3, 2, 5, 4), (0, 3, 4), (1, 5, 2), (0, 4, 5, 1)], mat)
+                # The exposed butt edge takes the trim colour, as the old lines did.
+                course.data.materials.append(self.k.M[trim])
+                for polygon in course.data.polygons:
+                    if len(polygon.vertices) == 4 and abs(polygon.normal.dot(down)) > .5:
+                        polygon.material_index = 1
+            self.k.beam(prefix+'_eave_beam', (-length/2, side*half, eave),
+                        (length/2, side*half, eave), .063, 'oak_dark', 5)
+            # Ridge tiles sit astride the ridge as a shallow inverted V.
+            ridge_a = Vector((-length/2, 0, ridge+.012))
+            ridge_b = Vector((length/2, 0, ridge+.012))
+            self.plank(prefix+'_ridge_cap', ridge_a+down*.09, ridge_b+down*.09,
+                       down, normal, .19, .05, trim)
+            # Verge boards give both gable edges a visible roof thickness. They
+            # sit inside the roof's length, so measured footprints are unchanged.
+            for end in (-1, 1):
+                x = end*length/2
+                self.plank(prefix+'_verge_board', (x, side*half, eave),
+                           (x, 0, ridge+.02), normal, (-end, 0, 0), .15, .07, 'oak_dark')
 
     def hipped_roof(self, prefix, width, eave, ridge):
         r = width/2

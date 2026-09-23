@@ -13,7 +13,7 @@ Created 21 September 2026. These are original static low-poly models, generated 
 | [Walters Art Museum: Archer's Shield, 51.1371](https://art.thewalters.org/object/51.1371/) | Large protective shield, raised centre, wood with surface covering, and the relationship to the bearer. | Museum dating is mid-15th century, after much of this campaign. The model uses a generic ribbed pavise with broad shoulders; no Teutonic insignia is copied. Width is exaggerated for readability. |
 | [Charles University / ABCzech: Cep](https://www.abczech.cz/Cep-P7033642.html) | Long staff with an elongated wooden threshing head reinforced by iron bands and short studs. | Secondary overview, not measurements of a securely dated 1420 specimen. Our dimensions, hinge arrangement and carrying pose are illustrative. |
 
-All three wear a simplified padded jack, coif under a low-crowned kettle hat, cloth hose and ankle shoes. Shared clothing is a modest visual baseline for this batch, not a claim that the armies wore a uniform. More equipment, social-status and headgear variation can be added later.
+All three wear a simplified padded jack, coif under a low-crowned kettle hat, cloth hose and ankle shoes. The shared body (revised 23 September 2026) tapers the jack from rounded shoulders to the belt, carries the side colour down both sleeves to a narrow linen cuff, and enlarges the head 8% about the neck. Pole weapons are gripped below the chin so the face stays visible. These are readability choices for the battlefield camera, not new historical evidence. Shared clothing is a modest visual baseline for this batch, not a claim that the armies wore a uniform. More equipment, social-status and headgear variation can be added later.
 
 ## Assets and presentation
 

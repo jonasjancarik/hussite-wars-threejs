@@ -23,10 +23,10 @@ class InfantryBatch:
             if name not in self.k.M:
                 self.k.material(name, colour)
 
-    def ring_mesh(self, name, rings, mat, segments=12):
+    def ring_mesh(self, name, rings, mat, segments=12, phase=0):
         """Elliptical horizontal rings; flat-shaded faces keep the kit's facets."""
-        vertices = [(x + rx*math.cos(2*math.pi*i/segments),
-                     y + ry*math.sin(2*math.pi*i/segments), z)
+        vertices = [(x + rx*math.cos(2*math.pi*i/segments+phase),
+                     y + ry*math.sin(2*math.pi*i/segments+phase), z)
                     for x, y, z, rx, ry in rings for i in range(segments)]
         faces = [tuple(reversed(range(segments)))]
         for ring in range(len(rings)-1):
@@ -40,15 +40,23 @@ class InfantryBatch:
     def body(self, prefix, hands, elbows, stance=.16, helmet=True):
         k = self.k
         self.palette()
-        k.box(prefix+'_padded_jack', (0, 0, 1.10), (.40, .35, .48), 'team_cloth', .065)
+        # Octagonal padded jack, tapered from broad shoulders to the belt. The
+        # flat front face and V-shaped silhouette read at battlefield distance.
+        facet = math.pi/8
+        self.ring_mesh(prefix+'_padded_jack', [
+            (0, 0, .84, .205, .19), (0, 0, .98, .215, .20),
+            (.01, 0, 1.16, .225, .215), (0, 0, 1.28, .205, .245),
+            (0, 0, 1.35, .13, .15)], 'team_cloth', 8, facet)
         self.ring_mesh(prefix+'_coat_skirt', [
-            (0, 0, .65, .265, .255), (0, 0, .84, .21, .19),
-            (0, 0, .94, .20, .18)], 'team_cloth', 8)
+            (0, 0, .65, .265, .255), (0, 0, .84, .215, .20),
+            (0, 0, .94, .21, .195)], 'team_cloth', 8, facet)
         # A restrained seam and a few raised padded panels, visible in close-up.
-        for y in (-.115, 0, .115):
-            k.beam(prefix+'_quilt_channel', (.211, y, .96), (.211, y, 1.28), .012, 'team_cloth', 4)
-        k.box(prefix+'_belt', (.01, 0, .90), (.435, .37, .065), 'leather', .012)
-        k.box(prefix+'_belt_buckle', (.235, -.035, .905), (.025, .070, .066), 'iron', .005)
+        for y in (-.07, 0, .07):
+            k.beam(prefix+'_quilt_channel', (.203, y, .97), (.212, y, 1.16), .012, 'team_cloth', 4)
+            k.beam(prefix+'_quilt_channel', (.212, y, 1.16), (.192, y, 1.27), .012, 'team_cloth', 4)
+        self.ring_mesh(prefix+'_belt', [
+            (.005, 0, .865, .228, .212), (.005, 0, .93, .228, .212)], 'leather', 8, facet)
+        k.box(prefix+'_belt_buckle', (.222, -.035, .898), (.025, .070, .066), 'iron', .005)
         k.cone(prefix+'_linen_collar', (0, 0, 1.365), .125, .105, .065, 'linen', 8)
         for side in (-1, 1):
             # Cloth hose down to short ankle shoes, not uniform tall riding boots.
@@ -59,26 +67,39 @@ class InfantryBatch:
             k.beam(prefix+'_hose_thigh', hip, knee, .102, 'hose', 6, radius2=.084)
             k.beam(prefix+'_hose_calf', knee, ankle, .080, 'hose', 6, radius2=.065)
             k.box(prefix+'_ankle_shoe', (foot_x+.055, side*stance, .080), (.255, .15, .16), 'leather', .035)
-            shoulder = (0, side*.23, 1.285)
-            elbow, hand = elbows[side], hands[side]
-            k.beam(prefix+'_upper_sleeve', shoulder, elbow, .108, 'team_cloth', 7, radius2=.090)
-            k.beam(prefix+'_lower_sleeve', elbow, hand, .086, 'padded_linen', 7, radius2=.065)
-            k.ico(prefix+'_hand', hand, (.076, .063, .068), 'skin', 1)
-        # Visible coif beneath a kettle hat or cloth cap. No fine chainmail texture.
-        k.ico(prefix+'_coif', (-.025, 0, 1.51), (.142, .14, .175), 'padded_linen', 2)
-        k.ico(prefix+'_face', (.062, 0, 1.535), (.116, .113, .145), 'skin', 2)
-        k.ico(prefix+'_nose', (.170, 0, 1.55), (.042, .04, .038), 'skin', 1)
+            shoulder = Vector((0, side*.225, 1.255))
+            elbow, hand = Vector(elbows[side]), Vector(hands[side])
+            # Rounded shoulder caps join the sleeve to the jack. Sleeves carry
+            # the side colour to the wrist; only a narrow linen cuff remains.
+            k.ico(prefix+'_upper_sleeve_shoulder', shoulder, (.105, .10, .095), 'team_cloth', 1)
+            k.beam(prefix+'_upper_sleeve', shoulder, elbow, .092, 'team_cloth', 7, radius2=.078)
+            k.ico(prefix+'_upper_sleeve_elbow', elbow, (.074, .074, .074), 'team_cloth', 1)
+            reach = hand-elbow
+            wrist = hand-reach.normalized()*min(.075, reach.length*.4)
+            k.beam(prefix+'_lower_sleeve', elbow, wrist, .074, 'team_cloth', 7, radius2=.060)
+            k.beam(prefix+'_lower_sleeve_cuff', wrist-reach.normalized()*.045, wrist,
+                   .068, 'padded_linen', 7, radius2=.066)
+            k.ico(prefix+'_hand', hand, (.078, .066, .070), 'skin', 1)
+        # Visible coif beneath a kettle hat or cloth cap. No fine chainmail
+        # texture. The head is slightly enlarged about the neck, in miniature
+        # proportion, so faces and hats survive the battlefield camera.
+        scale, neck = 1.08, 1.37
+        def head(x, y, z): return (x*scale, y*scale, neck+(z-neck)*scale)
+        def ring(x, y, z, rx, ry): return (*head(x, y, z), rx*scale, ry*scale)
+        k.ico(prefix+'_coif', head(-.025, 0, 1.51), (.142*scale, .14*scale, .175*scale), 'padded_linen', 2)
+        k.ico(prefix+'_face', head(.062, 0, 1.535), (.116*scale, .113*scale, .145*scale), 'skin', 2)
+        k.ico(prefix+'_nose', head(.170, 0, 1.55), (.042*scale, .04*scale, .038*scale), 'skin', 1)
         if helmet:
             self.ring_mesh(prefix+'_kettle_crown', [
-                (-.012, 0, 1.615, .169, .155), (-.020, 0, 1.72, .137, .125),
-                (-.035, 0, 1.785, .072, .065), (-.04, 0, 1.80, .018, .016)], 'steel')
+                ring(-.012, 0, 1.615, .169, .155), ring(-.020, 0, 1.72, .137, .125),
+                ring(-.035, 0, 1.785, .072, .065), ring(-.04, 0, 1.80, .018, .016)], 'steel')
             self.ring_mesh(prefix+'_kettle_brim', [
-                (-.008, 0, 1.60, .256, .232), (-.008, 0, 1.623, .25, .228),
-                (-.012, 0, 1.654, .164, .153)], 'steel')
+                ring(-.008, 0, 1.60, .262, .238), ring(-.008, 0, 1.623, .256, .234),
+                ring(-.012, 0, 1.654, .164, .153)], 'steel')
         else:
             self.ring_mesh(prefix+'_cloth_cap', [
-                (-.015, 0, 1.61, .15, .14), (-.045, 0, 1.70, .125, .125),
-                (-.065, 0, 1.755, .04, .04)], 'padded_linen')
+                ring(-.015, 0, 1.61, .15, .14), ring(-.045, 0, 1.70, .125, .125),
+                ring(-.065, 0, 1.755, .04, .04)], 'padded_linen')
         k.box(prefix+'_belt_pouch', (-.045, .235, .82), (.15, .13, .18), 'leather', .035)
         # Common sidearm in its sheath, kept behind the weapon silhouette.
         k.beam(prefix+'_knife_sheath', (-.10, -.24, .86), (-.17, -.24, .59), .030, 'leather', 5)
@@ -87,8 +108,8 @@ class InfantryBatch:
     def spear(self):
         k=self.k
         self.body('Spearman',
-            {-1:(.414,-.235,1.05),1:(.459,-.235,1.47)},
-            {-1:(.055,-.37,1.03),1:(.20,.27,1.37)},stance=.18)
+            {-1:(.414,-.235,1.05),1:(.446,-.235,1.33)},
+            {-1:(.055,-.37,1.03),1:(.13,.33,1.12)},stance=.18)
         foot=Vector((.305,-.235,.035));socket=Vector((.625,-.235,3.02))
         axis=(socket-foot).normalized()
         k.beam('Spear_long_ash_shaft',foot,socket,.029,'oak',8,radius2=.024)
@@ -138,8 +159,8 @@ class InfantryBatch:
     def flail(self):
         k = self.k
         self.body('Flailman',
-                  {-1: (.385, -.225, 1.04), 1: (.445, -.225, 1.55)},
-                  {-1: (.06, -.37, 1.06), 1: (.20, .26, 1.48)}, stance=.19)
+                  {-1: (.385, -.225, 1.04), 1: (.428, -.225, 1.39)},
+                  {-1: (.06, -.37, 1.06), 1: (.13, .33, 1.16)}, stance=.19)
         shaft_a = Vector((.30, -.225, .28))
         shaft_b = Vector((.53, -.225, 2.28))
         k.beam('Flail_ash_staff', shaft_a, shaft_b, .031, 'oak', 8, radius2=.026)
