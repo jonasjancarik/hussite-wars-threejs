@@ -150,6 +150,7 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     replace(region);
     townWalls(region, id);
     const walls = plan.walls.at(-1)!;
+    walls.gateStyle = "posts";
     plan.fortifications.add(walls.id);
     ditchAlong(walls).forEach((ditch, part) => plan.earthworks.push({ id: `${id}:ditch:${part}`, ...ditch, height: 0,
       ditch: true, ditchOffset: TVRZ_DITCH_OFFSET, ditchWidth: TVRZ_DITCH_WIDTH, ditchDepth: TVRZ_DITCH_DEPTH, ditchFloor: TVRZ_DITCH_FLOOR }));

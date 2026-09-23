@@ -3,6 +3,7 @@ import type { GeneratedTerrain } from "./generated-terrain.ts";
 import { SceneryVisibility } from "./scenery-visibility.ts";
 import { WALL_HEIGHT, WALL_THICKNESS, type TownWallPlan, type WallGate, type WallSegment, type WallTower } from "./town-wall-plan.ts";
 import type { TerrainPoint } from "./terrain-regions.ts";
+import { pointInPolygon } from "./geometry-utils.ts";
 
 type Ground = Pick<GeneratedTerrain, "renderedHeightAt">;
 type Vertices = number[];
@@ -174,6 +175,11 @@ export class TownWallScenery {
     const owner = this.gateOwner(plan, gate);
     root.userData.sceneryCell = owner;
     const stoneVertices: Vertices = [], timberVertices: Vertices = [], roofVertices: Vertices = [];
+    if (plan.gateStyle === "posts") {
+      this.addGateway(plan, gate, terrain, stoneVertices, timberVertices, roofVertices);
+      this.finishGate(root, stoneVertices, timberVertices, roofVertices, stone, timber, roof, visibility, owner);
+      return;
+    }
     const samples = Array.from({ length: 9 }, (_, index) => interpolate(gate.a, gate.b, index / 8));
     const ground = Math.max(...samples.flatMap(point => [-3.4,0,3.4].map(offset => height(terrain, {x:point.x+across.x*offset,z:point.z+across.z*offset}))));
     const spring = ground + gate.clearance;
@@ -181,13 +187,21 @@ export class TownWallScenery {
     const left = gate.a, right = gate.b;
     // Piers extend away from the opening so the planned a-b span remains completely clear.
     const pierDepth = gate.pierLength??WALL_THICKNESS * 1.45;
-    addGroundBox(stoneVertices, terrain, { x: left.x - along.x * pierDepth / 2, z: left.z - along.z * pierDepth / 2 }, along, across,
-      pierDepth / 2, (gate.depth??WALL_THICKNESS) / 2, spring + .12);
-    addGroundBox(stoneVertices, terrain, { x: right.x + along.x * pierDepth / 2, z: right.z + along.z * pierDepth / 2 }, along, across,
-      pierDepth / 2, (gate.depth??WALL_THICKNESS) / 2, spring + .12);
-    const innerRadius = width / 2, outerRadius = innerRadius + .16;
+    // One consistent masonry front: piers, arch and the wall above it share the
+    // planner's gate depth, which keeps every face clear of standing formations.
+    // The piers rise the full height like buttresses and the top carries the
+    // curtain wall's battlements, so nothing overhangs the slender piers.
+    // Below the passage clearance the piers keep the planner's depth; above it the
+    // front steps out a little, like a corbelled gate, and stays that deep to the top.
+    const pierHalf = (gate.depth??WALL_THICKNESS) / 2, half = Math.max(pierHalf, .3);
+    const innerRadius = width / 2;
     const innerRise = .8, outerRise = innerRise + .16;
-    const upperDepth=Math.max(gate.depth??WALL_THICKNESS,1.3)/2;
+    const archTop = spring + outerRise, parapetTop = archTop + .5;
+    for (const [end, sign] of [[left, -1], [right, 1]] as const) {
+      const pier = { x: end.x + sign * along.x * pierDepth / 2, z: end.z + sign * along.z * pierDepth / 2 };
+      addGroundBox(stoneVertices, terrain, pier, along, across, pierDepth / 2, pierHalf, spring);
+      addFrameBox(stoneVertices, pier, along, across, pierDepth / 2, half, spring, parapetTop);
+    }
     const archSegments = Math.max(6, Math.ceil(width * 2));
     for (let index = 0; index < archSegments; index += 1) {
       const a = Math.PI - Math.PI * index / archSegments, b = Math.PI - Math.PI * (index + 1) / archSegments;
@@ -195,42 +209,70 @@ export class TownWallScenery {
         centre.x + along.x * Math.cos(angle) * radius + across.x * lateral,
         spring + Math.sin(angle) * (radius === innerRadius ? innerRise : outerRise),
         centre.z + along.z * Math.cos(angle) * radius + across.z * lateral);
-      for (const lateral of [-WALL_THICKNESS / 2, WALL_THICKNESS / 2]) {
+      // Arch soffit, then the wall face from the arch up to the parapet on both sides.
+      pushQuad(stoneVertices, point(innerRadius, a, -half), point(innerRadius, a, half),
+        point(innerRadius, b, half), point(innerRadius, b, -half));
+      for (const lateral of [-half, half]) {
         const p = point(innerRadius, a, lateral), q = point(innerRadius, b, lateral);
-        const r = point(outerRadius, b, lateral), s = point(outerRadius, a, lateral);
-        pushQuad(stoneVertices, p, q, r, s);
+        const r = q.clone(); r.y = archTop; const t = p.clone(); t.y = archTop;
+        pushQuad(stoneVertices, p, q, r, t);
       }
-      const p = point(innerRadius, a, -WALL_THICKNESS / 2), q = point(innerRadius, b, -WALL_THICKNESS / 2);
-      const r = point(innerRadius, b, WALL_THICKNESS / 2), s = point(innerRadius, a, WALL_THICKNESS / 2);
-      pushQuad(stoneVertices, p, s, r, q);
-      const P = point(outerRadius, a, -WALL_THICKNESS / 2), Q = point(outerRadius, b, -WALL_THICKNESS / 2);
-      const R = point(outerRadius, b, WALL_THICKNESS / 2), S = point(outerRadius, a, WALL_THICKNESS / 2);
-      pushQuad(stoneVertices, P, Q, R, S);
-      // Solid masonry above the arch makes the upper gatehouse read as a
-      // building, while every new face stays above formation clearance.
-      for(const lateral of [-upperDepth,upperDepth]) {
-        const p=point(innerRadius,a,lateral),q=point(innerRadius,b,lateral);
-        const r=q.clone();r.y=spring+outerRise;
-        const s=p.clone();s.y=spring+outerRise;
-        pushQuad(stoneVertices,p,q,r,s);
-      }
-      pushQuad(stoneVertices,point(innerRadius,a,-upperDepth),point(innerRadius,a,upperDepth),
-        point(innerRadius,b,upperDepth),point(innerRadius,b,-upperDepth));
     }
-    const archTop = spring + outerRise;
-    addFrameBox(stoneVertices,centre,along,across,width/2+.22,upperDepth,archTop,archTop+.65);
-    addFrameBox(timberVertices, centre, along, across, width / 2 + .12, upperDepth, archTop+.65, archTop + .83);
-    const ridge = archTop + 1.45;
-    const roofPoint = (u: number, v: number, y: number): THREE.Vector3 => new THREE.Vector3(
-      centre.x + along.x * u + across.x * v, y, centre.z + along.z * u + across.z * v);
-    const lf = roofPoint(-width / 2 - .16, -upperDepth-.14, archTop + .83);
-    const rf = roofPoint(width / 2 + .16, -upperDepth-.14, archTop + .83);
-    const lb = roofPoint(-width / 2 - .16, upperDepth+.14, archTop + .83);
-    const rb = roofPoint(width / 2 + .16, upperDepth+.14, archTop + .83);
-    const ridgeFront = roofPoint(0, -upperDepth-.14, ridge), ridgeBack = roofPoint(0, upperDepth+.14, ridge);
-    pushTriangle(roofVertices, lf, rf, ridgeFront); pushTriangle(roofVertices, lb, ridgeBack, rb);
-    pushQuad(roofVertices, lf, ridgeFront, ridgeBack, lb); pushQuad(roofVertices, rf, rb, ridgeBack, ridgeFront);
-    for (const [vertices, material, name] of [[stoneVertices, stone, "Open stone arch and piers"], [timberVertices, timber, "Timber gate band"], [roofVertices, roof, "Gabled gate roof"]] as const) {
+    addFrameBox(stoneVertices, centre, along, across, width / 2 + pierDepth, half, archTop, parapetTop);
+    const span = width + pierDepth * 2;
+    for (let offset = .26; offset < span - .15; offset += .62) {
+      const merlon = { x: centre.x + along.x * (offset - span / 2), z: centre.z + along.z * (offset - span / 2) };
+      addFrameBox(stoneVertices, merlon, along, across, .15, half, parapetTop, parapetTop + .28);
+    }
+    this.finishGate(root, stoneVertices, timberVertices, roofVertices, stone, timber, roof, visibility, owner);
+  }
+
+  /**
+   * An open gateway at wall height: the wall ends in two stout gate posts with
+   * low caps, and the two timber leaves stand open, folded flat against the
+   * outer face of the wall. Nothing spans the opening, so nothing has to clear
+   * a passing formation's spears, and every piece stays on the wall line.
+   */
+  private addGateway(plan: TownWallPlan, gate: WallGate, terrain: Ground,
+    stoneVertices: Vertices, timberVertices: Vertices, roofVertices: Vertices): void {
+    const width = distance(gate.a, gate.b), pierDepth = gate.pierLength ?? WALL_THICKNESS * 1.45;
+    const postHalf = Math.max((gate.depth ?? WALL_THICKNESS) / 2, WALL_THICKNESS / 2 + .06);
+    const postLength = pierDepth + .3;
+    const outside = { x: gate.outside.x - gate.centre.x, z: gate.outside.z - gate.centre.z };
+    const fallback = { x: gate.b.x - gate.a.x, z: gate.b.z - gate.a.z };
+    for (const [end, sign] of [[gate.a, -1], [gate.b, 1]] as const) {
+      // Follow the wall run that meets this side of the opening, which may curve away from the gate line.
+      const run = plan.segments.map(segment => distance(segment.a, end) < .08 ? { x: segment.b.x - segment.a.x, z: segment.b.z - segment.a.z }
+        : distance(segment.b, end) < .08 ? { x: segment.a.x - segment.b.x, z: segment.a.z - segment.b.z } : null)
+        .find((direction): direction is TerrainPoint => direction !== null) ?? { x: fallback.x * sign, z: fallback.z * sign };
+      const length = Math.hypot(run.x, run.z) || 1, along = { x: run.x / length, z: run.z / length };
+      const side = { x: -along.z, z: along.x };
+      // Outward is the side of this run that lies outside the enclosure.
+      const probe = { x: end.x + along.x * (postLength + 1) + side.x * .6, z: end.z + along.z * (postLength + 1) + side.z * .6 };
+      const enclosed = plan.loops.some(loop => pointInPolygon(probe.x, probe.z, loop.points.map(point => [point.x, point.z] as [number, number])));
+      const outwards = plan.loops.length ? (enclosed ? -1 : 1) : (side.x * outside.x + side.z * outside.z >= 0 ? 1 : -1);
+      const post = { x: end.x + along.x * postLength / 2, z: end.z + along.z * postLength / 2 };
+      const top = height(terrain, post) + WALL_HEIGHT + .75;
+      addGroundBox(stoneVertices, terrain, post, along, side, postLength / 2, postHalf, top);
+      // A low pyramid cap.
+      const corner = (u: number, v: number, y: number): THREE.Vector3 => new THREE.Vector3(
+        post.x + along.x * u + side.x * v, y, post.z + along.z * u + side.z * v);
+      const [p, q, r, t] = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => corner(u! * (postLength / 2 + .06), v! * (postHalf + .06), top));
+      const apex = corner(0, 0, top + .45);
+      pushTriangle(roofVertices, p!, q!, apex); pushTriangle(roofVertices, q!, r!, apex);
+      pushTriangle(roofVertices, r!, t!, apex); pushTriangle(roofVertices, t!, p!, apex);
+      // The leaf swung fully open lies against the outer face of that wall run, beyond its post.
+      const leafWidth = Math.min(width / 2 - .05, 2.2), offset = postLength + .05 + leafWidth / 2;
+      const leaf = { x: end.x + along.x * offset + side.x * outwards * (WALL_THICKNESS / 2 + .07),
+        z: end.z + along.z * offset + side.z * outwards * (WALL_THICKNESS / 2 + .07) };
+      const leafBase = height(terrain, leaf) + .05;
+      addFrameBox(timberVertices, leaf, along, side, leafWidth / 2, .045, leafBase, leafBase + WALL_HEIGHT - .2);
+    }
+  }
+
+  private finishGate(root: THREE.Group, stoneVertices: Vertices, timberVertices: Vertices, roofVertices: Vertices,
+    stone: THREE.Material, timber: THREE.Material, roof: THREE.Material, visibility: SceneryVisibility, owner: string): void {
+    for (const [vertices, material, name] of [[stoneVertices, stone, "Open stone arch and piers"], [timberVertices, timber, "Timber gate leaves"], [roofVertices, roof, "Gate caps"]] as const) {
       if (vertices.length === 0) continue;
       const mesh = new THREE.Mesh(geometry(vertices), material); mesh.name = name; mesh.castShadow = true; mesh.receiveShadow = true;
       this.geometries.add(mesh.geometry); root.add(mesh);

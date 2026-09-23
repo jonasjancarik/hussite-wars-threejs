@@ -16,6 +16,12 @@ export interface WallLoop { id: string; points: TerrainPoint[] }
 export interface TownWallPlan {
   id: string; loops: WallLoop[]; segments: WallSegment[]; gates: WallGate[]; towers: WallTower[];
   enclosedCells: string[]; issues: string[];
+  /**
+   * "arch" (default): a masonry front spanning the opening above formation clearance.
+   * "posts": an open gateway at wall height, gate posts and door leaves folded
+   * against the outer face, for a small enclosure such as a tvrz.
+   */
+  gateStyle?: "arch" | "posts";
 }
 const key=(p:TerrainPoint):string=>`${p.x.toFixed(5)},${p.z.toFixed(5)}`;
 const cellKey=(p:{col:number;row:number}):string=>`${p.col},${p.row}`;

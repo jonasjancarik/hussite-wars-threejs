@@ -36,7 +36,8 @@ test("town walls are terrain-fitted, fog-owned, and leave the planned gate openi
   };
   const walls = new TownWallScenery([plan], terrain as never, visibility);
   const rendered = meshes(walls.group);
-  assert.ok(rendered.length >= 5, "joined wall, open gate, and tower meshes should be present");
+  // Wall, one masonry gate front (no separate roof or timber band) and the tower.
+  assert.ok(rendered.length >= 4, "joined wall, open gate, and tower meshes should be present");
   assert.ok(rendered.every(mesh => mesh.geometry.getAttribute("position").count > 0));
   assert.ok(walls.group.children.every(root => root.userData.sceneryCell === "4,4"));
   const masonry = rendered.find(mesh => mesh.name === "Joined masonry wall")!;
