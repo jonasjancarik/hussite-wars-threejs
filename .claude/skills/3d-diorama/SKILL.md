@@ -69,9 +69,7 @@ npm --prefix views/3d run build
 - **Absolute levels make pits.** Mud or swamp pinned to −0.36 m carved hex-shaped pits into hills; wet ground is now a dip relative to its neighbours. Water keeps one absolute level.
 - **Idle battles draw no frames.** Anything animated needs the low-rate ambient loop (as snowfall uses) or has to stay static.
 - **Tests compare `Float32` geometry.** Use tolerances, not `===`, for derived values.
-- **Models and static scenery are merged for drawing.** `model-merge.ts` bakes each GLB into one mesh per face side on load; `scenery-merge.ts` draws walls, ice and lone buildings through merged proxies. The source pieces keep their names, owners and `visible` flags but sit on layer 31, so a raycast or `Box3` over scenery must account for that.
-- **The browser pane can throttle `requestAnimationFrame` to 1 Hz** even while `document.hidden` is false. Read frame timings only right after a screenshot has fronted the pane, and compare draw calls (`renderer.info` after a steady frame; a shadow redraw adds roughly one draw per caster) rather than frame rates.
-- **Render passes update once per animation frame.** Calling `pipeline.render()` twice in one task redraws only the final quad; to time the GPU, render inside `requestAnimationFrame` and await `device.queue.onSubmittedWorkDone()`.
+- **Models and static scenery are drawn merged.** Scenery source pieces sit on layer 31. Before adding anything drawn per hex, unit or frame, or when timing anything, use the `3d-performance` skill.
 
 ## Sharing the checkout
 
@@ -80,3 +78,4 @@ Another agent session may be editing this checkout at the same time. Run `git st
 - The bundle is built from the whole working tree, so build it in a temporary `git worktree` (HEAD plus only your files, with `node_modules` symlinked).
 - Stage that bundle with `git hash-object -w` and `git update-index --cacheinfo`, leaving their working copy alone.
 - A failing test may come from their unfinished work. Check on a clean worktree before blaming yours.
+- If `main` moves while you work in a worktree, rebase and rebuild before staging the bundle; otherwise it ships without their commit.
