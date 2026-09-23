@@ -129,6 +129,33 @@ test("formations turn toward movement, attacks and visible threats without chang
   assert.ok(facingOf(formationFor(units, hussite.id)).x > 0.8, "attack direction temporarily overrides idle threat facing");
 });
 
+test("war wagons hold and fire broadside but travel pole first", async () => {
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(4, 3), new TestAssets());
+  const wagon = { ...unit(1, "VOZOVA_HRADBA", "hussites"), unitClass: "wagon", col: 0, row: 0, formationClosed: true };
+  const enemy = { ...unit(2, "KOPINICI", "crusaders"), col: 2, row: 0 };
+  const flank = (): THREE.Vector3 => {
+    const figure = formationFor(units, wagon.id).children.find(child => child instanceof THREE.Group)!;
+    return new THREE.Vector3(0, 0, 1).applyQuaternion(figure.getWorldQuaternion(new THREE.Quaternion()));
+  };
+  await units.update(snapshotWithUnits([wagon, enemy]));
+  await settleFacing(units);
+  assert.ok(flank().x > 0.8, `idle wagon shows its outer flank to the enemy: ${flank().toArray()}`);
+  assert.ok(Math.abs(facingOf(formationFor(units, wagon.id)).x) < 0.3, "the tow pole does not point at the enemy");
+
+  const moving = snapshotWithUnits([{ ...wagon, col: 1, row: 0 }, { ...enemy, col: 1, row: 2 }]);
+  moving.movement = { unitId: wagon.id, from: { col: 0, row: 0 }, to: { col: 1, row: 0 }, progress: 0.5 };
+  await units.update(moving);
+  await settleFacing(units);
+  assert.ok(facingOf(formationFor(units, wagon.id)).x > 0.8, "a moving wagon drives pole first");
+
+  const firing = snapshotWithUnits([{ ...wagon, col: 1, row: 0 }, { ...enemy, col: 3, row: 0 }]);
+  firing.events = [{ id: "wagon-volley", type: "attack", col: 1, row: 2, fromCol: 1, fromRow: 0 }];
+  await units.update(firing);
+  await settleFacing(units);
+  assert.ok(flank().z > 0.8, `a firing wagon turns its flank to the target: ${flank().toArray()}`);
+});
+
 test("routing formations turn away from the nearest visible enemy", async () => {
   const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
     new HexLayout(4, 2), new TestAssets());

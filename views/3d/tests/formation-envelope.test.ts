@@ -3,8 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import * as THREE from "three";
-import { FORMATION_FOOTPRINT, FORMATION_HEIGHT, formationSupport } from "../src/formation-envelope.ts";
-import { unitRecipe } from "../src/unit-recipes.ts";
+import { FORMATION_FOOTPRINT, FORMATION_HEIGHT, FORMATION_TRAVEL_FOOTPRINT, formationSupport } from "../src/formation-envelope.ts";
+import { BROADSIDE_YAW, unitRecipe } from "../src/unit-recipes.ts";
 import type { UnitSnapshot } from "../src/types.ts";
 
 const ROOT = path.resolve(import.meta.dirname, "../../..");
@@ -94,7 +94,8 @@ function rotate(x: number, z: number, radians: number): XzPoint {
   return { x: Math.cos(radians) * x + Math.sin(radians) * z, z: -Math.sin(radians) * x + Math.cos(radians) * z };
 }
 
-function actualFormationPoints(): XzPoint[] {
+/** Standing poses turn wagons broadside; travelling poses keep them pole first. */
+function actualFormationPoints(standing: boolean): XzPoint[] {
   const { types, commanders } = recipeTypes();
   assert.equal(types.length, 59, "all 59 current UnitTypes have a recipe or commander recipe");
   const points: XzPoint[] = [];
@@ -107,7 +108,8 @@ function actualFormationPoints(): XzPoint[] {
       const poseKey = JSON.stringify({ type, dismounted, faction, marching, routeScale, recipes });
       if (seen.has(poseKey)) continue;
       seen.add(poseKey);
-      const facing = faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
+      const facing = (faction === "hussites" ? -Math.PI / 2 : Math.PI / 2)
+        + (standing && recipes.some(recipe => recipe.broadside) ? BROADSIDE_YAW : 0);
       for (const recipe of recipes) {
         const offsets = recipe.offsets.map(([offsetX, offsetZ]) => recipe.rotateOffsetsWithFacing
           ? rotate(offsetX, offsetZ, facing) : { x: offsetX, z: offsetZ });
@@ -127,26 +129,30 @@ function actualFormationPoints(): XzPoint[] {
   return points;
 }
 
-function insideFootprint(point: XzPoint, epsilon = 0.00001): boolean {
-  for (let i = 0; i < FORMATION_FOOTPRINT.length; i += 1) {
-    const [ax, az] = FORMATION_FOOTPRINT[i]!;
-    const [bx, bz] = FORMATION_FOOTPRINT[(i + 1) % FORMATION_FOOTPRINT.length]!;
+type Footprint = typeof FORMATION_FOOTPRINT;
+
+function insideFootprint(point: XzPoint, footprint: Footprint, epsilon = 0.00001): boolean {
+  for (let i = 0; i < footprint.length; i += 1) {
+    const [ax, az] = footprint[i]!;
+    const [bx, bz] = footprint[(i + 1) % footprint.length]!;
     const cross = (bx - ax) * (point.z - az) - (bz - az) * (point.x - ax);
     if (cross < -epsilon) return false;
   }
   return true;
 }
 
-test("formation footprint contains every current GLB vertex and roster pose", () => {
-  assert.equal(FORMATION_FOOTPRINT.length, 21);
-  for (let i = 0; i < FORMATION_FOOTPRINT.length; i += 1) {
-    const [ax, az] = FORMATION_FOOTPRINT[i]!;
-    const [bx, bz] = FORMATION_FOOTPRINT[(i + 1) % FORMATION_FOOTPRINT.length]!;
+for (const [name, footprint, standing, corners] of [
+  ["standing", FORMATION_FOOTPRINT, true, 24], ["travel", FORMATION_TRAVEL_FOOTPRINT, false, 21],
+] as const) test(`${name} footprint contains every current GLB vertex and roster pose`, () => {
+  assert.equal(footprint.length, corners);
+  for (let i = 0; i < footprint.length; i += 1) {
+    const [ax, az] = footprint[i]!;
+    const [bx, bz] = footprint[(i + 1) % footprint.length]!;
     assert.ok((bx - ax) !== 0 || (bz - az) !== 0, "hull edges are nonzero");
   }
-  const points = actualFormationPoints();
+  const points = actualFormationPoints(standing);
   assert.ok(points.length > 100_000, "verification covered the actual model mesh vertices");
-  const outside = points.find(point => !insideFootprint(point));
+  const outside = points.find(point => !insideFootprint(point, footprint));
   assert.equal(outside, undefined, outside && `mesh vertex escaped footprint at (${outside.x}, ${outside.z})`);
 });
 
@@ -157,10 +163,13 @@ test("formation support returns the hull's directional extent", () => {
     const expected = Math.max(...FORMATION_FOOTPRINT.map(([x, z]) => x * nx + z * nz));
     assert.ok(Math.abs(formationSupport(nx, nz) - expected) < 1e-12, `support at ${degrees} degrees`);
   }
-  assert.ok(formationSupport(1, 0) >= 1.7535);
-  assert.ok(formationSupport(-1, 0) >= 1.7535);
-  assert.ok(formationSupport(0, 1) >= 3.3183);
-  assert.ok(formationSupport(0, -1) >= 3.3183);
+  assert.ok(formationSupport(1, 0) >= 3.2974);
+  assert.ok(formationSupport(-1, 0) >= 3.2974);
+  assert.ok(formationSupport(0, 1) >= 1.8943);
+  assert.ok(formationSupport(0, -1) >= 1.9929);
+  // Pole-first wagons are narrow across a gate but long along the route.
+  assert.ok(formationSupport(1, 0, FORMATION_TRAVEL_FOOTPRINT) >= 1.7535);
+  assert.ok(formationSupport(0, 1, FORMATION_TRAVEL_FOOTPRINT) >= 3.3183);
 });
 
 test("formation height safely covers every current recipe mesh above its grounded origin", () => {

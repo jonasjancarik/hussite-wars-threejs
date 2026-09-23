@@ -1,7 +1,7 @@
 import type { TerrainCell, TerrainPoint } from "./terrain-regions.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import { distanceToSegment, pointInPolygon } from "./geometry-utils.ts";
-import { FORMATION_FOOTPRINT, FORMATION_HEIGHT, formationSupport } from "./formation-envelope.ts";
+import { FORMATION_FOOTPRINT, FORMATION_HEIGHT, FORMATION_TRAVEL_FOOTPRINT, formationSupport } from "./formation-envelope.ts";
 
 export const WALL_THICKNESS = .18;
 export const WALL_HEIGHT = 2.5;
@@ -22,9 +22,12 @@ const cellKey=(p:{col:number;row:number}):string=>`${p.col},${p.row}`;
 const distance=(a:TerrainPoint,b:TerrainPoint):number=>Math.hypot(a.x-b.x,a.z-b.z);
 const cross=(a:TerrainPoint,b:TerrainPoint,c:TerrainPoint):number=>(b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x);
 const point=(a:TerrainPoint,b:TerrainPoint,t:number):TerrainPoint=>({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t});
-const footprintBounds={minX:Math.min(...FORMATION_FOOTPRINT.map(p=>p[0])),maxX:Math.max(...FORMATION_FOOTPRINT.map(p=>p[0])),
-  minZ:Math.min(...FORMATION_FOOTPRINT.map(p=>p[1])),maxZ:Math.max(...FORMATION_FOOTPRINT.map(p=>p[1]))};
-function outsideSweep(wallA:TerrainPoint,wallB:TerrainPoint,a:TerrainPoint,b:TerrainPoint,padding:number):boolean {
+type Footprint=readonly (readonly [number,number])[];
+type Bounds={minX:number;maxX:number;minZ:number;maxZ:number};
+const boundsOf=(footprint:Footprint):Bounds=>({minX:Math.min(...footprint.map(p=>p[0])),maxX:Math.max(...footprint.map(p=>p[0])),
+  minZ:Math.min(...footprint.map(p=>p[1])),maxZ:Math.max(...footprint.map(p=>p[1]))});
+const standingBounds=boundsOf(FORMATION_FOOTPRINT),travelBounds=boundsOf(FORMATION_TRAVEL_FOOTPRINT);
+function outsideSweep(wallA:TerrainPoint,wallB:TerrainPoint,a:TerrainPoint,b:TerrainPoint,padding:number,footprintBounds:Bounds):boolean {
   return Math.max(wallA.x,wallB.x)<Math.min(a.x,b.x)+footprintBounds.minX-padding
     ||Math.min(wallA.x,wallB.x)>Math.max(a.x,b.x)+footprintBounds.maxX+padding
     ||Math.max(wallA.z,wallB.z)<Math.min(a.z,b.z)+footprintBounds.minZ-padding
@@ -48,7 +51,7 @@ function clearsHull(a:TerrainPoint,b:TerrainPoint,hull:TerrainPoint[],padding:nu
 }
 /** Full fixed-pose formation hull, not a centre point or a picking cylinder. */
 export function wallClearsFormation(a:TerrainPoint,b:TerrainPoint,centre:TerrainPoint,padding=WALL_THICKNESS/2+WALL_MARGIN):boolean {
-  if(outsideSweep(a,b,centre,centre,padding)) return true;
+  if(outsideSweep(a,b,centre,centre,padding,standingBounds)) return true;
   return clearsHull(a,b,FORMATION_FOOTPRINT.map(([x,z])=>({x:x+centre.x,z:z+centre.z})),padding);
 }
 function convexHull(points:TerrainPoint[]):TerrainPoint[] {
@@ -57,14 +60,14 @@ function convexHull(points:TerrainPoint[]):TerrainPoint[] {
   for(const p of [...sorted].reverse()) {while(upper.length>1&&cross(upper.at(-2)!,upper.at(-1)!,p)<=0) upper.pop();upper.push(p);}
   return [...lower.slice(0,-1),...upper.slice(0,-1)];
 }
-/** Exact swept convex formation footprint for a straight visual movement leg. */
+/** Exact swept convex travel footprint for a straight visual movement leg. */
 export function wallRouteSegmentClear(a:TerrainPoint,b:TerrainPoint,walls:readonly WallSegment[]):boolean {
-  const nearby=walls.filter(wall=>!outsideSweep(wall.a,wall.b,a,b,(wall.thickness??WALL_THICKNESS)/2+WALL_MARGIN));
+  const nearby=walls.filter(wall=>!outsideSweep(wall.a,wall.b,a,b,(wall.thickness??WALL_THICKNESS)/2+WALL_MARGIN,travelBounds));
   if(!nearby.length) return true;
-  const hull=convexHull(FORMATION_FOOTPRINT.flatMap(([x,z])=>[{x:a.x+x,z:a.z+z},{x:b.x+x,z:b.z+z}]));
+  const hull=convexHull(FORMATION_TRAVEL_FOOTPRINT.flatMap(([x,z])=>[{x:a.x+x,z:a.z+z},{x:b.x+x,z:b.z+z}]));
   return nearby.every(wall=>{
     const padding=(wall.thickness??WALL_THICKNESS)/2+WALL_MARGIN;
-    return outsideSweep(wall.a,wall.b,a,b,padding)||clearsHull(wall.a,wall.b,hull,padding);
+    return outsideSweep(wall.a,wall.b,a,b,padding,travelBounds)||clearsHull(wall.a,wall.b,hull,padding);
   });
 }
 
@@ -216,7 +219,7 @@ export function planTownWalls(id:string,region:readonly TerrainCell[],tiles:read
       const from=candidate.from.center,to=candidate.to.center;
       const normalLength=distance(from,to),normal={x:(to.x-from.x)/normalLength,z:(to.z-from.z)/normalLength};
       const tangent={x:-normal.z,z:normal.x};
-      const width=formationSupport(tangent.x,tangent.z)+formationSupport(-tangent.x,-tangent.z)+.7;
+      const width=formationSupport(tangent.x,tangent.z,FORMATION_TRAVEL_FOOTPRINT)+formationSupport(-tangent.x,-tangent.z,FORMATION_TRAVEL_FOOTPRINT)+.7;
       const opening={arc:candidate.arc,half:width/2};openings.push(opening);
       const fits=():boolean=>{
         if(!wallRouteSegmentClear(from,to,spans())) return false;

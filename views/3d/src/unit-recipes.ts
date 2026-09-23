@@ -7,7 +7,15 @@ export interface FigureRecipe {
   /** Horizontal radius required by this figure in the formation's shared hit cylinder. */
   pickRadius?: number;
   rotateOffsetsWithFacing?: boolean;
+  /**
+   * The model's +X is its direction of travel but it fights from its +Z flank,
+   * so at rest and when firing it turns that long side toward the threat.
+   */
+  broadside?: boolean;
 }
+
+/** Extra yaw that turns a broadside model's +Z flank to where +X would face. */
+export const BROADSIDE_YAW = Math.PI / 2;
 
 const FIVE_FIGURE_OFFSETS: Array<[number, number]> = [
   [-1.02, 0.5], [0, -0.66], [1.02, 0.5], [-0.52, -0.1], [0.52, -0.1],
@@ -61,7 +69,7 @@ export function unitRecipe(unit: UnitSnapshot): FigureRecipe[] {
     case "TARASNICE": case "POLNI_DELO": return artillery("artillery_tarasnice");
     case "BOMBARDA": return artillery("artillery_bombard");
     case "POLNI_OPEVNENI": return [{ model: "field_blockhouse", offsets: [[0, 0]], scale: 1, pickRadius: 2.35 }];
-    case "VOZOVA_HRADBA": case "VOZOVA_HRADBA_PRASKY": return [{ model: "war_wagon", offsets: [[0, 0]], scale: 1.05, pickRadius: 3.4 }];
+    case "VOZOVA_HRADBA": case "VOZOVA_HRADBA_PRASKY": return [{ model: "war_wagon", offsets: [[0, 0]], scale: 1.05, pickRadius: 3.4, broadside: true }];
     case "JIZDA_HUSITI": case "LEHKA_JIZDA": case "JIZDA_PRASKY":
       return unit.dismounted ? formation("infantry_spear") : cavalry("cavalry_light");
     case "ZVED": case "ZVED_KRIZACI":

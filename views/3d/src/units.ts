@@ -4,12 +4,14 @@ import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 import { visibleSnapshotUnits } from "./unit-visibility.ts";
 import { CasualtyFades } from "./casualties.ts";
-import { recipeSignature, unitRecipe } from "./unit-recipes.ts";
+import { BROADSIDE_YAW, recipeSignature, unitRecipe } from "./unit-recipes.ts";
 import { commandAuraGeometry } from "./command-aura.ts";
 
 interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number;
   appearance: string; health: number; yaw: number; targetYaw: number; baseYaw: number; marchingYaw: number;
+  /** Holds and fires with its long flank to the threat; travels and flees along +X. */
+  broadside: boolean;
   unit: Pick<UnitSnapshot, "id" | "faction" | "col" | "row">;
   /** Ground position before any cosmetic strike offset. */
   base: { x: number; z: number };
@@ -53,8 +55,8 @@ function nearestTo(origin: { x: number; z: number }, candidates: PlacedUnit[]): 
   return closest;
 }
 
-function defaultFacing(unit: Pick<UnitSnapshot, "faction">): number {
-  return unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
+function defaultFacing(unit: Pick<UnitSnapshot, "faction">, broadside: boolean): number {
+  return (unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2) + (broadside ? BROADSIDE_YAW : 0);
 }
 
 function yawTowards(from: { x: number; z: number }, to: { x: number; z: number }): number | null {
@@ -297,9 +299,10 @@ export class UnitPresentation {
     if (!visual) {
       const root = new THREE.Group();
       root.name = `${unit.name} (${unit.id})`;
-      const facing = defaultFacing(unit);
-      const figures: GroundedFigure[] = [];
       const recipes = unitRecipe(unit);
+      const broadside = recipes.some(recipe => recipe.broadside);
+      const facing = defaultFacing(unit, broadside);
+      const figures: GroundedFigure[] = [];
       const pickRadius = Math.max(2.15, ...recipes.map(recipe => recipe.pickRadius ?? 0));
       for (const recipe of recipes) {
         const prototype = await this.variant(recipe.model, unit.faction);
@@ -344,7 +347,7 @@ export class UnitPresentation {
       hit.userData.unitId = unit.id;
       root.add(hit);
       visual = { root, hit, figures, revision, markerHeight: 0, appearance, health: unit.health,
-        yaw: facing, targetYaw: facing, baseYaw: facing, marchingYaw: 0,
+        yaw: facing, targetYaw: facing, baseYaw: facing, marchingYaw: 0, broadside,
         unit: { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row },
         base: { x: 0, z: 0 }, strike: null };
       this.visuals.set(unit.id, visual);
@@ -367,7 +370,7 @@ export class UnitPresentation {
     if (visual.base.x !== center.x || visual.base.z !== center.z) this.shadowsDirty = true;
     visual.base = { x: center.x, z: center.z };
     this.applyStrike(visual);
-    const facing = this.desiredFacing(unit, snapshot, context);
+    const facing = this.desiredFacing(unit, snapshot, context, visual.broadside);
     // Idle formations retain their bearing through small threat changes. Orders,
     // attacks and flight are decisive and always take precedence.
     if (facing && (facing.decisive || Math.abs(angleDelta(visual.targetYaw, facing.yaw)) >= IDLE_TURN_THRESHOLD)) {
@@ -411,10 +414,11 @@ export class UnitPresentation {
     return { byFaction };
   }
 
-  private desiredFacing(unit: UnitSnapshot, snapshot: BattleSnapshot, context: FacingContext): FacingIntent | null {
+  private desiredFacing(unit: UnitSnapshot, snapshot: BattleSnapshot, context: FacingContext, broadside: boolean): FacingIntent | null {
     const now = performance.now();
+    const flank = broadside ? BROADSIDE_YAW : 0;
     const attack = this.attackFacing.get(unit.id);
-    if (attack && attack.until > now) return { yaw: attack.yaw, decisive: true };
+    if (attack && attack.until > now) return { yaw: attack.yaw + flank, decisive: true };
     if (attack) this.attackFacing.delete(unit.id);
 
     const movement = snapshot.movement?.unitId === unit.id ? snapshot.movement : null;
@@ -440,7 +444,7 @@ export class UnitPresentation {
     center.z /= cohort.length;
     const threat = nearestTo(center, enemies);
     const idleYaw = threat ? yawTowards(center, threat) : null;
-    return idleYaw === null ? null : { yaw: idleYaw, decisive: false };
+    return idleYaw === null ? null : { yaw: idleYaw + flank, decisive: false };
   }
 
   private recordAttackFacings(snapshot: BattleSnapshot, now: number): void {
