@@ -33352,6 +33352,7 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 	effectNodes = [];
 	width = 1;
 	height = 1;
+	pixelRatio = 0;
 	constructor(e, t, n, r) {
 		this.camera = n, this.quality = r, this.renderer = new VB({
 			canvas: e,
@@ -33369,12 +33370,8 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 		this.pipeline.render();
 	}
 	resize(e, t) {
-		this.width = Math.max(1, Math.floor(e)), this.height = Math.max(1, Math.floor(t));
-		let n = Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio);
-		this.renderer.setDrawingBufferSize(this.width, this.height, n);
-		let r = this.renderer.getDrawingBufferSize(new O());
-		this.scenePass.setSize?.(r.x, r.y);
-		for (let e of this.effectNodes) e.setSize?.(r.x, r.y);
+		let n = Math.max(1, Math.floor(e)), r = Math.max(1, Math.floor(t)), i = Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio);
+		(n !== this.width || r !== this.height || i !== this.pixelRatio) && (this.width = n, this.height = r, this.pixelRatio = i, this.renderer.setDrawingBufferSize(this.width, this.height, i)), this.resizeEffects();
 	}
 	setDepthOfField(e, t, n) {
 		let r = $u(e ? n : 0);
@@ -33384,7 +33381,7 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 		this.quality.depthOfFieldMode !== e && (this.quality = {
 			...this.quality,
 			depthOfFieldMode: e
-		}, this.rebuildGraph(), this.resize(this.width, this.height));
+		}, this.rebuildGraph(), this.resizeEffects());
 	}
 	setCost(e) {
 		let t = this.quality;
@@ -33397,7 +33394,7 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 		this.quality = {
 			...this.quality,
 			effects: e
-		}, this.gradeAmountNode.value = +!!e, this.rebuildGraph(), this.resize(this.width, this.height);
+		}, this.gradeAmountNode.value = +!!e, this.rebuildGraph(), this.resizeEffects();
 	}
 	backendName() {
 		return this.renderer.backend.isWebGPUBackend === !0 ? "webgpu" : "webgl2";
@@ -33427,6 +33424,11 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 		this.track(l), n = l, n = TH(n, this.renderer.toneMapping, this.renderer.outputColorSpace);
 		let u = MV.xy, d = jH(wH(u), wH(u.add(AH(37, 17))), wH(u.add(AH(11, 47)))).sub(.5).mul(2 / 255);
 		n = MH(n.rgb.add(d), n.a), this.pipeline.outputColorTransform = !1, this.pipeline.outputNode = n, this.pipeline.needsUpdate = !0;
+	}
+	resizeEffects() {
+		let e = this.renderer.getDrawingBufferSize(new O());
+		this.scenePass.setSize?.(e.x, e.y);
+		for (let t of this.effectNodes) t.setSize?.(e.x, e.y);
 	}
 	track(e) {
 		this.effectNodes.push(e);

@@ -82,6 +82,7 @@ export class BattleRenderPipeline {
   private effectNodes: DisposableNode[] = [];
   private width = 1;
   private height = 1;
+  private pixelRatio = 0;
 
   public constructor(
     canvas: HTMLCanvasElement,
@@ -116,13 +117,19 @@ export class BattleRenderPipeline {
   public render(): void { this.pipeline.render(); }
 
   public resize(width: number, height: number): void {
-    this.width = Math.max(1, Math.floor(width));
-    this.height = Math.max(1, Math.floor(height));
+    const nextWidth = Math.max(1, Math.floor(width));
+    const nextHeight = Math.max(1, Math.floor(height));
     const pixelRatio = Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio);
-    this.renderer.setDrawingBufferSize(this.width, this.height, pixelRatio);
-    const drawing = this.renderer.getDrawingBufferSize(new THREE.Vector2());
-    this.scenePass.setSize?.(drawing.x, drawing.y);
-    for (const effect of this.effectNodes) effect.setSize?.(drawing.x, drawing.y);
+    // Assigning canvas.width/height clears the canvas even when the value is
+    // unchanged. Only touch it for a real size change; otherwise a settings
+    // change would show black until the next frame's shaders compile.
+    if (nextWidth !== this.width || nextHeight !== this.height || pixelRatio !== this.pixelRatio) {
+      this.width = nextWidth;
+      this.height = nextHeight;
+      this.pixelRatio = pixelRatio;
+      this.renderer.setDrawingBufferSize(this.width, this.height, pixelRatio);
+    }
+    this.resizeEffects();
   }
 
   public setDepthOfField(enabled: boolean, focusDistance: number, strength: number): void {
@@ -137,7 +144,7 @@ export class BattleRenderPipeline {
     if (this.quality.depthOfFieldMode === mode) return;
     this.quality = { ...this.quality, depthOfFieldMode: mode };
     this.rebuildGraph();
-    this.resize(this.width, this.height);
+    this.resizeEffects();
   }
 
   /** Apply a graphics tier's cost settings; depth of field and effects keep their own options. */
@@ -154,7 +161,7 @@ export class BattleRenderPipeline {
     this.quality = { ...this.quality, effects: enabled };
     this.gradeAmountNode.value = enabled ? 1 : 0;
     this.rebuildGraph();
-    this.resize(this.width, this.height);
+    this.resizeEffects();
   }
 
   public backendName(): string {
@@ -242,6 +249,13 @@ export class BattleRenderPipeline {
     this.pipeline.outputColorTransform = false;
     this.pipeline.outputNode = composed;
     this.pipeline.needsUpdate = true;
+  }
+
+  /** Size the scene pass and effect nodes to the current drawing buffer. */
+  private resizeEffects(): void {
+    const drawing = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    this.scenePass.setSize?.(drawing.x, drawing.y);
+    for (const effect of this.effectNodes) effect.setSize?.(drawing.x, drawing.y);
   }
 
   private track(effect: unknown): void { this.effectNodes.push(effect as DisposableNode); }
