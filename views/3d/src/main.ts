@@ -144,6 +144,7 @@ class IntegratedThreeBattle {
     this.applyingNote = new ApplyingNote(canvas, () => options.localize?.("applyingGraphics") ?? "Applying graphics settings…");
     this.wagonConnections = new WagonConnections(this.terrain, this.terrain.layout);
     this.overlays = new TacticalOverlays(this.terrain, this.terrain.layout);
+    this.overlays.setGridFocus(this.cameraRig.controls.target.x, this.cameraRig.controls.target.z);
     this.lighting = createBattleLighting(this.scene);
     this.winter = this.terrain instanceof GeneratedTerrain && this.terrain.environmentPlan.winter;
     this.atmosphere = new AtmosphereTransition(atmosphereProfile(options.snapshot.scenario, options.snapshot.round, this.winter));
@@ -423,6 +424,8 @@ class IntegratedThreeBattle {
     }) as EventListener);
     this.addListener(this.canvas, "pointerleave", (() => {
       this.focusPointer = null; this.overlays.setHovered(null); this.options.onHover?.(null);
+      const target = this.cameraRig.controls.target;
+      this.overlays.setGridFocus(target.x, target.z);
       this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);
       this.scheduleFrame();
     }) as EventListener);
@@ -435,6 +438,7 @@ class IntegratedThreeBattle {
     if (gesture) recordPointerGestureMovement(gesture, event);
     if (this.gestures.size > 0 || event.pointerType !== "mouse") return;
     const surface = this.picker.surfaceAt(event.clientX, event.clientY, this.terrain.interactiveMeshes);
+    if (surface && this.overlays.setGridFocus(surface.point.x, surface.point.z)) this.scheduleFrame();
     if (surface) this.focusOn(surface.point);
     const coord = surface?.coord ?? null;
     if (this.overlays.setHovered(coord)) this.scheduleFrame();
@@ -674,7 +678,9 @@ class IntegratedThreeBattle {
     if (controlsChanged) {
       const point = this.focusPointer
         ? this.picker.worldPointAt(this.focusPointer.x, this.focusPointer.y, this.terrain.interactiveMeshes) : null;
-      this.focusOn(point ?? this.cameraRig.controls.target.clone());
+      const focus = point ?? this.cameraRig.controls.target.clone();
+      this.overlays.setGridFocus(focus.x, focus.z);
+      this.focusOn(focus);
     }
     this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, this.targetFocusDistance, focusSmoothingAlpha(delta, 180));
     const cameraDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);

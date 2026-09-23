@@ -171,12 +171,13 @@ test("the complete hex grid is visible by default and can be hidden", () => {
   const terrain = new GeneratedTerrain(snapshot({ fogOfWar: false, objectiveHexes: [] }));
   const overlays = new TacticalOverlays(terrain, terrain.layout);
   overlays.update(snapshot({ fogOfWar: false, objectiveHexes: [] }));
-  const rings = [overlays.group.children[0] as THREE.Mesh, overlays.group.children[3] as THREE.Mesh];
-  assert.ok(rings.every(ring => ring.visible));
+  const alphas = overlays.grid.geometry.getAttribute("gridColor");
+  const everyOutlineDrawn = (): boolean => Array.from({ length: alphas.count }, (_, index) => alphas.getW(index)).every(alpha => alpha > 0);
+  assert.ok(overlays.grid.visible && everyOutlineDrawn());
   overlays.setGridVisible(false);
-  assert.ok(rings.every(ring => !ring.visible));
+  assert.equal(overlays.grid.visible, false);
   overlays.setGridVisible(true);
-  assert.ok(rings.every(ring => ring.visible));
+  assert.ok(overlays.grid.visible && everyOutlineDrawn());
   terrain.dispose();
 });
 

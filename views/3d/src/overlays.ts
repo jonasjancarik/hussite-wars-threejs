@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { MeshBasicNodeMaterial } from "three/webgpu";
+import { attribute, float, mix, positionWorld, smoothstep, uniform, vec2 } from "three/tsl";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, HexCoord, TerrainSurface } from "./types.ts";
 
@@ -66,6 +68,17 @@ export const FILL_CENTRE_ALPHA = 0.3;
 /** Attackable enemies pulse slowly between these fractions of their fill. */
 const PULSE_MIN = 0.55;
 const PULSE_PERIOD_MS = 1400;
+/**
+ * The plain grid is full strength within this many hex radii of the cursor
+ * (or the camera target without one) and eases to GRID_FAR_FACTOR of it by
+ * GRID_FADE_OUTER. Highlights never fade.
+ */
+export const GRID_FADE_INNER = 4.5;
+export const GRID_FADE_OUTER = 11;
+export const GRID_FAR_FACTOR = 0.3;
+
+type TslFactory = (...arguments_: any[]) => any;
+const tsl = (factory: unknown): TslFactory => factory as TslFactory;
 
 function fogOverlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heightAt">,
   layout: HexLayout): THREE.BufferGeometry {
@@ -82,11 +95,18 @@ function fogOverlayGeometry(coord: HexCoord, terrain: Pick<TerrainSurface, "heig
   return geometry;
 }
 
+const GRID_SCRATCH = new THREE.Color();
+
 export class TacticalOverlays {
   public readonly group = new THREE.Group();
   private readonly rings = new Map<string, THREE.Mesh>();
   private readonly fills = new Map<string, THREE.Mesh>();
   private readonly fogCovers = new Map<string, THREE.Mesh>();
+  /** Every plain hex outline in one draw, faded around the grid focus. */
+  public readonly grid: THREE.Mesh;
+  private readonly gridColors: THREE.BufferAttribute;
+  private readonly gridRanges = new Map<string, { start: number; count: number }>();
+  private readonly gridFocus = tsl(uniform)(new THREE.Vector2(Infinity, Infinity));
   private gridVisible = true;
   private hovered: HexCoord | null = null;
   private pulsing: Array<{ material: THREE.MeshBasicMaterial; opacity: number }> = [];
@@ -100,6 +120,7 @@ export class TacticalOverlays {
     this.winter = terrain.environmentPlan?.winter ?? false;
     this.shadeRemembered = !terrain.shadesRememberedHexes;
     this.group.name = "Tactical overlays";
+    const gridPositions: number[] = [], gridIndices: number[] = [];
     for (let col = 0; col < layout.cols; col += 1) {
       for (let row = 0; row < layout.rows; row += 1) {
         const material = new THREE.MeshBasicMaterial({
@@ -117,6 +138,11 @@ export class TacticalOverlays {
         });
         const ring = new THREE.Mesh(overlayGeometry({ col, row }, terrain, false, layout, 1, this.winter ? .09 : .055), material);
         ring.renderOrder = 10;
+        ring.visible = false;
+        const start = gridPositions.length / 3;
+        gridPositions.push(...(ring.geometry.getAttribute("position").array as Float32Array));
+        for (const index of ring.geometry.getIndex()!.array) gridIndices.push(start + index);
+        this.gridRanges.set(`${col},${row}`, { start, count: ring.geometry.getAttribute("position").count });
         this.rings.set(`${col},${row}`, ring);
         this.group.add(ring);
         const fillMaterial = material.clone();
@@ -137,6 +163,43 @@ export class TacticalOverlays {
         this.group.add(fogCover);
       }
     }
+    const gridGeometry = new THREE.BufferGeometry();
+    gridGeometry.setAttribute("position", new THREE.Float32BufferAttribute(gridPositions, 3));
+    this.gridColors = new THREE.Float32BufferAttribute(new Float32Array(gridPositions.length / 3 * 4), 4);
+    gridGeometry.setAttribute("gridColor", this.gridColors);
+    gridGeometry.setIndex(gridIndices);
+    this.grid = new THREE.Mesh(gridGeometry, this.createGridMaterial(layout.radius));
+    this.grid.name = "Hex grid";
+    this.grid.renderOrder = 8;
+    this.grid.frustumCulled = false;
+    this.group.add(this.grid);
+    this.refresh();
+  }
+
+  /**
+   * World point the plain grid is brightest around. Returns whether it moved
+   * enough to need a new frame.
+   */
+  public setGridFocus(x: number, z: number): boolean {
+    const focus = this.gridFocus.value as THREE.Vector2;
+    if (Math.abs(focus.x - x) < 0.02 && Math.abs(focus.y - z) < 0.02) return false;
+    focus.set(x, z);
+    return this.gridVisible;
+  }
+
+  private createGridMaterial(radius: number): THREE.Material {
+    const material = new MeshBasicNodeMaterial({
+      transparent: true, depthWrite: false, depthTest: true,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+      toneMapped: false, fog: true,
+    });
+    const color = tsl(attribute)("gridColor", "vec4");
+    const distance = (positionWorld as any).xz.distance(tsl(vec2)(this.gridFocus));
+    const near = tsl(smoothstep)(radius * GRID_FADE_OUTER, radius * GRID_FADE_INNER, distance);
+    material.colorNode = color.rgb;
+    material.opacityNode = color.a.mul(tsl(mix)(tsl(float)(GRID_FAR_FACTOR), 1, near));
+    material.name = "Hex grid fading from the cursor";
+    return material;
   }
 
   public setGridVisible(visible: boolean): void { this.gridVisible = visible; this.refresh(); }
@@ -158,7 +221,7 @@ export class TacticalOverlays {
   }
 
   public dispose(): void {
-    for (const mesh of [...this.rings.values(), ...this.fills.values(), ...this.fogCovers.values()]) {
+    for (const mesh of [...this.rings.values(), ...this.fills.values(), ...this.fogCovers.values(), this.grid]) {
       mesh.geometry.dispose();
       (mesh.material as THREE.Material).dispose();
     }
@@ -181,7 +244,8 @@ export class TacticalOverlays {
     for (const [coordKey, ring] of this.rings) {
       const material = ring.material as THREE.MeshBasicMaterial;
       const paleGround = this.winter && !["mud", "swamp", "marsh", "road", "road2", "dam", "trenches"].includes(terrains.get(coordKey) ?? "plains");
-      let opacity = this.gridVisible ? (paleGround ? .65 : .30) : 0;
+      const gridOpacity = this.gridVisible ? (paleGround ? .65 : .30) : 0;
+      let opacity = gridOpacity;
       let fillOpacity = 0;
       let ringColor = paleGround ? 0x506277 : 0xb5ae91;
       let fillColor = ringColor;
@@ -210,9 +274,13 @@ export class TacticalOverlays {
       if (this.shadeRemembered && this.snapshot?.fogOfWar && fillOpacity === 0 && explored.has(coordKey) && !visible.has(coordKey)) {
         fillOpacity = 0.26; fillColor = 0x3a4048;
       }
+      // A plain outline is drawn by the shared, fading grid; anything
+      // highlighted keeps its own full-strength ring.
+      const highlighted = opacity !== gridOpacity || ringColor !== (paleGround ? 0x506277 : 0xb5ae91);
       material.color.setHex(ringColor);
       material.opacity = opacity;
-      ring.visible = opacity > 0;
+      ring.visible = highlighted && opacity > 0;
+      this.setGridColor(coordKey, ringColor, highlighted ? 0 : gridOpacity);
       const fill = this.fills.get(coordKey)!;
       const fillMaterial = fill.material as THREE.MeshBasicMaterial;
       fillMaterial.color.setHex(fillColor);
@@ -221,6 +289,16 @@ export class TacticalOverlays {
       const hoveredHere = this.hovered && coordKey === key(this.hovered);
       if (attacks.has(coordKey) && !hoveredHere) this.pulsing.push({ material: fillMaterial, opacity: fillOpacity });
       this.fogCovers.get(coordKey)!.visible = Boolean(this.snapshot?.fogOfWar && !explored.has(coordKey));
+    }
+    this.gridColors.needsUpdate = true;
+    this.grid.visible = this.gridVisible;
+  }
+
+  private setGridColor(coordKey: string, hex: number, alpha: number): void {
+    const range = this.gridRanges.get(coordKey)!;
+    const color = GRID_SCRATCH.setHex(hex);
+    for (let index = range.start; index < range.start + range.count; index += 1) {
+      this.gridColors.setXYZW(index, color.r, color.g, color.b, alpha);
     }
   }
 }
