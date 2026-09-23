@@ -15,7 +15,6 @@ import { BattleRenderPipeline } from "./render-pipeline.ts";
 import { AuthoredScenery } from "./scenery.ts";
 import { loadScenarioArt } from "./scenario-art.ts";
 import { SnapshotClient, waitForInitialSnapshot } from "./snapshot-client.ts";
-import { classifyWheel, WHEEL_GESTURE_GAP_MS, type WheelIntent } from "./wheel-intent.ts";
 import { BattlePaintedSky } from "./sky.ts";
 import { AuthoredTerrain } from "./terrain.ts";
 import type { BattleScenery, BattleSnapshot, BattleTerrain, CosmeticEvent, HexCoord, IntegratedRendererOptions, ScenarioArtManifest } from "./types.ts";
@@ -101,7 +100,6 @@ class IntegratedThreeBattle {
   private pulseTimer: number | null = null;
   private cameraTween: { from: CameraPose; to: CameraPose; elapsed: number; duration: number } | null = null;
   private readonly heldPanKeys = new Set<string>();
-  private wheelGesture: { intent: WheelIntent; at: number } | null = null;
   /** A right-button drag just panned; the context menu that follows it on Windows is not a cancel. */
   private suppressContext = false;
   private lastSelectedUnitId: number | null = null;
@@ -410,9 +408,6 @@ class IntegratedThreeBattle {
       else if (!this.suppressContext) this.options.onContext?.();
       this.suppressContext = false;
     }) as EventListener);
-    // Capture on the document runs before OrbitControls' own wheel zoom.
-    this.addListener(doc, "wheel", ((event: Event) => this.handleWheel(event as WheelEvent)) as EventListener,
-      { capture: true, passive: false });
     this.addListener(this.canvas, "pointerdown", ((raw: Event) => {
       if (!this.active) return;
       const event = raw as PointerEvent;
@@ -628,40 +623,6 @@ class IntegratedThreeBattle {
     else if (event.key === "Home") this.frameScene();
     else return;
     event.preventDefault();
-  }
-
-  /** Two-finger trackpad swipes pan; pinches and mouse wheels fall through to OrbitControls zoom. */
-  private handleWheel(event: WheelEvent): void {
-    if (!this.active || event.target !== this.canvas) return;
-    const now = event.timeStamp;
-    const previous = this.wheelGesture && now - this.wheelGesture.at < WHEEL_GESTURE_GAP_MS ? this.wheelGesture.intent : null;
-    const intent = classifyWheel(event as WheelEvent & { wheelDeltaY?: number }, event.ctrlKey ? null : previous);
-    // A pinch interleaves with a swipe only via ctrlKey; it must not reclassify the swipe.
-    if (!event.ctrlKey) this.wheelGesture = { intent, at: now };
-    if (intent !== "pan") return;
-    event.preventDefault();
-    event.stopPropagation();
-    this.panByPixels(event.deltaX, event.deltaY);
-  }
-
-  /** Move the view as if the map were dragged by (-dx, -dy) screen pixels. */
-  private panByPixels(dx: number, dy: number): void {
-    const camera = this.cameraRig.camera, controls = this.cameraRig.controls;
-    const offset = camera.position.clone().sub(controls.target);
-    const forward = offset.clone().negate().setY(0);
-    const distance = offset.length();
-    if (forward.lengthSq() < 1e-6 || distance < 1e-6) return;
-    forward.normalize();
-    const right = new THREE.Vector3(-forward.z, 0, forward.x);
-    // World units per pixel at the orbit target; on the tilted view a screen
-    // row spans more ground, so vertical motion is divided by the elevation sine.
-    const perPixel = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / Math.max(1, this.canvas.clientHeight);
-    const elevation = Math.max(0.35, offset.y / distance);
-    const move = right.multiplyScalar(dx * perPixel).addScaledVector(forward, -dy * perPixel / elevation);
-    controls.target.add(move);
-    camera.position.add(move);
-    this.cameraTween = null;
-    this.scheduleFrame();
   }
 
   /** Continuous keyboard panning relative to the current view bearing. */
