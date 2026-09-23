@@ -5,6 +5,7 @@ import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 import { visibleSnapshotUnits } from "./unit-visibility.ts";
 import { CasualtyFades } from "./casualties.ts";
 import { recipeSignature, unitRecipe } from "./unit-recipes.ts";
+import { commandAuraGeometry } from "./command-aura.ts";
 
 interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number;
@@ -22,6 +23,9 @@ const TEAM_MATERIAL_COLORS = {
   hussites: { team_cloth: 0x9b4f4f, team_paint: 0x7f3f3b },
   crusaders: { team_cloth: 0x587493, team_paint: 0x3f5872 },
 } as const;
+/** Command auras: warm gold for the Hussites, steel blue for the crusaders. */
+const AURA_COLORS = { hussites: 0xf3c26a, crusaders: 0x8dbdf0 } as const;
+interface CommandAura { group: THREE.Group; band: THREE.Mesh; curtain: THREE.Mesh; key: string }
 const TEAM_MATERIAL_NAMES = new Set(["team_cloth", "team_paint"]);
 
 type MovementSnapshot = NonNullable<BattleSnapshot["movement"]>;
@@ -78,8 +82,7 @@ export class UnitPresentation {
   private readonly ownedMaterials = new Set<THREE.Material>();
   private readonly seenAttackEvents = new Set<string>();
   private readonly attackFacing = new Map<number, { yaw: number; until: number }>();
-  private readonly commanderAuras = new Map<number, { group: THREE.Group; geometry: THREE.BufferGeometry;
-    material: THREE.MeshBasicMaterial; key: string }>();
+  private readonly commanderAuras = new Map<number, CommandAura>();
   private shadowsDirty = true;
   private readonly scratch = new THREE.Vector3();
 
@@ -206,11 +209,7 @@ export class UnitPresentation {
     }
     this.visuals.clear();
     this.hitTargets.length = 0;
-    for (const aura of this.commanderAuras.values()) {
-      this.group.remove(aura.group);
-      aura.geometry.dispose();
-      aura.material.dispose();
-    }
+    for (const aura of this.commanderAuras.values()) this.removeAura(aura);
     this.commanderAuras.clear();
     this.group.clear();
     for (const material of this.ownedMaterials) material.dispose();
@@ -224,13 +223,10 @@ export class UnitPresentation {
     const ids = new Set(commanders.map(unit => unit.id));
     for (const [id, aura] of this.commanderAuras) {
       if (ids.has(id)) continue;
-      this.group.remove(aura.group);
-      aura.geometry.dispose();
-      aura.material.dispose();
+      this.removeAura(aura);
       this.commanderAuras.delete(id);
     }
 
-    const visible = new Set(units.map(unit => unit.id));
     const movement = snapshot.movement;
     for (const commander of commanders) {
       let aura = this.commanderAuras.get(commander.id);
@@ -238,84 +234,56 @@ export class UnitPresentation {
         const group = new THREE.Group();
         group.name = `${commander.name} command aura`;
         const material = new THREE.MeshBasicMaterial({
-          color: 0x62b9ee,
+          color: AURA_COLORS[commander.faction],
+          vertexColors: true,
           transparent: true,
-          opacity: 0.78,
           depthWrite: false,
           depthTest: true,
           toneMapped: false,
           side: THREE.DoubleSide,
+          polygonOffset: true,
+          polygonOffsetFactor: -2,
+          polygonOffsetUnits: -2,
         });
-        const geometry = new THREE.BufferGeometry();
-        aura = { group, geometry, material, key: "" };
+        const band = new THREE.Mesh(new THREE.BufferGeometry(), material);
+        band.name = "Command aura ground band";
+        band.renderOrder = 8;
+        const curtain = new THREE.Mesh(new THREE.BufferGeometry(), material.clone());
+        curtain.name = "Command aura curtain";
+        curtain.renderOrder = 8;
+        for (const mesh of [band, curtain]) mesh.raycast = () => undefined;
+        group.add(band, curtain);
+        aura = { group, band, curtain, key: "" };
         this.commanderAuras.set(commander.id, aura);
         this.group.add(group);
       }
 
+      // The selected commander's aura stands out; the others stay a quiet hint.
+      const selected = snapshot.selectedUnitId === commander.id;
+      (aura.band.material as THREE.MeshBasicMaterial).opacity = selected ? 0.95 : 0.55;
+      (aura.curtain.material as THREE.MeshBasicMaterial).opacity = selected ? 0.5 : 0.16;
+
       const moving = movement?.unitId === commander.id && this.movementPosition ? this.movementPosition(movement) : null;
       const range = commander.commanderAbilities?.auraRange ?? 0;
       const commanderCenter = this.layout.center(commander.col, commander.row);
-      const offsetX = moving ? moving.x - commanderCenter.x : 0;
-      const offsetZ = moving ? moving.z - commanderCenter.z : 0;
-      aura.group.visible = range > 0;
-      aura.material.opacity = visible.has(commander.id) ? 0.78 : 0.45;
-      // The outline only depends on the commander's (moving) position and range.
-      const key = `${commander.col},${commander.row},${range},${offsetX.toFixed(3)},${offsetZ.toFixed(3)}`;
+      const offset = moving ? { x: moving.x - commanderCenter.x, z: moving.z - commanderCenter.z } : { x: 0, z: 0 };
+      // The shape only depends on the commander's (moving) position and range.
+      const key = `${commander.col},${commander.row},${range},${offset.x.toFixed(3)},${offset.z.toFixed(3)}`;
       if (key === aura.key) continue;
       aura.key = key;
-      const cells: Array<{ col: number; row: number }> = [];
-      for (let col = Math.max(0, commander.col - range); col <= Math.min(this.layout.cols - 1, commander.col + range); col += 1) {
-        for (let row = Math.max(0, commander.row - range - 1); row <= Math.min(this.layout.rows - 1, commander.row + range + 1); row += 1) {
-          const dq = col - commander.col;
-          const dr = row - Math.floor(col / 2) - (commander.row - Math.floor(commander.col / 2));
-          const distance = Math.max(Math.abs(dq), Math.abs(dr), Math.abs(dq + dr));
-          if (distance > range) continue;
-          cells.push({ col, row });
-        }
-      }
-      const edgeSegments = new Map<string, { a: { x: number; z: number }; b: { x: number; z: number } }>();
-      for (const cell of cells) {
-        const center = this.layout.center(cell.col, cell.row);
-        const vertices = Array.from({ length: 6 }, (_, index) => {
-          const angle = index * Math.PI / 3;
-          return { x: center.x + Math.cos(angle) * this.layout.radius, z: center.z + Math.sin(angle) * this.layout.radius };
-        });
-        for (let index = 0; index < vertices.length; index += 1) {
-          const a = vertices[index]!;
-          const b = vertices[(index + 1) % vertices.length]!;
-          const midX = (a.x + b.x) * 0.5;
-          const midZ = (a.z + b.z) * 0.5;
-          const neighbour = this.layout.coordAt(midX + (midX - center.x) * 0.015, midZ + (midZ - center.z) * 0.015);
-          if (neighbour) {
-            const neighbourQ = neighbour.col - commander.col;
-            const neighbourR = neighbour.row - Math.floor(neighbour.col / 2)
-              - (commander.row - Math.floor(commander.col / 2));
-            if (Math.max(Math.abs(neighbourQ), Math.abs(neighbourR), Math.abs(neighbourQ + neighbourR)) <= range) continue;
-          }
-          const first = `${a.x.toFixed(3)},${a.z.toFixed(3)}`;
-          const second = `${b.x.toFixed(3)},${b.z.toFixed(3)}`;
-          edgeSegments.set(first < second ? `${first}|${second}` : `${second}|${first}`, { a, b });
-        }
-      }
-      const positions: number[] = [];
-      for (const { a, b } of edgeSegments.values()) {
-        for (const point of [a, b]) {
-          const ground = Math.max(this.terrain.renderedHeightAt?.(point.x, point.z) ?? this.terrain.heightAt(point.x, point.z), -0.52);
-          positions.push(point.x + offsetX, ground + 0.12, point.z + offsetZ);
-        }
-      }
-      aura.geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-      aura.geometry.computeBoundingSphere();
-      const auraMesh = aura.group.children[0] as THREE.LineSegments | undefined;
-      if (auraMesh) {
-        auraMesh.geometry = aura.geometry;
-      } else {
-        const line = new THREE.LineSegments(aura.geometry, aura.material);
-        line.name = "Outer command range hex edges";
-        line.renderOrder = 8;
-        aura.group.add(line);
-      }
-      aura.group.position.set(0, 0, 0);
+      const geometry = commandAuraGeometry(this.layout, this.terrain, commander, range, offset);
+      aura.band.geometry.dispose();
+      aura.curtain.geometry.dispose();
+      aura.band.geometry = geometry.band;
+      aura.curtain.geometry = geometry.curtain;
+    }
+  }
+
+  private removeAura(aura: CommandAura): void {
+    this.group.remove(aura.group);
+    for (const mesh of [aura.band, aura.curtain]) {
+      mesh.geometry.dispose();
+      (mesh.material as THREE.Material).dispose();
     }
   }
 

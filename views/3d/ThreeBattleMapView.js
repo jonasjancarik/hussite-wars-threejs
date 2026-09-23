@@ -210,6 +210,8 @@ class ThreeBattleMapView {
                 formationClosed: unit.formationClosed, marching: unit.marching,
                 dismounted: Boolean(unit.dismounted),
                 special: unit.special,
+                commanderAbilities: unit.isCommander()
+                    ? { auraRange: unit.getCommanderAbilities()?.auraRange ?? 0 } : null,
                 // Visible units only: this contains no extra information about
                 // enemies hidden by fog and gives 3D the same token facts as 2D.
                 presentation: WoodcutRenderer.unitPresentation(unit)
