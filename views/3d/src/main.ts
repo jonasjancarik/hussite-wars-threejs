@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
-import { createBattleCamera } from "./camera.ts";
+import { applyPose, clampTarget, createBattleCamera, currentPose, fitRadius, interpolatePose, OVERVIEW_DIRECTION,
+  snappedBearing, type CameraPose } from "./camera.ts";
 import { BattlefieldEffects, focusSmoothingAlpha } from "./effects.ts";
 import { GeneratedScenery } from "./generated-scenery.ts";
 import { GeneratedTerrain } from "./generated-terrain.ts";
@@ -28,6 +29,10 @@ const notifyLoaded = (): void => { for (const listener of loadListeners) listene
 THREE.DefaultLoadingManager.onProgress = notifyLoaded;
 THREE.DefaultLoadingManager.onLoad = notifyLoaded;
 const DIAGNOSTIC_CAPTURE_FRAMES = 240;
+const PAN_KEYS: Record<string, "up" | "down" | "left" | "right"> = {
+  KeyW: "up", KeyS: "down", KeyA: "left", KeyD: "right",
+  ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+};
 
 class IntegratedThreeBattle {
   private readonly scene = new THREE.Scene();
@@ -71,6 +76,9 @@ class IntegratedThreeBattle {
   private captureFramesRemaining = 0;
   private resumingFromIdle = true;
   private sceneryShadowKey = "";
+  private cameraTween: { from: CameraPose; to: CameraPose; elapsed: number; duration: number } | null = null;
+  private readonly heldPanKeys = new Set<string>();
+  private lastSelectedUnitId: number | null = null;
   private readonly markerScratch = new THREE.Vector3();
   /** Frames wait for the GPU backend; resize and load callbacks can arrive first. */
   private ready = false;
@@ -132,6 +140,9 @@ class IntegratedThreeBattle {
       await Promise.all([battle.sky.load(), battle.scenery.build()]);
       await battle.applySnapshot(options.snapshot);
       battle.lighting.invalidateShadows();
+      // Open on the armies and objectives rather than an empty corner of the map.
+      applyPose(battle.cameraRig.camera, battle.cameraRig.controls, battle.forcesPose());
+      battle.settleCamera();
       battle.ready = true;
       battle.scheduleFrame();
       return battle;
@@ -158,6 +169,7 @@ class IntegratedThreeBattle {
     await this.units.update(snapshot);
     if (this.disposed || revision !== this.snapshotRevision) return;
     this.effects.setPaused(snapshot.paused || !this.active);
+    this.followSelection(snapshot);
     for (const event of snapshot.events) {
       if (this.consumedEvents.has(event.id)) continue;
       this.consumedEvents.add(event.id);
@@ -193,6 +205,7 @@ class IntegratedThreeBattle {
     this.banners.setActive(active);
     if (!active) this.units.casualties.clear();
     this.effects.setPaused(!active);
+    if (!active) { this.heldPanKeys.clear(); this.cameraTween = null; }
     if (!active && this.frameRequest !== null) {
       cancelAnimationFrame(this.frameRequest);
       this.frameRequest = null;
@@ -203,10 +216,10 @@ class IntegratedThreeBattle {
     }
   }
 
+  /** Frame the visible armies and objectives (the 3D "centre on forces"). */
   public frameScene(): void {
-    this.cameraRig.frameScene();
     this.focusPointer = null;
-    this.focusOn(this.cameraRig.controls.target.clone());
+    this.startCameraTween(this.forcesPose(), 650);
   }
 
   public setGridVisible(visible: boolean): void { this.overlays.setGridVisible(visible); this.scheduleFrame(); }
@@ -223,23 +236,24 @@ class IntegratedThreeBattle {
 
   public focusHex(col: number, row: number): void {
     const center = this.terrain.layout.center(col, row);
-    const next = new THREE.Vector3(center.x, this.terrain.heightAt(center.x, center.z), center.z);
-    const offset = this.cameraRig.camera.position.clone().sub(this.cameraRig.controls.target);
-    this.cameraRig.controls.target.copy(next);
-    this.cameraRig.camera.position.copy(next).add(offset);
-    this.cameraRig.controls.update();
-    this.focusOn(next.clone());
+    const base = this.cameraTween?.to ?? currentPose(this.cameraRig.camera, this.cameraRig.controls.target);
+    this.startCameraTween({ ...base, target: new THREE.Vector3(center.x, this.terrain.heightAt(center.x, center.z), center.z) }, 520);
   }
 
   public zoomBy(factor: number): void {
     if (this.disposed || !Number.isFinite(factor) || factor <= 0) return;
-    const offset = this.cameraRig.camera.position.clone().sub(this.cameraRig.controls.target);
-    const distance = THREE.MathUtils.clamp(offset.length() / factor,
+    // Chain rapid clicks from the pending destination rather than the current frame.
+    const base = this.cameraTween?.to ?? currentPose(this.cameraRig.camera, this.cameraRig.controls.target);
+    const radius = THREE.MathUtils.clamp(base.radius / factor,
       this.cameraRig.controls.minDistance, this.cameraRig.controls.maxDistance);
-    offset.setLength(distance);
-    this.cameraRig.camera.position.copy(this.cameraRig.controls.target).add(offset);
-    this.cameraRig.controls.update();
-    this.reportZoom();
+    this.startCameraTween({ ...base, radius }, 260);
+  }
+
+  /** Rotate the view to the next of the six hex-aligned bearings. */
+  public rotateBy(direction: 1 | -1): void {
+    if (this.disposed) return;
+    const base = this.cameraTween?.to ?? currentPose(this.cameraRig.camera, this.cameraRig.controls.target);
+    this.startCameraTween({ ...base, theta: snappedBearing(base.theta, direction) }, 420);
   }
 
   public resize(): void {
@@ -323,7 +337,11 @@ class IntegratedThreeBattle {
     this.cameraRig.controls.addEventListener("change", () => { this.reportZoom(); this.scheduleFrame(); });
     // Gesture handlers call controls.update(), which emits "change"; damping
     // then keeps the loop awake until the camera settles.
-    this.cameraRig.controls.addEventListener("start", this.requestFrame);
+    this.cameraRig.controls.addEventListener("start", () => { this.cameraTween = null; this.scheduleFrame(); });
+    const doc = this.canvas.ownerDocument;
+    this.addListener(doc, "keydown", (event => this.handleKey(event as KeyboardEvent, true)) as EventListener);
+    this.addListener(doc, "keyup", (event => this.handleKey(event as KeyboardEvent, false)) as EventListener);
+    this.addListener(window, "blur", (() => this.heldPanKeys.clear()) as EventListener);
     this.addListener(this.canvas, "contextmenu", ((event: Event) => {
       event.preventDefault(); if (this.active) this.options.onContext?.();
     }) as EventListener);
@@ -376,6 +394,121 @@ class IntegratedThreeBattle {
     this.effects.burst(new THREE.Vector3(center.x, this.terrain.heightAt(center.x, center.z), center.z), event.type);
   }
 
+  private startCameraTween(to: CameraPose, duration: number): void {
+    if (this.disposed) return;
+    to = { ...to, target: to.target.clone(),
+      phi: THREE.MathUtils.clamp(to.phi, this.cameraRig.controls.minPolarAngle, this.cameraRig.controls.maxPolarAngle),
+      radius: THREE.MathUtils.clamp(to.radius, this.cameraRig.controls.minDistance, this.cameraRig.controls.maxDistance) };
+    if (this.reducedMotion.matches) {
+      this.cameraTween = null;
+      applyPose(this.cameraRig.camera, this.cameraRig.controls, to);
+      this.settleCamera();
+      this.scheduleFrame();
+      return;
+    }
+    this.cameraTween = { from: currentPose(this.cameraRig.camera, this.cameraRig.controls.target), to, elapsed: 0, duration };
+    this.scheduleFrame();
+  }
+
+  /** Apply a directly-set pose without damping residue, keeping it over the map. */
+  private settleCamera(): void {
+    const controls = this.cameraRig.controls;
+    clampTarget(controls, this.cameraRig.camera, this.terrain.bounds);
+    const damping = controls.enableDamping;
+    controls.enableDamping = false;
+    controls.update();
+    controls.enableDamping = damping;
+    this.reportZoom();
+  }
+
+  /** Visible formations and objective hexes, seen from the overview bearing and pitch. */
+  private forcesPose(): CameraPose {
+    const snapshot = this.options.snapshot;
+    const visible = new Set(snapshot.visibleHexes);
+    const points = [
+      ...snapshot.units.filter(unit => unit.health > 0 && (!snapshot.fogOfWar || unit.faction === snapshot.faction
+        || visible.has(`${unit.col},${unit.row}`))),
+      ...(snapshot.objectiveHexes ?? []),
+    ].map(coord => this.terrain.layout.center(coord.col, coord.row));
+    const overview = new THREE.Spherical().setFromVector3(OVERVIEW_DIRECTION);
+    if (!points.length) {
+      return { target: new THREE.Vector3(0, 1.1, 0.5), radius: this.openingDistance, phi: overview.phi, theta: overview.theta };
+    }
+    const minX = Math.min(...points.map(point => point.x)), maxX = Math.max(...points.map(point => point.x));
+    const minZ = Math.min(...points.map(point => point.z)), maxZ = Math.max(...points.map(point => point.z));
+    const target = new THREE.Vector3((minX + maxX) / 2, 0, (minZ + maxZ) / 2);
+    target.y = this.terrain.heightAt(target.x, target.z);
+    // Each hex contributes its centre plus a ring of half-hex margin, so edge
+    // formations and their banners are not cut by the frame.
+    const margin = this.terrain.layout.radius;
+    const ground = points.flatMap(point => [[0, 0], [margin, 0], [-margin, 0], [0, margin], [0, -margin]].map(([dx, dz]) =>
+      new THREE.Vector3(point.x + dx!, this.terrain.heightAt(point.x, point.z) + 2.5, point.z + dz!)));
+    const pose = { target, phi: overview.phi, theta: overview.theta };
+    const radius = fitRadius(ground, pose, this.cameraRig.camera, this.cameraRig.controls.minDistance * 1.2,
+      Math.min(this.cameraRig.controls.maxDistance, this.openingDistance));
+    return { ...pose, radius };
+  }
+
+  /**
+   * A newly selected own formation that sits off-screen (e.g. picked from the
+   * army list or with Tab) is brought into view. On-screen picks never move
+   * the camera, so clicking on the map stays calm.
+   */
+  private followSelection(snapshot: BattleSnapshot): void {
+    const selectedId = snapshot.selectedUnitId;
+    if (selectedId === this.lastSelectedUnitId) return;
+    this.lastSelectedUnitId = selectedId;
+    if (selectedId === null || snapshot.aiRunning || !this.ready) return;
+    const unit = snapshot.units.find(candidate => candidate.id === selectedId);
+    if (!unit || unit.faction !== snapshot.faction) return;
+    const center = this.terrain.layout.center(unit.col, unit.row);
+    const ndc = new THREE.Vector3(center.x, this.terrain.heightAt(center.x, center.z), center.z).project(this.cameraRig.camera);
+    // The top of the view is covered by the map toolbar, so it counts as off-screen sooner.
+    if (ndc.z > 1 || Math.abs(ndc.x) > 0.82 || ndc.y > 0.7 || ndc.y < -0.85) this.focusHex(unit.col, unit.row);
+  }
+
+  private handleKey(event: KeyboardEvent, down: boolean): void {
+    if (!this.active || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest?.("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return;
+    const pan = PAN_KEYS[event.code] ?? PAN_KEYS[event.key];
+    if (pan) {
+      if (down) this.heldPanKeys.add(pan); else this.heldPanKeys.delete(pan);
+      if (event.key.startsWith("Arrow")) event.preventDefault();
+      if (down) { this.cameraTween = null; this.scheduleFrame(); }
+      return;
+    }
+    if (!down || event.repeat) return;
+    if (event.code === "KeyQ") this.rotateBy(-1);
+    else if (event.code === "KeyE") this.rotateBy(1);
+    else if (event.key === "+" || event.key === "=") this.zoomBy(1.25);
+    else if (event.key === "-" || event.key === "_") this.zoomBy(0.8);
+    else if (event.key === "Home") this.frameScene();
+    else return;
+    event.preventDefault();
+  }
+
+  /** Continuous keyboard panning relative to the current view bearing. */
+  private panFromKeys(deltaMs: number): boolean {
+    if (!this.heldPanKeys.size) return false;
+    const camera = this.cameraRig.camera, controls = this.cameraRig.controls;
+    const forward = controls.target.clone().sub(camera.position).setY(0);
+    if (forward.lengthSq() < 1e-6) return false;
+    forward.normalize();
+    const right = new THREE.Vector3(-forward.z, 0, forward.x);
+    const move = new THREE.Vector3();
+    if (this.heldPanKeys.has("up")) move.add(forward);
+    if (this.heldPanKeys.has("down")) move.sub(forward);
+    if (this.heldPanKeys.has("right")) move.add(right);
+    if (this.heldPanKeys.has("left")) move.sub(right);
+    if (move.lengthSq() === 0) return false;
+    // Pan speed scales with zoom: about 60% of the view distance per second.
+    move.normalize().multiplyScalar(camera.position.distanceTo(controls.target) * 0.6 * deltaMs / 1000);
+    controls.target.add(move);
+    camera.position.add(move);
+    return true;
+  }
+
   private reportZoom(): void {
     const distance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);
     this.options.onZoom?.(Math.round(this.openingDistance / Math.max(distance, 0.01) * 100));
@@ -413,7 +546,15 @@ class IntegratedThreeBattle {
     this.lastFrame = now;
     this.frameCount += 1;
     const renderStartedAt = performance.now();
-    const controlsChanged = this.cameraRig.controls.update();
+    const tween = this.cameraTween;
+    if (tween) {
+      tween.elapsed += delta;
+      applyPose(this.cameraRig.camera, this.cameraRig.controls, interpolatePose(tween.from, tween.to, tween.elapsed / tween.duration));
+      if (tween.elapsed >= tween.duration) this.cameraTween = null;
+    }
+    const panning = this.panFromKeys(delta);
+    clampTarget(this.cameraRig.controls, this.cameraRig.camera, this.terrain.bounds);
+    const controlsChanged = this.cameraRig.controls.update() || Boolean(tween) || panning;
     if (controlsChanged) {
       const point = this.focusPointer
         ? this.picker.worldPointAt(this.focusPointer.x, this.focusPointer.y, this.terrain.interactiveMeshes) : null;
@@ -460,7 +601,7 @@ class IntegratedThreeBattle {
     if (this.frameCount % 120 === 0) this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
     if (this.captureFramesRemaining > 0) this.captureFramesRemaining -= 1;
     const paused = this.options.snapshot.paused;
-    const settling = controlsChanged
+    const settling = controlsChanged || this.cameraTween !== null || this.heldPanKeys.size > 0
       || Math.abs(this.focusDistance - this.targetFocusDistance) > 0.01
       || Math.abs(this.focusStrength - desiredFocusStrength) > 0.0005
       || turning
