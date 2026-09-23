@@ -24,7 +24,7 @@ import { WagonConnections } from "./wagon-connections.ts";
 import { atmosphereProfile, AtmosphereTransition } from "./atmosphere.ts";
 import { BattleWeather } from "./weather.ts";
 import { ApplyingNote } from "./applying-note.ts";
-import { AutoQualityGovernor, QUALITY_TIERS, type QualityLevel, type QualityTier } from "./quality.ts";
+import { AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, QUALITY_TIERS, type QualityLevel, type QualityTier } from "./quality.ts";
 
 // Textures stream in after the first frame. With on-demand rendering every
 // live battle must redraw once they arrive, so share the default manager.
@@ -247,6 +247,7 @@ class IntegratedThreeBattle {
     }
     if (active) {
       this.resumingFromIdle = true;
+      this.qualityGovernor.hold(performance.now(), AUTO_QUALITY_WARMUP_MS);
       this.resize(); this.scheduleFrame();
     }
   }
@@ -266,6 +267,7 @@ class IntegratedThreeBattle {
     if (this.disposed || !["auto", "high", "medium", "low"].includes(level)) return;
     this.qualityLevel = level;
     this.qualityGovernor.reset();
+    this.qualityGovernor.hold(performance.now(), AUTO_QUALITY_WARMUP_MS);
     this.applyQualityTier(level === "auto" ? this.qualityGovernor.tier : level);
   }
 
@@ -741,7 +743,7 @@ class IntegratedThreeBattle {
     // Auto quality judges only consecutive display-rate frames (drags, zooms,
     // effects); idle wake-ups and ~24 fps ambient frames say nothing about cost.
     if (this.qualityLevel === "auto" && !resumed && this.performanceWarm) {
-      const lowered = this.qualityGovernor.record(frameMs);
+      const lowered = this.qualityGovernor.record(frameMs, now);
       if (lowered) {
         console.info(`[Hussite 3D] frames over budget; graphics quality lowered to ${lowered}`);
         this.applyQualityTier(lowered);
@@ -752,6 +754,7 @@ class IntegratedThreeBattle {
         rendererFinishedAt - rendererStartedAt, rendererFinishedAt - renderStartedAt);
     } else {
       this.performanceWarm = true;
+      this.qualityGovernor.hold(now, AUTO_QUALITY_WARMUP_MS);
       this.performanceTracker.reset();
       this.performanceTracker.skipNextFrameInterval();
     }
