@@ -30858,61 +30858,114 @@ var SB = class {
 		u.name = `${e.id} gate ${t.id}`;
 		let d = this.gateOwner(e, t);
 		u.userData.sceneryCell = d;
-		let f = [], p = [], m = [], h = Array.from({ length: 9 }, (e, n) => dB(t.a, t.b, n / 8)), g = Math.max(...h.flatMap((e) => [
+		let f = [], p = [], m = [];
+		if (e.gateStyle === "posts") {
+			this.addGateway(e, t, n, f, p, m), this.finishGate(u, f, p, m, i, a, o, r, d);
+			return;
+		}
+		let h = Array.from({ length: 9 }, (e, n) => dB(t.a, t.b, n / 8)), g = Math.max(...h.flatMap((e) => [
 			-3.4,
 			0,
 			3.4
 		].map((t) => pB(n, {
 			x: e.x + l.x * t,
 			z: e.z + l.z * t
-		})))) + t.clearance, _ = uB(t.a, t.b), v = t.a, y = t.b, b = t.pierLength ?? .18 * 1.45;
-		vB(f, n, {
-			x: v.x - c.x * b / 2,
-			z: v.z - c.z * b / 2
-		}, c, l, b / 2, (t.depth ?? .18) / 2, g + .12), vB(f, n, {
-			x: y.x + c.x * b / 2,
-			z: y.z + c.z * b / 2
-		}, c, l, b / 2, (t.depth ?? .18) / 2, g + .12);
-		let x = s / 2, S = x + .16, C = .9600000000000001, w = Math.max(t.depth ?? .18, 1.3) / 2, ee = Math.max(6, Math.ceil(s * 2));
-		for (let e = 0; e < ee; e += 1) {
-			let t = Math.PI - Math.PI * e / ee, n = Math.PI - Math.PI * (e + 1) / ee, r = (e, t, n) => new k(_.x + c.x * Math.cos(t) * e + l.x * n, g + Math.sin(t) * (e === x ? .8 : C), _.z + c.z * Math.cos(t) * e + l.z * n);
-			for (let e of [-Vz / 2, Vz / 2]) hB(f, r(x, t, e), r(x, n, e), r(S, n, e), r(S, t, e));
-			let i = r(x, t, -Vz / 2), a = r(x, n, -Vz / 2), o = r(x, n, Vz / 2);
-			hB(f, i, r(x, t, Vz / 2), o, a), hB(f, r(S, t, -Vz / 2), r(S, n, -Vz / 2), r(S, n, Vz / 2), r(S, t, Vz / 2));
-			for (let e of [-w, w]) {
-				let i = r(x, t, e), a = r(x, n, e), o = a.clone();
-				o.y = g + C;
-				let s = i.clone();
-				s.y = g + C, hB(f, i, a, o, s);
-			}
-			hB(f, r(x, t, -w), r(x, t, w), r(x, n, w), r(x, n, -w));
+		})))) + t.clearance, _ = uB(t.a, t.b), v = t.a, y = t.b, b = t.pierLength ?? .18 * 1.45, x = (t.depth ?? .18) / 2, S = Math.max(x, .3), C = s / 2, w = .9600000000000001, ee = g + w, te = ee + .5;
+		for (let [e, t] of [[v, -1], [y, 1]]) {
+			let r = {
+				x: e.x + t * c.x * b / 2,
+				z: e.z + t * c.z * b / 2
+			};
+			vB(f, n, r, c, l, b / 2, x, g), gB(f, r, c, l, b / 2, S, g, te);
 		}
-		let te = g + C;
-		gB(f, _, c, l, s / 2 + .22, w, te, te + .65), gB(p, _, c, l, s / 2 + .12, w, te + .65, te + .83);
-		let ne = te + 1.45, re = (e, t, n) => new k(_.x + c.x * e + l.x * t, n, _.z + c.z * e + l.z * t), ie = re(-s / 2 - .16, -w - .14, te + .83), ae = re(s / 2 + .16, -w - .14, te + .83), oe = re(-s / 2 - .16, w + .14, te + .83), se = re(s / 2 + .16, w + .14, te + .83), ce = re(0, -w - .14, ne), le = re(0, w + .14, ne);
-		mB(m, ie, ae, ce), mB(m, oe, le, se), hB(m, ie, ce, le, oe), hB(m, ae, se, le, ce);
-		for (let [e, t, n] of [
+		let ne = Math.max(6, Math.ceil(s * 2));
+		for (let e = 0; e < ne; e += 1) {
+			let t = Math.PI - Math.PI * e / ne, n = Math.PI - Math.PI * (e + 1) / ne, r = (e, t, n) => new k(_.x + c.x * Math.cos(t) * e + l.x * n, g + Math.sin(t) * (e === C ? .8 : w), _.z + c.z * Math.cos(t) * e + l.z * n);
+			hB(f, r(C, t, -S), r(C, t, S), r(C, n, S), r(C, n, -S));
+			for (let e of [-S, S]) {
+				let i = r(C, t, e), a = r(C, n, e), o = a.clone();
+				o.y = ee;
+				let s = i.clone();
+				s.y = ee, hB(f, i, a, o, s);
+			}
+		}
+		gB(f, _, c, l, s / 2 + b, S, ee, te);
+		let re = s + b * 2;
+		for (let e = .26; e < re - .15; e += .62) gB(f, {
+			x: _.x + c.x * (e - re / 2),
+			z: _.z + c.z * (e - re / 2)
+		}, c, l, .15, S, te, te + .28);
+		this.finishGate(u, f, p, m, i, a, o, r, d);
+	}
+	addGateway(e, t, n, r, i, a) {
+		let o = lB(t.a, t.b), s = t.pierLength ?? .18 * 1.45, c = Math.max((t.depth ?? .18) / 2, Vz / 2 + .06), l = s + .3, u = {
+			x: t.outside.x - t.centre.x,
+			z: t.outside.z - t.centre.z
+		}, d = {
+			x: t.b.x - t.a.x,
+			z: t.b.z - t.a.z
+		};
+		for (let [s, f] of [[t.a, -1], [t.b, 1]]) {
+			let t = e.segments.map((e) => lB(e.a, s) < .08 ? {
+				x: e.b.x - e.a.x,
+				z: e.b.z - e.a.z
+			} : lB(e.b, s) < .08 ? {
+				x: e.a.x - e.b.x,
+				z: e.a.z - e.b.z
+			} : null).find((e) => e !== null) ?? {
+				x: d.x * f,
+				z: d.z * f
+			}, p = Math.hypot(t.x, t.z) || 1, m = {
+				x: t.x / p,
+				z: t.z / p
+			}, h = {
+				x: -m.z,
+				z: m.x
+			}, g = {
+				x: s.x + m.x * (l + 1) + h.x * .6,
+				z: s.z + m.z * (l + 1) + h.z * .6
+			}, _ = e.loops.some((e) => Mz(g.x, g.z, e.points.map((e) => [e.x, e.z]))), v = e.loops.length ? _ ? -1 : 1 : h.x * u.x + h.z * u.z >= 0 ? 1 : -1, y = {
+				x: s.x + m.x * l / 2,
+				z: s.z + m.z * l / 2
+			}, b = pB(n, y) + Hz + .75;
+			vB(r, n, y, m, h, l / 2, c, b);
+			let x = (e, t, n) => new k(y.x + m.x * e + h.x * t, n, y.z + m.z * e + h.z * t), [S, C, w, ee] = [
+				[-1, -1],
+				[1, -1],
+				[1, 1],
+				[-1, 1]
+			].map(([e, t]) => x(e * (l / 2 + .06), t * (c + .06), b)), te = x(0, 0, b + .45);
+			mB(a, S, C, te), mB(a, C, w, te), mB(a, w, ee, te), mB(a, ee, S, te);
+			let ne = Math.min(o / 2 - .05, 2.2), re = l + .05 + ne / 2, ie = {
+				x: s.x + m.x * re + h.x * v * (Vz / 2 + .07),
+				z: s.z + m.z * re + h.z * v * (Vz / 2 + .07)
+			}, ae = pB(n, ie) + .05;
+			gB(i, ie, m, h, ne / 2, .045, ae, ae + Hz - .2);
+		}
+	}
+	finishGate(e, t, n, r, i, a, o, s, c) {
+		for (let [s, c, l] of [
 			[
-				f,
+				t,
 				i,
 				"Open stone arch and piers"
 			],
 			[
-				p,
+				n,
 				a,
-				"Timber gate band"
+				"Timber gate leaves"
 			],
 			[
-				m,
+				r,
 				o,
-				"Gabled gate roof"
+				"Gate caps"
 			]
 		]) {
-			if (e.length === 0) continue;
-			let r = new qi(xB(e), t);
-			r.name = n, r.castShadow = !0, r.receiveShadow = !0, this.geometries.add(r.geometry), u.add(r);
+			if (s.length === 0) continue;
+			let t = new qi(xB(s), c);
+			t.name = l, t.castShadow = !0, t.receiveShadow = !0, this.geometries.add(t.geometry), e.add(t);
 		}
-		this.group.add(u), r.trackCell(u, d);
+		this.group.add(e), s.trackCell(e, c);
 	}
 	addTower(e, t, n, r, i, a) {
 		let o = new Qn();
@@ -32726,7 +32779,7 @@ function PH(e, t, n = []) {
 		let s = `${e ?? "battle"}-tvrz-${n}`;
 		m(o), h(o, s);
 		let c = r.walls.at(-1);
-		r.fortifications.add(c.id), dH(c).forEach((e, t) => r.earthworks.push({
+		c.gateStyle = "posts", r.fortifications.add(c.id), dH(c).forEach((e, t) => r.earthworks.push({
 			id: `${s}:ditch:${t}`,
 			...e,
 			height: 0,
