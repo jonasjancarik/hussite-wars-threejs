@@ -8,6 +8,7 @@ import { GeneratedTerrain } from "./generated-terrain.ts";
 import { TownWallRoutes } from "./town-wall-routes.ts";
 import { createBattleLighting } from "./lighting.ts";
 import { TacticalOverlays } from "./overlays.ts";
+import { DioramaTable } from "./diorama-table.ts";
 import { BattlePicker } from "./picking.ts";
 import { beginPointerGesture, pointerGestureIsClick, recordPointerGestureMovement, type PointerGesture } from "./pointer-gesture.ts";
 import { PerformanceTracker, rendererCounters, type RendererCounters } from "./performance.ts";
@@ -104,6 +105,7 @@ class IntegratedThreeBattle {
   private suppressContext = false;
   private lastSelectedUnitId: number | null = null;
   private terrainBox: THREE.Box3 | null = null;
+  private readonly table: DioramaTable;
   private readonly markerScratch = new THREE.Vector3();
   /** Frames wait for the GPU backend; resize and load callbacks can arrive first. */
   private ready = false;
@@ -152,6 +154,10 @@ class IntegratedThreeBattle {
     this.atmosphere = new AtmosphereTransition(atmosphereProfile(options.snapshot.scenario, options.snapshot.round, this.winter));
     this.picker = new BattlePicker(canvas, this.cameraRig.camera, this.terrain.layout);
     this.sky = new BattlePaintedSky(this.scene, assetBase, Math.max(500, extent * 3.7));
+    const { minX, maxX, minZ, maxZ } = this.terrain.bounds;
+    this.table = new DioramaTable(new THREE.Vector2((minX + maxX) / 2, (minZ + maxZ) / 2), extent,
+      new THREE.Box3().setFromObject(this.terrain.group).min.y - .01);
+    this.scene.add(this.table.mesh);
     this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group,
       this.overlays.group, this.effects.group, this.weather.group);
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -378,6 +384,7 @@ class IntegratedThreeBattle {
     this.banners.dispose();
     this.wagonConnections.dispose();
     this.sky.dispose();
+    this.table.dispose();
     this.assets.dispose();
     this.terrain.dispose();
     this.pipeline.dispose();
@@ -526,6 +533,7 @@ class IntegratedThreeBattle {
   private applyAtmosphere(): void {
     this.lighting.apply(this.atmosphere.state);
     this.sky.apply(this.atmosphere.state);
+    this.table.setHorizon(this.atmosphere.state.veilColor);
   }
 
   private groundPoint(col: number, row: number): THREE.Vector3 {

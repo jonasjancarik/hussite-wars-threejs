@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createGeneratedSurfaceMaterials, createPuddleMaterial, GROUND_SPLAT, SHORE_DISTANCE, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
+import { createGeneratedSurfaceMaterials, createPuddleMaterial, createWoodMaterial, GROUND_SPLAT, RIM_TOP, SHORE_DISTANCE, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, fractalNoise, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
@@ -44,6 +44,7 @@ export class GeneratedTerrain implements BattleTerrain {
   private readonly cityLoops: Array<{points:Array<[number,number]>;minX:number;maxX:number;minZ:number;maxZ:number}>;
   private readonly cityCells: readonly TerrainCell[];
   private surfaceMesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial[]>;
+  private soilMaterial!: THREE.Material;
   private readonly surfaceTextures: THREE.Texture[] = [];
   private basePositions!: Float32Array;
   private baseColors!: Float32Array;
@@ -590,6 +591,7 @@ export class GeneratedTerrain implements BattleTerrain {
     });
     geometry.computeVertexNormals();
     const surface = createGeneratedSurfaceMaterials(assetBase, this.environmentPlan.winter);
+    this.soilMaterial = surface.soil;
     if (this.environmentPlan.settlement) surface.materials.push(new THREE.MeshStandardMaterial({
       name: "Settlement packed ground", color: 0xffffff, vertexColors: true, roughness: 1, side: THREE.DoubleSide,
     }));
@@ -613,7 +615,7 @@ export class GeneratedTerrain implements BattleTerrain {
     for (let x = this.gridWidth - 2; x >= 0; x -= 1) edgeIndices.push((this.gridHeight - 1) * this.gridWidth + x);
     for (let z = this.gridHeight - 2; z > 0; z -= 1) edgeIndices.push(z * this.gridWidth);
     edgeIndices.push(edgeIndices[0]!);
-    const positions: number[] = [], colors: number[] = [], indices: number[] = [], uvs: number[] = [];
+    const positions: number[] = [], colors: number[] = [], indices: number[] = [], uvs: number[] = [], rims: number[] = [];
     const topColor = new THREE.Color(0xc7b492), bottomColor = new THREE.Color(0x9b8266);
     let perimeterDistance = 0;
     for (let index = 0; index < edgeIndices.length; index += 1) {
@@ -624,8 +626,9 @@ export class GeneratedTerrain implements BattleTerrain {
         const previous = edgeIndices[index - 1]!;
         perimeterDistance += Math.hypot(x - surfacePositions.getX(previous), z - surfacePositions.getZ(previous));
       }
-      positions.push(x, top, z, x, -5.9, z);
-      uvs.push(perimeterDistance / 8, top / 8, perimeterDistance / 8, -5.9 / 8);
+      positions.push(x, top, z, x, PLINTH_BOTTOM, z);
+      rims.push(top, top);
+      uvs.push(perimeterDistance / 8, top / 8, perimeterDistance / 8, PLINTH_BOTTOM / 8);
       const variation = 0.94 + 0.06 * Math.sin(index * 0.43);
       colors.push(topColor.r * variation, topColor.g * variation, topColor.b * variation,
         bottomColor.r * variation, bottomColor.g * variation, bottomColor.b * variation);
@@ -638,23 +641,33 @@ export class GeneratedTerrain implements BattleTerrain {
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    geometry.setAttribute(RIM_TOP, new THREE.Float32BufferAttribute(rims, 1));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
-    const skirt = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
-      color: 0xffffff, vertexColors: true, roughness: 1, side: THREE.DoubleSide,
-      map: this.surfaceMesh.material[3]!.map,
-    }));
+    const skirt = new THREE.Mesh(geometry, this.soilMaterial);
     skirt.name = "Topography-following layered battlefield soil plinth";
     skirt.receiveShadow = true;
-    const width = maxX - minX, depth = maxZ - minZ;
-    const base = new THREE.Mesh(new THREE.BoxGeometry(width + 0.8, 0.5, depth + 0.8),
-      new THREE.MeshStandardMaterial({ color: 0x46382d, roughness: 1 }));
-    base.position.y = -6.1;
+    // A walnut base with a chamfered top edge frames the board like a model's plinth.
+    const width = maxX - minX + BASE_MARGIN * 2, depth = maxZ - minZ + BASE_MARGIN * 2, chamfer = .22;
+    const outline = new THREE.Shape();
+    outline.moveTo(-width / 2, -depth / 2); outline.lineTo(width / 2, -depth / 2);
+    outline.lineTo(width / 2, depth / 2); outline.lineTo(-width / 2, depth / 2);
+    const baseGeometry = new THREE.ExtrudeGeometry(outline, { depth: BASE_HEIGHT - chamfer, bevelEnabled: true,
+      bevelThickness: chamfer, bevelSize: chamfer, bevelSegments: 1 });
+    baseGeometry.rotateX(-Math.PI / 2);
+    baseGeometry.translate((minX + maxX) / 2, PLINTH_BOTTOM - BASE_HEIGHT, (minZ + maxZ) / 2);
+    const base = new THREE.Mesh(baseGeometry, createWoodMaterial());
     base.name = "Battlefield plinth base";
-    base.receiveShadow = true;
+    base.castShadow = base.receiveShadow = true;
     this.group.add(skirt, base);
   }
 }
+
+/** Where the cut soil face meets the wooden base. */
+const PLINTH_BOTTOM = -5.9;
+/** The walnut base: its ledge beyond the soil, and its thickness. */
+const BASE_MARGIN = .9;
+const BASE_HEIGHT = 1.1;
 
 /** Water vertices farther than this from the shore all count as open water. */
 const SHORE_REACH = 6;
