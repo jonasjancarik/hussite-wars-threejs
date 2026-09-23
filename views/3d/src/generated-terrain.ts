@@ -85,38 +85,34 @@ export class GeneratedTerrain implements BattleTerrain {
   }
 
   /**
-   * Standing water in the wetland hollows: a sheet that follows the undipped
-   * ground a few centimetres down, so it shows only where a hollow dips below
-   * it and the puddle outlines follow the noise, not the hexes.
+   * Standing water in the wetland hollows. The sheet reuses the rendered
+   * terrain's own grid vertices and diagonals, raised by each vertex's dip
+   * less PUDDLE_FILL, so the waterline is the exact crossing of two surfaces
+   * sharing one triangulation: a smooth contour around each hollow.
    */
   private createPuddles(): void {
     const wetCells = this.field.tiles.filter(cell => WETLAND.has(cell.terrain.toLowerCase())
       && !this.environmentPlan.replacedCells.has(`${cell.col},${cell.row}`));
     if (!wetCells.length) return;
-    const positions: number[] = [], step = .32, reach = this.layout.radius + 1;
-    const steps = Math.ceil(reach * 2 / step);
-    for (const cell of wetCells) {
-      const heights: number[] = [], dips: number[] = [];
-      for (let iz = 0; iz <= steps; iz += 1) for (let ix = 0; ix <= steps; ix += 1) {
-        const x = cell.center.x - reach + ix * step, z = cell.center.z - reach + iz * step;
-        const dip = this.puddleDip(x, z);
-        dips.push(dip);
-        const level = dip > 0 ? this.heightAt(x, z) + dip - PUDDLE_FILL : NaN;
-        // Water lies level: skip ground that tilts more than a gentle hollow does.
-        const tilt = dip > 0 ? Math.hypot(this.heightAt(x + .3, z) - this.heightAt(x - .3, z),
-          this.heightAt(x, z + .3) - this.heightAt(x, z - .3)) / .6 : 0;
-        heights.push(tilt < .22 ? level : NaN);
-      }
-      const vertex = (ix: number, iz: number): number[] => [cell.center.x - reach + ix * step,
-        heights[iz * (steps + 1) + ix]!, cell.center.z - reach + iz * step];
-      for (let iz = 0; iz < steps; iz += 1) for (let ix = 0; ix < steps; ix += 1) {
-        const corners = [[ix, iz], [ix + 1, iz], [ix, iz + 1], [ix + 1, iz + 1]] as const;
-        const indices = corners.map(([cx, cz]) => cz * (steps + 1) + cx);
-        if (indices.some(index => Number.isNaN(heights[index]!))) continue;
-        if (Math.max(...indices.map(index => dips[index]!)) < PUDDLE_FILL * .8) continue;
-        const [a, b, c, d] = corners.map(([cx, cz]) => vertex(cx, cz));
-        positions.push(...a!, ...c!, ...b!, ...b!, ...c!, ...d!);
-      }
+    const nx = this.gridWidth, nz = this.gridHeight, reach = this.layout.radius + 1.5;
+    const near = (x: number, z: number): boolean => wetCells.some(cell =>
+      Math.abs(x - cell.center.x) < reach && Math.abs(z - cell.center.z) < reach);
+    const dips = new Float32Array(nx * nz);
+    for (let index = 0; index < nx * nz; index += 1) {
+      const x = this.basePositions[index * 3]!, z = this.basePositions[index * 3 + 2]!;
+      dips[index] = near(x, z) ? this.puddleDip(x, z) : 0;
+    }
+    const positions: number[] = [];
+    const push = (index: number): void => {
+      positions.push(this.basePositions[index * 3]!, this.basePositions[index * 3 + 1]! + dips[index]! - PUDDLE_FILL,
+        this.basePositions[index * 3 + 2]!);
+    };
+    for (let iz = 0; iz < nz - 1; iz += 1) for (let ix = 0; ix < nx - 1; ix += 1) {
+      const a = iz * nx + ix, b = a + 1, c = a + nx, d = c + 1;
+      // Only quads where some corner rises above the ground can show water.
+      if (Math.max(dips[a]!, dips[b]!, dips[c]!, dips[d]!) <= PUDDLE_FILL) continue;
+      const triangles = (ix + iz) % 2 === 0 ? [a, c, b, b, c, d] : [a, c, d, a, d, b];
+      triangles.forEach(push);
     }
     if (!positions.length) return;
     const geometry = new THREE.BufferGeometry();
@@ -125,6 +121,7 @@ export class GeneratedTerrain implements BattleTerrain {
     const mesh = new THREE.Mesh(geometry, createPuddleMaterial(this.environmentPlan.winter));
     mesh.name = "Wetland puddles";
     mesh.receiveShadow = true;
+    mesh.renderOrder = 2;
     this.group.add(mesh);
   }
 
@@ -172,10 +169,11 @@ export class GeneratedTerrain implements BattleTerrain {
     let wet = 0;
     for (const [terrain, weight] of Object.entries(weights)) if (WETLAND.has(terrain.toLowerCase())) wet += weight;
     if (wet <= 0) return 0;
-    // Earthwork banks and ditches are too steep to hold a sheet of water.
-    if (earthworkRelief(x, z, this.environmentPlan.earthworks) !== 0) return 0;
-    const hollow = THREE.MathUtils.smoothstep(fractalNoise(this.field.seed ^ 0x5be0cd19, x / 3.4, z / 3.4, 2), .16, .5);
-    return PUDDLE_DEPTH * hollow * THREE.MathUtils.smoothstep(wet, .35, .85);
+    // Earthwork banks and ditches are too steep to hold water; hollows ease out toward them.
+    const relief = Math.abs(earthworkRelief(x, z, this.environmentPlan.earthworks));
+    if (relief >= .06) return 0;
+    const hollow = THREE.MathUtils.smoothstep(fractalNoise(this.field.seed ^ 0x5be0cd19, x / 2.3, z / 2.3, 2), .24, .55);
+    return PUDDLE_DEPTH * hollow * THREE.MathUtils.smoothstep(wet, .35, .85) * (1 - relief / .06);
   }
 
   private insideCity(x:number,z:number):boolean {
@@ -450,6 +448,9 @@ export class GeneratedTerrain implements BattleTerrain {
             color.lerp(sampleColor, worn * (weights.town ?? 0) * .8);
           }
         }
+        // Soil darkens as it nears a waterline.
+        const damp = 1 - .38 * THREE.MathUtils.smoothstep(this.puddleDip(x, z, weights), PUDDLE_FILL * .3, PUDDLE_FILL * 1.4);
+        color.multiplyScalar(damp);
         const grain = 0.96 + 0.04 * Math.sin(x * 0.19 + z * 0.13);
         colors.push(color.r * grain, color.g * grain, color.b * grain);
       }

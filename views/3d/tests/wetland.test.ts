@@ -56,7 +56,12 @@ test("wetlands hold shallow puddles that stay off earthworks", () => {
   const swamp = terrain("malesov_1424");
   const puddles = swamp.group.children.find(child => child.name === "Wetland puddles") as THREE.Mesh | undefined;
   assert.ok(puddles, "swamp map has standing water");
-  assert.ok(puddles.geometry.getAttribute("position").count > 100);
+  const sheet = puddles.geometry.getAttribute("position");
+  assert.ok(sheet.count > 100);
+  // The sheet shares the terrain grid: every vertex sits over a rendered ground vertex.
+  const ground = surface(swamp).geometry.getAttribute("position");
+  const columns = new Set(Array.from({ length: ground.count }, (_, index) => ground.getX(index).toFixed(4)));
+  for (let index = 0; index < sheet.count; index += 97) assert.ok(columns.has(sheet.getX(index).toFixed(4)));
   swamp.dispose();
 
   const neck = terrain("vitkov_1420");
@@ -66,7 +71,10 @@ test("wetlands hold shallow puddles that stay off earthworks", () => {
       const x = cell.center.x + dx, z = cell.center.z + dz;
       const dip = neck.puddleDip(x, z);
       assert.ok(dip >= 0 && dip <= PUDDLE_DEPTH + 1e-9);
-      if (earthworkRelief(x, z, neck.environmentPlan.earthworks) !== 0) assert.equal(dip, 0, "no puddle on a bank or ditch");
+      const relief = Math.abs(earthworkRelief(x, z, neck.environmentPlan.earthworks));
+      // Hollows ease out over the first 6 cm of a bank or ditch and are absent beyond.
+      if (relief >= .06) assert.equal(dip, 0, "no puddle on a bank or ditch");
+      else assert.ok(dip <= PUDDLE_DEPTH * (1 - relief / .06) + 1e-9);
       wetSamples += 1;
     }
   }

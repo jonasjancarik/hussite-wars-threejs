@@ -100,18 +100,22 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
 }
 
 /**
- * Standing water in mud and swamp hollows: dark and still, with a sky sheen
- * that grows toward grazing angles. Frozen on winter maps.
+ * Standing water in mud and swamp hollows: a thin, tinted film that lets the
+ * dark soil show through from above, with a sky sheen that grows toward
+ * grazing angles. Frozen and opaque on winter maps.
  */
 export function createPuddleMaterial(winter: boolean): THREE.Material {
   const material = new MeshStandardNodeMaterial({
-    color: winter ? 0xc3d2d4 : 0x23261f, roughness: winter ? .38 : .05, metalness: 0,
+    color: winter ? 0xc3d2d4 : 0x1d2320, roughness: winter ? .38 : .04, metalness: 0,
+    transparent: !winter, opacity: winter ? 1 : .72, depthWrite: winter,
   });
   if (!winter) {
     const view = (cameraPosition as any).sub(positionWorld).normalize();
     const facing = (normalWorld as any).dot(view).clamp(0, 1);
-    const fresnel = facing.oneMinus().pow(4).mul(.6).add(.05);
+    const fresnel = facing.oneMinus().pow(4).mul(.55).add(.1);
     material.emissiveNode = tsl(vec3)(.5, .58, .62).mul(fresnel);
+    // Grazing views see mostly reflection; from above, mostly the soil beneath.
+    material.opacityNode = fresnel.mul(.8).add(.55).clamp(0, .92);
   }
   material.name = winter ? "Frozen puddles" : "Standing water";
   return material;
