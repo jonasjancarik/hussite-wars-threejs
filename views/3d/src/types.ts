@@ -124,6 +124,8 @@ export interface IntegratedRendererOptions {
   onHover?(coord: (HexCoord & { clientX: number; clientY: number }) | null): void;
   onContext?(): void;
   onZoom?(percentage: number): void;
+  /** Localized UI text for renderer-owned notes, e.g. "applyingGraphics". */
+  localize?(key: string): string;
 }
 
 export interface LandscapePolygon {

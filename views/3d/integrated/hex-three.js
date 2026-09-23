@@ -33323,7 +33323,17 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 	_getSearchTexture() {
 		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAAhCAAAAABIXyLAAAAAOElEQVRIx2NgGAWjYBSMglEwEICREYRgFBZBqDCSLA2MGPUIVQETE9iNUAqLR5gIeoQKRgwXjwAAGn4AtaFeYLEAAAAASUVORK5CYII=";
 	}
-}, hH = (e) => new mH($B(e)), gH = (e) => e, _H = gH(nH), vH = gH(uH), yH = gH(oH), bH = gH(uV), xH = gH(mV), SH = gH(gV), CH = gH(CV), wH = gH(OV), TH = gH(AV), EH = gH(jV), DH = gH(hH), OH = gH(FV), kH = gH(BV), AH = gH(GV), jH = gH(KV), MH = gH(qV), NH = {
+}, hH = (e) => new mH($B(e)), gH = (e) => e, _H = gH(nH), vH = gH(uH), yH = gH(oH), bH = gH(uV), xH = gH(mV), SH = gH(gV), CH = gH(CV), wH = gH(OV), TH = gH(AV), EH = gH(jV), DH = gH(hH), OH = gH(FV), kH = gH(BV), AH = gH(GV), jH = gH(KV), MH = gH(qV);
+function NH(e) {
+	return [
+		e.effects,
+		e.ambientOcclusion,
+		e.gtaoSamples,
+		e.aoResolutionScale ?? 1,
+		e.depthOfFieldMode
+	].join("|");
+}
+var PH = {
 	coolShadow: [
 		.95,
 		.985,
@@ -33334,7 +33344,7 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 		1.025,
 		.94
 	]
-}, PH = class {
+}, FH = class {
 	camera;
 	quality;
 	renderer;
@@ -33353,6 +33363,7 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 	width = 1;
 	height = 1;
 	pixelRatio = 0;
+	builtGraphs = /* @__PURE__ */ new Set();
 	constructor(e, t, n, r) {
 		this.camera = n, this.quality = r, this.renderer = new VB({
 			canvas: e,
@@ -33402,8 +33413,14 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 	dispose() {
 		this.disposeEffects(), this.scenePass.dispose(), this.pipeline.dispose(), this.renderer.dispose();
 	}
+	needsCompile(e) {
+		return !this.builtGraphs.has(NH({
+			...this.quality,
+			...e
+		}));
+	}
 	rebuildGraph() {
-		this.disposeEffects();
+		this.builtGraphs.add(NH(this.quality)), this.disposeEffects();
 		let e = this.scenePass.getTextureNode("output"), t = this.scenePass.getTextureNode("depth"), n = e;
 		if (this.scenePass.setMRT(this.normalMrt), this.quality.effects && this.quality.ambientOcclusion) {
 			let e = _H(t, this.scenePass.getTextureNode("normal"), this.camera);
@@ -33418,7 +33435,7 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 			let e = this.scenePass.getViewZNode().negate(), t = OH(0, this.focusRangeNode, e.sub(this.focusDistanceNode).abs()), r = yH(n, this.blurDirectionNode, 1, { resolutionScale: .5 });
 			this.track(r), n = xH(n, r, t);
 		}
-		let r = n.rgb, i = bH(r), a = OH(.04, .58, i).oneMinus().mul(.3).mul(this.gradeAmountNode), o = OH(.46, .92, i).mul(.24).mul(this.gradeAmountNode), s = r.mul(jH(...NH.coolShadow)), c = r.mul(jH(...NH.warmHighlight));
+		let r = n.rgb, i = bH(r), a = OH(.04, .58, i).oneMinus().mul(.3).mul(this.gradeAmountNode), o = OH(.46, .92, i).mul(.24).mul(this.gradeAmountNode), s = r.mul(jH(...PH.coolShadow)), c = r.mul(jH(...PH.warmHighlight));
 		n = MH(EH(xH(xH(r, s, a), c, o), xH(1, .97, this.gradeAmountNode)), n.a);
 		let l = DH(n);
 		this.track(l), n = l, n = TH(n, this.renderer.toneMapping, this.renderer.outputColorSpace);
@@ -33440,7 +33457,7 @@ var nH = (e, t, n) => new $V(vV(e), vV(t), n), rH = /*@__PURE__*/ new vA(), iH, 
 };
 //#endregion
 //#region src/landscape-details.ts
-function FH(e, t, n) {
+function IH(e, t, n) {
 	let r = t.data, i = cd(r.artSeed + 83), a = new Zn(), o = new ai();
 	o.setAttribute("position", new M([
 		-.2,
@@ -33522,7 +33539,7 @@ function FH(e, t, n) {
 	}
 	p.count = u, e.add(p), n.trackInstances(p, m);
 }
-function IH() {
+function LH() {
 	let e = new Uint8Array(16384 * 4);
 	for (let t = 0; t < 128; t += 1) for (let n = 0; n < 128; n += 1) {
 		let r = n / 128 * Math.PI * 2, i = t / 128 * Math.PI * 2, a = r + i * 3 + .7 * Math.sin(r * 2 - i), o = new k(Math.cos(a) * .12 + Math.cos(r * 4 - i * 2) * .025, Math.cos(a) * .25 - Math.cos(r * 4 - i * 2) * .04, 1).normalize(), s = (t * 128 + n) * 4;
@@ -33533,7 +33550,7 @@ function IH() {
 }
 //#endregion
 //#region src/scenery.ts
-var LH = class {
+var RH = class {
 	data;
 	terrain;
 	assets;
@@ -33556,7 +33573,7 @@ var LH = class {
 			"procedural-worlds/pw_deciduous_03",
 			"procedural-worlds/pw_shrub_01"
 		]), this.disposed || (await Promise.all([this.addWoodland(), this.addLandmarks()]), this.disposed)) return;
-		this.addReeds(), this.addStones(), FH(this.group, this.terrain, this.visibility);
+		this.addReeds(), this.addStones(), IH(this.group, this.terrain, this.visibility);
 		let e = Xd(this.group, (e) => this.visibility.keyForObject(e));
 		this.visibility.trackBatches(e.batches), console.info(`[Sudomer] batched static scenery (${e.savedMeshes} meshes removed)`);
 	}
@@ -33633,7 +33650,7 @@ var LH = class {
 };
 //#endregion
 //#region src/snapshot-client.ts
-function RH(e, t) {
+function zH(e, t) {
 	return new Promise((n, r) => {
 		let i = (e) => n(e.detail);
 		t.addEventListener("sudomer-snapshot", i, { once: !0 });
@@ -33645,7 +33662,7 @@ function RH(e, t) {
 		}
 	});
 }
-var zH = class {
+var BH = class {
 	generation = -1;
 	revision = -1;
 	seenEvents = /* @__PURE__ */ new Set();
@@ -33661,10 +33678,10 @@ var zH = class {
 			newEvents: t
 		};
 	}
-}, BH = class {
+}, VH = class {
 	latest = null;
 	consumer = null;
-	accumulator = new zH();
+	accumulator = new BH();
 	constructor() {
 		addEventListener("sudomer-snapshot", this.onSnapshot);
 		let e = window.SudomerHexBridge?.takeSnapshot();
@@ -33686,7 +33703,7 @@ var zH = class {
 		let t = this.accumulator.accept(e);
 		t && (this.latest = t.snapshot, this.consumer?.applySnapshot(t.snapshot, t.newEvents));
 	}
-}, VH = class {
+}, HH = class {
 	scene;
 	assetBase;
 	texture = null;
@@ -33725,12 +33742,12 @@ var zH = class {
 	dispose() {
 		this.texture?.dispose(), this.texture = null, this.lowerVeil.removeFromParent(), this.lowerVeil.geometry.dispose(), this.lowerVeil.material.dispose();
 	}
-}, HH = 241, UH = 177;
-function WH(e, t, n) {
+}, UH = 241, WH = 177;
+function GH(e, t, n) {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
 }
-var GH = class {
+var KH = class {
 	data;
 	assetBase;
 	group = new Qn();
@@ -33744,15 +33761,15 @@ var GH = class {
 	}
 	heightAt(e, t) {
 		let n = id(e, t, this.data.pond.points), r = od(e, t, this.data.pond.points);
-		if (n) return D.lerp(-.62, -1.15, WH(0, 2.8, r)) - .04 * Math.sin(e * .34 + t * .22);
-		if (r < 3.4) return -.62 + WH(0, 3.4, r) * .77;
+		if (n) return D.lerp(-.62, -1.15, GH(0, 2.8, r)) - .04 * Math.sin(e * .34 + t * .22);
+		if (r < 3.4) return -.62 + GH(0, 3.4, r) * .77;
 		let i = id(e, t, this.data.mudBasin.points), a = od(e, t, this.data.mudBasin.points);
 		if (i) {
 			let n = Math.exp(-((Math.sin(e * .13 + t * .055) * 3.2) ** 2));
 			return -.48 + Math.sin(e * .21) * Math.cos(t * .17) * .12 - n * .12;
 		}
-		if (a < 2.8) return -.42 + WH(0, 2.8, a) * .62;
-		let o = .95 * Math.sin(e * .026 + .65) * Math.cos(t * .022 - .25), s = .48 * Math.sin((e + t * .42) * .055), c = (Math.abs(e) / 72) ** 4 * .85 + (Math.abs(t) / 52) ** 4 * .55, l = sd(e, t, this.data.causeway.points), u = 1 - WH(this.data.causeway.width, this.data.causeway.width + 3.5, l);
+		if (a < 2.8) return -.42 + GH(0, 2.8, a) * .62;
+		let o = .95 * Math.sin(e * .026 + .65) * Math.cos(t * .022 - .25), s = .48 * Math.sin((e + t * .42) * .055), c = (Math.abs(e) / 72) ** 4 * .85 + (Math.abs(t) / 52) ** 4 * .55, l = sd(e, t, this.data.causeway.points), u = 1 - GH(this.data.causeway.width, this.data.causeway.width + 3.5, l);
 		return D.lerp(o + s + c, .1 + Math.sin(e * .035) * .12, u * .78);
 	}
 	updateVisibility(e) {}
@@ -33766,10 +33783,10 @@ var GH = class {
 	}
 	createGround() {
 		let { minX: e, maxX: t, minZ: n, maxZ: r } = this.data.bounds, i = [], o = [], s = [], c = [], l = new j();
-		for (let a = 0; a < UH; a += 1) {
-			let c = a / (UH - 1), u = D.lerp(n, r, c);
-			for (let n = 0; n < HH; n += 1) {
-				let r = n / (HH - 1), a = D.lerp(e, t, r), c = this.heightAt(a, u);
+		for (let a = 0; a < WH; a += 1) {
+			let c = a / (WH - 1), u = D.lerp(n, r, c);
+			for (let n = 0; n < UH; n += 1) {
+				let r = n / (UH - 1), a = D.lerp(e, t, r), c = this.heightAt(a, u);
 				i.push(a, c, u), s.push(a / 32, u / 32);
 				let d = id(a, u, this.data.mudBasin.points), f = sd(a, u, this.data.causeway.points);
 				if (d) l.setRGB(.66, .49, .34);
@@ -33777,14 +33794,14 @@ var GH = class {
 				else {
 					let e = .065 * Math.sin(a * .09) * Math.cos(u * .12) + .025 * Math.sin(a * .31 + u * .17);
 					l.setRGB(.91 + e, .99 + e, .83 + e * .6);
-					let t = 1 - WH(0, 2.8, od(a, u, this.data.pond.points));
+					let t = 1 - GH(0, 2.8, od(a, u, this.data.pond.points));
 					l.lerp(new j(11051127), t * .45);
 				}
 				o.push(l.r, l.g, l.b);
 			}
 		}
-		for (let e = 0; e < UH - 1; e += 1) for (let t = 0; t < HH - 1; t += 1) {
-			let n = e * HH + t, r = n + 1, i = n + HH, a = i + 1;
+		for (let e = 0; e < WH - 1; e += 1) for (let t = 0; t < UH - 1; t += 1) {
+			let n = e * UH + t, r = n + 1, i = n + UH, a = i + 1;
 			c.push(n, i, r, r, i, a);
 		}
 		let u = new ai();
@@ -33826,7 +33843,7 @@ var GH = class {
 			transmission: 0,
 			clearcoat: .7,
 			clearcoatRoughness: .24,
-			normalMap: IH(),
+			normalMap: LH(),
 			normalScale: new O(.55, .55)
 		}));
 		e.name = "Markovec pond", this.interactiveMeshes.push(e), this.group.add(e);
@@ -33998,11 +34015,11 @@ var GH = class {
 };
 //#endregion
 //#region src/unit-visibility.ts
-function KH(e) {
+function qH(e) {
 	let t = new Set(e.visibleHexes);
 	return e.units.filter((n) => n.health > 0 && (!e.fogOfWar || n.faction === "hussites" || t.has(`${n.col},${n.row}`)));
 }
-var qH = class {
+var JH = class {
 	group = new Qn();
 	fading = /* @__PURE__ */ new Set();
 	enabled = !0;
@@ -34041,7 +34058,7 @@ var qH = class {
 		});
 	}
 	retainVisible(e) {
-		let t = /* @__PURE__ */ new Set([...KH(e).map((e) => e.id), ...e.eliminatedUnitIds ?? []]), n = new Set(e.visibleHexes);
+		let t = /* @__PURE__ */ new Set([...qH(e).map((e) => e.id), ...e.eliminatedUnitIds ?? []]), n = new Set(e.visibleHexes);
 		for (let r of this.fading) (!t.has(r.unitId) || e.fogOfWar && r.faction !== "hussites" && !n.has(`${r.col},${r.row}`)) && this.remove(r);
 	}
 	cancelUnit(e) {
@@ -34064,29 +34081,29 @@ var qH = class {
 		for (let t of e.materials.keys()) t.dispose();
 		this.fading.delete(e);
 	}
-}, JH = [
+}, YH = [
 	[-1.02, .5],
 	[0, -.66],
 	[1.02, .5],
 	[-.52, -.1],
 	[.52, -.1]
-], YH = [[-.7, -.2], [.7, .2]];
-function XH(e, t = 1.15, n = 2.15) {
+], XH = [[-.7, -.2], [.7, .2]];
+function ZH(e, t = 1.15, n = 2.15) {
 	return [{
 		model: e,
-		offsets: JH,
+		offsets: YH,
 		scale: t,
 		pickRadius: n
 	}];
 }
-function ZH(e) {
+function QH(e) {
 	return [{
 		model: e,
-		offsets: YH,
+		offsets: XH,
 		scale: .98
 	}];
 }
-function QH(e) {
+function $H(e) {
 	return [{
 		model: e,
 		offsets: [[0, 0]],
@@ -34098,7 +34115,7 @@ function QH(e) {
 		rotateOffsetsWithFacing: !0
 	}];
 }
-var $H = [
+var eU = [
 	{
 		model: "civilian_adult",
 		offsets: [[-1.02, .5], [.52, -.1]],
@@ -34114,15 +34131,15 @@ var $H = [
 		offsets: [[-.52, -.1]],
 		scale: 1.12
 	}
-], eU = /* @__PURE__ */ new Set([
+], tU = /* @__PURE__ */ new Set([
 	"PROKOP_HOLY",
 	"JAN_ZELIVSKY",
 	"VACLAV_KORANDA"
-]), tU = /* @__PURE__ */ new Set([
+]), nU = /* @__PURE__ */ new Set([
 	"JAN_ZIZKA",
 	"ZATECKY_HEJTMAN",
 	"JAN_HVEZDA"
-]), nU = /* @__PURE__ */ new Set([
+]), rU = /* @__PURE__ */ new Set([
 	"FRIDRICH_MISNENSKY",
 	"BOHUSLAV_SVAMBERK",
 	"ZIKMUND",
@@ -34145,29 +34162,29 @@ var $H = [
 	"VIKTORIN_BOCEK",
 	"JAN_ROHAC"
 ]);
-function rU(e) {
+function iU(e) {
 	switch (e.type) {
 		case "CEPNICI":
-		case "CEPNICI_PRASKY": return XH("infantry_flail", 1.15, 2.25);
-		case "SUDLICNICI": return XH("infantry_polearm");
+		case "CEPNICI_PRASKY": return ZH("infantry_flail", 1.15, 2.25);
+		case "SUDLICNICI": return ZH("infantry_polearm");
 		case "PAVEZNICI":
-		case "PAVEZNICI_KRIZACI": return XH("infantry_pavise");
+		case "PAVEZNICI_KRIZACI": return ZH("infantry_pavise");
 		case "KOPINICI_HUSITI":
-		case "KOPINICI": return XH("infantry_spear");
+		case "KOPINICI": return ZH("infantry_spear");
 		case "KUSINICI_HUSITI":
 		case "KUSNICI":
 		case "KUSNICI_JANOV":
-		case "KUSINICI_PRASKY": return XH("infantry_crossbow");
-		case "RUCNICARI": return XH("infantry_handgun");
-		case "HALAPARTNICI": return XH("infantry_halberd");
-		case "ZOLDNERI": return XH("infantry_shield");
-		case "LUCISTNICI": return XH("infantry_archer");
-		case "POUTNICI": return $H;
+		case "KUSINICI_PRASKY": return ZH("infantry_crossbow");
+		case "RUCNICARI": return ZH("infantry_handgun");
+		case "HALAPARTNICI": return ZH("infantry_halberd");
+		case "ZOLDNERI": return ZH("infantry_shield");
+		case "LUCISTNICI": return ZH("infantry_archer");
+		case "POUTNICI": return eU;
 		case "HOUFNICE":
-		case "HOUFNICE_PRASKY": return QH("artillery_houfnice");
+		case "HOUFNICE_PRASKY": return $H("artillery_houfnice");
 		case "TARASNICE":
-		case "POLNI_DELO": return QH("artillery_tarasnice");
-		case "BOMBARDA": return QH("artillery_bombard");
+		case "POLNI_DELO": return $H("artillery_tarasnice");
+		case "BOMBARDA": return $H("artillery_bombard");
 		case "POLNI_OPEVNENI": return [{
 			model: "field_blockhouse",
 			offsets: [[0, 0]],
@@ -34183,24 +34200,24 @@ function rU(e) {
 		}];
 		case "JIZDA_HUSITI":
 		case "LEHKA_JIZDA":
-		case "JIZDA_PRASKY": return e.dismounted ? XH("infantry_spear") : ZH("cavalry_light");
+		case "JIZDA_PRASKY": return e.dismounted ? ZH("infantry_spear") : QH("cavalry_light");
 		case "ZVED":
-		case "ZVED_KRIZACI": return e.dismounted ? XH("infantry_shield") : ZH("cavalry_scout");
+		case "ZVED_KRIZACI": return e.dismounted ? ZH("infantry_shield") : QH("cavalry_scout");
 		case "SLECHTICKA_JIZDA_HUSITI":
 		case "TEZKY_RYTIR":
-		case "TEZKOODENCI": return e.dismounted ? XH("infantry_dismounted") : ZH("cavalry_heavy");
+		case "TEZKOODENCI": return e.dismounted ? ZH("infantry_dismounted") : QH("cavalry_heavy");
 		default:
-			if (eU.has(e.type)) return [{
+			if (tU.has(e.type)) return [{
 				model: "commander_cleric",
 				offsets: [[0, 0]],
 				scale: 1.24
 			}];
-			if (tU.has(e.type)) return [{
+			if (nU.has(e.type)) return [{
 				model: "commander_captain",
 				offsets: [[0, 0]],
 				scale: 1.28
 			}];
-			if (nU.has(e.type)) return [{
+			if (rU.has(e.type)) return [{
 				model: "commander_noble",
 				offsets: [[0, 0]],
 				scale: 1.28
@@ -34208,12 +34225,12 @@ function rU(e) {
 			throw Error(`No 3D unit recipe for ${e.type}`);
 	}
 }
-function iU(e) {
-	return `${e.faction}:${e.dismounted ? "foot" : "mounted"}:${rU(e).map((e) => e.model).join(",")}`;
+function aU(e) {
+	return `${e.faction}:${e.dismounted ? "foot" : "mounted"}:${iU(e).map((e) => e.model).join(",")}`;
 }
 //#endregion
 //#region src/units.ts
-var aU = 420, oU = (e) => e < .3 ? Math.sin(e / .3 * Math.PI / 2) : Math.cos((e - .3) / .7 * Math.PI / 2) ** 2, sU = {
+var oU = 420, sU = (e) => e < .3 ? Math.sin(e / .3 * Math.PI / 2) : Math.cos((e - .3) / .7 * Math.PI / 2) ** 2, cU = {
 	hussites: {
 		team_cloth: 10178383,
 		team_paint: 8339259
@@ -34222,8 +34239,8 @@ var aU = 420, oU = (e) => e < .3 ? Math.sin(e / .3 * Math.PI / 2) : Math.cos((e 
 		team_cloth: 5797011,
 		team_paint: 4151410
 	}
-}, cU = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]), lU = 180, uU = 520, dU = Math.PI / 12;
-function fU(e, t) {
+}, lU = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]), uU = 180, dU = 520, fU = Math.PI / 12;
+function pU(e, t) {
 	let n = null, r = Infinity;
 	for (let i of t) {
 		let t = (i.x - e.x) ** 2 + (i.z - e.z) ** 2;
@@ -34231,19 +34248,19 @@ function fU(e, t) {
 	}
 	return n;
 }
-function pU(e) {
+function mU(e) {
 	return e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2;
 }
-function mU(e, t) {
+function hU(e, t) {
 	let n = t.x - e.x, r = t.z - e.z;
 	return n * n + r * r > 1e-4 ? Math.atan2(-r, n) : null;
 }
-function hU(e, t) {
+function gU(e, t) {
 	return Math.atan2(Math.sin(t - e), Math.cos(t - e));
 }
-var gU = class {
+var _U = class {
 	group = new Qn();
-	casualties = new qH();
+	casualties = new JH();
 	hitTargets = [];
 	visuals = /* @__PURE__ */ new Map();
 	disposed = !1;
@@ -34264,7 +34281,7 @@ var gU = class {
 	}
 	async update(e) {
 		if (this.disposed) return;
-		let t = ++this.updateRevision, n = KH(e), r = new Set(n.map((e) => e.id)), i = new Set(e.eliminatedUnitIds ?? []);
+		let t = ++this.updateRevision, n = qH(e), r = new Set(n.map((e) => e.id)), i = new Set(e.eliminatedUnitIds ?? []);
 		this.casualties.retainVisible(e);
 		for (let [e, t] of this.visuals) if (!r.has(e)) {
 			if (i.has(e)) for (let e of t.figures) this.casualties.add(e.object, t.unit);
@@ -34277,7 +34294,7 @@ var gU = class {
 	updateMovement(e) {
 		if (this.disposed) return !0;
 		let t = e.movement?.unitId, n = t === void 0 ? void 0 : e.units.find((e) => e.id === t), r = n ? this.visuals.get(n.id) : void 0;
-		return !n || !r || r.appearance !== iU(n) ? !1 : (this.placeUnit(r, n, e, this.facingContext(KH(e))), (n.unitClass === "commander" || n.special === "commander") && this.updateCommanderAuras(KH(e), e), !0);
+		return !n || !r || r.appearance !== aU(n) ? !1 : (this.placeUnit(r, n, e, this.facingContext(qH(e))), (n.unitClass === "commander" || n.special === "commander") && this.updateCommanderAuras(qH(e), e), !0);
 	}
 	consumeShadowChange() {
 		let e = this.shadowsDirty;
@@ -34306,10 +34323,10 @@ var gU = class {
 	}
 	advance(e, t = !1) {
 		if (t || e <= 0) return !1;
-		let n = 1 - Math.exp(-Math.min(e, 64) / lU), r = !1;
+		let n = 1 - Math.exp(-Math.min(e, 64) / uU), r = !1;
 		for (let t of this.visuals.values()) {
-			t.strike && (r = !0, this.shadowsDirty = !0, t.strike.age += e, t.strike.age >= aU && (t.strike = null), this.applyStrike(t), this.groundFigures(t));
-			let i = hU(t.yaw, t.targetYaw);
+			t.strike && (r = !0, this.shadowsDirty = !0, t.strike.age += e, t.strike.age >= oU && (t.strike = null), this.applyStrike(t), this.groundFigures(t));
+			let i = gU(t.yaw, t.targetYaw);
 			Math.abs(i) < 1e-4 || (r = !0, this.shadowsDirty = !0, t.yaw = Math.abs(i) < .002 ? t.targetYaw : t.yaw + i * n, t.root.rotation.y = t.yaw - t.baseYaw + t.marchingYaw, this.groundFigures(t));
 		}
 		return r;
@@ -34401,11 +34418,11 @@ var gU = class {
 		}
 	}
 	async updateUnit(e, t, n, r) {
-		let i = this.visuals.get(e.id), a = iU(e);
+		let i = this.visuals.get(e.id), a = aU(e);
 		if (i && i.appearance !== a && (this.removeVisual(e.id, i), i = void 0), !i) {
 			let n = new Qn();
 			n.name = `${e.name} (${e.id})`;
-			let r = pU(e), o = [], s = rU(e), c = Math.max(2.15, ...s.map((e) => e.pickRadius ?? 0));
+			let r = mU(e), o = [], s = iU(e), c = Math.max(2.15, ...s.map((e) => e.pickRadius ?? 0));
 			for (let i of s) {
 				let a = await this.variant(i.model, e.faction);
 				if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
@@ -34473,7 +34490,7 @@ var gU = class {
 			z: o.z
 		}, this.applyStrike(e);
 		let c = this.desiredFacing(t, n, r);
-		c && (c.decisive || Math.abs(hU(e.targetYaw, c.yaw)) >= dU) && (e.targetYaw = c.yaw);
+		c && (c.decisive || Math.abs(gU(e.targetYaw, c.yaw)) >= fU) && (e.targetYaw = c.yaw);
 		let l = t.marching ? .06 : 0, u = t.isRouting ? .92 : 1;
 		(e.marchingYaw !== l || e.root.scale.x !== u) && (this.shadowsDirty = !0), e.marchingYaw = l, e.root.scale.setScalar(u), e.root.rotation.y = e.yaw - e.baseYaw + e.marchingYaw, e.root.updateMatrixWorld(!0);
 		let d = e.figures.filter((e) => e.depletes).length, f = t.maxHealth > 0 ? Math.min(1, Math.max(0, t.health / t.maxHealth)) : 0, p = Math.max(1, Math.ceil(d * f));
@@ -34520,7 +34537,7 @@ var gU = class {
 		}
 		let o = this.layout.center(e.col, e.row), s = [...n.byFaction.entries()].filter(([t]) => t !== e.faction).flatMap(([, e]) => e);
 		if (e.isRouting) {
-			let e = fU(o, s), t = e ? mU(e, o) : null;
+			let e = pU(o, s), t = e ? hU(e, o) : null;
 			if (e) return t === null ? null : {
 				yaw: t,
 				decisive: !0
@@ -34536,7 +34553,7 @@ var gU = class {
 		};
 		for (let e of l) u.x += e.x, u.z += e.z;
 		u.x /= l.length, u.z /= l.length;
-		let d = fU(u, s), f = d ? mU(u, d) : null;
+		let d = pU(u, s), f = d ? hU(u, d) : null;
 		return f === null ? null : {
 			yaw: f,
 			decisive: !1
@@ -34551,13 +34568,13 @@ var gU = class {
 			let i = this.yawBetween(r, n);
 			i !== null && this.attackFacing.set(r.id, {
 				yaw: i,
-				until: t + uU
+				until: t + dU
 			});
 		}
 		for (; this.seenAttackEvents.size > 96;) this.seenAttackEvents.delete(this.seenAttackEvents.values().next().value);
 	}
 	yawBetween(e, t) {
-		return mU(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
+		return hU(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
 	}
 	groundFigures(e) {
 		let t = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
@@ -34569,7 +34586,7 @@ var gU = class {
 		e.root.updateMatrixWorld(!0);
 	}
 	applyStrike(e) {
-		let t = e.strike ? oU(Math.min(1, e.strike.age / aU)) : 0, n = e.base.x + (e.strike?.dx ?? 0) * t, r = e.base.z + (e.strike?.dz ?? 0) * t;
+		let t = e.strike ? sU(Math.min(1, e.strike.age / oU)) : 0, n = e.base.x + (e.strike?.dx ?? 0) * t, r = e.base.z + (e.strike?.dz ?? 0) * t;
 		e.root.position.set(n, this.terrain.renderedHeightAt?.(n, r) ?? this.terrain.heightAt(n, r), r), e.root.updateMatrixWorld(!0);
 	}
 	removeVisual(e, t) {
@@ -34585,12 +34602,12 @@ var gU = class {
 				let r = e;
 				if (!r.isMesh) return;
 				let i = (Array.isArray(r.material) ? r.material : [r.material]).map((e) => {
-					if (!cU.has(e.name)) return e;
+					if (!lU.has(e.name)) return e;
 					let r = n.get(e);
 					if (!r) {
 						r = e.clone();
 						let i = r.color;
-						i && i.setHex(sU[t][e.name]), n.set(e, r), this.disposed ? r.dispose() : this.ownedMaterials.add(r);
+						i && i.setHex(cU[t][e.name]), n.set(e, r), this.disposed ? r.dispose() : this.ownedMaterials.add(r);
 					}
 					return r;
 				});
@@ -34598,21 +34615,21 @@ var gU = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, _U = {
+}, vU = {
 	width: 64,
 	height: 58
-}, vU = {
+}, yU = {
 	width: 152,
 	height: 114
 };
-function yU(e = !1) {
-	return e ? vU : _U;
+function bU(e = !1) {
+	return e ? yU : vU;
 }
-function bU(e, t) {
+function xU(e, t) {
 	return Number(e.selected) - Number(t.selected) || (t.depth ?? 0) - (e.depth ?? 0) || e.id - t.id;
 }
-function xU(e, t, n, r = _U) {
-	return t <= 0 || n <= 0 ? [] : [...e].sort(bU).map((e) => ({
+function SU(e, t, n, r = vU) {
+	return t <= 0 || n <= 0 ? [] : [...e].sort(xU).map((e) => ({
 		...e,
 		width: r.width,
 		height: r.height,
@@ -34620,8 +34637,8 @@ function xU(e, t, n, r = _U) {
 		top: e.y - r.height - 6
 	}));
 }
-var SU = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
-function CU(e, t, n, r = [], i = _U) {
+var CU = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
+function wU(e, t, n, r = [], i = vU) {
 	let a = [];
 	for (let o of [...e].sort((e, t) => Number(t.selected) - Number(e.selected) || e.y - t.y || e.id - t.id)) {
 		let { width: e, height: s } = i;
@@ -34648,26 +34665,26 @@ function CU(e, t, n, r = [], i = _U) {
 				left: Math.max(4, Math.min(t - e - 4, o.x - e / 2 + i)),
 				top: Math.max(4, Math.min(n - s - 4, o.y - s - 6 + d))
 			};
-			if (![...a, ...r].some((e) => SU(l, e))) {
+			if (![...a, ...r].some((e) => CU(l, e))) {
 				c = l;
 				break;
 			}
 		}
 		c && a.push(c);
 	}
-	return a.sort(bU);
-}
-function wU(e, t, n) {
-	if (!n || e.length === t.length) return e;
-	let r = new Set(e.map((e) => e.id));
-	return [...e, ...t.filter((e) => !r.has(e.id))].sort(bU);
+	return a.sort(xU);
 }
 function TU(e, t, n) {
-	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + _U.height || Math.abs(t - e.left - e.width / 2) <= _U.width / 2))?.id ?? null;
+	if (!n || e.length === t.length) return e;
+	let r = new Set(e.map((e) => e.id));
+	return [...e, ...t.filter((e) => !r.has(e.id))].sort(xU);
+}
+function EU(e, t, n) {
+	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + vU.height || Math.abs(t - e.left - e.width / 2) <= vU.width / 2))?.id ?? null;
 }
 //#endregion
 //#region src/unit-marker-styles.ts
-var EU = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", DU = class {
+var DU = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", OU = class {
 	canvas;
 	onChoose;
 	layer;
@@ -34689,11 +34706,11 @@ var EU = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		let n = e.ownerDocument;
 		this.layer = n.createElement("div"), this.layer.className = "three-unit-markers";
 		let r = n.createElement("style");
-		r.textContent = EU, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
+		r.textContent = DU, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
 	}
 	update(e) {
 		if (this.disposed) return;
-		this.snapshot = e, this.resize(), this.units = KH(e).filter((e) => e.presentation);
+		this.snapshot = e, this.resize(), this.units = qH(e).filter((e) => e.presentation);
 		let t = new Set(this.units.map((e) => e.id));
 		for (let [e, n] of this.markers) t.has(e) || (n.button.remove(), this.markers.delete(e));
 		this.placements = this.placements.filter((e) => t.has(e.id));
@@ -34745,8 +34762,8 @@ var EU = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 				depth: a.z
 			});
 		}
-		let r = yU(this.detailsVisible), i = xU(n, this.width, this.height, r);
-		this.placements = this.avoidance ? CU(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = wU(this.placements, i, this.detailsVisible));
+		let r = bU(this.detailsVisible), i = SU(n, this.width, this.height, r);
+		this.placements = this.avoidance ? wU(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = TU(this.placements, i, this.detailsVisible));
 		let a = new Set(this.placements.map((e) => e.id));
 		for (let [e, t] of this.markers) t.button.hidden = !a.has(e);
 		for (let [e, t] of this.placements.entries()) {
@@ -34758,7 +34775,7 @@ var EU = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 	}
 	unitAt(e, t) {
 		if (!this.active || !this.labelsVisible || this.disposed) return null;
-		let n = this.canvas.getBoundingClientRect(), r = TU(this.placements, e - n.left, t - n.top);
+		let n = this.canvas.getBoundingClientRect(), r = EU(this.placements, e - n.left, t - n.top);
 		return this.units.find((e) => e.id === r) ?? null;
 	}
 	dispose() {
@@ -34826,18 +34843,18 @@ var EU = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 			return t.className = "marker-badge", t.dataset.status = e.id, t.textContent = e.text, t.title = e.label, t.style.backgroundColor = e.color, t;
 		}));
 	}
-}, OU = 10, kU = 5, AU = 1.3, jU = .48, MU = .24, NU = .065;
-function PU(e) {
+}, kU = 10, AU = 5, jU = 1.3, MU = .48, NU = .24, PU = .065;
+function FU(e) {
 	return `${e.col},${e.row}`;
 }
-function FU(e, t) {
+function IU(e, t) {
 	return `${Math.min(e.id, t.id)}:${Math.max(e.id, t.id)}`;
 }
-var IU = class {
+var LU = class {
 	group = new Qn();
 	terrain;
 	layout;
-	linkGeometry = new Ds(MU, NU, 8, 8);
+	linkGeometry = new Ds(NU, PU, 8, 8);
 	closedMaterial = new As({
 		color: 5917215,
 		roughness: .88,
@@ -34859,11 +34876,11 @@ var IU = class {
 	}
 	update(e) {
 		if (this.disposed) return;
-		let t = KH(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [PU(e), e])), r = /* @__PURE__ */ new Set();
+		let t = qH(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [FU(e), e])), r = /* @__PURE__ */ new Set();
 		for (let e of t) for (let t of this.layout.neighbours(e)) {
 			let i = n.get(`${t.col},${t.row}`);
 			if (!i || e.faction !== i.faction || e.id >= i.id) continue;
-			let a = FU(e, i);
+			let a = IU(e, i);
 			r.add(a);
 			let o = e.marching || i.marching, s = `${a}|${e.col},${e.row}|${i.col},${i.row}|${o ? "marching" : "closed"}`, c = this.connections.get(a);
 			if (c?.stateKey === s) continue;
@@ -34877,11 +34894,11 @@ var IU = class {
 		this.disposed || (this.disposed = !0, this.connections.clear(), this.group.clear(), this.linkGeometry.dispose(), this.closedMaterial.dispose(), this.marchingMaterial.dispose());
 	}
 	createConnection(e, t, n) {
-		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new k(a / s, 0, o / s), l = new k(-c.z, 0, c.x), u = new k(0, 1, 0), d = Math.max(0, s - AU * 2), f = n ? kU : OU, p = n ? this.marchingMaterial : this.closedMaterial, m = new Qn();
+		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new k(a / s, 0, o / s), l = new k(-c.z, 0, c.x), u = new k(0, 1, 0), d = Math.max(0, s - jU * 2), f = n ? AU : kU, p = n ? this.marchingMaterial : this.closedMaterial, m = new Qn();
 		m.name = `Wagon chain ${Math.min(e.id, t.id)}-${Math.max(e.id, t.id)}`, m.userData.wagonIds = [e.id, t.id];
 		let h = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		for (let e = 0; e < f; e += 1) {
-			let t = AU + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + jU, o = new qi(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
+			let t = jU + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + MU, o = new qi(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
 			o.position.set(n, a, i), o.quaternion.setFromUnitVectors(new k(0, 0, 1), s), o.castShadow = !0, o.receiveShadow = !0, o.userData.connectionLink = !0, m.add(o);
 		}
 		return {
@@ -34889,10 +34906,10 @@ var IU = class {
 			stateKey: ""
 		};
 	}
-}, LU = 1400, RU = 70, zU = 46, BU = 3.2, VU = class {
+}, RU = 1400, zU = 70, BU = 46, VU = 3.2, HU = class {
 	group = new Qn();
 	flakes;
-	offsets = new Float32Array(LU * 4);
+	offsets = new Float32Array(RU * 4);
 	matrix = new A();
 	centre = new k();
 	precipitation = "none";
@@ -34907,14 +34924,14 @@ var IU = class {
 			depthWrite: !1,
 			fog: !0
 		});
-		this.flakes = new ya(e, t, LU), this.flakes.frustumCulled = !1, this.flakes.castShadow = !1, this.flakes.visible = !1;
+		this.flakes = new ya(e, t, RU), this.flakes.frustumCulled = !1, this.flakes.castShadow = !1, this.flakes.visible = !1;
 		let n = 2654435769, r = () => (n = n * 1664525 + 1013904223 >>> 0, n / 4294967296);
-		for (let e = 0; e < LU; e += 1) {
-			let t = r() * Math.PI * 2, n = Math.sqrt(r()) * RU;
+		for (let e = 0; e < RU; e += 1) {
+			let t = r() * Math.PI * 2, n = Math.sqrt(r()) * zU;
 			this.offsets.set([
 				Math.cos(t) * n,
 				Math.sin(t) * n,
-				r() * zU,
+				r() * BU,
 				r() * Math.PI * 2
 			], e * 4);
 		}
@@ -34932,8 +34949,8 @@ var IU = class {
 	advance(e, t, n = !1) {
 		if (this.flakes.visible) {
 			n || (this.time += e / 1e3), this.centre.set(Math.round(t.x / 8) * 8, t.y, Math.round(t.z / 8) * 8);
-			for (let e = 0; e < LU; e += 1) {
-				let t = e * 4, n = this.offsets[t + 3], r = (this.offsets[t + 2] - this.time * BU * (.8 + n % .4)) % zU, i = r < 0 ? r + zU : r;
+			for (let e = 0; e < RU; e += 1) {
+				let t = e * 4, n = this.offsets[t + 3], r = (this.offsets[t + 2] - this.time * VU * (.8 + n % .4)) % BU, i = r < 0 ? r + BU : r;
 				this.matrix.makeTranslation(this.centre.x + this.offsets[t] + Math.sin(this.time * .7 + n) * .6, this.centre.y + i - 2, this.centre.z + this.offsets[t + 1] + Math.cos(this.time * .5 + n) * .6), this.flakes.setMatrixAt(e, this.matrix);
 			}
 			this.flakes.instanceMatrix.needsUpdate = !0;
@@ -34942,7 +34959,30 @@ var IU = class {
 	dispose() {
 		this.flakes.geometry.dispose(), this.flakes.material.dispose(), this.flakes.dispose(), this.group.clear();
 	}
-}, HU = {
+}, UU = "\n.three-applying-note { position:absolute; left:50%; bottom:18px; z-index:4; transform:translateX(-50%);\n  display:flex; align-items:center; gap:8px; padding:6px 12px; pointer-events:none;\n  background:rgba(242,232,211,.94); border:1px solid var(--field-ink, #20150d); color:var(--field-ink, #20150d);\n  font:0.85rem/1.2 Georgia, serif; box-shadow:0 2px 8px rgba(0,0,0,.18); }\n.three-applying-note[hidden] { display:none; }\n.three-applying-note span[aria-hidden] { width:12px; height:12px; border-radius:50%;\n  border:2px solid currentColor; border-right-color:transparent; animation:three-applying-spin .8s linear infinite; }\n@keyframes three-applying-spin { to { transform:rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { .three-applying-note span[aria-hidden] { animation:none; } }\n", WU = class {
+	text;
+	element = null;
+	label = null;
+	style = null;
+	constructor(e, t) {
+		this.text = t;
+		let n = e.parentElement;
+		if (!n) return;
+		let r = e.ownerDocument;
+		this.element = r.createElement("div"), this.element.className = "three-applying-note", this.element.setAttribute("role", "status"), this.element.hidden = !0, this.style = r.createElement("style"), this.style.textContent = UU;
+		let i = r.createElement("span");
+		i.setAttribute("aria-hidden", "true"), this.label = r.createElement("span"), this.element.append(i, this.label), n.append(this.style, this.element);
+	}
+	show() {
+		!this.element || !this.label || (this.label.textContent = this.text(), this.element.hidden = !1);
+	}
+	hide() {
+		this.element && (this.element.hidden = !0);
+	}
+	dispose() {
+		this.element?.remove(), this.style?.remove();
+	}
+}, GU = {
 	high: {
 		ambientOcclusion: !0,
 		gtaoSamples: 12,
@@ -34964,11 +35004,11 @@ var IU = class {
 		maxPixelRatio: 1,
 		shadowMapSize: 1024
 	}
-}, UU = {
+}, KU = {
 	high: "medium",
 	medium: "low",
 	low: null
-}, WU = class {
+}, qU = class {
 	samples = [];
 	tier = "high";
 	reset(e = "high") {
@@ -34978,14 +35018,14 @@ var IU = class {
 		if (!Number.isFinite(e) || e <= 0 || e > 250 || (this.samples.push(e), this.samples.length < 60)) return null;
 		let t = [...this.samples].sort((e, t) => e - t), n = t[Math.floor(t.length / 2)];
 		this.samples = [];
-		let r = UU[this.tier];
+		let r = KU[this.tier];
 		return n <= 25 || !r ? null : (this.tier = r, r);
 	}
-}, GU = /* @__PURE__ */ new Set(), KU = () => {
-	for (let e of GU) e();
+}, JU = /* @__PURE__ */ new Set(), YU = () => {
+	for (let e of JU) e();
 };
-oc.onProgress = KU, oc.onLoad = KU;
-var qU = 240, JU = {
+oc.onProgress = YU, oc.onLoad = YU;
+var XU = 240, ZU = {
 	KeyW: "up",
 	KeyS: "down",
 	KeyA: "left",
@@ -34994,7 +35034,7 @@ var qU = 240, JU = {
 	ArrowDown: "down",
 	ArrowLeft: "left",
 	ArrowRight: "right"
-}, YU = class e {
+}, QU = class e {
 	canvas;
 	options;
 	scene = new sr();
@@ -35009,11 +35049,15 @@ var qU = 240, JU = {
 	wagonConnections;
 	overlays;
 	effects;
-	weather = new VU();
+	weather = new HU();
 	atmosphere;
 	winter;
 	qualityLevel = "auto";
-	qualityGovernor = new WU();
+	qualityGovernor = new qU();
+	appliedTiers = /* @__PURE__ */ new Set(["high"]);
+	applyingNote;
+	pendingGraphChanges = [];
+	hideApplyingAfterFrame = !1;
 	incomingStyles = /* @__PURE__ */ new Map();
 	viewportWidth = 1;
 	viewportHeight = 1;
@@ -35058,27 +35102,27 @@ var qU = 240, JU = {
 		this.canvas = e, this.options = t;
 		let r = new URL(t.assetBase ?? "assets/", document.baseURI).href;
 		if (this.assets = new vu(r), n) {
-			let e = new GH(n, t.snapshot, r);
-			this.terrain = e, this.scenery = new LH(n, e, this.assets), this.artMode = "authored";
+			let e = new KH(n, t.snapshot, r);
+			this.terrain = e, this.scenery = new RH(n, e, this.assets), this.artMode = "authored";
 		} else {
 			let e = new vp(t.snapshot, r);
 			this.terrain = e, this.scenery = new Zd(e, this.assets, t.snapshot.scenario), this.artMode = "generated";
 		}
 		let i = Math.max(this.terrain.bounds.maxX - this.terrain.bounds.minX, this.terrain.bounds.maxZ - this.terrain.bounds.minZ);
-		this.scene.background = new j(8623772), this.scene.fog = new or(12109763, .001), this.cameraRig = Zu(e, i), this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), this.openingDistance = this.focusDistance, this.pipeline = new PH(e, this.scene, this.cameraRig.camera, {
-			...HU.high,
+		this.scene.background = new j(8623772), this.scene.fog = new or(12109763, .001), this.cameraRig = Zu(e, i), this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), this.openingDistance = this.focusDistance, this.pipeline = new FH(e, this.scene, this.cameraRig.camera, {
+			...GU.high,
 			depthOfFieldMode: "compact",
 			effects: !0
 		});
 		let a = this.terrain instanceof vp && this.terrain.environmentPlan.walls.length ? new xp(this.terrain.field.tiles, this.terrain.layout, this.terrain.environmentPlan.walls, this.terrain.environmentPlan.frozenRiver) : null;
-		this.units = new gU(this.terrain, this.terrain.layout, this.assets, (e) => {
+		this.units = new _U(this.terrain, this.terrain.layout, this.assets, (e) => {
 			if (a) return a.position(e.from, e.to, e.progress);
 			let t = this.terrain.layout.center(e.from.col, e.from.row), n = this.terrain.layout.center(e.to.col, e.to.row);
 			return {
 				x: t.x + (n.x - t.x) * e.progress,
 				z: t.z + (n.z - t.z) * e.progress
 			};
-		}), this.banners = new DU(e, (e) => this.options.onHex?.(e)), this.effects = new rd(e), this.wagonConnections = new IU(this.terrain, this.terrain.layout), this.overlays = new zp(this.terrain, this.terrain.layout), this.lighting = Mp(this.scene), this.winter = this.terrain instanceof vp && this.terrain.environmentPlan.winter, this.atmosphere = new Ap(Dp(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new Bp(e, this.cameraRig.camera, this.terrain.layout), this.sky = new VH(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), GU.add(this.requestFrame), this.installInput();
+		}), this.banners = new OU(e, (e) => this.options.onHex?.(e)), this.effects = new rd(e), this.applyingNote = new WU(e, () => t.localize?.("applyingGraphics") ?? "Applying graphics settings…"), this.wagonConnections = new LU(this.terrain, this.terrain.layout), this.overlays = new zp(this.terrain, this.terrain.layout), this.lighting = Mp(this.scene), this.winter = this.terrain instanceof vp && this.terrain.environmentPlan.winter, this.atmosphere = new Ap(Dp(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new Bp(e, this.cameraRig.camera, this.terrain.layout), this.sky = new HH(this.scene, r, Math.max(500, i * 3.7)), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), JU.add(this.requestFrame), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await Gf(n.snapshot, r), a = new e(t, n, i);
@@ -35149,10 +35193,10 @@ var qU = 240, JU = {
 		this.weather.setEnabled(e), this.scheduleFrame();
 	}
 	setEffectsEnabled(e) {
-		this.pipeline.setEffectsEnabled(e), this.scheduleFrame();
+		this.changeGraphics(this.pipeline.needsCompile({ effects: e }), () => this.pipeline.setEffectsEnabled(e));
 	}
 	setFocusSettings(e, t, n) {
-		this.depthOfFieldEnabled = e, this.closeupFocusStrength = D.clamp(t, 0, 1), this.pipeline.setDepthOfFieldMode(n), this.scheduleFrame();
+		this.depthOfFieldEnabled = e, this.closeupFocusStrength = D.clamp(t, 0, 1), this.changeGraphics(this.pipeline.needsCompile({ depthOfFieldMode: n }), () => this.pipeline.setDepthOfFieldMode(n));
 	}
 	focusHex(e, t) {
 		let n = this.terrain.layout.center(e, t), r = this.cameraTween?.to ?? Wu(this.cameraRig.camera, this.cameraRig.controls.target);
@@ -35240,10 +35284,10 @@ var qU = 240, JU = {
 		};
 	}
 	resetDiagnostics() {
-		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = qU, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
+		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = XU, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
 	}
 	dispose() {
-		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), GU.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
+		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), JU.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.applyingNote.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
 	}
 	addListener(e, t, n, r) {
 		e.addEventListener(t, n, {
@@ -35310,8 +35354,24 @@ var qU = 240, JU = {
 		}
 	}
 	applyQualityTier(e) {
-		let t = HU[e];
-		this.pipeline.setCost(t), this.lighting.setShadowMapSize(t.shadowMapSize), this.canvas.dataset.qualityTier = e, this.scheduleFrame();
+		let t = GU[e];
+		this.canvas.dataset.qualityTier = e, this.changeGraphics(!this.appliedTiers.has(e), () => {
+			this.appliedTiers.add(e), this.pipeline.setCost(t), this.lighting.setShadowMapSize(t.shadowMapSize);
+		});
+	}
+	changeGraphics(e, t) {
+		if (!this.disposed) {
+			if ((!e || !this.active || !this.ready) && this.pendingGraphChanges.length === 0) {
+				t(), this.scheduleFrame();
+				return;
+			}
+			this.pendingGraphChanges.push(t), !(this.pendingGraphChanges.length > 1) && (this.applyingNote.show(), requestAnimationFrame(() => window.setTimeout(() => {
+				if (!this.disposed) {
+					for (let e of this.pendingGraphChanges.splice(0)) e();
+					this.hideApplyingAfterFrame = !0, this.active ? this.scheduleFrame() : (this.applyingNote.hide(), this.hideApplyingAfterFrame = !1);
+				}
+			}, 0)));
+		}
 	}
 	applyAtmosphere() {
 		this.lighting.apply(this.atmosphere.state), this.sky.apply(this.atmosphere.state);
@@ -35381,7 +35441,7 @@ var qU = 240, JU = {
 	}
 	handleKey(e, t) {
 		if (!this.active || e.ctrlKey || e.metaKey || e.altKey || e.target?.closest?.("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return;
-		let n = JU[e.code] ?? JU[e.key];
+		let n = ZU[e.code] ?? ZU[e.key];
 		if (n) {
 			t ? this.heldPanKeys.add(n) : this.heldPanKeys.delete(n), e.key.startsWith("Arrow") && e.preventDefault(), t && (this.cameraTween = null, this.scheduleFrame());
 			return;
@@ -35441,7 +35501,7 @@ var qU = 240, JU = {
 		let _ = this.overlays.pulsingActive && !this.reducedMotion.matches && !this.options.snapshot.paused;
 		this.overlays.pulse(_ ? e : 0), this.units.consumeShadowChange() && this.lighting.invalidateShadows(), this.lighting.updateShadows();
 		let v = performance.now();
-		this.pipeline.renderer.info.reset(), this.pipeline.render();
+		this.pipeline.renderer.info.reset(), this.pipeline.render(), this.hideApplyingAfterFrame && (this.hideApplyingAfterFrame = !1, this.applyingNote.hide());
 		let y = performance.now();
 		if (this.lastRendererCounters = Yp(this.pipeline.renderer), this.qualityLevel === "auto" && !n && this.performanceWarm) {
 			let e = this.qualityGovernor.record(t);
@@ -35452,11 +35512,11 @@ var qU = 240, JU = {
 		}, 42)) : this.resumingFromIdle = !0;
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => YU.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function XU() {
+window.HussiteBattle3D = { create: (e, t) => QU.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function $U() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
-	let n = RH(() => t.takeSnapshot(), window), r = new BH(), i = await n, a = r.current() ?? i, o = (e, n) => {
+	let n = zH(() => t.takeSnapshot(), window), r = new VH(), i = await n, a = r.current() ?? i, o = (e, n) => {
 		let r = t.current();
 		t.sendCommand(JSON.stringify({
 			protocolVersion: 1,
@@ -35465,7 +35525,7 @@ async function XU() {
 			action: e,
 			...n
 		}));
-	}, s = await YU.create(e, {
+	}, s = await QU.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -35478,7 +35538,7 @@ async function XU() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-XU().catch((e) => {
+$U().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

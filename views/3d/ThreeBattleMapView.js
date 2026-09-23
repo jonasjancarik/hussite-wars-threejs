@@ -88,6 +88,7 @@ class ThreeBattleMapView {
                     this.view.orders.cancel();
                     this.game.deselectUnit();
                 },
+                localize: key => i18n.t(`touch.${key}`),
                 onZoom: percentage => {
                     if (this.active && !this.destroyed) {
                         document.getElementById('map-zoom-value').textContent = `${percentage}%`;
@@ -147,7 +148,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.39';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.40';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });

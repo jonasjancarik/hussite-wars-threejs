@@ -23,6 +23,7 @@ import { UnitBanners } from "./unit-banners.ts";
 import { WagonConnections } from "./wagon-connections.ts";
 import { atmosphereProfile, AtmosphereTransition } from "./atmosphere.ts";
 import { BattleWeather } from "./weather.ts";
+import { ApplyingNote } from "./applying-note.ts";
 import { AutoQualityGovernor, QUALITY_TIERS, type QualityLevel, type QualityTier } from "./quality.ts";
 
 // Textures stream in after the first frame. With on-demand rendering every
@@ -55,6 +56,12 @@ class IntegratedThreeBattle {
   private readonly winter: boolean;
   private qualityLevel: QualityLevel = "auto";
   private readonly qualityGovernor = new AutoQualityGovernor();
+  /** Tiers whose shaders and shadow lights have been compiled in this renderer. */
+  private readonly appliedTiers = new Set<QualityTier>(["high"]);
+  private readonly applyingNote: ApplyingNote;
+  /** Graphics changes waiting for the "Applying…" note to be painted. */
+  private readonly pendingGraphChanges: Array<() => void> = [];
+  private hideApplyingAfterFrame = false;
   /** Recent attack style per target hex, so its impact matches the weapon. */
   private readonly incomingStyles = new Map<string, AttackStyle>();
   private viewportWidth = 1;
@@ -134,6 +141,7 @@ class IntegratedThreeBattle {
     });
     this.banners = new UnitBanners(canvas, coord => this.options.onHex?.(coord));
     this.effects = new BattlefieldEffects(canvas);
+    this.applyingNote = new ApplyingNote(canvas, () => options.localize?.("applyingGraphics") ?? "Applying graphics settings…");
     this.wagonConnections = new WagonConnections(this.terrain, this.terrain.layout);
     this.overlays = new TacticalOverlays(this.terrain, this.terrain.layout);
     this.lighting = createBattleLighting(this.scene);
@@ -262,12 +270,13 @@ class IntegratedThreeBattle {
   public qualityTier(): QualityTier { return this.qualityLevel === "auto" ? this.qualityGovernor.tier : this.qualityLevel; }
 
   public setWeatherEnabled(enabled: boolean): void { this.weather.setEnabled(enabled); this.scheduleFrame(); }
-  public setEffectsEnabled(enabled: boolean): void { this.pipeline.setEffectsEnabled(enabled); this.scheduleFrame(); }
+  public setEffectsEnabled(enabled: boolean): void {
+    this.changeGraphics(this.pipeline.needsCompile({ effects: enabled }), () => this.pipeline.setEffectsEnabled(enabled));
+  }
   public setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void {
     this.depthOfFieldEnabled = enabled;
     this.closeupFocusStrength = THREE.MathUtils.clamp(closeupStrength, 0, 1);
-    this.pipeline.setDepthOfFieldMode(quality);
-    this.scheduleFrame();
+    this.changeGraphics(this.pipeline.needsCompile({ depthOfFieldMode: quality }), () => this.pipeline.setDepthOfFieldMode(quality));
   }
 
   public focusHex(col: number, row: number): void {
@@ -358,6 +367,7 @@ class IntegratedThreeBattle {
     this.scenery.dispose();
     this.overlays.dispose();
     this.effects.dispose();
+    this.applyingNote.dispose();
     this.weather.dispose();
     this.units.dispose();
     this.banners.dispose();
@@ -454,10 +464,39 @@ class IntegratedThreeBattle {
 
   private applyQualityTier(tier: QualityTier): void {
     const settings = QUALITY_TIERS[tier];
-    this.pipeline.setCost(settings);
-    this.lighting.setShadowMapSize(settings.shadowMapSize);
     this.canvas.dataset.qualityTier = tier;
-    this.scheduleFrame();
+    // A tier's first use compiles new effect shaders and, through the
+    // replacement sun light, every scene material.
+    this.changeGraphics(!this.appliedTiers.has(tier), () => {
+      this.appliedTiers.add(tier);
+      this.pipeline.setCost(settings);
+      this.lighting.setShadowMapSize(settings.shadowMapSize);
+    });
+  }
+
+  /**
+   * Apply a graphics change. When it compiles new shaders, the next frame
+   * blocks the main thread for a moment: show the "Applying…" note first,
+   * let the browser paint it, then apply and render, and hide it afterwards.
+   * The previous frame stays on screen meanwhile.
+   */
+  private changeGraphics(compiles: boolean, apply: () => void): void {
+    if (this.disposed) return;
+    if ((!compiles || !this.active || !this.ready) && this.pendingGraphChanges.length === 0) {
+      apply();
+      this.scheduleFrame();
+      return;
+    }
+    this.pendingGraphChanges.push(apply);
+    if (this.pendingGraphChanges.length > 1) return;
+    this.applyingNote.show();
+    // A task queued from an animation frame runs after that frame's paint.
+    requestAnimationFrame(() => window.setTimeout(() => {
+      if (this.disposed) return;
+      for (const change of this.pendingGraphChanges.splice(0)) change();
+      this.hideApplyingAfterFrame = true;
+      if (this.active) this.scheduleFrame(); else { this.applyingNote.hide(); this.hideApplyingAfterFrame = false; }
+    }, 0));
   }
 
   private applyAtmosphere(): void {
@@ -672,6 +711,7 @@ class IntegratedThreeBattle {
     const rendererStartedAt = performance.now();
     this.pipeline.renderer.info.reset();
     this.pipeline.render();
+    if (this.hideApplyingAfterFrame) { this.hideApplyingAfterFrame = false; this.applyingNote.hide(); }
     const rendererFinishedAt = performance.now();
     this.lastRendererCounters = rendererCounters(this.pipeline.renderer);
     // Auto quality judges only consecutive display-rate frames (drags, zooms,

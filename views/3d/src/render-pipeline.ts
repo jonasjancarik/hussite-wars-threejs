@@ -64,6 +64,11 @@ export interface RenderQuality {
   aoResolutionScale?: number;
 }
 
+function graphKey(quality: RenderQuality): string {
+  return [quality.effects, quality.ambientOcclusion, quality.gtaoSamples, quality.aoResolutionScale ?? 1,
+    quality.depthOfFieldMode].join("|");
+}
+
 const GRADE = {
   coolShadow: [0.95, 0.985, 1.05] as const,
   warmHighlight: [1.06, 1.025, 0.94] as const,
@@ -83,6 +88,8 @@ export class BattleRenderPipeline {
   private width = 1;
   private height = 1;
   private pixelRatio = 0;
+  /** Effect graph configurations already built (their shaders are cached). */
+  private readonly builtGraphs = new Set<string>();
 
   public constructor(
     canvas: HTMLCanvasElement,
@@ -175,7 +182,13 @@ export class BattleRenderPipeline {
     this.renderer.dispose();
   }
 
+  /** Whether applying `change` builds an effect graph not seen before, i.e. compiles new shaders. */
+  public needsCompile(change: Partial<RenderQuality>): boolean {
+    return !this.builtGraphs.has(graphKey({ ...this.quality, ...change }));
+  }
+
   private rebuildGraph(): void {
+    this.builtGraphs.add(graphKey(this.quality));
     this.disposeEffects();
     const sceneColor = this.scenePass.getTextureNode("output");
     const sceneDepth = this.scenePass.getTextureNode("depth");
