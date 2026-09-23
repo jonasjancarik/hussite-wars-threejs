@@ -5,6 +5,7 @@ import random
 import json
 import sys
 import bpy
+import bmesh
 from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -241,37 +242,80 @@ def wagon():
     banner((-1.66,.72,.95),2.70)
 
 
+def loft(name, samples, mat, segments=12, parent=None, origin=(0,0,0)):
+    """Faceted tube through (centre, half_width, half_height) samples; flat caps."""
+    origin=Vector(origin)
+    points=[Vector(c) for c,_,_ in samples]
+    side=Vector((0,1,0))
+    vertices=[]
+    for i,(centre,ry,rz) in enumerate(samples):
+        tangent=(points[min(i+1,len(points)-1)]-points[max(i-1,0)]).normalized()
+        up=tangent.cross(side).normalized()
+        for j in range(segments):
+            a=j*math.tau/segments
+            vertices.append(tuple(points[i]+side*ry*math.cos(a)+up*rz*math.sin(a)-origin))
+    faces=[tuple(reversed(range(segments))),tuple(range((len(samples)-1)*segments,len(samples)*segments))]
+    for ring in range(len(samples)-1):
+        for j in range(segments):
+            k=(j+1)%segments
+            faces.append((ring*segments+j,ring*segments+k,(ring+1)*segments+k,(ring+1)*segments+j))
+    obj=mesh(name,vertices,faces,mat)
+    bm=bmesh.new();bm.from_mesh(obj.data)
+    bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+    bm.to_mesh(obj.data);bm.free()
+    obj.location=origin
+    if parent: obj.parent=parent
+    return obj
+
+
 def horse():
     root=empty('Horse_gait_root')
-    body=ico('Horse_barrel',(0,0,1.37),(.90,.32,.45),'horse',2,parent=root)
-    ico('Horse_chest',(.65,0,1.46),(.35,.32,.46),'horse',2,parent=root)
-    ico('Horse_haunch',(-.68,0,1.43),(.38,.34,.41),'horse',2,parent=root)
-    neck=ico('Horse_neck',(.76,0,1.94),(.27,.235,.67),'horse',2,parent=root)
-    neck.rotation_euler.y=.40
-    ico('Horse_head',(1.06,0,2.37),(.33,.205,.23),'horse',2,parent=root)
-    muzzle=ico('Horse_muzzle',(1.36,0,2.20),(.29,.17,.19),'horse',2,parent=root)
-    muzzle.rotation_euler.y=.38
-    ico('Horse_nose',(1.56,0,2.12),(.125,.155,.14),'mane',1,parent=root)
-    for y in (-.125,.125):
-        cone('Horse_ear',(1.02,y,2.62),.065,.014,.18,'horse',5,parent=root)
-        ico('Horse_eye',(1.13,y*1.57,2.41),(.040,.015,.039),'black',2,parent=root)
-    for i in range(7):
-        ico('Mane_lock',(.86-i*.071,0,2.47-i*.105),(.12,.16,.16),'mane',1,parent=root)
-    tail=beam('Horse_tail',(-.87,0,1.60),(-1.27,.02,.84),.14,'mane',6,parent=root,radius2=.035)
+    # One faceted barrel from rump to chest: the topline dips under the saddle
+    # (its height is unchanged for riders) and rises to the withers.
+    loft('Horse_barrel',[
+        ((-1.04,0,1.52),.10,.13),((-.94,0,1.53),.25,.30),((-.72,0,1.47),.335,.40),
+        ((-.35,0,1.39),.335,.41),((0,0,1.36),.33,.43),((.35,0,1.40),.32,.40),
+        ((.62,0,1.47),.285,.44),((.86,0,1.45),.20,.34),((.98,0,1.43),.09,.18)],'horse',12,root)
+    neck=loft('Horse_neck',[
+        ((.48,0,1.56),.22,.34),((.70,0,1.86),.185,.29),((.88,0,2.13),.145,.22),
+        ((.99,0,2.33),.125,.17)],'horse',12,root)
+    loft('Horse_head',[
+        ((.93,0,2.44),.10,.11),((1.05,0,2.43),.14,.17),((1.22,0,2.32),.125,.15),
+        ((1.38,0,2.21),.11,.125),((1.51,0,2.13),.10,.10),((1.585,0,2.09),.065,.065)],'horse',10,root)
+    ico('Horse_cheek',(1.10,0,2.31),(.14,.145,.14),'horse',1,parent=root)
+    ico('Horse_nose',(1.555,0,2.10),(.075,.092,.075),'mane',1,parent=root)
+    for y in (-.07,.07):
+        beam('Horse_ear',(1.00,y,2.52),(.97,y*1.3,2.71),.05,'horse',5,parent=root,radius2=.012)
+        ico('Horse_eye',(1.17,y*1.85,2.40),(.036,.014,.034),'black',1,parent=root)
+    # A continuous crest mane and forelock follow the neck.
+    crest=[(.47,1.93),(.62,2.12),(.76,2.30),(.88,2.44),(.97,2.54)]
+    for (x0,z0),(x1,z1) in zip(crest,crest[1:]):
+        beam('Mane_crest',(x0-.035,0,z0),(x1-.035,0,z1),.075,'mane',5,parent=root,radius2=.068)
+    beam('Mane_forelock',(1.01,0,2.53),(1.12,0,2.43),.05,'mane',5,parent=root,radius2=.02)
+    # Tapered, gently curved tail; its object origin is the dock for the gait.
+    tail=loft('Horse_tail',[
+        ((-1.00,0,1.60),.055,.06),((-1.07,.005,1.47),.085,.075),((-1.11,.012,1.22),.095,.075),
+        ((-1.12,.02,.98),.07,.06),((-1.10,.02,.84),.02,.025)],'mane',8,root,(-1.00,0,1.60))
     box('Saddle_blanket',(-.10,0,1.78),(.79,.71,.09),'red',.04,parent=root)
     box('Leather_saddle',(-.12,0,1.84),(.49,.47,.13),'leather',.05,parent=root)
     for y in (-.337,.337):
         beam('Saddle_girth',(-.10,y,1.77),(-.10,y,1.05),.025,'leather',5,parent=root)
-        beam('Bridle_cheek',(1.13,y*.61,2.43),(1.40,y*.48,2.15),.021,'leather',5,parent=root)
-        beam('Rein',(.22,y,2.29),(1.43,y*.48,2.20),.012,'leather',4,parent=root)
+        beam('Bridle_cheek',(1.07,y*.44,2.47),(1.42,y*.33,2.18),.019,'leather',5,parent=root)
+        beam('Bridle_noseband',(1.40,y*.33,2.26),(1.46,y*.31,2.08),.017,'leather',5,parent=root)
+        ico('Bridle_bit_ring',(1.45,y*.33,2.15),(.035,.012,.035),'iron',1,parent=root)
+        beam('Rein',(.22,y,2.29),(1.45,y*.33,2.15),.012,'leather',4,parent=root)
     leg_roots=[]
     for front,x in ((True,.62),(False,-.64)):
         for side,y in enumerate((-.22,.22)):
             hip=empty(('Fore' if front else 'Hind')+('_near' if side==0 else '_far'),(x,y,1.40),root)
-            beam('Upper_leg',(0,0,0),(.03 if front else .18,0,-.57),.103,'horse',6,parent=hip,radius2=.06)
-            knee=empty('Knee',(.03 if front else .18,0,-.57),hip)
-            beam('Lower_leg',(0,0,0),(-.025,0,-.66),.049,'horse',6,parent=knee,radius2=.034)
-            box('Hoof',(.025,0,-.715),(.19,.125,.14),'mane',.025,parent=knee)
+            knee_at=(.03 if front else .18,0,-.57)
+            # Muscled forearm/gaskin tapering to a visible knee or hock.
+            beam('Upper_leg',(0,0,.08),knee_at,.135 if front else .16,'horse',7,parent=hip,radius2=.066)
+            knee=empty('Knee',knee_at,hip)
+            ico('Knee_joint',(0,0,0),(.068,.064,.075),'horse',1,parent=knee)
+            beam('Lower_leg',(0,0,0),(-.025,0,-.60),.058,'horse',6,parent=knee,radius2=.047)
+            ico('Fetlock',(-.025,0,-.61),(.058,.055,.06),'horse',1,parent=knee)
+            cone('Hoof',(-.005,0,-.715),.088,.062,.14,'mane',8,parent=knee)
             leg_roots.append((hip,knee,(0 if front else .5)+(side*.5 if front else side*.5+.25)))
     before=set(bpy.data.objects)
     soldier('Mounted_rider',(-.20,0,1.33),'polearm','ochre',True)
@@ -313,27 +357,6 @@ def window(name,pos,width=.45,height=1.10):
     x,y,z=pos
     box(name,(x,y,z),(width,.035,height),'oak_dark',.08)
     box(name+'_sill',(x,y-.035,z-height/2), (width+.15,.15,.09),'stone')
-
-
-def church():
-    box('Church_foundation',(0,0,.18),(7.4,4.6,.36),'stone',.08)
-    box('Nave_plaster',(0,0,2.15),(7,4.2,4.1),'plaster',.04)
-    roof('Nave_roof',(0,0,0),7.7,4.8,4.2,6.0)
-    for y in (-2.12,2.12):
-        for x in (-2.3,0,2.3):
-            window('Nave_window',(x,y,2.65),.55,1.55)
-            box('Buttress',(x+.6,y,1.40),(.32,.40,2.8),'plaster',.02)
-    box('Tower',(-2.75,0,3.88),(2.65,2.65,7.7),'plaster',.05)
-    box('Tower_stone_band',(-2.75,0,6.0),(2.8,2.8,.18),'stone',.025)
-    for y in (-1.34,1.34):
-        window('Belfry',(-2.75,y,6.88),.60,1.17)
-    cone('Tower_spire',(-2.75,0,9.13),2.03,0,3.20,'slate',4).rotation_euler.z=math.pi/4
-    beam('Church_cross_vertical',(-2.75,0,10.5),(-2.75,0,11.25),.041,'iron')
-    beam('Church_cross_horizontal',(-3.00,0,11.02),(-2.50,0,11.02),.038,'iron')
-    box('Door',(-2.75,-1.35,1.10),(1.08,.06,2.2),'oak_dark',.14)
-    for x in (-2.97,-2.53):
-        box('Door_iron_hinge',(x,-1.40,.75),(.35,.05,.055),'iron')
-    box('Church_step',(-2.75,-1.73,.12),(1.5,.85,.24),'stone',.03)
 
 
 def farmhouse():
@@ -449,7 +472,7 @@ BUILDERS={
     'infantry_polearm':lambda:soldier(weapon='polearm'),
     'infantry_handgun':lambda:soldier(weapon='handgun',coat='ochre'),
     'infantry_shield':lambda:soldier(weapon='shield'),
-    'church':church,'farmhouse':farmhouse,
+    'farmhouse':farmhouse,
     'broadleaf_olive':tree,'broadleaf_gold':lambda:tree(True),'cypress':cypress,
     'stakes':stakes,'banner':banner,'bridge':bridge,
 }

@@ -7,7 +7,7 @@ import math
 from types import SimpleNamespace
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 from fortification_batch import Fortifications
 
@@ -372,6 +372,99 @@ class Settlement:
         k.beam('Gothic_church_ridge_cross_arm', (-.22, 0, 9.58), (.22, 0, 9.58), .033, 'iron', 6)
         self.centre(before)
 
+    def church_village(self):
+        """Plain Gothic village church: west tower, nave, polygonal choir.
+
+        Tower at -X, south portal on -Y. The finished model is fitted to the
+        original kit church's measured envelope, which settlement placement uses.
+        """
+        before = self.begin()
+        k = self.k
+        # Nave: plastered rubble walls on a low stone plinth, steep tiled roof.
+        k.box('Village_church_nave_plinth', (-.90, 0, .12), (4.50, 4.72, .24), 'fort_stone_dark', .03)
+        k.box('Village_church_nave_walls', (-.90, 0, 2.20), (4.40, 4.60, 4.40), 'settlement_lime', .03)
+        roof_before = set(bpy.context.scene.objects)
+        self.roof('Village_church_nave', 4.62, 5.30, 4.38, 7.55, 'fort_roof', 'settlement_lime')
+        for obj in set(bpy.context.scene.objects)-roof_before:
+            obj.location.x -= .90
+        # Wall helpers measure `along` leftwards from the outside, so on the
+        # north (+Y) face a world X position is passed negated.
+        for side in (-1, 1):
+            for x in (-.20, 1.12):
+                self.buttress('Village_church_nave', (0, side), 2.30, -side*x, 3.10, .34, .42)
+            for x in ((-.85, .45) if side < 0 else (-1.60, .45)):
+                self.pointed('Village_church_nave_window', (0, side), 2.30, -side*x,
+                             1.75, .50, 1.85, mullion=False)
+        # South portal with a pointed stone surround.
+        self.pointed('Village_church_south_portal', (0, -1), 2.30, -2.15, .20, 1.05, 2.25, 'oak', False)
+        self.step('Village_church', -2.15, -2.30, 1.30, .18)
+        # Lower, narrower choir with a three-sided east end.
+        apse = [(1.30, -1.70), (2.90, -1.70), (3.62, -.70), (3.62, .70), (2.90, 1.70), (1.30, 1.70)]
+        self.f.prism('Village_church_choir_walls', apse, .0, 4.00, 'settlement_lime')
+        self.f.prism('Village_church_choir_plinth', [(x+(.05 if x > 2 else 0), y*1.03) for x, y in apse],
+                     .0, .24, 'fort_stone_dark')
+        eave = [(1.30, -1.92), (3.00, -1.92), (3.85, -.78), (3.85, .78), (3.00, 1.92), (1.30, 1.92)]
+        ridge_west, ridge_east = (1.10, 0, 6.35), (2.78, 0, 6.35)
+        vertices = [(x, y, 3.96) for x, y in eave] + [ridge_west, ridge_east]
+        self.f.solid('Village_church_choir_roof', vertices,
+                     [tuple(reversed(range(6))), (0, 1, 7, 6), (1, 2, 7), (2, 3, 7),
+                      (3, 4, 7), (4, 5, 6, 7), (5, 0, 6)], 'fort_roof')
+        k.beam('Village_church_choir_ridge', ridge_west, ridge_east, .05, 'fort_roof_light', 5)
+        # Two-stage buttresses brace the choir corners and its angled faces.
+        slope = Vector((1.0, .72, 0)).normalized()
+        for y in (-1, 1):
+            for base, normal in (((2.85, y*1.70), (0, y)),
+                                 ((3.26, y*1.20), (slope.x, y*slope.y))):
+                normal = Vector((*normal, 0))
+                turn = math.atan2(normal.y, normal.x)-math.pi/2
+                for depth, width, low, high in ((.46, .32, 0, 1.85), (.30, .28, 1.85, 2.90)):
+                    part = k.box('Village_church_choir_buttress', (0, 0, (low+high)/2),
+                                 (width, depth, high-low), 'fort_masonry', .02)
+                    part.rotation_euler.z = turn
+                    part.location += Vector((*base, 0))+normal*(depth/2-.03)
+        for side in (-1, 1):
+            self.pointed('Village_church_choir_window', (0, side), 1.70, -side*2.10,
+                         1.55, .44, 1.75, mullion=False)
+        self.pointed('Village_church_east_window', (1, 0), 3.62, 0, 1.55, .44, 1.75, mullion=False)
+        k.beam('Village_church_choir_cross_upright', (2.80, 0, 6.30), (2.80, 0, 6.95), .03, 'iron', 6)
+        k.beam('Village_church_choir_cross_arm', (2.80, -.17, 6.74), (2.80, .17, 6.74), .03, 'iron', 6)
+        # Plain square west tower with quoins, small bell openings and a tent roof.
+        tower_before = set(bpy.context.scene.objects)
+        k.box('Village_church_tower_plinth', (0, 0, .14), (2.66, 2.66, .28), 'fort_stone_dark', .03)
+        k.box('Village_church_tower', (0, 0, 3.55), (2.50, 2.50, 7.10), 'settlement_lime', .03)
+        self.f.quoins('Village_church_tower', 1.27, 1.27, 6.9)
+        for normal in ((0, -1), (0, 1), (-1, 0)):
+            self.pointed('Village_church_bell_opening', normal, 1.25, 0, 5.55, .42, .95, 'black', False)
+        self.f.window('Village_church_tower_slit', (-1, 0), 1.25, 0, 2.60, .14, .60, slit=True)
+        r = 1.46
+        self.f.solid('Village_church_tower_tent_roof',
+                     [(-r, -r, 7.05), (r, -r, 7.05), (r, r, 7.05), (-r, r, 7.05), (0, 0, 10.55)],
+                     [(3, 2, 1, 0), (0, 1, 4), (1, 2, 4), (2, 3, 4), (3, 0, 4)], 'slate')
+        for a, b in (((-r, -r), (r, -r)), ((r, -r), (r, r)), ((r, r), (-r, r)), ((-r, r), (-r, -r))):
+            k.beam('Village_church_tower_eave', (*a, 7.05), (*b, 7.05), .05, 'oak_dark', 5)
+        k.beam('Village_church_cross_upright', (0, 0, 10.45), (0, 0, 11.25), .038, 'iron', 6)
+        k.beam('Village_church_cross_arm', (0, -.24, 10.98), (0, .24, 10.98), .036, 'iron', 6)
+        for obj in set(bpy.context.scene.objects)-tower_before:
+            obj.location.x -= 4.35
+        self.fit(before, (-5.6205, -2.871, 0), (3.8505, 2.871, 11.25))
+
+    def fit(self, before, low, high):
+        """Bake transforms and map the model exactly onto a measured envelope."""
+        objects = [obj for obj in set(bpy.context.scene.objects)-before if obj.type == 'MESH']
+        bpy.context.view_layer.update()
+        for obj in objects:
+            obj.data.transform(obj.matrix_world)
+            obj.parent = None
+            obj.matrix_world = Matrix.Identity(4)
+        points = [v.co for obj in objects for v in obj.data.vertices]
+        lo = [min(p[i] for p in points) for i in range(3)]
+        hi = [max(p[i] for p in points) for i in range(3)]
+        for obj in objects:
+            for v in obj.data.vertices:
+                v.co = Vector(tuple(low[i]+(v.co[i]-lo[i])*(high[i]-low[i])/(hi[i]-lo[i])
+                                    for i in range(3)))
+            obj.data.update()
+
     def ring(self, prefix, outside, inside, low, high, material, count=12):
         verts = [(radius*math.cos(i*math.tau/count), radius*math.sin(i*math.tau/count), z)
                  for z, radius in ((low, outside), (high, outside),
@@ -421,5 +514,6 @@ def builders(namespace):
         'fence_gate': batch.fence_gate,
         'monastery_wing': batch.monastery_wing,
         'church_gothic': batch.church_gothic,
+        'church': batch.church_village,
         'well': batch.well,
     }

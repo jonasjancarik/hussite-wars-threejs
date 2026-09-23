@@ -37,7 +37,8 @@ class InfantryBatch:
         faces.append(tuple((len(rings)-1)*segments+i for i in range(segments)))
         return self.k.mesh(name, vertices, faces, mat)
 
-    def body(self, prefix, hands, elbows, stance=.16, helmet=True):
+    def body(self, prefix, hands, elbows, stance=.16, helmet=True, coat='team_cloth', padded=True):
+        """Shared figure. `padded=False` gives a plain civilian coat and cloth sleeves."""
         k = self.k
         self.palette()
         # Octagonal padded jack, tapered from broad shoulders to the belt. The
@@ -46,14 +47,14 @@ class InfantryBatch:
         self.ring_mesh(prefix+'_padded_jack', [
             (0, 0, .84, .205, .19), (0, 0, .98, .215, .20),
             (.01, 0, 1.16, .225, .215), (0, 0, 1.28, .205, .245),
-            (0, 0, 1.35, .13, .15)], 'team_cloth', 8, facet)
+            (0, 0, 1.35, .13, .15)], coat, 8, facet)
         self.ring_mesh(prefix+'_coat_skirt', [
             (0, 0, .65, .265, .255), (0, 0, .84, .215, .20),
-            (0, 0, .94, .21, .195)], 'team_cloth', 8, facet)
+            (0, 0, .94, .21, .195)], coat, 8, facet)
         # A restrained seam and a few raised padded panels, visible in close-up.
-        for y in (-.07, 0, .07):
-            k.beam(prefix+'_quilt_channel', (.203, y, .97), (.212, y, 1.16), .012, 'team_cloth', 4)
-            k.beam(prefix+'_quilt_channel', (.212, y, 1.16), (.192, y, 1.27), .012, 'team_cloth', 4)
+        for y in ((-.07, 0, .07) if padded else ()):
+            k.beam(prefix+'_quilt_channel', (.203, y, .97), (.212, y, 1.16), .012, coat, 4)
+            k.beam(prefix+'_quilt_channel', (.212, y, 1.16), (.192, y, 1.27), .012, coat, 4)
         self.ring_mesh(prefix+'_belt', [
             (.005, 0, .865, .228, .212), (.005, 0, .93, .228, .212)], 'leather', 8, facet)
         k.box(prefix+'_belt_buckle', (.222, -.035, .898), (.025, .070, .066), 'iron', .005)
@@ -70,19 +71,25 @@ class InfantryBatch:
             shoulder = Vector((0, side*.225, 1.255))
             elbow, hand = Vector(elbows[side]), Vector(hands[side])
             # Rounded shoulder caps join the side-colour sleeve to the jack.
-            k.ico(prefix+'_upper_sleeve_shoulder', shoulder, (.105, .10, .095), 'team_cloth', 1)
-            k.beam(prefix+'_upper_sleeve', shoulder, elbow, .092, 'team_cloth', 7, radius2=.078)
+            k.ico(prefix+'_upper_sleeve_shoulder', shoulder, (.105, .10, .095), coat, 1)
+            k.beam(prefix+'_upper_sleeve', shoulder, elbow, .092, coat, 7, radius2=.078)
             # Padded forearm defences with an elbow cop and quilted ridges.
             # Armoured variants turn every `_lower_sleeve` part to steel.
             reach = hand-elbow
             axis = reach.normalized()
             wrist = hand-axis*min(.06, reach.length*.3)
-            k.ico(prefix+'_lower_sleeve_elbow', elbow, (.090, .088, .088), 'padded_linen', 1)
-            k.beam(prefix+'_lower_sleeve', elbow, wrist, .084, 'padded_linen', 7, radius2=.066)
-            for fraction, radius in ((.38, .083), (.72, .075)):
-                centre = elbow.lerp(wrist, fraction)
-                k.beam(prefix+'_lower_sleeve_quilt', centre-axis*.016, centre+axis*.016,
-                       radius, 'padded_linen', 7)
+            if padded:
+                k.ico(prefix+'_lower_sleeve_elbow', elbow, (.090, .088, .088), 'padded_linen', 1)
+                k.beam(prefix+'_lower_sleeve', elbow, wrist, .084, 'padded_linen', 7, radius2=.066)
+                for fraction, radius in ((.38, .083), (.72, .075)):
+                    centre = elbow.lerp(wrist, fraction)
+                    k.beam(prefix+'_lower_sleeve_quilt', centre-axis*.016, centre+axis*.016,
+                           radius, 'padded_linen', 7)
+            else:
+                # A plain cloth sleeve with a turned-back linen cuff.
+                k.ico(prefix+'_upper_sleeve_elbow', elbow, (.078, .076, .076), coat, 1)
+                k.beam(prefix+'_lower_sleeve', elbow, wrist, .076, coat, 7, radius2=.064)
+                k.beam(prefix+'_lower_sleeve_cuff', wrist-axis*.05, wrist, .070, 'linen', 7, radius2=.068)
             k.ico(prefix+'_hand', hand, (.078, .066, .070), 'skin', 1)
         # Visible coif beneath a kettle hat or cloth cap. No fine chainmail
         # texture. The head is slightly enlarged about the neck, in miniature

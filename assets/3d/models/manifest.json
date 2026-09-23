@@ -2,18 +2,18 @@
   "cavalry": {
     "file": "units/cavalry.glb",
     "dimensions_blender_xyz_m": [
-      2.902,
+      2.807,
       1.0,
-      4.29
+      4.276
     ],
     "dimensions_gltf_xyz_m": [
-      2.902,
-      4.29,
+      2.807,
+      4.276,
       1.0
     ],
-    "mesh_objects": 23,
-    "editable_source_mesh_objects": 61,
-    "triangles": 2010,
+    "mesh_objects": 24,
+    "editable_source_mesh_objects": 69,
+    "triangles": 2030,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [
@@ -24,18 +24,18 @@
   "war_wagon": {
     "file": "units/war_wagon.glb",
     "dimensions_blender_xyz_m": [
-      5.305,
-      2.96,
+      5.285,
+      2.94,
       3.93
     ],
     "dimensions_gltf_xyz_m": [
-      5.305,
+      5.285,
       3.93,
-      2.96
+      2.94
     ],
-    "mesh_objects": 10,
-    "editable_source_mesh_objects": 190,
-    "triangles": 6156,
+    "mesh_objects": 14,
+    "editable_source_mesh_objects": 358,
+    "triangles": 10872,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -113,9 +113,9 @@
       11.25,
       5.742
     ],
-    "mesh_objects": 7,
-    "editable_source_mesh_objects": 44,
-    "triangles": 1174,
+    "mesh_objects": 12,
+    "editable_source_mesh_objects": 115,
+    "triangles": 3730,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -444,18 +444,18 @@
   "cavalry_light": {
     "file": "units/cavalry_light.glb",
     "dimensions_blender_xyz_m": [
-      2.882,
+      2.807,
       1.087,
       3.963
     ],
     "dimensions_gltf_xyz_m": [
-      2.882,
+      2.807,
       3.963,
       1.087
     ],
     "mesh_objects": 14,
-    "editable_source_mesh_objects": 97,
-    "triangles": 2954,
+    "editable_source_mesh_objects": 105,
+    "triangles": 2974,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -464,18 +464,18 @@
   "cavalry_scout": {
     "file": "units/cavalry_scout.glb",
     "dimensions_blender_xyz_m": [
-      2.882,
+      2.807,
       1.087,
       2.941
     ],
     "dimensions_gltf_xyz_m": [
-      2.882,
+      2.807,
       2.941,
       1.087
     ],
     "mesh_objects": 11,
-    "editable_source_mesh_objects": 97,
-    "triangles": 3052,
+    "editable_source_mesh_objects": 105,
+    "triangles": 3072,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -484,18 +484,18 @@
   "cavalry_heavy": {
     "file": "units/cavalry_heavy.glb",
     "dimensions_blender_xyz_m": [
-      2.882,
+      2.807,
       1.087,
       4.123
     ],
     "dimensions_gltf_xyz_m": [
-      2.882,
+      2.807,
       4.123,
       1.087
     ],
     "mesh_objects": 13,
-    "editable_source_mesh_objects": 118,
-    "triangles": 3338,
+    "editable_source_mesh_objects": 126,
+    "triangles": 3379,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -504,18 +504,18 @@
   "civilian_adult": {
     "file": "units/civilian_adult.glb",
     "dimensions_blender_xyz_m": [
-      0.871,
-      0.819,
-      1.751
+      0.826,
+      0.796,
+      1.787
     ],
     "dimensions_gltf_xyz_m": [
-      0.871,
-      1.751,
-      0.819
+      0.826,
+      1.787,
+      0.796
     ],
-    "mesh_objects": 6,
-    "editable_source_mesh_objects": 23,
-    "triangles": 664,
+    "mesh_objects": 8,
+    "editable_source_mesh_objects": 33,
+    "triangles": 1036,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -525,17 +525,17 @@
     "file": "units/civilian_woman.glb",
     "dimensions_blender_xyz_m": [
       0.917,
-      0.718,
+      0.665,
       1.72
     ],
     "dimensions_gltf_xyz_m": [
       0.917,
       1.72,
-      0.718
+      0.665
     ],
     "mesh_objects": 6,
-    "editable_source_mesh_objects": 18,
-    "triangles": 640,
+    "editable_source_mesh_objects": 24,
+    "triangles": 768,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],
@@ -544,18 +544,18 @@
   "civilian_child": {
     "file": "units/civilian_child.glb",
     "dimensions_blender_xyz_m": [
-      0.576,
-      0.548,
-      1.186
+      0.546,
+      0.533,
+      1.23
     ],
     "dimensions_gltf_xyz_m": [
-      0.576,
-      1.186,
-      0.548
+      0.546,
+      1.23,
+      0.533
     ],
-    "mesh_objects": 6,
-    "editable_source_mesh_objects": 21,
-    "triangles": 624,
+    "mesh_objects": 8,
+    "editable_source_mesh_objects": 30,
+    "triangles": 952,
     "forward_axis": "+X",
     "up_axis": "Y",
     "animations": [],

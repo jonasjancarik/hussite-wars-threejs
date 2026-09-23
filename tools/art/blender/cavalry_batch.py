@@ -57,7 +57,7 @@ class CavalryBatch:
             points=[(-.12,side*.50,1.30),(-.14,side*.53,1.12),(.10,side*.53,1.12),(.105,side*.50,1.28)]
             for a,b in zip(points,points[1:]): k.beam('Iron_stirrup',a,b,.014,'iron',5)
             hand=(.22,side*.16,2.30) if style=='scout' else (.22,.16,2.30)
-            k.beam('Held_rein',hand,(1.40,side*.155,2.20),.013,'leather',5)
+            k.beam('Held_rein',hand,(1.45,side*.111,2.15),.013,'leather',5)
         for obj in bpy.context.scene.objects:
             if obj.name.startswith('Saddle_blanket'):
                 obj.data.materials.clear();obj.data.materials.append(k.M['team_cloth'])
@@ -131,9 +131,13 @@ class CavalryBatch:
             for a,b in zip(vertices[10:],vertices[11:]):
                 k.beam('Caparison_hem',a,b,.015,'linen',5)
         # Restrained forehead protection, not a complete later plate horse bard.
-        k.mesh('Horse_forehead_guard',[(1.21,-.115,2.61),(1.21,.115,2.61),
-            (1.61,.095,2.33),(1.66,0,2.25),(1.61,-.095,2.33)],
-            [(1,0,3),(2,1,3),(4,3,0)],'steel')
+        # Ridged plate following the top of the faceted head to the nose.
+        guard=k.mesh('Horse_forehead_guard',[
+            (1.10,-.115,2.555),(1.12,0,2.615),(1.10,.115,2.555),
+            (1.46,-.085,2.285),(1.47,0,2.345),(1.46,.085,2.285),(1.575,0,2.225)],
+            [(0,1,4,3),(1,2,5,4),(3,4,6),(4,5,6)],'steel')
+        solid=guard.modifiers.new('Plate thickness','SOLIDIFY');solid.thickness=.014
+        bpy.context.view_layer.objects.active=guard;bpy.ops.object.modifier_apply(modifier=solid.name)
 
     def scout_gear(self):
         k=self.k

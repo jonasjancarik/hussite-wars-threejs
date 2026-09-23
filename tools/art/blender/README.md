@@ -29,14 +29,14 @@ On this macOS machine Blender must run with native graphics-device access. Its M
 
 One unit represents approximately one metre. Blender uses Z-up and exports glTF with Y-up. The original kit and units face +X where facing matters. The fortification kit uses Blender −Y / glTF +Z as its front, with straight wall and palisade sections along X; its corner module has an elbow origin, as documented in the references. Houses and camp pieces also present their fronts along Blender −Y / glTF +Z. Functional landscape pieces—the field shelter, firing platform and bridge approach—face Blender +X and retain glTF +X. Place a scene at ground height with an identity rotation; there is no hidden global scale. Houses and vegetation are centred in their footprint; soldiers and the horse are centred around their body; the wagon is centred on its deck, so its towing poles extend further toward +X. All meshes are opaque, with small standalone banner surfaces using glTF's default double-sided material behaviour.
 
-`cavalry.glb` contains one `HorseWalk` clip: 49 source frames at 24 fps, exactly two seconds between the first and last sample. Repeat the clip when walking. The four legs have staggered upper-leg swing and knee flexion, the body rises and pitches slightly, and the tail sways. Animation is an in-place object-transform loop, not skeletal animation or root motion; the game moves the cavalry entity. The rider travels with the horse. No attack, death, or transition clips are included.
+The shared horse is built from faceted lofts (barrel, neck, head and tail) with a crest mane, bridle and bit rings, shaped legs, knee and fetlock joints and cone hooves. Its hip and knee pivots, saddle height and overall length are unchanged. `cavalry.glb` contains one `HorseWalk` clip: 49 source frames at 24 fps, exactly two seconds between the first and last sample. Repeat the clip when walking. The four legs have staggered upper-leg swing and knee flexion, the body rises and pitches slightly, and the tail sways. Animation is an in-place object-transform loop, not skeletal animation or root motion; the game moves the cavalry entity. The rider travels with the horse. No attack, death, or transition clips are included.
 
 ## Included assets
 
 | Asset | Contents |
 | --- | --- |
-| `war_wagon` | Four ten-spoke wheels, iron tyres and axles, separate wooden planks, fittings and rivets, defensive boards and stakes, two crew, towing poles, chalice banner |
-| `cavalry` | Original faceted horse and polearm rider with walking loop, retained unchanged |
+| `war_wagon` | Hussite battle wagon: ten-spoke wheels, tall planked walls with pointed stanchions, iron straps and shooting slots, a hinged lower board on the outer (-Y) side, handgunner, crossbowman and flailman firing over that side, keg, towing poles and chalice banner |
+| `cavalry` | Faceted horse and original polearm rider with walking loop |
 | `cavalry_light`, `cavalry_scout`, `cavalry_heavy` | Static mounted variants with distinct equipment and side-colour cloth/shields |
 | `infantry_spear` | Long plain spear, kettle hat and side-colour cloth |
 | `infantry_archer` | Drawn wooden bow, nocked arrow, hip quiver, cloth cap and side-colour cloth |
@@ -50,12 +50,12 @@ One unit represents approximately one metre. Blender uses Z-up and exports glTF 
 | `artillery_tarasnice` | Long slim field gun on a low wheeled timber bed |
 | `artillery_bombard` | Heavy hoop-bound siege gun on ground timbers with stone shot |
 | `artillery_gunner` | Static crew with apron, ramrod and side-colour cloth |
-| `civilian_adult`, `civilian_woman`, `civilian_child` | Mixed pilgrim figures with ordinary clothes, staff and bundles |
+| `civilian_adult`, `civilian_woman`, `civilian_child` | Mixed pilgrim figures with ordinary clothes, staff and bundles; the adult and child use the shared body without armour |
 | `commander_captain`, `commander_noble`, `commander_cleric` | Shared leader bases for all 27 commanders |
 | `infantry_dismounted` | Armoured foot soldier for explicit cavalry dismounts |
 | `commander_standard` | Neutral striped faction-colour standard for leaders |
 | `field_blockhouse` | Fixed timber/stone garrison with two visible crossbow defenders |
-| `church` | Plastered nave, buttresses, windows, red roof, bell tower, slate spire and cross |
+| `church` | Plain Gothic village church: west tower with tent roof, steep-roofed nave with south portal, lower polygonal choir with buttresses, lancet windows |
 | `farmhouse` | Timber-and-plaster walls, windows, door, chimney and red gabled roof |
 | `fort_wall`, `fort_wall_corner` | Modular straight and L-shaped masonry walls with a raised wall-walk |
 | `fort_gatehouse` | Open passage through a masonry gate with a roofed timber-and-plaster upper storey |

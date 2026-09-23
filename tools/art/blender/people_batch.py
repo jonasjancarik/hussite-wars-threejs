@@ -33,38 +33,48 @@ class PeopleBatch:
 
     def civilian_adult(self, child=False):
         k=self.k;self.palette()
-        # Same body construction as the retained unarmed-adult experiment.
-        k.soldier('Pilgrim',weapon=None,coat='civilian_wool' if child else 'linen')
-        self.remove(('Pilgrim_helmet',))
-        k.cone('Pilgrim_neck',(0,0,1.335),.080,.078,.15,'skin',8)
-        self.infantry.ring_mesh('Pilgrim_soft_cap',[
-            (0,0,1.60,.142,.132),(-.035,0,1.71,.105,.104),(-.06,0,1.75,.04,.04)],'padded_linen',10)
-        k.beam('Pilgrim_shoulder_cord',(.23,-.13,1.26),(.23,.13,.92),.020,'team_cloth',5)
+        # Unarmoured shared body: plain coat, cloth sleeves and a soft cap.
+        self.infantry.body('Pilgrim',{-1:(.405,-.22,1.12),1:(.36,.21,1.05)},
+                           {-1:(.10,-.33,1.00),1:(.08,.32,.99)},stance=.15,helmet=False,
+                           coat='civilian_wool' if child else 'linen',padded=False)
+        self.remove(('Pilgrim_knife',))
+        k.beam('Pilgrim_shoulder_cord',(.215,-.13,1.27),(.215,.13,.93),.020,'team_cloth',5)
+        k.beam('Pilgrim_rope_belt_end',(.20,.10,.89),(.23,.12,.66),.016,'linen',5)
         if not child:
             k.beam('Pilgrim_walking_staff',(.37,-.22,0),(.43,-.22,1.72),.027,'oak',7)
             k.ico('Pilgrim_bundle',(.42,.22,.98),(.18,.17,.20),'padded_linen',1)
             k.beam('Pilgrim_bundle_tie',(.43,.08,1.10),(.43,.36,1.10),.016,'leather',5)
         else:
-            k.ico('Child_small_bundle',(.40,0,1.08),(.19,.24,.14),'padded_linen',1)
+            self.remove(('Pilgrim_belt_pouch',))
+            k.ico('Child_small_bundle',(.40,.02,1.06),(.19,.24,.14),'padded_linen',1)
             for obj in bpy.context.scene.objects:
                 if obj.type=='MESH':
-                    if obj.name.startswith(('Pilgrim_face','Pilgrim_nose','Pilgrim_soft_cap')):
-                        pivot=Vector((0,0,1.50))
-                        obj.location=pivot+(obj.location-pivot)*1.08
-                        obj.scale*=1.08
+                    # Children keep a larger head relative to the body.
+                    if obj.name.startswith(('Pilgrim_face','Pilgrim_nose','Pilgrim_cloth_cap','Pilgrim_coif')):
+                        pivot=Vector((0,0,1.37))
+                        obj.location=pivot+(obj.location-pivot)*1.12
+                        obj.scale*=1.12
                     obj.location*=.67;obj.scale*=.67
 
     def civilian_woman(self):
         k=self.k;self.palette()
         self.infantry.ring_mesh('Civilian_long_dress',[
             (0,0,.115,.29,.26),(0,0,.66,.25,.225),(0,0,1.00,.19,.175)],'civilian_dress',10)
-        k.box('Civilian_bodice',(0,0,1.08),(.36,.31,.40),'civilian_dress',.055)
-        k.box('Civilian_waist_tie',(0,0,.93),(.40,.34,.040),'team_cloth',.012)
+        # Fitted bodice tapering from rounded shoulders, as on the shared body.
+        self.infantry.ring_mesh('Civilian_bodice',[
+            (0,0,.92,.185,.172),(0,0,1.08,.195,.19),(0,0,1.22,.18,.215),
+            (0,0,1.29,.11,.13)],'civilian_dress',8,math.pi/8)
+        self.infantry.ring_mesh('Civilian_waist_tie',[
+            (0,0,.915,.197,.184),(0,0,.955,.197,.184)],'team_cloth',8,math.pi/8)
         for side in (-1,1):
             k.box('Civilian_shoe',(.07,side*.12,.065),(.235,.135,.13),'leather',.025)
-            elbow=(.15,side*.28,1.00);hand=(.36,side*.16,1.10)
-            k.beam('Civilian_dress_sleeve',(0,side*.205,1.24),elbow,.10,'civilian_dress',7,radius2=.085)
-            k.beam('Civilian_linen_cuff',elbow,hand,.078,'linen',7,radius2=.062)
+            shoulder=Vector((0,side*.195,1.21));elbow=Vector((.15,side*.27,1.00));hand=Vector((.36,side*.16,1.10))
+            k.ico('Civilian_dress_sleeve_shoulder',shoulder,(.092,.088,.085),'civilian_dress',1)
+            k.beam('Civilian_dress_sleeve',shoulder,elbow,.080,'civilian_dress',7,radius2=.068)
+            k.ico('Civilian_dress_sleeve_elbow',elbow,(.068,.066,.066),'civilian_dress',1)
+            wrist=hand-(hand-elbow).normalized()*.065
+            k.beam('Civilian_dress_sleeve_lower',elbow,wrist,.066,'civilian_dress',7,radius2=.058)
+            k.beam('Civilian_linen_cuff',wrist-(hand-elbow).normalized()*.05,wrist,.064,'linen',7,radius2=.062)
             k.ico('Civilian_hand',hand,(.07,.06,.067),'skin',1)
         k.ico('Civilian_head',(.025,0,1.485),(.128,.124,.153),'skin',2)
         k.cone('Civilian_neck',(0,0,1.32),.078,.078,.15,'skin',8)

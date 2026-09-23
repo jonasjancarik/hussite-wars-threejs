@@ -43,7 +43,7 @@ Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `b
 | `units/infantry_shield.glb` | 1 | Sword and plain striped shield with faction colours, used for mercenaries and dismounted scouts. |
 | `units/cavalry.glb` | 1 | Original horse and polearm rider with `HorseWalk`; retained unchanged. The campaign now uses the static mounted variants below. |
 | `units/cavalry_light.glb`, `units/cavalry_scout.glb`, `units/cavalry_heavy.glb` | 3 | Static light rider, equipped scout and armoured knight; all eight cavalry definitions, with side-colour cloth and shields. |
-| `units/war_wagon.glb` | 1 | Defensive wagon with two crew, wheels, towing poles, stakes and chalice flag. |
+| `units/war_wagon.glb` | 1 | Battle wagon with planked walls, shooting slots, a hinged lower board, three crew, towing poles and chalice flag. |
 | `units/artillery_houfnice.glb`, `units/artillery_tarasnice.glb`, `units/artillery_bombard.glb` | 3 | Short field gun, long light field gun and heavy siege gun; one model per artillery unit. |
 | `units/artillery_gunner.glb` | 1 | Static ramrod-bearing crew figure with side-colour cloth; two independently grounded figures accompany each gun. |
 | `props/banner.glb` | 1 | Original red chalice prop retained for legacy scenes. |

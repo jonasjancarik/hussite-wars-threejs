@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import bpy
 import bmesh
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 from infantry_batch import InfantryBatch
 
@@ -163,23 +163,106 @@ class SupportUnits:
         k.beam('Mercenary_sword_guard', (.37, .12, 1.20), (.37, .36, 1.20), .024, 'iron', 6)
         k.beam('Mercenary_sword_blade', (.372, .24, 1.21), (.47, .24, 1.86), .036, 'steel', 4, radius2=.005)
 
+    def _place(self, objects, location, yaw, prefix):
+        """Bake a yaw and offset into freshly built parts, renaming them."""
+        bpy.context.view_layer.update()
+        matrix = Matrix.Translation(location) @ Matrix.Rotation(yaw, 4, 'Z')
+        for obj in objects:
+            if obj.parent is None:
+                obj.matrix_world = matrix @ obj.matrix_world
+            obj.name = prefix + obj.name
+
+    def _wheel(self, x, y):
+        k = self.k
+        for major, minor, mat in ((.52, .066, 'oak_light'), (.572, .018, 'iron')):
+            bpy.ops.mesh.primitive_torus_add(major_segments=20, minor_segments=4, location=(x, y, .60),
+                                             major_radius=major, minor_radius=minor,
+                                             rotation=(math.pi/2, 0, 0))
+            k.finish(bpy.context.object, 'Wagon_wheel_felloe' if mat != 'iron' else 'Wagon_wheel_tyre', mat)
+        k.beam('Wagon_wheel_hub', (x, y-.15, .60), (x, y+.15, .60), .13, 'oak_dark', 10)
+        k.beam('Wagon_hub_band', (x, y-.018, .60), (x, y+.018, .60), .138, 'iron', 10)
+        for i in range(10):
+            angle = i*math.tau/10
+            k.beam('Wagon_wheel_spoke', (x, y, .60),
+                   (x+math.sin(angle)*.50, y, .60+math.cos(angle)*.50), .032, 'oak_light', 4)
+
+    def _wall(self, side, rows):
+        """Heavy horizontal side planking with a top rail, straps and loopholes."""
+        k = self.k
+        y = side*.94
+        for row in range(rows):
+            for col in range(3):
+                k.box('Wagon_side_board', (-1.37+col*1.36, y, 1.05+row*.19),
+                      (1.335, .09, .178), 'oak_light' if (row+col) % 2 else 'oak', .012)
+        top = 1.05+(rows-1)*.19+.09
+        k.box('Wagon_top_rail', (0, y, top+.04), (4.12, .14, .08), 'oak_dark', .012)
+        for x in (-2.02, -.69, .69, 2.02):
+            k.box('Wagon_stanchion', (x, y, (.90+top+.22)/2), (.115, .15, top+.22-.90), 'oak_dark', .012)
+            k.cone('Wagon_stanchion_point', (x, y, top+.29), .055, 0, .14, 'oak_dark', 4)
+            k.box('Wagon_iron_strap', (x, y*1.067, 1.42), (.09, .025, .86), 'iron')
+            for z in (1.06, 1.70):
+                k.ico('Wagon_iron_rivet', (x, y*1.088, z), (.032, .022, .032), 'steel')
+        # Plain horizontal shooting slots, two per bay, in the upper boards.
+        for x in (-1.36, 0, 1.36):
+            for offset in (-.28, .28):
+                k.box('Wagon_loophole', (x+offset, y*1.052, 1.62), (.30, .02, .075), 'black')
+
     def war_wagon(self):
-        """Reuse the original wagon, adding only shared faction colour slots."""
+        """Hussite battle wagon: planked walls, lower shield board and crew."""
         self.palette()
+        k = self.k
+        for i in range(11):
+            k.box('Wagon_deck_plank', (-1.90+i*.38, 0, .89), (.365, 1.86, .13), 'oak_light', .012)
+        for y in (-.67, .67):
+            k.box('Wagon_underframe', (0, y, .72), (4.35, .17, .22), 'oak_dark', .012)
+        for x in (-1.45, 1.45):
+            k.beam('Wagon_axle', (x, -1.27, .60), (x, 1.27, .60), .09, 'iron', 8)
+            for y in (-1.10, 1.10):
+                self._wheel(x, y)
+        self._wall(-1, 5)
+        self._wall(1, 5)
+        # Full front board and a lower rear board where the crew climbs in.
+        for x, rows in ((2.03, 5), (-2.03, 3)):
+            for row in range(rows):
+                k.box('Wagon_end_board', (x, 0, 1.05+row*.19), (.09, 1.87, .178),
+                      'oak' if row % 2 else 'oak_light', .01)
+        # Hinged lower board, let down on the outer (-Y) side to close the gap
+        # beneath the wagon between the wheels.
+        # Three planks hang almost vertically from hinges under the wall.
+        lean = math.atan2(.10, .74)
+        for row, z in enumerate((.68, .44, .20)):
+            plank = k.box('Wagon_lower_shield_board', (0, 0, 0), (1.62, .06, .235),
+                          'oak_light' if row % 2 else 'oak', .01)
+            plank.rotation_euler.x = lean
+            plank.location = (0, -1.00-(.80-z)*.135, z)
+        for x in (-.60, 0, .60):
+            batten = k.box('Wagon_lower_board_batten', (0, 0, 0), (.09, .05, .72), 'oak_dark', .008)
+            batten.rotation_euler.x = lean
+            batten.location = (x, -1.10, .44)
+        for x in (-.60, .60):
+            k.box('Wagon_lower_board_hinge', (x, -1.00, .82), (.16, .06, .06), 'iron')
+        for y in (-.60, .60):
+            k.beam('Wagon_tow_pole', (1.85, y, .70), (3.10, y, .52), .07, 'oak_dark')
+        k.beam('Wagon_pole_crossbar', (2.98, -.62, .545), (2.98, .62, .545), .045, 'oak_dark', 6)
+        k.beam('Wagon_keg', (1.55, .52, .96), (1.55, .52, 1.42), .19, 'oak', 10)
+        for z in (1.02, 1.36):
+            k.beam('Wagon_keg_hoop', (1.55, .52, z-.02), (1.55, .52, z+.02), .197, 'iron', 10)
+        # Crew fire over the outer wall: handgunner, crossbowman, flailman.
+        deck = .955
+        infantry = InfantryBatch(k)
+        for build, where, prefix in ((self.handgun, (.70, -.12), 'Wagon_crew_'),
+                                     (infantry.crossbow, (-.45, .08), 'Wagon_crew_'),
+                                     (infantry.flail, (-1.30, .25), 'Wagon_crew_')):
+            before = set(bpy.context.scene.objects)
+            build()
+            self._place(self._objects_created(before), (*where, deck), -math.pi/2, prefix)
         before = set(bpy.context.scene.objects)
-        self.k.wagon()
-        created = self._objects_created(before)
-        crew_prefixes = ('Wagon_pikeman_', 'Wagon_gunner_')
-        for obj in created:
-            if obj.type != 'MESH' or not obj.name.startswith(crew_prefixes):
-                continue
-            base_name = obj.name.split('.')[0]
-            if (base_name.endswith(('_tunic', '_skirt', '_sleeve'))
-                    and obj.data.materials):
-                obj.data.materials[0] = self.k.M['team_cloth']
-        for obj in created:
+        # The standard reaches the old wagon's 3.94 m top, which sets the
+        # renderer's measured formation height.
+        k.banner((-1.66, .72, .95), 2.9901)
+        for obj in self._objects_created(before):
             if obj.type == 'MESH' and obj.name.startswith('Chalice_banner_cloth'):
-                obj.data.materials[0] = self.k.M['team_cloth']
+                obj.data.materials[0] = k.M['team_cloth']
         # White_chalice_* parts intentionally remain linen: this is the
         # documented existing Hussite/Prague wagon signal, not a new emblem.
 

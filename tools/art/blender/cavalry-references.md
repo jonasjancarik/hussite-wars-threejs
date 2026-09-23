@@ -2,7 +2,7 @@
 
 Read when revising light riders, scouts, heavy cavalry or mounted formations.
 
-Created 21 September 2026. Three static horse-and-rider models cover all eight mounted unit definitions. They reuse the original locally authored horse geometry in a standing pose; the original `cavalry.glb` and its `HorseWalk` clip remain unchanged. Equipment and riders are newly assembled with the same faceted primitives and matte materials as the infantry batches.
+Created 21 September 2026. Three static horse-and-rider models cover all eight mounted unit definitions. They reuse the shared locally authored horse in a standing pose. On 23 September 2026 that horse was rebuilt from faceted lofts with a crest mane, shaped legs and cone hooves, keeping its pivots, saddle height and length; `cavalry.glb` keeps its `HorseWalk` clip. The heavy mount's forehead guard now follows the new head line. Equipment and riders are newly assembled with the same faceted primitives and matte materials as the infantry batches.
 
 ## References and interpretation
 
