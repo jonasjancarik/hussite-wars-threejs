@@ -2,6 +2,8 @@ export const CLICK_MOVEMENT_THRESHOLD = 5;
 
 export interface PointerGesture {
   button: number;
+  /** A context menu was requested during this press (right button, or Ctrl-click on a Mac). */
+  context: boolean;
   dragged: boolean;
   pointerId: number;
   pointerType: string;
@@ -12,6 +14,7 @@ export interface PointerGesture {
 export function beginPointerGesture(event: Pick<PointerEvent, "button" | "clientX" | "clientY" | "pointerId" | "pointerType">): PointerGesture {
   return {
     button: event.button,
+    context: false,
     dragged: false,
     pointerId: event.pointerId,
     pointerType: event.pointerType,

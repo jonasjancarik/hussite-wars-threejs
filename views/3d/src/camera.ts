@@ -108,7 +108,8 @@ export function createBattleCamera(canvas: HTMLCanvasElement, extent = 120): Bat
   controls.screenSpacePanning = false;
   controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
   controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
-  controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
+  // Right-drag is also a two-finger click-drag on a Mac trackpad.
+  controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
   controls.touches.ONE = THREE.TOUCH.ROTATE;
   controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
 
