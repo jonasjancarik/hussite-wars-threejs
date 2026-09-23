@@ -9,7 +9,14 @@ import { recipeSignature, unitRecipe } from "./unit-recipes.ts";
 interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number;
   appearance: string; health: number; yaw: number; targetYaw: number; baseYaw: number; marchingYaw: number;
-  unit: Pick<UnitSnapshot, "id" | "faction" | "col" | "row"> }
+  unit: Pick<UnitSnapshot, "id" | "faction" | "col" | "row">;
+  /** Ground position before any cosmetic strike offset. */
+  base: { x: number; z: number };
+  strike: { dx: number; dz: number; age: number } | null }
+
+/** Forward lunge (melee) or recoil (guns) of a whole formation, in ms. */
+const STRIKE_MS = 420;
+const strikeProfile = (t: number): number => t < 0.3 ? Math.sin(t / 0.3 * Math.PI / 2) : Math.cos((t - 0.3) / 0.7 * Math.PI / 2) ** 2;
 
 const TEAM_MATERIAL_COLORS = {
   hussites: { team_cloth: 0x9b4f4f, team_paint: 0x7f3f3b },
@@ -149,12 +156,33 @@ export class UnitPresentation {
     return Number.isInteger(id) ? id : null;
   }
 
-  /** Advance visual turns without changing any game state or movement rules. Returns whether any formation is still turning. */
+  /**
+   * A formation strikes towards (distance > 0) or recoils from (distance < 0)
+   * a target hex. Purely cosmetic; the formation returns to its hex.
+   */
+  public strike(unitId: number, target: { col: number; row: number }, distance: number): void {
+    const visual = this.visuals.get(unitId);
+    if (!visual || distance === 0) return;
+    const to = this.layout.center(target.col, target.row);
+    const dx = to.x - visual.base.x, dz = to.z - visual.base.z, length = Math.hypot(dx, dz);
+    if (length < 1e-6) return;
+    visual.strike = { dx: dx / length * distance, dz: dz / length * distance, age: 0 };
+  }
+
+  /** Advance visual turns without changing any game state or movement rules. Returns whether any formation is still animating. */
   public advance(deltaMs: number, paused = false): boolean {
     if (paused || deltaMs <= 0) return false;
     const alpha = 1 - Math.exp(-Math.min(deltaMs, 64) / TURN_RESPONSE_MS);
     let turning = false;
     for (const visual of this.visuals.values()) {
+      if (visual.strike) {
+        turning = true;
+        this.shadowsDirty = true;
+        visual.strike.age += deltaMs;
+        if (visual.strike.age >= STRIKE_MS) visual.strike = null;
+        this.applyStrike(visual);
+        this.groundFigures(visual);
+      }
       const delta = angleDelta(visual.yaw, visual.targetYaw);
       if (Math.abs(delta) < 0.0001) continue;
       turning = true;
@@ -344,7 +372,8 @@ export class UnitPresentation {
       root.add(hit);
       visual = { root, hit, figures, revision, markerHeight: 0, appearance, health: unit.health,
         yaw: facing, targetYaw: facing, baseYaw: facing, marchingYaw: 0,
-        unit: { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row } };
+        unit: { id: unit.id, faction: unit.faction, col: unit.col, row: unit.row },
+        base: { x: 0, z: 0 }, strike: null };
       this.visuals.set(unit.id, visual);
       this.hitTargets.push(hit);
       this.group.add(root);
@@ -362,9 +391,9 @@ export class UnitPresentation {
     // authoritative target tile rather than guessing a straight path.
     const center = routed ?? target;
     const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
-    const previousX = visual.root.position.x, previousZ = visual.root.position.z;
-    visual.root.position.set(center.x, heightAt(center.x, center.z), center.z);
-    if (previousX !== center.x || previousZ !== center.z) this.shadowsDirty = true;
+    if (visual.base.x !== center.x || visual.base.z !== center.z) this.shadowsDirty = true;
+    visual.base = { x: center.x, z: center.z };
+    this.applyStrike(visual);
     const facing = this.desiredFacing(unit, snapshot, context);
     // Idle formations retain their bearing through small threat changes. Orders,
     // attacks and flight are decisive and always take precedence.
@@ -466,6 +495,14 @@ export class UnitPresentation {
       object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
       if (object.visible) visual.markerHeight = Math.max(visual.markerHeight, object.position.y + top);
     }
+    visual.root.updateMatrixWorld(true);
+  }
+
+  /** Root position: the hex (or route) position plus any strike offset, on the ground. */
+  private applyStrike(visual: UnitVisual): void {
+    const profile = visual.strike ? strikeProfile(Math.min(1, visual.strike.age / STRIKE_MS)) : 0;
+    const x = visual.base.x + (visual.strike?.dx ?? 0) * profile, z = visual.base.z + (visual.strike?.dz ?? 0) * profile;
+    visual.root.position.set(x, this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z), z);
     visual.root.updateMatrixWorld(true);
   }
 

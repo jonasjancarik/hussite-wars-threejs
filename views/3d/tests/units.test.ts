@@ -430,3 +430,21 @@ test("disposes presenter-owned faction material variants", async () => {
   assert.equal(disposed, 2);
   assert.equal(neutralDisposed, false);
 });
+
+test("a melee strike lunges toward the target and settles back on its hex", async () => {
+  const layout = new HexLayout(4, 3);
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 }, layout, new TestAssets());
+  const attacker = unit(1, "KOPINICI_HUSITI", "hussites"); attacker.col = 0; attacker.row = 0;
+  const defender = unit(2, "KOPINICI", "crusaders"); defender.col = 1; defender.row = 0;
+  await units.update(snapshotWithUnits([attacker, defender]));
+  await settleFacing(units);
+  const home = formationFor(units, attacker.id).position.clone();
+  const target = layout.center(defender.col, defender.row);
+  units.strike(attacker.id, defender, 1.25);
+  assert.equal(units.advance(100), true, "the strike keeps the frame loop awake");
+  const lunged = formationFor(units, attacker.id).position;
+  assert.ok(Math.hypot(target.x - lunged.x, target.z - lunged.z) < Math.hypot(target.x - home.x, target.z - home.z) - 0.8);
+  for (let step = 0; step < 10; step += 1) units.advance(64);
+  assert.ok(formationFor(units, attacker.id).position.distanceTo(home) < 1e-9, "the formation returns to its hex");
+  assert.equal(units.advance(64), false);
+});

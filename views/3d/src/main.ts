@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { BattleAssets } from "./assets.ts";
 import { applyPose, clampTarget, createBattleCamera, currentPose, fitRadius, interpolatePose, OVERVIEW_DIRECTION,
   snappedBearing, type CameraPose } from "./camera.ts";
-import { BattlefieldEffects, focusSmoothingAlpha } from "./effects.ts";
+import { attackStyle, BattlefieldEffects, focusSmoothingAlpha, type AttackStyle } from "./effects.ts";
 import { GeneratedScenery } from "./generated-scenery.ts";
 import { GeneratedTerrain } from "./generated-terrain.ts";
 import { TownWallRoutes } from "./town-wall-routes.ts";
@@ -46,7 +46,11 @@ class IntegratedThreeBattle {
   private readonly banners: UnitBanners;
   private readonly wagonConnections: WagonConnections;
   private readonly overlays: TacticalOverlays;
-  private readonly effects = new BattlefieldEffects();
+  private readonly effects: BattlefieldEffects;
+  /** Recent attack style per target hex, so its impact matches the weapon. */
+  private readonly incomingStyles = new Map<string, AttackStyle>();
+  private viewportWidth = 1;
+  private viewportHeight = 1;
   private readonly lighting;
   private readonly picker: BattlePicker;
   private readonly sky: BattlePaintedSky;
@@ -117,6 +121,7 @@ class IntegratedThreeBattle {
       return {x:from.x+(to.x-from.x)*movement.progress,z:from.z+(to.z-from.z)*movement.progress};
     });
     this.banners = new UnitBanners(canvas, coord => this.options.onHex?.(coord));
+    this.effects = new BattlefieldEffects(canvas);
     this.wagonConnections = new WagonConnections(this.terrain, this.terrain.layout);
     this.overlays = new TacticalOverlays(this.terrain, this.terrain.layout);
     this.lighting = createBattleLighting(this.scene);
@@ -169,6 +174,7 @@ class IntegratedThreeBattle {
     await this.units.update(snapshot);
     if (this.disposed || revision !== this.snapshotRevision) return;
     this.effects.setPaused(snapshot.paused || !this.active);
+    this.effects.setReducedMotion(this.reducedMotion.matches);
     this.followSelection(snapshot);
     for (const event of snapshot.events) {
       if (this.consumedEvents.has(event.id)) continue;
@@ -205,7 +211,8 @@ class IntegratedThreeBattle {
     this.banners.setActive(active);
     if (!active) this.units.casualties.clear();
     this.effects.setPaused(!active);
-    if (!active) { this.heldPanKeys.clear(); this.cameraTween = null; }
+    this.effects.setVisible(active);
+    if (!active) { this.heldPanKeys.clear(); this.cameraTween = null; this.effects.clear(); }
     if (!active && this.frameRequest !== null) {
       cancelAnimationFrame(this.frameRequest);
       this.frameRequest = null;
@@ -259,6 +266,8 @@ class IntegratedThreeBattle {
   public resize(): void {
     if (this.disposed) return;
     const rect = this.canvas.getBoundingClientRect();
+    this.viewportWidth = rect.width;
+    this.viewportHeight = rect.height;
     this.cameraRig.resize(rect.width, rect.height);
     this.pipeline.resize(rect.width, rect.height);
     this.banners.resize();
@@ -390,8 +399,29 @@ class IntegratedThreeBattle {
   }
 
   private showEvent(event: CosmeticEvent): void {
-    const center = this.terrain.layout.center(event.col, event.row);
-    this.effects.burst(new THREE.Vector3(center.x, this.terrain.heightAt(center.x, center.z), center.z), event.type);
+    const key = `${event.col},${event.row}`;
+    const at = this.groundPoint(event.col, event.row);
+    if (event.type === "attack" && event.fromCol !== undefined && event.fromRow !== undefined) {
+      const attacker = this.options.snapshot.units.find(unit => unit.col === event.fromCol && unit.row === event.fromRow);
+      const style = attackStyle(attacker);
+      this.incomingStyles.set(key, style);
+      while (this.incomingStyles.size > 24) this.incomingStyles.delete(this.incomingStyles.keys().next().value!);
+      const from = this.groundPoint(event.fromCol, event.fromRow).add(new THREE.Vector3(0, 1.6, 0));
+      this.effects.attack(style, from, at.clone().add(new THREE.Vector3(0, 1.3, 0)));
+      if (attacker && !this.reducedMotion.matches) {
+        this.units.strike(attacker.id, event, style === "melee" ? 1.25 : style === "cannon" ? -0.55 : style === "gunfire" ? -0.12 : 0);
+      }
+    } else if (event.type === "explosion") {
+      this.effects.impact(at.add(new THREE.Vector3(0, 1.2, 0)), this.incomingStyles.get(key) === "cannon");
+    } else if ((event.type === "damage" || event.type === "heal") && Number.isFinite(event.damage)) {
+      const heal = event.type === "heal";
+      this.effects.number(at.add(new THREE.Vector3(0, 3.4, 0)), `${heal ? "+" : "−"}${event.damage}`, heal);
+    }
+  }
+
+  private groundPoint(col: number, row: number): THREE.Vector3 {
+    const center = this.terrain.layout.center(col, row);
+    return new THREE.Vector3(center.x, this.terrain.renderedHeightAt?.(center.x, center.z) ?? this.terrain.heightAt(center.x, center.z), center.z);
   }
 
   private startCameraTween(to: CameraPose, duration: number): void {
@@ -583,6 +613,7 @@ class IntegratedThreeBattle {
     const turning = this.units.advance(delta, this.options.snapshot.paused || this.reducedMotion.matches);
     this.effects.advance(delta);
     this.banners.position(this.cameraRig.camera, id => this.units.markerPosition(id, this.markerScratch));
+    this.effects.position(this.cameraRig.camera, this.viewportWidth, this.viewportHeight);
     if (this.units.consumeShadowChange()) this.lighting.invalidateShadows();
     this.lighting.updateShadows();
     const rendererStartedAt = performance.now();
