@@ -83,11 +83,11 @@ def main():
     OUTPUT.mkdir(parents=True, exist_ok=True)
     create_unarmed_source()
     manifest = {
-        "war_wagon_crewless": flatten("war_wagon", "war_wagon_crewless", ("Wagon_pikeman", "Wagon_gunner")),
+        "war_wagon_crewless": flatten("war_wagon", "war_wagon_crewless", ("Wagon_pikeman", "Wagon_gunner", "Wagon_crew_")),
         "unarmed_adult_static": flatten("battle_unarmed_adult", "unarmed_adult_static"),
         "horse_rider_static": flatten("cavalry", "horse_rider_static"),
     }
-    manifest["war_wagon_crewless"]["accounting_note"] = "All baked Wagon_pikeman and Wagon_gunner objects excluded; crew are separate Person records."
+    manifest["war_wagon_crewless"]["accounting_note"] = "All baked wagon crew objects (Wagon_crew_*, and the former Wagon_pikeman/Wagon_gunner) excluded; crew are separate Person records."
     manifest["horse_rider_static"]["pose_note"] = "Existing cavalry evaluated at frame 1 and baked; no animation clips exported."
     (OUTPUT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print("BATTLE_ASSETS_COMPLETE", json.dumps(manifest), flush=True)
