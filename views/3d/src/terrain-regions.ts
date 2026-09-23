@@ -95,6 +95,8 @@ const SHORE_SPREAD = 0.6;
 const SHORE_BAND = 0.06;
 /** Coherent displacement of the water share, so shorelines wander rather than run straight. */
 const SHORE_NOISE = 0.16;
+/** Distinct points remembered by `weightsAt`. */
+const WEIGHTS_MEMO_SIZE = 4;
 
 function smoothstep(value: number, edge0: number, edge1: number): number {
   return smooth(Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0))));
@@ -248,7 +250,11 @@ export class TerrainRegions {
   public readonly tiles: readonly TerrainCell[];
   public readonly roads: RoadCorridors;
 
-  private readonly tileByKey = new Map<string, TerrainCell>();
+  /** Cells indexed col * rows + row: the hottest lookup of terrain generation. */
+  private readonly cellGrid: TerrainCell[] = [];
+  /** Recent `weightsAt` results; one vertex asks for the same point's weights several times. */
+  private readonly weightsMemo: Array<{ x: number; z: number; weights: TerrainWeights }> = [];
+  private readonly waterInfluenceMemo = { x: NaN, z: NaN, value: 0 };
   private readonly coverageCache = new Map<number, TerrainCoverage>();
   private readonly origin: TerrainPoint;
   private readonly coreInset: number;
@@ -279,7 +285,7 @@ export class TerrainRegions {
       for (let row = 0; row < this.rows; row += 1) {
         const terrain = terrainByKey.get(this.key(col, row)) ?? options.defaultTerrain ?? firstTerrain;
         const cell = { col, row, terrain, center: this.centerAt(col, row) };
-        this.tileByKey.set(this.key(col, row), cell);
+        this.cellGrid[col * this.rows + row] = cell;
         allTiles.push(cell);
       }
     }
@@ -303,7 +309,8 @@ export class TerrainRegions {
   }
 
   public getCell(col: number, row: number): TerrainCell | null {
-    return this.tileByKey.get(this.key(col, row)) ?? null;
+    if (!Number.isInteger(col) || !Number.isInteger(row) || col < 0 || col >= this.cols || row < 0 || row >= this.rows) return null;
+    return this.cellGrid[col * this.rows + row] ?? null;
   }
 
   public pointInsideHex(x: number, z: number, col: number, row: number): boolean {
@@ -336,8 +343,16 @@ export class TerrainRegions {
     return best;
   }
 
-  /** Returns weights that sum to one. Outside the map it returns an empty object. */
+  /** Returns weights that sum to one. Outside the map it returns an empty object. The result is frozen and may be shared. */
   public weightsAt(x: number, z: number): TerrainWeights {
+    for (const entry of this.weightsMemo) if (entry.x === x && entry.z === z) return entry.weights;
+    const weights = Object.freeze(this.computeWeightsAt(x, z));
+    this.weightsMemo.unshift({ x, z, weights });
+    if (this.weightsMemo.length > WEIGHTS_MEMO_SIZE) this.weightsMemo.pop();
+    return weights;
+  }
+
+  private computeWeightsAt(x: number, z: number): TerrainWeights {
     const cell = this.cellAt(x, z);
     if (!cell) return {};
     if (!this.roads.active) return this.baseWeightsAt(x,z,cell);
@@ -449,6 +464,8 @@ export class TerrainRegions {
   /** Broad bank influence, independent of protected material cores. */
   public waterInfluenceAt(x: number, z: number): number {
     if (!this.terrainTypes.some(isWaterTerrain)) return 0;
+    const memo = this.waterInfluenceMemo;
+    if (memo.x === x && memo.z === z) return memo.value;
     let wet = 0, total = 0;
     for (const cell of this.nearbyCells(x, z)) {
       const distance = Math.hypot(x-cell.center.x, z-cell.center.z)/this.hexRadius;
@@ -457,7 +474,8 @@ export class TerrainRegions {
       total += weight;
       if (isWaterTerrain(cell.terrain)) wet += weight;
     }
-    return total > 0 ? wet/total : 0;
+    memo.x = x; memo.z = z; memo.value = total > 0 ? wet/total : 0;
+    return memo.value;
   }
 
   public classify(x: number, z: number): TerrainType | null {
