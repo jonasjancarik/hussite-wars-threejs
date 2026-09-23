@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { MeshStandardNodeMaterial } from "three/webgpu";
-import { attribute, cameraPosition, normalWorld, positionWorld, texture as textureNode, uv, vec3 } from "three/tsl";
+import { attribute, cameraPosition, mix, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, uv, vec3, vertexColor } from "three/tsl";
 import { isFieldTerrain } from "./terrain-regions.ts";
 import { isRoadTerrain } from "./road-corridors.ts";
 
@@ -50,6 +50,22 @@ function loadTexture(baseUrl: string, path: string, repeat: number): THREE.Textu
   return texture;
 }
 
+/** Ground whose normal is steeper than this starts to show rock (about 34°)... */
+const CLIFF_FLAT_NORMAL_Y = .83;
+/** ...and is all rock from about 52°. */
+const CLIFF_STEEP_NORMAL_Y = .62;
+const CLIFF_TILE_METRES = 5.5;
+const CLIFF_BRIGHTNESS = 1.15;
+
+/** World-space triplanar sample, blended by the geometric normal. */
+function triplanar(map: THREE.Texture, tileMetres: number): any {
+  const position = (positionWorld as any).div(tileMetres);
+  const axes = (normalWorldGeometry as any).abs().pow(4);
+  const share = axes.div(axes.x.add(axes.y).add(axes.z));
+  const sample = (coordinates: any): any => tsl(textureNode)(map, coordinates).rgb;
+  return sample(position.zy).mul(share.x).add(sample(position.xz).mul(share.y)).add(sample(position.xy).mul(share.z));
+}
+
 /** Texture nodes ignore `repeat` unless asked to; scale the UV explicitly instead. */
 function groundLayer(map: THREE.Texture | null): any {
   return map ? tsl(textureNode)(map, tsl(uv)().mul(map.repeat.x)).rgb : tsl(vec3)(1, 1, 1);
@@ -76,14 +92,23 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
     result.name = `Generated ${name} ground material`;
     return result;
   };
+  const cliffMap = texture("textures/procedural-worlds/T_ConceptBCliff.webp", 1);
   const weights = tsl(attribute)(GROUND_SPLAT, "vec3");
+  const tint = tsl(vertexColor)();
   const blend = groundLayer(meadowMap).mul(weights.x)
     .add(groundLayer(earthMap).mul(weights.y))
-    .add(groundLayer(slopeMap).mul(weights.z));
+    .add(groundLayer(slopeMap).mul(weights.z)).mul(tint);
+  // Steep ground turns to rock. The rock is projected from all three axes, so
+  // it never smears down a bank the way the top-down ground textures would.
+  const steep = tsl(smoothstep)(CLIFF_FLAT_NORMAL_Y, CLIFF_STEEP_NORMAL_Y, (normalWorldGeometry as any).y);
+  const rock = cliffMap ? triplanar(cliffMap, CLIFF_TILE_METRES) : tsl(vec3)(.42, .40, .37);
+  // Rock keeps only a trace of the grass tint so hillsides do not turn olive.
+  const ground = tsl(mix)(blend, rock.mul(tsl(mix)(tint, tsl(vec3)(1, 1, 1), .7)).mul(CLIFF_BRIGHTNESS), steep);
   const land = (name: SurfaceMaterialKind, map: THREE.Texture | null, roughness: number): THREE.MeshStandardMaterial => {
-    const result = new MeshStandardNodeMaterial({ color: 0xffffff, vertexColors: true, roughness, metalness: 0,
+    // Vertex colours are applied inside the colour node, not by the material.
+    const result = new MeshStandardNodeMaterial({ color: 0xffffff, vertexColors: false, roughness, metalness: 0,
       side: THREE.DoubleSide });
-    result.colorNode = blend;
+    result.colorNode = ground;
     // Kept for consumers that read a kind's own texture (the plinth reuses the rock grain).
     result.map = map;
     result.name = `Generated ${name} ground material`;

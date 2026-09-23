@@ -71,3 +71,38 @@ test("wet terrain stays level in its core, blends at the bank, and exterior inte
   const left = edgeTopography.elevationAt(-0.05, edgeZ), right = edgeTopography.elevationAt(0.05, edgeZ);
   assert.ok(Math.abs(right - left) < 0.2, `exterior jump ${left} -> ${right}`);
 });
+
+test("hill flanks are even and ground ramps between centres without hex-edge steps", () => {
+  // A 3-row hill block with a zigzag edge, like Malešov's.
+  const tiles = [];
+  for (let col = 0; col < 10; col++) for (let row = 0; row < 7; row++) {
+    tiles.push({ col, row, terrain: row >= 2 && row <= 4 && col >= 2 && col <= 7 ? "hills" : "plains" });
+  }
+  const field = createTerrainRegions({ cols: 10, rows: 7, seed: 5, tiles });
+  const topography = new TopographyPlan(field);
+  const flank = [2, 3, 4, 5, 6, 7].map(col => topography.cellElevation(col, 1));
+  assert.ok(Math.max(...flank) - Math.min(...flank) < .6, `uneven flank ${flank.map(value => value.toFixed(2))}`);
+  assert.equal(topography.cellElevation(4, 3), 6, "hill interior keeps its height");
+  // Sample a line across the hill: every step is bounded, so no cliff sits on a hex edge.
+  const from = field.getCell(4, 0)!.center, to = field.getCell(4, 6)!.center;
+  let previous = topography.elevationAt(from.x, from.z), steepest = 0;
+  for (let step = 1; step <= 200; step++) {
+    const t = step / 200, x = from.x + (to.x - from.x) * t, z = from.z + (to.z - from.z) * t;
+    const height = topography.elevationAt(x, z);
+    steepest = Math.max(steepest, Math.abs(height - previous) / (Math.hypot(to.x - from.x, to.z - from.z) / 200));
+    previous = height;
+  }
+  assert.ok(steepest < 1.6, `steepest gradient ${steepest.toFixed(2)}`);
+});
+
+test("mud lies a shallow dip below the land around it, even up on a ridge", () => {
+  const field = createTerrainRegions({ cols: 3, rows: 1, seed: 7, tiles: [
+    { col: 0, row: 0, terrain: "hills" }, { col: 1, row: 0, terrain: "mud" }, { col: 2, row: 0, terrain: "hills" },
+  ] });
+  const topography = new TopographyPlan(field);
+  assert.ok(Math.abs(topography.cellElevation(1, 0) - (6 - .36)) < 1e-9);
+  const flat = new TopographyPlan(createTerrainRegions({ cols: 2, rows: 1, seed: 7, tiles: [
+    { col: 0, row: 0, terrain: "plains" }, { col: 1, row: 0, terrain: "mud" },
+  ] }));
+  assert.ok(Math.abs(flat.cellElevation(1, 0) + .36) < 1e-9, "on flat ground mud keeps its familiar depth");
+});
