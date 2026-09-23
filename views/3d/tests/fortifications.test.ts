@@ -190,3 +190,29 @@ test("a tvrz ditch cut by the board edge shows soil in the cut face, not a water
     "the stream shows its water band where it meets the edge");
   malesov.dispose();
 });
+
+test("tvrz gate leaves are planked doors that stand open without cutting into the wall", async () => {
+  const { TownWallScenery } = await import("../src/town-wall-scenery.ts");
+  const { SceneryVisibility } = await import("../src/scenery-visibility.ts");
+  const { WALL_THICKNESS } = await import("../src/town-wall-plan.ts");
+  const { distanceToSegment } = await import("../src/geometry-utils.ts");
+  for (const id of ["nekmir_1419", "malesov_1424"]) {
+    const terrain = new GeneratedTerrain(snapshot(id));
+    const plans = terrain.environmentPlan.walls.filter(wall => terrain.environmentPlan.fortifications.has(wall.id));
+    const walls = new TownWallScenery(plans, terrain, new SceneryVisibility(terrain.layout));
+    const planks: THREE.Mesh[] = [];
+    walls.group.traverse(object => { if (object instanceof THREE.Mesh && object.name === "Gate leaf planks") planks.push(object); });
+    assert.ok(planks.length >= 1, `${id}: the gate has door leaves`);
+    const segments = plans.flatMap(plan => plan.segments);
+    for (const mesh of planks) {
+      const positions = mesh.geometry.getAttribute("position");
+      assert.ok(positions.count / 36 >= 8, `${id}: leaves are built from several planks`);
+      for (let index = 0; index < positions.count; index += 1) {
+        const x = positions.getX(index), z = positions.getZ(index);
+        const nearest = Math.min(...segments.map(segment => distanceToSegment(x, z, segment.a.x, segment.a.z, segment.b.x, segment.b.z)));
+        assert.ok(nearest >= WALL_THICKNESS / 2 - 1e-3, `${id}: a plank corner is ${nearest.toFixed(3)} m from the wall line, inside the wall`);
+      }
+    }
+    terrain.dispose();
+  }
+});

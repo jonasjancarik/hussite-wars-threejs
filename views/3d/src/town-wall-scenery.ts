@@ -3,7 +3,6 @@ import type { GeneratedTerrain } from "./generated-terrain.ts";
 import { SceneryVisibility } from "./scenery-visibility.ts";
 import { WALL_HEIGHT, WALL_THICKNESS, type TownWallPlan, type WallGate, type WallSegment, type WallTower } from "./town-wall-plan.ts";
 import type { TerrainPoint } from "./terrain-regions.ts";
-import { pointInPolygon } from "./geometry-utils.ts";
 
 type Ground = Pick<GeneratedTerrain, "renderedHeightAt">;
 type Vertices = number[];
@@ -12,6 +11,8 @@ const MASONRY = 0xc4bfad;
 const MASONRY_LIGHT = 0xd3c9b2;
 const TIMBER = 0x4d3827;
 const ROOF = 0x59433a;
+const PLANK = 0x7a5836;
+const IRON = 0x2f2c29;
 
 function distance(a: TerrainPoint, b: TerrainPoint): number { return Math.hypot(b.x - a.x, b.z - a.z); }
 function midpoint(a: TerrainPoint, b: TerrainPoint): TerrainPoint { return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 }; }
@@ -88,6 +89,48 @@ function addTerrainWall(vertices: Vertices, terrain: Ground, a: TerrainPoint, b:
   return finalTop;
 }
 
+/**
+ * An open door leaf: vertical oak planks with
+ * small gaps, two cross battens and a diagonal brace facing out, and iron
+ * hinge straps running from the hinge side. `hingeSide` is -1 when the hinge is at
+ * the leaf's -along edge (the edge next to its gate post).
+ */
+function addDoorLeaf(planks: Vertices, battens: Vertices, iron: Vertices, centre: TerrainPoint, along: TerrainPoint,
+  out: TerrainPoint, leafWidth: number, base: number, leafHeight: number, hingeSide: number): void {
+  const at = (u: number, v: number): TerrainPoint => ({ x: centre.x + along.x * u + out.x * v, z: centre.z + along.z * u + out.z * v });
+  const count = Math.max(4, Math.round(leafWidth / .3)), pitch = leafWidth / count;
+  for (let index = 0; index < count; index += 1) {
+    const u = -leafWidth / 2 + pitch * (index + .5);
+    // Uneven plank tops read as hand-cut boards.
+    const top = base + leafHeight - ((index * 7) % 3) * .03;
+    addFrameBox(planks, at(u, 0), along, out, pitch / 2 - .012, .035, base, top);
+  }
+  for (const level of [.22, .78]) {
+    const y = base + leafHeight * level;
+    addFrameBox(battens, at(0, .06), along, out, leafWidth / 2 - .04, .025, y - .07, y + .07);
+  }
+  // Brace from the low batten on the hinge side up to the high batten on the latch side.
+  const low = base + leafHeight * .22, high = base + leafHeight * .78, reach = leafWidth / 2 - .12;
+  const from = new THREE.Vector3(), to = new THREE.Vector3();
+  const point = (u: number, y: number, v: number): THREE.Vector3 => {
+    const p = at(u, v); return new THREE.Vector3(p.x, y, p.z);
+  };
+  from.copy(point(hingeSide * reach, low, .06)); to.copy(point(-hingeSide * reach, high, .06));
+  const lift = .06;
+  const corners = [[0, -lift, -.025], [0, lift, -.025], [0, lift, .025], [0, -lift, .025]];
+  const ends = [from, to].map(anchor => corners.map(([, dy, dv]) =>
+    new THREE.Vector3(anchor.x + out.x * dv!, anchor.y + dy!, anchor.z + out.z * dv!)));
+  for (let side = 0; side < 4; side += 1) {
+    const next = (side + 1) % 4;
+    pushQuad(battens, ends[0]![side]!, ends[1]![side]!, ends[1]![next]!, ends[0]![next]!);
+  }
+  // Hinge straps: short iron bands along each batten from the hinge edge.
+  for (const level of [.22, .78]) {
+    const y = base + leafHeight * level;
+    addFrameBox(iron, at(hingeSide * (leafWidth / 2 - .3), .09), along, out, .3, .012, y - .035, y + .035);
+  }
+}
+
 function masonryTexture(): THREE.DataTexture {
   const size=128,data=new Uint8Array(size*size*4);
   for(let y=0;y<size;y++) for(let x=0;x<size;x++) {
@@ -124,6 +167,7 @@ export class TownWallScenery {
   private readonly geometries = new Set<THREE.BufferGeometry>();
   private readonly materials = new Set<THREE.Material>();
   private readonly masonry = masonryTexture();
+  private doorMaterials!: { plank: THREE.Material; iron: THREE.Material };
 
   public constructor(plans: readonly TownWallPlan[], terrain: Ground, visibility: SceneryVisibility) {
     this.group.name = "Procedural town walls";
@@ -131,7 +175,11 @@ export class TownWallScenery {
     const stoneLight = new THREE.MeshStandardMaterial({ color: MASONRY_LIGHT, map:this.masonry, roughness: .9, metalness: 0, side: THREE.DoubleSide });
     const timber = new THREE.MeshStandardMaterial({ color: TIMBER, roughness: .96, metalness: 0, side: THREE.DoubleSide });
     const roof = new THREE.MeshStandardMaterial({ color: ROOF, roughness: .92, metalness: 0, side: THREE.DoubleSide });
-    [stone, stoneLight, timber, roof].forEach(material => this.materials.add(material));
+    // Shared by every gate: oak planks and the dark iron of hinge straps.
+    const plank = new THREE.MeshStandardMaterial({ color: PLANK, roughness: .9, metalness: 0, side: THREE.DoubleSide, flatShading: true });
+    const iron = new THREE.MeshStandardMaterial({ color: IRON, roughness: .6, metalness: .35, side: THREE.DoubleSide });
+    this.doorMaterials = { plank, iron };
+    [stone, stoneLight, timber, roof, plank, iron].forEach(material => this.materials.add(material));
     for (const plan of plans) this.addPlan(plan, terrain, visibility, stone, stoneLight, timber, roof);
   }
 
@@ -176,8 +224,9 @@ export class TownWallScenery {
     root.userData.sceneryCell = owner;
     const stoneVertices: Vertices = [], timberVertices: Vertices = [], roofVertices: Vertices = [];
     if (plan.gateStyle === "posts") {
-      this.addGateway(plan, gate, terrain, stoneVertices, timberVertices, roofVertices);
-      this.finishGate(root, stoneVertices, timberVertices, roofVertices, stone, timber, roof, visibility, owner);
+      const plankVertices: Vertices = [], ironVertices: Vertices = [];
+      this.addGateway(plan, gate, terrain, stoneVertices, timberVertices, roofVertices, plankVertices, ironVertices);
+      this.finishGate(root, stoneVertices, timberVertices, roofVertices, stone, timber, roof, visibility, owner, plankVertices, ironVertices);
       return;
     }
     const samples = Array.from({ length: 9 }, (_, index) => interpolate(gate.a, gate.b, index / 8));
@@ -234,7 +283,7 @@ export class TownWallScenery {
    * a passing formation's spears, and every piece stays on the wall line.
    */
   private addGateway(plan: TownWallPlan, gate: WallGate, terrain: Ground,
-    stoneVertices: Vertices, timberVertices: Vertices, roofVertices: Vertices): void {
+    stoneVertices: Vertices, timberVertices: Vertices, roofVertices: Vertices, plankVertices: Vertices, ironVertices: Vertices): void {
     const width = distance(gate.a, gate.b), pierDepth = gate.pierLength ?? WALL_THICKNESS * 1.45;
     const postHalf = Math.max((gate.depth ?? WALL_THICKNESS) / 2, WALL_THICKNESS / 2 + .06);
     const postLength = pierDepth + .3;
@@ -242,15 +291,11 @@ export class TownWallScenery {
     const fallback = { x: gate.b.x - gate.a.x, z: gate.b.z - gate.a.z };
     for (const [end, sign] of [[gate.a, -1], [gate.b, 1]] as const) {
       // Follow the wall run that meets this side of the opening, which may curve away from the gate line.
-      const run = plan.segments.map(segment => distance(segment.a, end) < .08 ? { x: segment.b.x - segment.a.x, z: segment.b.z - segment.a.z }
+      const first = plan.segments.map(segment => distance(segment.a, end) < .08 ? { x: segment.b.x - segment.a.x, z: segment.b.z - segment.a.z }
         : distance(segment.b, end) < .08 ? { x: segment.a.x - segment.b.x, z: segment.a.z - segment.b.z } : null)
         .find((direction): direction is TerrainPoint => direction !== null) ?? { x: fallback.x * sign, z: fallback.z * sign };
-      const length = Math.hypot(run.x, run.z) || 1, along = { x: run.x / length, z: run.z / length };
+      const length = Math.hypot(first.x, first.z) || 1, along = { x: first.x / length, z: first.z / length };
       const side = { x: -along.z, z: along.x };
-      // Outward is the side of this run that lies outside the enclosure.
-      const probe = { x: end.x + along.x * (postLength + 1) + side.x * .6, z: end.z + along.z * (postLength + 1) + side.z * .6 };
-      const enclosed = plan.loops.some(loop => pointInPolygon(probe.x, probe.z, loop.points.map(point => [point.x, point.z] as [number, number])));
-      const outwards = plan.loops.length ? (enclosed ? -1 : 1) : (side.x * outside.x + side.z * outside.z >= 0 ? 1 : -1);
       const post = { x: end.x + along.x * postLength / 2, z: end.z + along.z * postLength / 2 };
       const top = height(terrain, post) + WALL_HEIGHT + .75;
       addGroundBox(stoneVertices, terrain, post, along, side, postLength / 2, postHalf, top);
@@ -261,18 +306,31 @@ export class TownWallScenery {
       const apex = corner(0, 0, top + .45);
       pushTriangle(roofVertices, p!, q!, apex); pushTriangle(roofVertices, q!, r!, apex);
       pushTriangle(roofVertices, r!, t!, apex); pushTriangle(roofVertices, t!, p!, apex);
-      // The leaf swung fully open lies against the outer face of that wall run, beyond its post.
-      const leafWidth = Math.min(width / 2 - .05, 2.2), offset = postLength + .05 + leafWidth / 2;
-      const leaf = { x: end.x + along.x * offset + side.x * outwards * (WALL_THICKNESS / 2 + .07),
-        z: end.z + along.z * offset + side.z * outwards * (WALL_THICKNESS / 2 + .07) };
-      const leafBase = height(terrain, leaf) + .05;
-      addFrameBox(timberVertices, leaf, along, side, leafWidth / 2, .045, leafBase, leafBase + WALL_HEIGHT - .2);
+      // The leaf hangs from the post and stands open outward, a little past square
+      // and angled away from the passage, beside the causeway. It never meets the
+      // wall, whatever its curve, and stays outside the opening formations use.
+      const gateAlong = { x: fallback.x / width, z: fallback.z / width };
+      const away = { x: gateAlong.x * sign, z: gateAlong.z * sign };
+      const across = outside.x * -gateAlong.z + outside.z * gateAlong.x >= 0 ? 1 : -1;
+      const out = { x: -gateAlong.z * across, z: gateAlong.x * across };
+      const swing = Math.PI / 18;
+      const leafAlong = { x: out.x * Math.cos(swing) + away.x * Math.sin(swing), z: out.z * Math.cos(swing) + away.z * Math.sin(swing) };
+      const faceOut = { x: away.x - leafAlong.x * (away.x * leafAlong.x + away.z * leafAlong.z),
+        z: away.z - leafAlong.z * (away.x * leafAlong.x + away.z * leafAlong.z) };
+      const faceLength = Math.hypot(faceOut.x, faceOut.z) || 1;
+      const leafWidth = Math.min(width / 2 - .05, 2.1);
+      const hinge = { x: end.x + out.x * (postHalf + .02) + away.x * .06, z: end.z + out.z * (postHalf + .02) + away.z * .06 };
+      const leaf = { x: hinge.x + leafAlong.x * (leafWidth / 2 + .03), z: hinge.z + leafAlong.z * (leafWidth / 2 + .03) };
+      addDoorLeaf(plankVertices, timberVertices, ironVertices, leaf, leafAlong, { x: faceOut.x / faceLength, z: faceOut.z / faceLength },
+        leafWidth, height(terrain, end) + .05, Math.min(WALL_HEIGHT - .25, 2.2), -1);
     }
   }
 
   private finishGate(root: THREE.Group, stoneVertices: Vertices, timberVertices: Vertices, roofVertices: Vertices,
-    stone: THREE.Material, timber: THREE.Material, roof: THREE.Material, visibility: SceneryVisibility, owner: string): void {
-    for (const [vertices, material, name] of [[stoneVertices, stone, "Open stone arch and piers"], [timberVertices, timber, "Timber gate leaves"], [roofVertices, roof, "Gate caps"]] as const) {
+    stone: THREE.Material, timber: THREE.Material, roof: THREE.Material, visibility: SceneryVisibility, owner: string,
+    plankVertices: Vertices = [], ironVertices: Vertices = []): void {
+    for (const [vertices, material, name] of [[stoneVertices, stone, "Open stone arch and piers"], [timberVertices, timber, "Timber gate battens"],
+      [roofVertices, roof, "Gate caps"], [plankVertices, this.doorMaterials.plank, "Gate leaf planks"], [ironVertices, this.doorMaterials.iron, "Gate hinge straps"]] as const) {
       if (vertices.length === 0) continue;
       const mesh = new THREE.Mesh(geometry(vertices), material); mesh.name = name; mesh.castShadow = true; mesh.receiveShadow = true;
       this.geometries.add(mesh.geometry); root.add(mesh);
