@@ -260,8 +260,8 @@ export class UnitPresentation {
 
       // The selected commander's aura stands out; the others stay a quiet hint.
       const selected = snapshot.selectedUnitId === commander.id;
-      (aura.band.material as THREE.MeshBasicMaterial).opacity = selected ? 0.95 : 0.55;
-      (aura.curtain.material as THREE.MeshBasicMaterial).opacity = selected ? 0.5 : 0.16;
+      (aura.band.material as THREE.MeshBasicMaterial).opacity = selected ? 0.78 : 0.32;
+      (aura.curtain.material as THREE.MeshBasicMaterial).opacity = selected ? 0.34 : 0.07;
 
       const moving = movement?.unitId === commander.id && this.movementPosition ? this.movementPosition(movement) : null;
       const range = commander.commanderAbilities?.auraRange ?? 0;
