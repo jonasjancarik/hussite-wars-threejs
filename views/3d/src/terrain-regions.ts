@@ -132,7 +132,7 @@ function valueNoise(seed: number, x: number, z: number): number {
   return lerp(top, bottom, tz) * 2 - 1;
 }
 
-function fractalNoise(seed: number, x: number, z: number, octaves = 4): number {
+export function fractalNoise(seed: number, x: number, z: number, octaves = 4): number {
   let amplitude = 0.5;
   let frequency = 1;
   let total = 0;

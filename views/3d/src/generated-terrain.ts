@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { createGeneratedSurfaceMaterials, surfaceMaterialIndex } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
-import { createTerrainRegions, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
+import { createTerrainRegions, fractalNoise, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
@@ -20,6 +20,11 @@ const COLORS: Record<string, number> = {
   church: 0xcab79e, field: 0xddc47d, fields: 0xddc47d, farmland: 0xddc47d, cropland: 0xddc47d,
 };
 const FROST_COLOR = new THREE.Color(0xe2e5dc);
+/** Grassland drifts between cured straw and cooler sage, like late-summer pasture. */
+const STRAW_TINT = new THREE.Color(0xffe3a2);
+const SAGE_TINT = new THREE.Color(0xd3deae);
+const GRASS_SCRATCH = new THREE.Color();
+const GRASSLAND = new Set(["plains", "hills", "hill", "ridge", "highland", "slope", "steep_slope", "forest"]);
 
 export class GeneratedTerrain implements BattleTerrain {
   public readonly group = new THREE.Group();
@@ -253,6 +258,21 @@ export class GeneratedTerrain implements BattleTerrain {
     this.surfaceTextures.length = 0;
   }
 
+  /**
+   * Broad straw and sage patches, drier on crests and greener in hollows.
+   * Presentation only: the tint follows position and height, never rules.
+   */
+  private grasslandTint(x: number, z: number, height: number, base: THREE.Color): THREE.Color {
+    const seed = this.field.seed ^ 0x51ed270b;
+    const patch = THREE.MathUtils.smoothstep(fractalNoise(seed, x / 21, z / 19, 3), -0.32, 0.32);
+    const dry = THREE.MathUtils.clamp(patch * 0.8 + THREE.MathUtils.smoothstep(height, 0.5, 5) * 0.35
+      - THREE.MathUtils.smoothstep(-height, 0.05, 0.5) * 0.3, 0, 1);
+    const tint = GRASS_SCRATCH.copy(SAGE_TINT).lerp(STRAW_TINT, dry);
+    // Keep each terrain's own brightness so hills and forest stay distinct.
+    const brightness = (base.r + base.g + base.b) / ((tint.r + tint.g + tint.b) || 1);
+    return tint.multiplyScalar(THREE.MathUtils.lerp(1, brightness, 0.6));
+  }
+
   private createSurface(assetBase?: string): void {
     const area = (this.bounds.maxX - this.bounds.minX) * (this.bounds.maxZ - this.bounds.minZ);
     const step = Math.max(0.36, Math.sqrt(area * 2 / 260_000));
@@ -304,6 +324,9 @@ export class GeneratedTerrain implements BattleTerrain {
           if(this.environmentPlan.frozenRiver && isWaterTerrain(terrain)) sampleColor.setHex(0xbad1d1);
           if (this.environmentPlan.winter && !["water", "mud", "swamp", "road", "road2", "dam", "town", "church"].includes(terrain)) {
             sampleColor.lerp(FROST_COLOR, .79);
+          }
+          if (!this.environmentPlan.winter && GRASSLAND.has(terrain.toLowerCase())) {
+            sampleColor.copy(this.grasslandTint(x, z, positions[positions.length - 2]!, sampleColor));
           }
           if (isFieldTerrain(terrain)) {
             const furrow = 0.86 + 0.14 * (0.5 + 0.5 * Math.sin((x + z * 0.18) * 2.3));

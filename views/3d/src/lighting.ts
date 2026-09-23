@@ -14,8 +14,8 @@ export interface BattleLights {
 }
 
 export function createBattleLighting(scene: THREE.Scene): BattleLights {
-  // Procedural-worlds' clear summer afternoon state at 15:30. Keeping the
-  // solved palette together avoids the flat, independently tuned look.
+  // Placeholder values; the day preset below sets the actual palette, so the
+  // light, sky and haze are always tuned together.
   const hemisphere = new THREE.HemisphereLight(0xc3d9e5, 0x948c68, 1.15);
   scene.add(hemisphere);
 
@@ -85,5 +85,6 @@ export function createBattleLighting(scene: THREE.Scene): BattleLights {
       dirty = false;
     },
   };
+  lights.apply(ATMOSPHERE_PRESETS.day);
   return lights;
 }

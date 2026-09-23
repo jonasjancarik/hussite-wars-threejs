@@ -38,7 +38,9 @@ Depth of field keeps its own options. Auto starts on High and steps down one tie
 **Light and weather** (`atmosphere.ts`, `weather.ts`) are presentation profiles keyed by scenario and round, like the art registry. They never change sight, fog-of-war rules or combat.
 - Sudoměř is fought in evening light that turns to dusk from round 6. Mist rises from round 8 and thickens at round 10, where the scenario announces the fog.
 - Kutná Hora starts at dusk and fades into night from round 3.
-- Other battles keep the clear afternoon.
+- Other battles are fought in a clear late afternoon: a sun about 31° high, warm light and long shadows.
+
+Generic grassland (plains, hills, slopes, forest floor) drifts between cured straw and cooler sage in broad seeded patches, drier on crests and greener in hollows. Winter maps keep their frost colours.
 
 Light, sky, sun direction (and therefore shadow length) and haze ease between presets over about 2.5 seconds. The first snapshot and reduced motion apply them at once. Winter maps (Kutná Hora, Německý Brod) have light snowfall: one instanced draw call in a column that follows the view. Like the target pulse, it is drawn at about 24 fps rather than display rate. The **Weather effects** toggle in the map options turns snowfall off; light and mist always follow the battle. Snow freezes while paused and is still under reduced motion.
 

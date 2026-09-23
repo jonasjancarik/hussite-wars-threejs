@@ -31,7 +31,10 @@ export interface AtmosphereState {
   fogDensity: number;
 }
 
-const DAY_SUN = new THREE.Vector3(-64.2, 65.1, 40.6);
+/** Late afternoon: a sun about 31° high casts long, readable shadows across the board. */
+const DAY_SUN = new THREE.Vector3(-70, 50, 44);
+/** Night keeps the former, higher moon position. */
+const MOON = new THREE.Vector3(-64.2, 65.1, 40.6);
 
 function preset(values: {
   sky: number; ground: number; hemisphere: number; sun: [number, number, number]; sunIntensity: number;
@@ -46,10 +49,10 @@ function preset(values: {
   };
 }
 
-/** The clear 15:30 afternoon (procedural-worlds palette) and its darker neighbours. */
+/** A clear late afternoon and its darker neighbours. */
 export const ATMOSPHERE_PRESETS: Record<TimeOfDay, AtmosphereState> = {
-  day: preset({ sky: 0xc3d9e5, ground: 0x948c68, hemisphere: 1.15, sun: [1, 0.84, 0.63], sunIntensity: 2.2167,
-    sunPosition: DAY_SUN, fill: 0.13, background: 1.05, environment: 0.20, veil: 0xbdccc8, fog: 0xb8c7c3, density: 0.0010 }),
+  day: preset({ sky: 0xb8cfe4, ground: 0x9c8a5e, hemisphere: 1.0, sun: [1, 0.8, 0.56], sunIntensity: 2.45,
+    sunPosition: DAY_SUN, fill: 0.13, background: 1.05, environment: 0.20, veil: 0xc9ccbf, fog: 0xc4c6b6, density: 0.0010 }),
   evening: preset({ sky: 0xc6cbd0, ground: 0x8a7658, hemisphere: 1.0, sun: [1, 0.72, 0.46], sunIntensity: 2.0,
     sunPosition: new THREE.Vector3(-80, 40, 44), fill: 0.16, background: 0.86, environment: 0.18, veil: 0xcfc2ae,
     fog: 0xc6bba8, density: 0.0012 }),
@@ -57,7 +60,7 @@ export const ATMOSPHERE_PRESETS: Record<TimeOfDay, AtmosphereState> = {
     sunPosition: new THREE.Vector3(-88, 22, 48), fill: 0.1, background: 0.5, environment: 0.14, veil: 0x8d8288,
     fog: 0x908890, density: 0.0014 }),
   night: preset({ sky: 0x9eb9dd, ground: 0x59636f, hemisphere: 0.8, sun: [0.52, 0.65, 1], sunIntensity: 0.72,
-    sunPosition: DAY_SUN, fill: 0.05, background: 0.19, environment: 0.12, veil: 0x334858, fog: 0x344b60, density: 0.0010 }),
+    sunPosition: MOON, fill: 0.05, background: 0.19, environment: 0.12, veil: 0x334858, fog: 0x344b60, density: 0.0010 }),
 };
 
 const MIST_DAY = new THREE.Color(0xd4dad6);
