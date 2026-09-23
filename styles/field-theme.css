@@ -1856,6 +1856,19 @@ body {
     padding: 10px 5px;
 }
 
+/* Obsah sbaleného panelu musí zůstat skrytý i při vybrané jednotce: pravidla
+   `#unit-panel:not(.empty-unit-panel) …` výše mají stejnou specifičnost jako
+   skrytí v battle.css a jinak ho přebijí, takže se karta lámala do 42px sloupce. */
+#unit-panel.collapsed h2,
+#unit-panel.collapsed .panel-content,
+#unit-panel.collapsed #unit-info,
+#unit-panel.collapsed #unit-actions,
+#info-panel.collapsed h2,
+#info-panel.collapsed .panel-content,
+#info-panel.collapsed #army-overview {
+    display: none;
+}
+
 /* === Čitelnost vítězné/prohrané obrazovky na světlém pergamenu ("polní rukopis") ===
    Modal má krémové pozadí, ale řada textů zůstala světlá z původního tmavého
    tématu (debriefing byl světlý na světlém = neviditelný). Ztmavujeme je. */
