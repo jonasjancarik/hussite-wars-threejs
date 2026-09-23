@@ -27,6 +27,9 @@ import { BattleWeather } from "./weather.ts";
 import { ApplyingNote } from "./applying-note.ts";
 import { AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, QUALITY_TIERS, type QualityLevel, type QualityTier } from "./quality.ts";
 
+/** Room above the ground for the tallest shadow casters: trees, towers and banners. */
+const SHADOW_CASTER_HEADROOM = 12;
+
 // Textures stream in after the first frame. With on-demand rendering every
 // live battle must redraw once they arrive, so share the default manager.
 const loadListeners = new Set<() => void>();
@@ -160,8 +163,11 @@ class IntegratedThreeBattle {
     this.picker = new BattlePicker(canvas, this.cameraRig.camera, this.terrain.layout);
     this.sky = new BattlePaintedSky(this.scene, assetBase, Math.max(500, extent * 3.7));
     const { minX, maxX, minZ, maxZ } = this.terrain.bounds;
+    const board = new THREE.Box3().setFromObject(this.terrain.group);
     this.table = new DioramaTable(new THREE.Vector2((minX + maxX) / 2, (minZ + maxZ) / 2), extent,
-      new THREE.Box3().setFromObject(this.terrain.group).min.y - .01);
+      board.min.y - .01, this.lighting.shadowFrame);
+    board.max.y += SHADOW_CASTER_HEADROOM;
+    this.lighting.fitShadowTo(board);
     this.scene.add(this.table.mesh);
     this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group,
       this.overlays.group, this.effects.group, this.weather.group);

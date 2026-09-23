@@ -9,6 +9,7 @@ import { GeneratedTerrain } from "../src/generated-terrain.ts";
 import { GeneratedScenery } from "../src/generated-scenery.ts";
 import { HexLayout } from "../src/hex-coordinates.ts";
 import { createBattleLighting } from "../src/lighting.ts";
+import { ATMOSPHERE_PRESETS } from "../src/atmosphere.ts";
 import type { BattleSnapshot } from "../src/types.ts";
 
 const root=new URL("../../../",import.meta.url);
@@ -165,4 +166,25 @@ test("winter and night presentation remains readable and daylight can be restore
   const scene=new THREE.Scene(), lighting=createBattleLighting(scene), daylight=lighting.sun.intensity;
   lighting.setNight(true); assert.ok(lighting.sun.intensity>0&&lighting.sun.intensity<daylight);
   lighting.setNight(false); assert.equal(lighting.sun.intensity,daylight);
+});
+
+test("the sun's shadow area fits each board, however low the sun",()=>{
+  const areaFor=(half:number,sun:THREE.Vector3)=>{
+    const scene=new THREE.Scene(), lighting=createBattleLighting(scene);
+    const board=new THREE.Box3(new THREE.Vector3(-half,-7.2,-half*.9),new THREE.Vector3(half,12,half*.9));
+    lighting.fitShadowTo(board);
+    lighting.apply({...ATMOSPHERE_PRESETS.day,sunPosition:sun});
+    const camera=lighting.sun.shadow.camera;
+    camera.updateMatrixWorld();
+    // Every caster lies inside the map, clear of the faded rim.
+    for(let corner=0;corner<8;corner+=1) {
+      const point=new THREE.Vector3(corner&1?board.max.x:board.min.x,corner&2?board.max.y:board.min.y,corner&4?board.max.z:board.min.z)
+        .applyMatrix4(lighting.shadowFrame);
+      assert.ok(Math.abs(point.x)<.9&&Math.abs(point.y)<.9&&Math.abs(point.z)<1,`corner ${corner} of a ${half*2} m board`);
+    }
+    return (camera.right-camera.left)*(camera.top-camera.bottom);
+  };
+  for(const sun of [ATMOSPHERE_PRESETS.day.sunPosition,new THREE.Vector3(-88,22,48)]) {
+    assert.ok(areaFor(40,sun)<areaFor(90,sun)/3,"a small board gets a sharper map");
+  }
 });
