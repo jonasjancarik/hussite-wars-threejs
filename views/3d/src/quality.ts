@@ -13,12 +13,14 @@ export interface QualitySettings {
   aoResolutionScale: number;
   maxPixelRatio: number;
   shadowMapSize: number;
+  /** Anisotropic filtering of the ground textures. */
+  anisotropy: number;
 }
 
 export const QUALITY_TIERS: Record<QualityTier, QualitySettings> = {
-  high: { ambientOcclusion: true, gtaoSamples: 12, aoResolutionScale: 1, maxPixelRatio: 2, shadowMapSize: 4096 },
-  medium: { ambientOcclusion: true, gtaoSamples: 8, aoResolutionScale: 0.5, maxPixelRatio: 1.5, shadowMapSize: 2048 },
-  low: { ambientOcclusion: false, gtaoSamples: 8, aoResolutionScale: 0.5, maxPixelRatio: 1, shadowMapSize: 1024 },
+  high: { ambientOcclusion: true, gtaoSamples: 12, aoResolutionScale: 1, maxPixelRatio: 2, shadowMapSize: 4096, anisotropy: 8 },
+  medium: { ambientOcclusion: true, gtaoSamples: 8, aoResolutionScale: 0.5, maxPixelRatio: 1.5, shadowMapSize: 2048, anisotropy: 4 },
+  low: { ambientOcclusion: false, gtaoSamples: 8, aoResolutionScale: 0.5, maxPixelRatio: 1, shadowMapSize: 1024, anisotropy: 2 },
 };
 
 const LOWER: Record<QualityTier, QualityTier | null> = { high: "medium", medium: "low", low: null };

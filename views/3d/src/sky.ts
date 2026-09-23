@@ -27,6 +27,14 @@ export class BattlePaintedSky {
       colors[offset + 3] = alpha;
     }
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 4));
+    // The upper sky has zero alpha: blending it changed no pixel but still
+    // shaded every sky fragment. Keep only triangles with some opacity.
+    const index = geometry.getIndex()!, kept: number[] = [];
+    for (let corner = 0; corner < index.count; corner += 3) {
+      const triangle = [index.getX(corner), index.getX(corner + 1), index.getX(corner + 2)];
+      if (triangle.some(vertex => colors[vertex * 4 + 3]! > 0)) kept.push(...triangle);
+    }
+    geometry.setIndex(kept);
     this.lowerVeil = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
       color: 0xbdccc8,
       side: THREE.BackSide,

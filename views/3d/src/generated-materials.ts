@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { MeshStandardNodeMaterial } from "three/webgpu";
-import { attribute, cameraPosition, mix, mx_noise_float, mx_worley_noise_vec2, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, transformNormalToView, uv, vec3, vertexColor } from "three/tsl";
+import { attribute, cameraPosition, dFdx, dFdy, Fn, If, mix, mx_noise_float, mx_worley_noise_vec2, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, transformNormalToView, uv, vec3, vertexColor } from "three/tsl";
 import { isFieldTerrain } from "./terrain-regions.ts";
 import { isRoadTerrain } from "./road-corridors.ts";
 
@@ -43,12 +43,15 @@ export function groundSplatChannel(kind: SurfaceMaterialKind): 0 | 1 | 2 {
 type TslFactory = (...arguments_: any[]) => any;
 const tsl = (factory: unknown): TslFactory => factory as TslFactory;
 
+/** Anisotropic filtering of the ground textures at the High tier; lower tiers use less. */
+export const GROUND_ANISOTROPY = 8;
+
 function loadTexture(baseUrl: string, path: string, repeat: number): THREE.Texture {
   const texture = new THREE.TextureLoader().load(new URL(path, baseUrl).href);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
   texture.repeat.setScalar(repeat);
-  texture.anisotropy = 8;
+  texture.anisotropy = GROUND_ANISOTROPY;
   return texture;
 }
 
@@ -59,13 +62,27 @@ const CLIFF_STEEP_NORMAL_Y = .62;
 const CLIFF_TILE_METRES = 5.5;
 const CLIFF_BRIGHTNESS = 1.15;
 
-/** World-space triplanar sample, blended by the geometric normal. */
-function triplanar(map: THREE.Texture, tileMetres: number): any {
-  const position = (positionWorld as any).div(tileMetres);
-  const axes = (normalWorldGeometry as any).abs().pow(4);
-  const share = axes.div(axes.x.add(axes.y).add(axes.z));
-  const sample = (coordinates: any): any => tsl(textureNode)(map, coordinates).rgb;
-  return sample(position.zy).mul(share.x).add(sample(position.xz).mul(share.y)).add(sample(position.xy).mul(share.z));
+/**
+ * World-space triplanar sample, blended by the geometric normal, taken only
+ * where `weight` is above zero: most of the board is flat and would discard
+ * all three samples. Inside the branch the texture is sampled with gradients
+ * computed outside it, since WGSL allows implicit-derivative sampling only
+ * in uniform control flow.
+ */
+function triplanar(map: THREE.Texture, tileMetres: number, weight: any): any {
+  return tsl(Fn)(() => {
+    const position = (positionWorld as any).div(tileMetres);
+    const axes = (normalWorldGeometry as any).abs().pow(4);
+    const share = axes.div(axes.x.add(axes.y).add(axes.z));
+    const projections = [position.zy, position.xz, position.xy].map(coordinates =>
+      ({ coordinates, dx: tsl(dFdx)(coordinates), dy: tsl(dFdy)(coordinates) }));
+    const result = tsl(vec3)(0, 0, 0).toVar();
+    tsl(If)(weight.greaterThan(0), () => {
+      const [x, y, z] = projections.map(({ coordinates, dx, dy }) => tsl(textureNode)(map, coordinates).grad(dx, dy).rgb);
+      result.assign(x!.mul(share.x).add(y!.mul(share.y)).add(z!.mul(share.z)));
+    });
+    return result;
+  })();
 }
 
 /** Texture nodes ignore `repeat` unless asked to; scale the UV explicitly instead. */
@@ -87,8 +104,8 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
     return result;
   };
   const meadowMap = winter ? null : texture("textures/procedural-worlds/T_ConceptBGroundCalm.webp", 1.0);
-  const earthMap = texture("textures/sudomer-pond-mud.png", 1.25);
-  const slopeMap = texture("textures/earth-grain.png", 2.8);
+  const earthMap = texture("textures/sudomer-pond-mud.webp", 1.25);
+  const slopeMap = texture("textures/earth-grain.webp", 2.8);
   const material = (name: SurfaceMaterialKind, map: THREE.Texture | null, roughness: number): THREE.MeshStandardMaterial => {
     const result = new THREE.MeshStandardMaterial({
       color: 0xffffff, vertexColors: true, map, roughness, metalness: 0, side: THREE.DoubleSide,
@@ -105,7 +122,7 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
   // Steep ground turns to rock. The rock is projected from all three axes, so
   // it never smears down a bank the way the top-down ground textures would.
   const steep = tsl(smoothstep)(CLIFF_FLAT_NORMAL_Y, CLIFF_STEEP_NORMAL_Y, (normalWorldGeometry as any).y);
-  const rock = cliffMap ? triplanar(cliffMap, CLIFF_TILE_METRES) : tsl(vec3)(.42, .40, .37);
+  const rock = cliffMap ? triplanar(cliffMap, CLIFF_TILE_METRES, steep) : tsl(vec3)(.42, .40, .37);
   // Rock keeps only a trace of the grass tint so hillsides do not turn olive.
   const ground = tsl(mix)(blend, rock.mul(tsl(mix)(tint, tsl(vec3)(1, 1, 1), .7)).mul(CLIFF_BRIGHTNESS), steep);
   const land = (name: SurfaceMaterialKind, map: THREE.Texture | null, roughness: number): THREE.MeshStandardMaterial => {
@@ -259,7 +276,9 @@ function createWaterMaterial(): THREE.MeshStandardMaterial {
     const at = world.xz.add(tsl(vec3)(x, z, 0).xy);
     return tsl(mx_noise_float)(at.mul(.8)).add(tsl(mx_noise_float)(at.mul(2.2).add(7)).mul(.35));
   };
-  const slopeX = h(step, 0).sub(h(-step, 0)).div(step * 2), slopeZ = h(0, step).sub(h(0, -step)).div(step * 2);
+  // Forward differences: three height samples (six noise calls) instead of four.
+  const centre = h(0, 0);
+  const slopeX = h(step, 0).sub(centre).div(step), slopeZ = h(0, step).sub(centre).div(step);
   const rippled = tsl(vec3)(slopeX.mul(-strength), 1, slopeZ.mul(-strength)).normalize();
   material.normalNode = tsl(transformNormalToView)(rippled);
   const view = (cameraPosition as any).sub(positionWorld).normalize();

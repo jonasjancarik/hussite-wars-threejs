@@ -31,7 +31,8 @@ Banners remain a readable screen size when zooming and stay anchored directly ab
 **Graphics quality** in the map options chooses Auto (default), High, Medium or Low (`quality.ts`). The tiers change only render cost:
 - ambient-occlusion samples and resolution (off on Low);
 - the pixel-ratio cap (2, 1.5, 1);
-- the sun's shadow-map size (4096, 2048, 1024).
+- the sun's shadow-map size (4096, 2048, 1024);
+- anisotropic filtering of the ground textures (8×, 4×, 2×).
 
 Depth of field keeps its own options. Auto starts on High and steps down one tier when the median interval of 60 consecutive animated frames exceeds 25 ms. Idle wake-ups and ambient 24 fps frames are not counted. It never steps back up within a battle, and the options hint names the tier it settled on. A shadow-size change replaces the sun light rather than resizing its live VSM map, which leaves destroyed textures bound on WebGPU. The scene pass keeps its normal attachment even without AO, because compiled pipelines are keyed to the pass's targets. The first switch to a focus quality, effects setting or tier compiles new shaders, and that one frame blocks the main thread (about 0.85 s the first time for Photo bokeh). The previous frame stays on screen. A small *Applying graphics settings…* note is painted before the change and removed after the frame; its spinner is a compositor animation, so it keeps turning during the stall. Settings that were already compiled switch without the note. The canvas is resized only when its size or pixel ratio really changes, because assigning `canvas.width` clears it. Like the other display options, the choice persists while switching views and recreating the renderer during the battle.
 

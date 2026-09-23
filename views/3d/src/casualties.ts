@@ -8,7 +8,8 @@ interface Casualty extends HexCoord {
   unitId: number;
   faction: UnitSnapshot["faction"];
   object: THREE.Object3D;
-  materials: Map<THREE.Material, number>;
+  /** Faded copy → [its source material, the source's opacity]. */
+  materials: Map<THREE.Material, [THREE.Material, number]>;
   age: number;
   initialY: number;
 }
@@ -17,6 +18,12 @@ interface Casualty extends HexCoord {
 export class CasualtyFades {
   public readonly group = new THREE.Group();
   private readonly fading = new Set<Casualty>();
+  /**
+   * Released transparent copies per source material. Every casualty fades
+   * through copies, and a fresh material per fade meant new GPU bindings
+   * each time; reusing them keeps losses cheap after the first.
+   */
+  private readonly pool = new Map<THREE.Material, THREE.Material[]>();
   private enabled = true;
 
   public constructor() { this.group.name = "Casualty fades"; }
@@ -34,17 +41,18 @@ export class CasualtyFades {
     const object = source.clone(true);
     source.matrixWorld.decompose(object.position, object.quaternion, object.scale);
     const clones = new Map<THREE.Material, THREE.Material>();
-    const materials = new Map<THREE.Material, number>();
+    const materials = new Map<THREE.Material, [THREE.Material, number]>();
     object.traverse(child => {
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
       const cloneMaterial = (original: THREE.Material): THREE.Material => {
         let material = clones.get(original);
         if (!material) {
-          material = original.clone();
+          material = this.pool.get(original)?.pop() ?? original.clone();
           material.transparent = true;
           material.depthWrite = false;
-          materials.set(material, original.opacity);
+          material.opacity = original.opacity;
+          materials.set(material, [original, original.opacity]);
           clones.set(original, material);
         }
         return material;
@@ -78,16 +86,26 @@ export class CasualtyFades {
       const t = Math.min(1, fade.age / CASUALTY_FADE_MS);
       // Settle only a little, keeping the loss grounded rather than flying away.
       fade.object.position.y = fade.initialY - t * 0.18;
-      for (const [material, originalOpacity] of fade.materials) material.opacity = originalOpacity * (1 - t);
+      for (const [material, [, originalOpacity]] of fade.materials) material.opacity = originalOpacity * (1 - t);
       if (t === 1) this.remove(fade);
     }
   }
 
   public clear(): void { for (const fade of this.fading) this.remove(fade); }
 
+  /** Clear and release the pooled copies. */
+  public dispose(): void {
+    this.clear();
+    for (const copies of this.pool.values()) for (const material of copies) material.dispose();
+    this.pool.clear();
+  }
+
   private remove(fade: Casualty): void {
     this.group.remove(fade.object);
-    for (const material of fade.materials.keys()) material.dispose();
+    for (const [material, [original]] of fade.materials) {
+      const copies = this.pool.get(original) ?? [];
+      copies.push(material); this.pool.set(original, copies);
+    }
     this.fading.delete(fade);
   }
 }

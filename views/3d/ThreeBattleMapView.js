@@ -14,6 +14,7 @@ class ThreeBattleMapView {
         this.destroyed = false;
         this.revision = 0;
         this.renderQueued = false;
+        this.tooltipHex = null;
         this.effectCounter = 0;
         this.effects = [];
         this.terrainSignature = null;
@@ -79,10 +80,17 @@ class ThreeBattleMapView {
                 },
                 onHover: payload => {
                     if (!this.active || this.destroyed) return;
+                    const hex = payload ? `${payload.col},${payload.row}` : null;
                     if (!payload) this.view.hideTooltip();
+                    // Moving within one hex only moves the tooltip, as in 2D;
+                    // its content is rebuilt for a new hex or a new snapshot.
+                    else if (hex === this.tooltipHex && !this.view.tooltip.tooltip.classList.contains('hidden')) {
+                        this.view.tooltip.positionTooltip(payload.clientX, payload.clientY);
+                    }
                     else this.view.tooltip.showTooltip(
                         { col: payload.col, row: payload.row }, payload.clientX, payload.clientY
                     );
+                    this.tooltipHex = hex;
                 },
                 onContext: () => {
                     if (!this.active || this.destroyed) return;
@@ -149,7 +157,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.57';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.58';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -269,6 +277,7 @@ class ThreeBattleMapView {
 
     render() {
         this.renderQueued = false;
+        this.tooltipHex = null;
         if (!this.active || this.destroyed) return;
         const snapshot = this.snapshot();
         const terrainSignature = this.getTerrainSignature(snapshot);

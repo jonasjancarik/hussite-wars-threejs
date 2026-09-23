@@ -117,8 +117,9 @@ test("a visible loss creates one fade per lost figure without fading shared livi
   assert.equal(units.casualties.group.children.length, 2, "repeated snapshots do not replay casualties");
   units.casualties.advance(CASUALTY_FADE_MS / 2);
   assert.equal(units.casualties.group.children.length, 0);
-  assert.equal(disposed, 1);
+  assert.equal(disposed, 0, "a finished fade returns its copy to the pool for the next loss");
   units.dispose();
+  assert.equal(disposed, 1, "disposing the presentation releases pooled copies");
 });
 
 test("initial wounded snapshots and reduced motion never create casualty fades", async () => {

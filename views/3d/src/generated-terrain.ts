@@ -196,6 +196,15 @@ export class GeneratedTerrain implements BattleTerrain {
     return weights;
   }
 
+  /** Anisotropic filtering of the ground textures, set by the graphics quality tier. */
+  public setAnisotropy(level: number): void {
+    for (const texture of this.surfaceTextures) {
+      if (texture.anisotropy === level) continue;
+      texture.anisotropy = level;
+      texture.needsUpdate = true;
+    }
+  }
+
   public updateVisibility(snapshot: BattleSnapshot): void {
     const signature = snapshot.fogOfWar
       ? `fog:${[...snapshot.exploredHexes].sort().join("|")}:${[...snapshot.visibleHexes].sort().join("|")}`
@@ -606,8 +615,14 @@ export class GeneratedTerrain implements BattleTerrain {
     geometry.setAttribute(SHORE_DISTANCE, new THREE.Float32BufferAttribute(shoreDistances(positions, materialIndices), 1));
     geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices);
-    let groupStart = 0;
+    // The four dry-land materials share one colour node and differ only in a
+    // hundredth of roughness: their triangles (contiguous at the start of the
+    // index) are drawn as one group with the meadow material.
+    const landCount = materialIndices.slice(0, 4).reduce((sum, bucket) => sum + bucket.length, 0);
+    if (landCount > 0) geometry.addGroup(0, landCount, 0);
+    let groupStart = landCount;
     materialIndices.forEach((bucket, materialIndex) => {
+      if (materialIndex < 4) return;
       if (bucket.length > 0) geometry.addGroup(groupStart, bucket.length, materialIndex);
       groupStart += bucket.length;
     });

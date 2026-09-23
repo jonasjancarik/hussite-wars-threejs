@@ -214,7 +214,7 @@ export class UnitPresentation {
     if (this.disposed) return;
     this.disposed = true;
     this.updateRevision += 1;
-    this.casualties.clear();
+    this.casualties.dispose();
     for (const visual of this.visuals.values()) {
       visual.hit.geometry.dispose();
       (visual.hit.material as THREE.Material).dispose();
@@ -286,10 +286,21 @@ export class UnitPresentation {
       if (key === aura.key) continue;
       aura.key = key;
       const geometry = commandAuraGeometry(this.layout, this.terrain, commander, range, offset);
-      aura.band.geometry.dispose();
-      aura.curtain.geometry.dispose();
-      aura.band.geometry = geometry.band;
-      aura.curtain.geometry = geometry.curtain;
+      for (const [mesh, next] of [[aura.band, geometry.band], [aura.curtain, geometry.curtain]] as const) {
+        const current = mesh.geometry.getAttribute("position") as THREE.BufferAttribute | undefined;
+        const positions = next.getAttribute("position") as THREE.BufferAttribute;
+        if (current && current.count === positions.count) {
+          // Moving along a route keeps the shape: rewrite positions rather than
+          // replacing the GPU buffers on every animation frame.
+          (current.array as Float32Array).set(positions.array as Float32Array);
+          current.needsUpdate = true;
+          mesh.geometry.computeBoundingSphere();
+          next.dispose();
+        } else {
+          mesh.geometry.dispose();
+          mesh.geometry = next;
+        }
+      }
     }
   }
 

@@ -508,6 +508,7 @@ class IntegratedThreeBattle {
       this.appliedTiers.add(tier);
       this.pipeline.setCost(settings);
       this.lighting.setShadowMapSize(settings.shadowMapSize);
+      this.terrain.setAnisotropy?.(settings.anisotropy);
     });
   }
 
@@ -781,8 +782,11 @@ class IntegratedThreeBattle {
       this.performanceTracker.reset();
       this.performanceTracker.skipNextFrameInterval();
     }
-    if (this.frameCount % 120 === 0) this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
-    if (this.captureFramesRemaining > 0) this.captureFramesRemaining -= 1;
+    // Published when a `resetDiagnostics` capture completes, not every few
+    // seconds of play: it serialises the whole capture and reads layout.
+    if (this.captureFramesRemaining > 0 && --this.captureFramesRemaining === 0) {
+      this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics());
+    }
     const settling = this.atmosphere.settling || controlsChanged || this.cameraTween !== null || this.heldPanKeys.size > 0
       || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(0.01, this.targetFocusDistance * FOCUS_SETTLED)
       || Math.abs(this.focusStrength - desiredFocusStrength) > 0.0005

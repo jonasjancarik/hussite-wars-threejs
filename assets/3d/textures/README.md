@@ -8,4 +8,6 @@ This is illustrative art material. It is not a texture derived from the Sudomě�
 
 `sudomer-pond-mud.png` is a generated repeating diffuse texture for the drained Škaredý basin, produced with the built-in image-generation tool on 2026-09-20. The exact prompt is retained in `experiments/sudomer-diorama/assets/terrain/sudomer/mud-prompt.txt`. It represents illustrative damp silt, not a sampled historical surface.
 
+The generated 3D view loads `earth-grain.webp` and `sudomer-pond-mud.webp`, WebP encodings of the PNGs above (the mud downsampled from 1254² to 1024²), to download and decode about 3 MB less. The PNGs stay as the sources and for the Bevy experiment.
+
 `sudomer-meadow.png` is a new muted early-spring meadow diffuse tile generated with the built-in image tool on 2026-09-20. Its exact prompt is in `experiments/sudomer-diorama/assets/terrain/sudomer/meadow-prompt.txt`. The Sudoměř renderer blends its appearance with a separate reused earth-grain layer for fields, tracks and damp banks.

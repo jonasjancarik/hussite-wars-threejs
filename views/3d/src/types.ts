@@ -106,6 +106,8 @@ export interface TerrainSurface {
   readonly interactiveMeshes: import("three").Object3D[];
   heightAt(x: number, z: number): number;
   renderedHeightAt?(x: number, z: number): number;
+  /** Anisotropic filtering of the ground textures, when the terrain has any. */
+  setAnisotropy?(level: number): void;
 }
 
 export interface BattleTerrain extends TerrainSurface {
