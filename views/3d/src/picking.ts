@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { HexLayout } from "./hex-coordinates.ts";
+import { intersectMeshes, type RayHit } from "./ray-index.ts";
 import type { HexCoord } from "./types.ts";
 
 export class BattlePicker {
@@ -26,12 +27,13 @@ export class BattlePicker {
   }
 
   public worldPointAt(clientX: number, clientY: number, targets: THREE.Object3D[]): THREE.Vector3 | null {
-    return this.worldHitAt(clientX, clientY, targets)?.point.clone() ?? null;
+    return this.worldHitAt(clientX, clientY, targets)?.point ?? null;
   }
 
-  private worldHitAt(clientX: number, clientY: number, targets: THREE.Object3D[]): THREE.Intersection | null {
+  /** Terrain meshes are indexed on a grid (`ray-index.ts`); a full raycast took tens of ms per pointer move. */
+  private worldHitAt(clientX: number, clientY: number, targets: THREE.Object3D[]): RayHit | null {
     this.setPointer(clientX, clientY);
-    return this.raycaster.intersectObjects(targets, false)[0] ?? null;
+    return intersectMeshes(this.raycaster.ray, targets);
   }
 
   private setPointer(clientX: number, clientY: number): void {
