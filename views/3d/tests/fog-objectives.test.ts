@@ -67,8 +67,11 @@ test("generated plinth sides follow elevated terrain at the map edge", () => {
   assert.ok(minimum <= -5.9);
   const surface = terrain.group.children[0] as THREE.Mesh;
   const surfacePositions = surface.geometry.getAttribute("position") as THREE.BufferAttribute;
+  // Each column of the cut face starts at its rim; lower rows carry relief.
+  const rims = skirt.geometry.getAttribute("rimTop") as THREE.BufferAttribute;
   const skirtTops = new Map<string, number>();
-  for (let index = 0; index < positions.count; index += 2) {
+  for (let index = 0; index < positions.count; index += 1) {
+    if (positions.getY(index) !== rims.getX(index)) continue;
     skirtTops.set(`${positions.getX(index).toFixed(6)},${positions.getZ(index).toFixed(6)}`, positions.getY(index));
   }
   const { minX, maxX, minZ, maxZ } = terrain.bounds;

@@ -8,7 +8,7 @@ import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } 
 import { isRoadTerrain } from "./road-corridors.ts";
 import { nearestOnStreet } from "./settlement-plan.ts";
 import { clipPolygon, triangulatePolygon } from "./water-geometry.ts";
-import { pointInPolygon } from "./geometry-utils.ts";
+import { mulberry32, pointInPolygon } from "./geometry-utils.ts";
 
 /** Cool grey the remembered (explored, not visible) terrain is pulled toward. */
 const MEMORY_TINT = new THREE.Color(0.62, 0.66, 0.72);
@@ -615,38 +615,52 @@ export class GeneratedTerrain implements BattleTerrain {
     for (let x = this.gridWidth - 2; x >= 0; x -= 1) edgeIndices.push((this.gridHeight - 1) * this.gridWidth + x);
     for (let z = this.gridHeight - 2; z > 0; z -= 1) edgeIndices.push(z * this.gridWidth);
     edgeIndices.push(edgeIndices[0]!);
-    const positions: number[] = [], colors: number[] = [], indices: number[] = [], uvs: number[] = [], rims: number[] = [];
-    const topColor = new THREE.Color(0xc7b492), bottomColor = new THREE.Color(0x9b8266);
-    let perimeterDistance = 0;
+    // The cut face is real relief: a turf lip overhanging the topsoil, gently
+    // bulging subsoil and chunky bedrock. Rows sit at fixed depths below the rim near the top, then
+    // spread evenly down to the base.
+    const seed = this.field.seed ^ 0x2545f491;
+    const columns: Array<{ x: number; z: number; top: number; outX: number; outZ: number; along: number }> = [];
+    let along = 0;
     for (let index = 0; index < edgeIndices.length; index += 1) {
-      const sourceIndex = edgeIndices[index]!;
-      const x = surfacePositions.getX(sourceIndex), top = surfacePositions.getY(sourceIndex);
-      const z = surfacePositions.getZ(sourceIndex);
+      const source = edgeIndices[index]!;
+      const x = surfacePositions.getX(source), z = surfacePositions.getZ(source);
       if (index > 0) {
         const previous = edgeIndices[index - 1]!;
-        perimeterDistance += Math.hypot(x - surfacePositions.getX(previous), z - surfacePositions.getZ(previous));
+        along += Math.hypot(x - surfacePositions.getX(previous), z - surfacePositions.getZ(previous));
       }
-      positions.push(x, top, z, x, PLINTH_BOTTOM, z);
-      rims.push(top, top);
-      uvs.push(perimeterDistance / 8, top / 8, perimeterDistance / 8, PLINTH_BOTTOM / 8);
-      const variation = 0.94 + 0.06 * Math.sin(index * 0.43);
-      colors.push(topColor.r * variation, topColor.g * variation, topColor.b * variation,
-        bottomColor.r * variation, bottomColor.g * variation, bottomColor.b * variation);
-      if (index < edgeIndices.length - 1) {
-        const a = index * 2, b = a + 2;
+      let outX = x <= minX + 1e-6 ? -1 : x >= maxX - 1e-6 ? 1 : 0;
+      let outZ = z <= minZ + 1e-6 ? -1 : z >= maxZ - 1e-6 ? 1 : 0;
+      const length = Math.hypot(outX, outZ) || 1;
+      outX /= length; outZ /= length;
+      columns.push({ x, z, top: surfacePositions.getY(source), outX, outZ, along });
+    }
+    const positions: number[] = [], indices: number[] = [], rims: number[] = [];
+    for (const column of columns) {
+      const reach = column.top - PLINTH_BOTTOM;
+      const depths = SOIL_ROWS.filter(depth => depth < reach - .3);
+      const last = depths.at(-1)!, remaining = SOIL_ROW_COUNT - depths.length;
+      for (let step = 1; step <= remaining; step += 1) depths.push(last + (reach - last) * step / remaining);
+      for (const [row, depth] of depths.entries()) {
+        const offset = row === 0 || row === SOIL_ROW_COUNT - 1 ? 0 : soilRelief(seed, column.along, depth);
+        positions.push(column.x + column.outX * offset, column.top - depth, column.z + column.outZ * offset);
+        rims.push(column.top);
+      }
+    }
+    for (let index = 0; index < columns.length - 1; index += 1) {
+      for (let row = 0; row < SOIL_ROW_COUNT - 1; row += 1) {
+        const a = index * SOIL_ROW_COUNT + row, b = a + SOIL_ROW_COUNT;
         indices.push(a, a + 1, b, b, a + 1, b + 1);
       }
     }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setAttribute(RIM_TOP, new THREE.Float32BufferAttribute(rims, 1));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
     const skirt = new THREE.Mesh(geometry, this.soilMaterial);
     skirt.name = "Topography-following layered battlefield soil plinth";
     skirt.receiveShadow = true;
+    const stones = soilStones(columns, seed);
     // A walnut base with a chamfered top edge frames the board like a model's plinth.
     const width = maxX - minX + BASE_MARGIN * 2, depth = maxZ - minZ + BASE_MARGIN * 2, chamfer = .22;
     const outline = new THREE.Shape();
@@ -659,8 +673,83 @@ export class GeneratedTerrain implements BattleTerrain {
     const base = new THREE.Mesh(baseGeometry, createWoodMaterial());
     base.name = "Battlefield plinth base";
     base.castShadow = base.receiveShadow = true;
-    this.group.add(skirt, base);
+    this.group.add(skirt, base, stones);
   }
+}
+
+/** Depths below the rim of the cut face's upper rows: turf lip, topsoil, subsoil, bedrock top. */
+const SOIL_ROWS = [0, .14, .45, .9, 1.35, 2, 2.7, 3.35, 3.8];
+/** Every column of the cut face has the same number of rows, so it forms one quad strip. */
+const SOIL_ROW_COUNT = 16;
+
+/** Outward relief of the cut face at a depth below the rim. */
+function soilRelief(seed: number, along: number, depth: number): number {
+  if (depth < .3) return -.12 + fractalNoise(seed, along / 1.1, depth, 2) * .03;
+  const soft = fractalNoise(seed + 1, along / 2.2, depth / 1.5, 2) * .09 - .04;
+  // Bedrock: broad bulges between coarse lattice points.
+  const rock = latticeRelief(seed + 2, along / 1.3, depth / 1.1) * .4 + .04;
+  return THREE.MathUtils.lerp(soft, rock, THREE.MathUtils.smoothstep(depth, 3.3, 3.9));
+}
+
+/** Bilinear value noise in [-1, 1] on an integer lattice. */
+function latticeRelief(seed: number, x: number, y: number): number {
+  const corner = (cx: number, cy: number): number => {
+    let hash = Math.imul(cx, 0x27d4eb2d) ^ Math.imul(cy, 0x165667b1) ^ seed;
+    hash = Math.imul(hash ^ hash >>> 15, 0x2c1b3c6d);
+    return ((hash ^ hash >>> 13) >>> 0) / 0xffffffff * 2 - 1;
+  };
+  const x0 = Math.floor(x), y0 = Math.floor(y), tx = x - x0, ty = y - y0;
+  const top = THREE.MathUtils.lerp(corner(x0, y0), corner(x0 + 1, y0), tx);
+  const bottom = THREE.MathUtils.lerp(corner(x0, y0 + 1), corner(x0 + 1, y0 + 1), tx);
+  return THREE.MathUtils.lerp(top, bottom, ty);
+}
+
+/**
+ * Low-poly stones set into the cut face: boulders in the bedrock and a few
+ * pebbles in the subsoil, one instanced draw.
+ */
+function soilStones(columns: ReadonlyArray<{ x: number; z: number; top: number; outX: number; outZ: number; along: number }>,
+  seed: number): THREE.InstancedMesh {
+  const random = mulberry32(seed);
+  const placements: Array<{ matrix: THREE.Matrix4; colour: THREE.Color }> = [];
+  const dummy = new THREE.Object3D();
+  const total = columns.at(-1)!.along;
+  let cursor = 0;
+  const at = (distance: number) => {
+    let low = 0, high = columns.length - 1;
+    while (high - low > 1) { const middle = (low + high) >> 1; if (columns[middle]!.along < distance) low = middle; else high = middle; }
+    return columns[low]!;
+  };
+  const place = (distance: number, fromDepth: number, toDepth: number, size: number, stretch: number, tone: number, bulge: number) => {
+    const column = at(distance);
+    const reach = column.top - PLINTH_BOTTOM;
+    if (toDepth > reach - .35) toDepth = reach - .35;
+    if (toDepth <= fromDepth) return;
+    const depth = THREE.MathUtils.lerp(fromDepth, toDepth, random());
+    const out = soilRelief(seed, column.along, depth) + bulge * random();
+    dummy.position.set(column.x + column.outX * out, column.top - depth, column.z + column.outZ * out);
+    dummy.rotation.set(random() * Math.PI, random() * Math.PI, random() * Math.PI);
+    const scale = size * (.6 + random() * .8);
+    dummy.scale.set(scale * (1 + random() * stretch), scale * (.6 + random() * .4), scale * (1 + random() * stretch * .5));
+    dummy.updateMatrix();
+    // Weathered stone: warm grey to ochre-stained, never bright.
+    const shade = tone * (.7 + random() * .45), stain = random();
+    placements.push({ matrix: dummy.matrix.clone(),
+      colour: new THREE.Color(shade * (1 + stain * .12), shade * (.94 + stain * .02), shade * (.84 - stain * .12)) });
+  };
+  while (cursor < total) {
+    // Boulders sit half-buried in the bedrock; a few small stones ride in the subsoil.
+    place(cursor, 3.9, 12, random() < .2 ? .75 : .45, .9, .19, .06);
+    if (random() < .45) place(cursor + .5, 4.2, 12, .32, .6, .15, .04);
+    if (random() < .22) place(cursor + .2, 1.4, 3.1, .12, .5, .22, .02);
+    cursor += 1 + random() * 1.4;
+  }
+  const mesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .95, flatShading: true }), placements.length);
+  placements.forEach(({ matrix, colour }, index) => { mesh.setMatrixAt(index, matrix); mesh.setColorAt(index, colour); });
+  mesh.name = "Stones in the diorama's cut face";
+  mesh.receiveShadow = true;
+  return mesh;
 }
 
 /** Where the cut soil face meets the wooden base. */

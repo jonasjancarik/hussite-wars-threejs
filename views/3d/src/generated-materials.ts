@@ -125,7 +125,7 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
     land("rock", slopeMap, 1),
     createWaterMaterial(),
     material("road", slopeMap, 1),
-  ], textures, soil: createSoilMaterial(earthMap, cliffMap, winter) };
+  ], textures, soil: createSoilMaterial(winter) };
 }
 
 /** Per-vertex height of the terrain rim above a point of the diorama's cut face. */
@@ -134,40 +134,42 @@ export const RIM_TOP = "rimTop";
 /** Linear-light colours of the soil profile, top to bottom. */
 const SOIL = {
   turf: new THREE.Color(0x5d6a2c), snow: new THREE.Color(0xe4e8e2), topsoil: new THREE.Color(0x3a2a1e),
-  subsoil: new THREE.Color(0xa47a4a), gravel: new THREE.Color(0x7c7263), stone: new THREE.Color(0x8d8474),
+  subsoil: new THREE.Color(0xa47a4a), gravel: new THREE.Color(0x8a7458), bedrock: new THREE.Color(0x6f675c),
   water: new THREE.Color(0x1f3d44),
 };
 const colourNode = (colour: THREE.Color): any => tsl(vec3)(colour.r, colour.g, colour.b);
 
 /**
- * The cut face around the board, shaded by depth below its rim: a turf lip
- * (snow in winter), dark topsoil, ochre subsoil studded with stones, gravel,
- * then faceted bedrock. Layer boundaries wander along the face; where the rim
+ * The cut face around the board, coloured by depth below its
+ * rim: a turf lip (snow in winter), dark topsoil, ochre subsoil with faint
+ * vertical streaks, then grey-brown bedrock. Colour varies slowly along the
+ * face and never repeats; the relief and stones are geometry. Where the rim
  * is water, a band of water shows above the silt.
  */
-function createSoilMaterial(earthMap: THREE.Texture | null, cliffMap: THREE.Texture | null, winter: boolean): THREE.Material {
+function createSoilMaterial(winter: boolean): THREE.Material {
+  // Smooth-shaded: the face's fine grid would turn flat facets into a checker.
+  // The faceted look comes from the stones set into it.
   const material = new MeshStandardNodeMaterial({ color: 0xffffff, roughness: 1, metalness: 0, side: THREE.DoubleSide });
   const world = positionWorld as any;
   const rim = tsl(attribute)(RIM_TOP, "float");
   const along = world.x.add(world.z);
-  const wander = (scale: number, amount: number, offset: number): any =>
-    tsl(mx_noise_float)(tsl(vec3)(along.mul(scale), offset, 0).xy).mul(amount);
   const depth = rim.sub(world.y);
-  const layer = (from: number, width: number, offset: number): any => tsl(smoothstep)(from - width, from + width,
-    depth.add(wander(.22, .28, offset)).add(wander(.9, .06, offset + 3)));
-  // The mud texture lends grain, not its darkness.
-  const earth = earthMap ? tsl(mix)(tsl(vec3)(1, 1, 1), tsl(textureNode)(earthMap, tsl(vec3)(along.div(4), world.y.div(4), 0).xy).rgb.mul(2.2), .55)
-    : tsl(vec3)(1, 1, 1);
-  const rock = cliffMap ? triplanar(cliffMap, 3.2).mul(1.1) : colourNode(SOIL.gravel);
-  const pebbles = tsl(smoothstep)(.6, .66, tsl(mx_noise_float)(tsl(vec3)(along.mul(2.3), world.y.mul(2.3), 0).xy));
-  const subsoil = tsl(mix)(colourNode(SOIL.subsoil).mul(earth), colourNode(SOIL.stone), pebbles.mul(.7));
-  let colour = tsl(mix)(colourNode(winter ? SOIL.snow : SOIL.turf), colourNode(SOIL.topsoil).mul(earth), layer(.14, .03, 0));
-  colour = tsl(mix)(colour, subsoil, layer(1.0, .12, 11));
-  colour = tsl(mix)(colour, colourNode(SOIL.gravel).mul(earth), layer(2.9, .15, 23));
-  colour = tsl(mix)(colour, rock, layer(3.6, .2, 37));
+  const noise = (x: any, y: any): any => tsl(mx_noise_float)(tsl(vec3)(x, y, 0).xy);
+  const wander = (offset: number): any => noise(along.mul(.22), offset).mul(.28).add(noise(along.mul(.9), offset + 3).mul(.06));
+  const layer = (from: number, width: number, offset: number): any =>
+    tsl(smoothstep)(from - width, from + width, depth.add(wander(offset)));
+  // Slow tonal drift along the face; the subsoil carries faint sediment bands
+  // and a trace of vertical streaking where water ran through it.
+  const drift = noise(along.mul(.15), depth.mul(.5)).mul(.12).add(1);
+  const streaks = noise(along.mul(.25), depth.mul(3.2)).mul(.07)
+    .add(noise(along.mul(2.2), depth.mul(.3)).mul(.03)).add(1);
+  let colour = tsl(mix)(colourNode(winter ? SOIL.snow : SOIL.turf), colourNode(SOIL.topsoil), layer(.2, .03, 0));
+  colour = tsl(mix)(colour, colourNode(SOIL.subsoil).mul(streaks), layer(1.0, .15, 11));
+  colour = tsl(mix)(colour, colourNode(SOIL.gravel), layer(3.1, .25, 23));
+  colour = tsl(mix)(colour, colourNode(SOIL.bedrock), layer(3.7, .2, 37));
   // Water at the rim: the face shows its depth before the silt below.
   const wet = tsl(smoothstep)(-.62, -.68, rim).mul(tsl(smoothstep)(.95, .8, depth));
-  material.colorNode = tsl(mix)(colour, colourNode(winter ? SOIL.snow : SOIL.water), wet);
+  material.colorNode = tsl(mix)(colour.mul(drift), colourNode(winter ? SOIL.snow : SOIL.water), wet);
   material.roughnessNode = tsl(mix)(1, .25, wet);
   material.name = "Diorama soil strata";
   return material;
