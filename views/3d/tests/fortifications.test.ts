@@ -216,3 +216,21 @@ test("tvrz gate leaves are planked doors that stand open without cutting into th
     terrain.dispose();
   }
 });
+
+test("a plank bridge crosses the tvrz ditch from every gate and figures walk on its deck", () => {
+  for (const id of ["nekmir_1419", "malesov_1424"]) {
+    const terrain = new GeneratedTerrain(snapshot(id));
+    const walls = terrain.environmentPlan.walls.find(wall => terrain.environmentPlan.fortifications.has(wall.id))!;
+    assert.equal(terrain.moatBridges.length, walls.gates.length, `${id}: one bridge per gate`);
+    for (const bridge of terrain.moatBridges) {
+      const over = { x: bridge.x + bridge.dx * 1.75, z: bridge.z + bridge.dz * 1.75 };
+      // The ditch runs on under the bridge instead of breaking at the gate.
+      assert.ok(earthworkRelief(over.x, over.z, terrain.environmentPlan.earthworks) < -1, `${id}: the ditch passes under the bridge`);
+      const deck = terrain.renderedHeightAt(over.x, over.z);
+      assert.ok(deck > terrain.heightAt(over.x, over.z) + .8, `${id}: figures stand on the deck, not in the ditch`);
+      const approach = terrain.renderedHeightAt(bridge.x + bridge.dx * (bridge.to + .2), bridge.z + bridge.dz * (bridge.to + .2));
+      assert.ok(Math.abs(deck - approach) < .35, `${id}: the deck meets the ground past the ditch`);
+    }
+    terrain.dispose();
+  }
+});

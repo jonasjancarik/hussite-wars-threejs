@@ -30704,49 +30704,112 @@ function uB(e, t, n, r, i = !1) {
 	return a.enclosedCells = o.filter((e) => a.loops.some((t) => Rz(e.center.x, e.center.z, t.points.map((e) => [e.x, e.z])))).map(Zz).sort(), a;
 }
 //#endregion
+//#region src/fortification-plan.ts
+var dB = 1.75, fB = 1.5, pB = 1.1, mB = .45, hB = .1, gB = (e) => {
+	let t = e.loops.map((e) => e.points.map((e) => [e.x, e.z]));
+	return (e, n) => t.some((t) => Rz(e, n, t));
+};
+function _B(e) {
+	let t = gB(e);
+	return [...e.segments, ...e.gates].flatMap((e) => {
+		let n = e.b.x - e.a.x, r = e.b.z - e.a.z, i = Math.hypot(n, r);
+		if (i < .2) return [];
+		let a = {
+			x: (e.a.x + e.b.x) / 2 + r / i * 1.5,
+			z: (e.a.z + e.b.z) / 2 - n / i * 1.5
+		}, [o, s] = t(a.x, a.z) ? [e.b, e.a] : [e.a, e.b];
+		return [{
+			ax: o.x,
+			az: o.z,
+			bx: s.x,
+			bz: s.z
+		}];
+	});
+}
+function vB(e) {
+	let t = gB(e);
+	return e.gates.flatMap((e) => {
+		let n = e.b.x - e.a.x, r = e.b.z - e.a.z, i = Math.hypot(n, r);
+		if (i < 1) return [];
+		let a = t(e.centre.x + r / i, e.centre.z - n / i) ? -1 : 1;
+		return [{
+			id: e.id,
+			x: e.centre.x,
+			z: e.centre.z,
+			dx: r / i * a,
+			dz: -n / i * a,
+			from: -.15,
+			to: 3.6,
+			halfWidth: i / 2 - .1
+		}];
+	});
+}
+function yB(e, t, n) {
+	let r = t - e.x, i = n - e.z, a = r * e.dx + i * e.dz, o = r * -e.dz + i * e.dx;
+	return a < e.from || a > e.to || Math.abs(o) > e.halfWidth ? null : e.y0 + (e.y1 - e.y0) * (a - e.from) / (e.to - e.from);
+}
+function bB(e, t, n) {
+	let r = /* @__PURE__ */ new Map();
+	for (let n of e) for (let e = 0; e < 6; e += 1) {
+		let i = {
+			x: n.center.x + Math.cos(e * Math.PI / 3) * t.radius,
+			z: n.center.z + Math.sin(e * Math.PI / 3) * t.radius
+		}, a = `${i.x.toFixed(4)},${i.z.toFixed(4)}`, o = r.get(a) ?? {
+			point: i,
+			count: 0
+		};
+		o.count += 1, r.set(a, o);
+	}
+	let i = {
+		x: e.reduce((e, t) => e + t.center.x, 0) / e.length,
+		z: e.reduce((e, t) => e + t.center.z, 0) / e.length
+	}, a = (e) => Math.hypot(e.x - i.x, e.z - i.z) - (n ? Math.hypot(e.x - n.x, e.z - n.z) * .5 : 0);
+	return [...r.values()].filter((e) => e.count >= 3).map((e) => e.point).sort((e, t) => a(e) - a(t));
+}
+//#endregion
 //#region src/town-wall-scenery.ts
-var dB = 12894125, fB = 13879730, pB = 5060647, mB = 5849914, hB = 8017974, gB = 3091497;
-function _B(e, t) {
+var xB = 12894125, SB = 13879730, CB = 5060647, wB = 5849914, TB = 8017974, EB = 3091497;
+function DB(e, t) {
 	return Math.hypot(t.x - e.x, t.z - e.z);
 }
-function vB(e, t) {
+function OB(e, t) {
 	return {
 		x: (e.x + t.x) / 2,
 		z: (e.z + t.z) / 2
 	};
 }
-function yB(e, t, n) {
+function kB(e, t, n) {
 	return {
 		x: e.x + (t.x - e.x) * n,
 		z: e.z + (t.z - e.z) * n
 	};
 }
-function bB(e, t) {
-	let n = _B(e, t) || 1;
+function AB(e, t) {
+	let n = DB(e, t) || 1;
 	return {
 		x: -(t.z - e.z) / n,
 		z: (t.x - e.x) / n
 	};
 }
-function xB(e, t) {
+function jB(e, t) {
 	let n = e.renderedHeightAt(t.x, t.z);
 	return Number.isFinite(n) ? n : 0;
 }
-function SB(e, t, n, r) {
+function MB(e, t, n, r) {
 	e.push(...t.toArray(), ...n.toArray(), ...r.toArray());
 }
-function CB(e, t, n, r, i) {
-	SB(e, t, n, r), SB(e, t, r, i);
+function NB(e, t, n, r, i) {
+	MB(e, t, n, r), MB(e, t, r, i);
 }
-function wB(e, t, n, r, i, a, o, s) {
+function PB(e, t, n, r, i, a, o, s) {
 	let c = (e, i, a) => new k(t.x + n.x * e + r.x * i, a, t.z + n.z * e + r.z * i), l = c(-i, -a, o), u = c(i, -a, o), d = c(i, a, o), f = c(-i, a, o), p = c(-i, -a, s), m = c(i, -a, s), h = c(i, a, s), g = c(-i, a, s);
-	CB(e, l, f, d, u), CB(e, p, m, h, g), CB(e, l, u, m, p), CB(e, u, d, h, m), CB(e, d, f, g, h), CB(e, f, l, p, g);
+	NB(e, l, f, d, u), NB(e, p, m, h, g), NB(e, l, u, m, p), NB(e, u, d, h, m), NB(e, d, f, g, h), NB(e, f, l, p, g);
 }
-function TB(e, t, n, r) {
+function FB(e, t, n, r) {
 	let [i, a, o, s] = t.map((e, t) => new k(e.x, n[t], e.z)), [c, l, u, d] = t.map((e) => new k(e.x, r, e.z));
-	CB(e, i, s, o, a), CB(e, c, l, u, d), CB(e, i, a, l, c), CB(e, a, o, u, l), CB(e, o, s, d, u), CB(e, s, i, c, d);
+	NB(e, i, s, o, a), NB(e, c, l, u, d), NB(e, i, a, l, c), NB(e, a, o, u, l), NB(e, o, s, d, u), NB(e, s, i, c, d);
 }
-function EB(e, t, n, r, i, a, o, s) {
+function IB(e, t, n, r, i, a, o, s) {
 	let c = [
 		[-a, -o],
 		[a, -o],
@@ -30756,17 +30819,17 @@ function EB(e, t, n, r, i, a, o, s) {
 		x: n.x + r.x * e + i.x * t,
 		z: n.z + r.z * e + i.z * t
 	}));
-	TB(e, c, c.map((e) => xB(t, e)), s);
+	FB(e, c, c.map((e) => jB(t, e)), s);
 }
-function DB(e, t, n, r) {
-	let i = _B(n, r);
+function LB(e, t, n, r) {
+	let i = DB(n, r);
 	if (i < 1e-6) return 0;
 	let a = {
 		x: (r.x - n.x) / i,
 		z: (r.z - n.z) / i
-	}, o = bB(n, r), s = Math.max(1, Math.ceil(i / 1.1)), c = 0;
+	}, o = AB(n, r), s = Math.max(1, Math.ceil(i / 1.1)), c = 0;
 	for (let i = 0; i < s; i += 1) {
-		let l = yB(n, r, i / s), u = yB(n, r, (i + 1) / s), d = {
+		let l = kB(n, r, i / s), u = kB(n, r, (i + 1) / s), d = {
 			x: l.x + o.x * qz / 2,
 			z: l.z + o.z * qz / 2
 		}, f = {
@@ -30779,33 +30842,33 @@ function DB(e, t, n, r) {
 			x: u.x - o.x * qz / 2,
 			z: u.z - o.z * qz / 2
 		}, h = [
-			xB(t, d),
-			xB(t, f),
-			xB(t, m),
-			xB(t, p)
+			jB(t, d),
+			jB(t, f),
+			jB(t, m),
+			jB(t, p)
 		], g = Math.max(...h) + Jz;
-		c = g, TB(e, [
+		c = g, FB(e, [
 			d,
 			f,
 			m,
 			p
 		], h, g);
-		for (let t = .26; t < _B(l, u) - .15; t += .62) wB(e, yB(l, u, t / _B(l, u)), a, o, .15, qz / 2, g, g + .28);
+		for (let t = .26; t < DB(l, u) - .15; t += .62) PB(e, kB(l, u, t / DB(l, u)), a, o, .15, qz / 2, g, g + .28);
 	}
 	return c;
 }
-function OB(e, t, n, r, i, a, o, s, c, l) {
+function RB(e, t, n, r, i, a, o, s, c, l) {
 	let u = (e, t) => ({
 		x: r.x + i.x * e + a.x * t,
 		z: r.z + i.z * e + a.z * t
 	}), d = Math.max(4, Math.round(o / .3)), f = o / d;
 	for (let t = 0; t < d; t += 1) {
 		let n = -o / 2 + f * (t + .5), r = s + c - t * 7 % 3 * .03;
-		wB(e, u(n, 0), i, a, f / 2 - .012, .035, s, r);
+		PB(e, u(n, 0), i, a, f / 2 - .012, .035, s, r);
 	}
 	for (let e of [.22, .78]) {
 		let n = s + c * e;
-		wB(t, u(0, .06), i, a, o / 2 - .04, .025, n - .07, n + .07);
+		PB(t, u(0, .06), i, a, o / 2 - .04, .025, n - .07, n + .07);
 	}
 	let p = s + c * .22, m = s + c * .78, h = o / 2 - .12, g = new k(), _ = new k(), v = (e, t, n) => {
 		let r = u(e, n);
@@ -30836,14 +30899,72 @@ function OB(e, t, n, r, i, a, o, s, c, l) {
 	], x = [g, _].map((e) => b.map(([, t, n]) => new k(e.x + a.x * n, e.y + t, e.z + a.z * n)));
 	for (let e = 0; e < 4; e += 1) {
 		let n = (e + 1) % 4;
-		CB(t, x[0][e], x[1][e], x[1][n], x[0][n]);
+		NB(t, x[0][e], x[1][e], x[1][n], x[0][n]);
 	}
 	for (let e of [.22, .78]) {
 		let t = s + c * e;
-		wB(n, u(l * (o / 2 - .3), .09), i, a, .3, .012, t - .035, t + .035);
+		PB(n, u(l * (o / 2 - .3), .09), i, a, .3, .012, t - .035, t + .035);
 	}
 }
-function kB() {
+function zB(e, t, n, r, i, a) {
+	let [o, s] = [t, n].map((e) => [
+		[-1, -1],
+		[1, -1],
+		[1, 1],
+		[-1, 1]
+	].map(([t, n]) => new k(e.x + r.x * t * i, e.y + n * a, e.z + r.z * t * i)));
+	for (let t = 0; t < 4; t += 1) {
+		let n = (t + 1) % 4;
+		NB(e, o[t], s[t], s[n], o[n]);
+	}
+	NB(e, o[3], o[2], o[1], o[0]), NB(e, s[0], s[1], s[2], s[3]);
+}
+function BB(e, t, n, r) {
+	let i = {
+		x: e.dx,
+		z: e.dz
+	}, a = {
+		x: -e.dz,
+		z: e.dx
+	}, o = (t, n) => ({
+		x: e.x + i.x * t + a.x * n,
+		z: e.z + i.z * t + a.z * n
+	}), s = (t) => e.y0 + (e.y1 - e.y0) * (t - e.from) / (e.to - e.from), c = (e, t, n) => {
+		let r = o(e, t);
+		return new k(r.x, n, r.z);
+	}, l = (e, n) => {
+		let r = o(e, n);
+		return t.heightAt?.(r.x, r.z) ?? jB(t, r);
+	}, u = e.to - e.from, d = Math.max(6, Math.round(u / .3)), f = u / d, p = e.halfWidth, m = .06, h = .2;
+	for (let t = 0; t < d; t += 1) {
+		let r = e.from + f * (t + .5), c = (t * 5 % 3 - 1) * .04, l = s(r) - t * 7 % 3 * .008;
+		PB(n, o(r, c), a, i, p - .1 + t * 3 % 2 * .05, f / 2 - .014, l - m, l);
+	}
+	let g = (e) => s(e) - m, _ = [
+		-1,
+		-1 / 3,
+		1 / 3,
+		1
+	].map((e) => e * (p - .25));
+	for (let t of _) zB(r, c(e.from, t, g(e.from) - h / 2), c(e.to, t, g(e.to) - h / 2), a, .08, h / 2);
+	let v = dB, y = g(v) - h;
+	PB(r, o(v, 0), a, i, p - .1, .1, y - .18, y);
+	for (let e of [
+		-1,
+		0,
+		1
+	].map((e) => e * (p - .35))) PB(r, o(v, e), a, i, .09, .09, l(v, e) - .15, y - .18);
+	let b = [
+		.5,
+		v,
+		e.to - .25
+	];
+	for (let e of [-(p - .06), p - .06]) {
+		for (let t of b) PB(r, o(t, e), a, i, .06, .06, g(t) - h, s(t) + .95);
+		for (let t of [.88, .46]) zB(r, c(b[0], e, s(b[0]) + t), c(b[2], e, s(b[2]) + t), a, .045, .04);
+	}
+}
+function VB() {
 	let e = new Uint8Array(16384 * 4);
 	for (let t = 0; t < 128; t++) for (let n = 0; n < 128; n++) {
 		let r = Math.floor(t / 32), i = r % 2 ? 32 : 0, a = Math.floor((n + i) / 64), o = t % 32 < 2 || (n + i) % 64 < 2, s = (a * 17 + r * 31) % 13 - 6, c = o ? 139 : 209 + s, l = (t * 128 + n) * 4;
@@ -30852,7 +30973,7 @@ function kB() {
 	let t = new sa(e, 128, 128, re);
 	return t.colorSpace = nt, t.wrapS = t.wrapT = r, t.magFilter = l, t.minFilter = d, t.generateMipmaps = !0, t.needsUpdate = !0, t;
 }
-function AB(e) {
+function HB(e) {
 	let t = new ai();
 	t.setAttribute("position", new M(e, 3));
 	let n = [];
@@ -30862,44 +30983,44 @@ function AB(e) {
 	}
 	return t.setAttribute("uv", new M(n, 2)), t.computeVertexNormals(), t;
 }
-var jB = class {
+var UB = class {
 	group = new Qn();
 	geometries = /* @__PURE__ */ new Set();
 	materials = /* @__PURE__ */ new Set();
-	masonry = kB();
+	masonry = VB();
 	doorMaterials;
 	constructor(e, t, n) {
 		this.group.name = "Procedural town walls";
 		let r = new Ps({
-			color: dB,
+			color: xB,
 			map: this.masonry,
 			roughness: .93,
 			metalness: 0,
 			side: 2
 		}), i = new Ps({
-			color: fB,
+			color: SB,
 			map: this.masonry,
 			roughness: .9,
 			metalness: 0,
 			side: 2
 		}), a = new Ps({
-			color: pB,
+			color: CB,
 			roughness: .96,
 			metalness: 0,
 			side: 2
 		}), o = new Ps({
-			color: mB,
+			color: wB,
 			roughness: .92,
 			metalness: 0,
 			side: 2
 		}), s = new Ps({
-			color: hB,
+			color: TB,
 			roughness: .9,
 			metalness: 0,
 			side: 2,
 			flatShading: !0
 		}), c = new Ps({
-			color: gB,
+			color: EB,
 			roughness: .6,
 			metalness: .35,
 			side: 2
@@ -30925,71 +31046,73 @@ var jB = class {
 		}
 		for (let [i, a] of s) {
 			let o = [];
-			for (let e of a) DB(o, t, e.a, e.b);
+			for (let e of a) LB(o, t, e.a, e.b);
 			if (o.length === 0) continue;
 			let s = new Qn();
 			s.name = `${e.id} masonry ${i}`, s.userData.sceneryCell = i;
-			let c = new qi(AB(o), r);
+			let c = new qi(HB(o), r);
 			c.name = "Joined masonry wall", c.castShadow = !0, c.receiveShadow = !0, this.geometries.add(c.geometry), s.add(c), this.group.add(s), n.trackCell(s, i);
 		}
 		for (let i of e.gates) this.addGate(e, i, t, n, r, a, o);
 		for (let r of e.towers) this.addTower(e, r, t, n, i, o);
 	}
 	gateOwner(e, t) {
-		return t.owner ? t.owner : [...e.segments].sort((e, n) => _B(vB(e.a, e.b), t.centre) - _B(vB(n.a, n.b), t.centre))[0]?.owner ?? "0,0";
+		return t.owner ? t.owner : [...e.segments].sort((e, n) => DB(OB(e.a, e.b), t.centre) - DB(OB(n.a, n.b), t.centre))[0]?.owner ?? "0,0";
 	}
 	addGate(e, t, n, r, i, a, o) {
-		let s = _B(t.a, t.b);
+		let s = DB(t.a, t.b);
 		if (s < .2) return;
 		let c = {
 			x: (t.b.x - t.a.x) / s,
 			z: (t.b.z - t.a.z) / s
-		}, l = bB(t.a, t.b), u = new Qn();
+		}, l = AB(t.a, t.b), u = new Qn();
 		u.name = `${e.id} gate ${t.id}`;
 		let d = this.gateOwner(e, t);
 		u.userData.sceneryCell = d;
 		let f = [], p = [], m = [];
 		if (e.gateStyle === "posts") {
 			let s = [], c = [];
-			this.addGateway(e, t, n, f, p, m, s, c), this.finishGate(u, f, p, m, i, a, o, r, d, s, c);
+			this.addGateway(e, t, n, f, p, m, s, c);
+			let l = n.moatBridges?.find((e) => e.id === t.id);
+			l && BB(l, n, s, p), this.finishGate(u, f, p, m, i, a, o, r, d, s, c);
 			return;
 		}
-		let h = Array.from({ length: 9 }, (e, n) => yB(t.a, t.b, n / 8)), g = Math.max(...h.flatMap((e) => [
+		let h = Array.from({ length: 9 }, (e, n) => kB(t.a, t.b, n / 8)), g = Math.max(...h.flatMap((e) => [
 			-3.4,
 			0,
 			3.4
-		].map((t) => xB(n, {
+		].map((t) => jB(n, {
 			x: e.x + l.x * t,
 			z: e.z + l.z * t
-		})))) + t.clearance, _ = vB(t.a, t.b), v = t.a, y = t.b, b = t.pierLength ?? .18 * 1.45, x = (t.depth ?? .18) / 2, S = Math.max(x, .3), C = s / 2, w = .9600000000000001, ee = g + w, te = ee + .5;
+		})))) + t.clearance, _ = OB(t.a, t.b), v = t.a, y = t.b, b = t.pierLength ?? .18 * 1.45, x = (t.depth ?? .18) / 2, S = Math.max(x, .3), C = s / 2, w = .9600000000000001, ee = g + w, te = ee + .5;
 		for (let [e, t] of [[v, -1], [y, 1]]) {
 			let r = {
 				x: e.x + t * c.x * b / 2,
 				z: e.z + t * c.z * b / 2
 			};
-			EB(f, n, r, c, l, b / 2, x, g), wB(f, r, c, l, b / 2, S, g, te);
+			IB(f, n, r, c, l, b / 2, x, g), PB(f, r, c, l, b / 2, S, g, te);
 		}
 		let ne = Math.max(6, Math.ceil(s * 2));
 		for (let e = 0; e < ne; e += 1) {
 			let t = Math.PI - Math.PI * e / ne, n = Math.PI - Math.PI * (e + 1) / ne, r = (e, t, n) => new k(_.x + c.x * Math.cos(t) * e + l.x * n, g + Math.sin(t) * (e === C ? .8 : w), _.z + c.z * Math.cos(t) * e + l.z * n);
-			CB(f, r(C, t, -S), r(C, t, S), r(C, n, S), r(C, n, -S));
+			NB(f, r(C, t, -S), r(C, t, S), r(C, n, S), r(C, n, -S));
 			for (let e of [-S, S]) {
 				let i = r(C, t, e), a = r(C, n, e), o = a.clone();
 				o.y = ee;
 				let s = i.clone();
-				s.y = ee, CB(f, i, a, o, s);
+				s.y = ee, NB(f, i, a, o, s);
 			}
 		}
-		wB(f, _, c, l, s / 2 + b, S, ee, te);
+		PB(f, _, c, l, s / 2 + b, S, ee, te);
 		let re = s + b * 2;
-		for (let e = .26; e < re - .15; e += .62) wB(f, {
+		for (let e = .26; e < re - .15; e += .62) PB(f, {
 			x: _.x + c.x * (e - re / 2),
 			z: _.z + c.z * (e - re / 2)
 		}, c, l, .15, S, te, te + .28);
 		this.finishGate(u, f, p, m, i, a, o, r, d);
 	}
 	addGateway(e, t, n, r, i, a, o, s) {
-		let c = _B(t.a, t.b), l = t.pierLength ?? .18 * 1.45, u = Math.max((t.depth ?? .18) / 2, qz / 2 + .06), d = l + .3, f = {
+		let c = DB(t.a, t.b), l = t.pierLength ?? .18 * 1.45, u = Math.max((t.depth ?? .18) / 2, qz / 2 + .06), d = l + .3, f = {
 			x: t.outside.x - t.centre.x,
 			z: t.outside.z - t.centre.z
 		}, p = {
@@ -30997,10 +31120,10 @@ var jB = class {
 			z: t.b.z - t.a.z
 		};
 		for (let [l, m] of [[t.a, -1], [t.b, 1]]) {
-			let t = e.segments.map((e) => _B(e.a, l) < .08 ? {
+			let t = e.segments.map((e) => DB(e.a, l) < .08 ? {
 				x: e.b.x - e.a.x,
 				z: e.b.z - e.a.z
-			} : _B(e.b, l) < .08 ? {
+			} : DB(e.b, l) < .08 ? {
 				x: e.a.x - e.b.x,
 				z: e.a.z - e.b.z
 			} : null).find((e) => e !== null) ?? {
@@ -31015,15 +31138,15 @@ var jB = class {
 			}, v = {
 				x: l.x + g.x * d / 2,
 				z: l.z + g.z * d / 2
-			}, y = xB(n, v) + Jz + .75;
-			EB(r, n, v, g, _, d / 2, u, y);
+			}, y = jB(n, v) + Jz + .75;
+			IB(r, n, v, g, _, d / 2, u, y);
 			let b = (e, t, n) => new k(v.x + g.x * e + _.x * t, n, v.z + g.z * e + _.z * t), [x, S, C, w] = [
 				[-1, -1],
 				[1, -1],
 				[1, 1],
 				[-1, 1]
 			].map(([e, t]) => b(e * (d / 2 + .06), t * (u + .06), y)), ee = b(0, 0, y + .45);
-			SB(a, x, S, ee), SB(a, S, C, ee), SB(a, C, w, ee), SB(a, w, x, ee);
+			MB(a, x, S, ee), MB(a, S, C, ee), MB(a, C, w, ee), MB(a, w, x, ee);
 			let te = {
 				x: p.x / c,
 				z: p.z / c
@@ -31031,25 +31154,44 @@ var jB = class {
 				x: te.x * m,
 				z: te.z * m
 			}, re = f.x * -te.z + f.z * te.x >= 0 ? 1 : -1, ie = {
-				x: -te.z * re,
-				z: te.x * re
-			}, ae = Math.PI / 18, oe = {
-				x: ie.x * Math.cos(ae) + ne.x * Math.sin(ae),
-				z: ie.z * Math.cos(ae) + ne.z * Math.sin(ae)
-			}, se = {
-				x: ne.x - oe.x * (ne.x * oe.x + ne.z * oe.z),
-				z: ne.z - oe.z * (ne.x * oe.x + ne.z * oe.z)
-			}, ce = Math.hypot(se.x, se.z) || 1, le = Math.min(c / 2 - .05, 2.1), ue = {
-				x: l.x + ie.x * (u + .02) + ne.x * .06,
-				z: l.z + ie.z * (u + .02) + ne.z * .06
-			};
-			OB(o, i, s, {
-				x: ue.x + oe.x * (le / 2 + .03),
-				z: ue.z + oe.z * (le / 2 + .03)
-			}, oe, {
-				x: se.x / ce,
-				z: se.z / ce
-			}, le, xB(n, l) + .05, Math.min(Jz - .25, 2.2), -1);
+				x: te.z * re,
+				z: -te.x * re
+			}, ae = Math.min(c / 2 - .05, 2.1), oe = (t, n) => [
+				0,
+				.25,
+				.5,
+				.75,
+				1
+			].every((r) => [-.07, .07].every((i) => {
+				let a = t.x + n.x * (ae + .03) * r - n.z * i, o = t.z + n.z * (ae + .03) * r + n.x * i;
+				return e.segments.every((e) => zz(a, o, e.a.x, e.a.z, e.b.x, e.b.z) >= qz / 2 + .04);
+			})), se = [.06, -(u + .04)].flatMap((e) => [
+				10,
+				0,
+				-10
+			].map((t) => {
+				let n = t * Math.PI / 180;
+				return {
+					hinge: {
+						x: l.x + ie.x * (u + .02) + ne.x * e,
+						z: l.z + ie.z * (u + .02) + ne.z * e
+					},
+					direction: {
+						x: ie.x * Math.cos(n) + ne.x * Math.sin(n),
+						z: ie.z * Math.cos(n) + ne.z * Math.sin(n)
+					}
+				};
+			})), { hinge: ce, direction: le } = se.find((e) => oe(e.hinge, e.direction)) ?? se.at(-1), ue = {
+				x: ne.x - le.x * (ne.x * le.x + ne.z * le.z),
+				z: ne.z - le.z * (ne.x * le.x + ne.z * le.z)
+			}, de = Math.hypot(ue.x, ue.z) || 1;
+			RB(o, i, s, {
+				x: ce.x + le.x * (ae / 2 + .03),
+				z: ce.z + le.z * (ae / 2 + .03)
+			}, le, {
+				x: ue.x / de,
+				z: ue.z / de
+			}, ae, jB(n, l) + .05, Math.min(Jz - .25, 2.2), -1);
 		}
 	}
 	finishGate(e, t, n, r, i, a, o, s, c, l = [], u = []) {
@@ -31081,7 +31223,7 @@ var jB = class {
 			]
 		]) {
 			if (s.length === 0) continue;
-			let t = new qi(AB(s), c);
+			let t = new qi(HB(s), c);
 			t.name = d, t.castShadow = !0, t.receiveShadow = !0, this.geometries.add(t.geometry), e.add(t);
 		}
 		this.group.add(e), s.trackCell(e, c);
@@ -31094,16 +31236,16 @@ var jB = class {
 				x: t.centre.x + Math.cos(i) * t.radius,
 				z: t.centre.z + Math.sin(i) * t.radius
 			};
-			return s.push(xB(n, a)), xB(n, a);
+			return s.push(jB(n, a)), jB(n, a);
 		})) + 3.2, l = [], u = (e, n) => {
 			let r = e * Math.PI * 2 / 10;
 			return new k(t.centre.x + Math.cos(r) * t.radius, n, t.centre.z + Math.sin(r) * t.radius);
 		};
 		for (let e = 0; e < 10; e += 1) {
 			let n = (e + 1) % 10;
-			if (CB(l, u(e, s[e]), u(n, s[n]), u(n, c), u(e, c)), e % 2 == 0) {
+			if (NB(l, u(e, s[e]), u(n, s[n]), u(n, c), u(e, c)), e % 2 == 0) {
 				let n = e * Math.PI * 2 / 10;
-				wB(l, {
+				PB(l, {
 					x: t.centre.x + Math.cos(n) * (t.radius - .14),
 					z: t.centre.z + Math.sin(n) * (t.radius - .14)
 				}, {
@@ -31116,7 +31258,7 @@ var jB = class {
 			}
 		}
 		let d = [], f = new k(t.centre.x, c + .76, t.centre.z);
-		for (let e = 0; e < 10; e += 1) SB(d, u(e, c), u((e + 1) % 10, c), f);
+		for (let e = 0; e < 10; e += 1) MB(d, u(e, c), u((e + 1) % 10, c), f);
 		for (let [e, t, n] of [[
 			l,
 			i,
@@ -31126,7 +31268,7 @@ var jB = class {
 			a,
 			"Tower roof"
 		]]) {
-			let r = new qi(AB(e), t);
+			let r = new qi(HB(e), t);
 			r.name = n, r.castShadow = !0, r.receiveShadow = !0, this.geometries.add(r.geometry), o.add(r);
 		}
 		this.group.add(o), r.trackCell(o, t.owner);
@@ -31134,8 +31276,8 @@ var jB = class {
 	dispose() {
 		this.geometries.forEach((e) => e.dispose()), this.materials.forEach((e) => e.dispose()), this.masonry.dispose(), this.geometries.clear(), this.materials.clear(), this.group.clear();
 	}
-}, MB = "instanceTint";
-function NB(e, t) {
+}, WB = "instanceTint";
+function GB(e, t) {
 	e.updateWorldMatrix(!0, !0);
 	let n = e.matrixWorld.clone().invert(), r = /* @__PURE__ */ new Map();
 	e.traverse((e) => {
@@ -31148,7 +31290,7 @@ function NB(e, t) {
 			e.renderOrder
 		].join(":"), a = t(e);
 		if (!a) return;
-		let o = r.get(i) ?? [], s = e.userData[MB];
+		let o = r.get(i) ?? [], s = e.userData[WB];
 		o.push({
 			mesh: e,
 			matrix: n.clone().multiply(e.matrixWorld),
@@ -31177,12 +31319,12 @@ function NB(e, t) {
 }
 //#endregion
 //#region src/generated-meadow.ts
-function PB(e, t, n, r) {
+function KB(e, t, n, r) {
 	let i = e ^ Math.imul(t + 1, 2654435761) ^ Math.imul(n + 1, 2246822507);
 	for (let e = 0; e < r.length; e += 1) i ^= r.charCodeAt(e), i = Math.imul(i, 16777619);
 	return i >>> 0;
 }
-var FB = Math.sqrt(3), IB = class {
+var qB = Math.sqrt(3), JB = class {
 	cols;
 	rows;
 	radius;
@@ -31190,7 +31332,7 @@ var FB = Math.sqrt(3), IB = class {
 		this.cols = e, this.rows = t, this.radius = n;
 	}
 	center(e, t) {
-		let n = 1.5 * this.radius * e, r = FB * this.radius * (t + .5 * (e & 1)), i = 1.5 * this.radius * (this.cols - 1) * .5, a = FB * this.radius * ((this.rows - 1) * .5 + (this.cols > 1 ? .25 : 0));
+		let n = 1.5 * this.radius * e, r = qB * this.radius * (t + .5 * (e & 1)), i = 1.5 * this.radius * (this.cols - 1) * .5, a = qB * this.radius * ((this.rows - 1) * .5 + (this.cols > 1 ? .25 : 0));
 		return {
 			x: n - i,
 			z: r - a
@@ -31198,12 +31340,12 @@ var FB = Math.sqrt(3), IB = class {
 	}
 	contains(e, t, n, r) {
 		let i = this.center(n, r), a = Math.abs(e - i.x), o = Math.abs(t - i.z);
-		return a <= this.radius + 1e-7 && o <= FB * this.radius * .5 + 1e-7 && FB * a + o <= FB * this.radius + 1e-7;
+		return a <= this.radius + 1e-7 && o <= qB * this.radius * .5 + 1e-7 && qB * a + o <= qB * this.radius + 1e-7;
 	}
 	coordAt(e, t) {
 		let n = this.center(0, 0), r = Math.round((e - n.x) / (1.5 * this.radius)), i = [];
 		for (let n = Math.max(0, r - 1); n <= Math.min(this.cols - 1, r + 1); n += 1) {
-			let r = Math.round((t - this.center(n, 0).z) / (FB * this.radius));
+			let r = Math.round((t - this.center(n, 0).z) / (qB * this.radius));
 			for (let a = Math.max(0, r - 1); a <= Math.min(this.rows - 1, r + 1); a += 1) this.contains(e, t, n, a) && i.push({
 				col: n,
 				row: a
@@ -31264,10 +31406,10 @@ var FB = Math.sqrt(3), IB = class {
 		};
 	}
 };
-new IB(20, 12);
+new JB(20, 12);
 //#endregion
 //#region src/road-corridors.ts
-function LB(e) {
+function YB(e) {
 	return [
 		"road",
 		"road2",
@@ -31275,10 +31417,10 @@ function LB(e) {
 		"causeway"
 	].includes(e.toLowerCase());
 }
-var RB = (e, t, n) => {
+var XB = (e, t, n) => {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
-}, zB = class {
+}, ZB = class {
 	buckets = /* @__PURE__ */ new Map();
 	dryBuckets = /* @__PURE__ */ new Map();
 	radius;
@@ -31287,7 +31429,7 @@ var RB = (e, t, n) => {
 	active;
 	constructor(e, t) {
 		this.radius = t.radius * .81, this.bucketSize = t.radius * 2, this.protectedRadius = t.radius * Math.sqrt(.75 * 3 * Math.sqrt(3) / (2 * Math.PI));
-		let n = e.filter((e) => LB(e.terrain));
+		let n = e.filter((e) => YB(e.terrain));
 		if (this.active = n.length > 0 && n.length < e.length, !this.active) return;
 		let r = new Map(e.map((e) => [`${e.col},${e.row}`, e])), i = (e) => {
 			let t = this.radius + .2;
@@ -31306,7 +31448,7 @@ var RB = (e, t, n) => {
 			});
 			for (let n of t.neighbours(e)) {
 				let t = r.get(`${n.col},${n.row}`);
-				!t || !LB(t.terrain) || i({
+				!t || !YB(t.terrain) || i({
 					ax: e.center.x,
 					az: e.center.z,
 					bx: (e.center.x + t.center.x) / 2,
@@ -31315,7 +31457,7 @@ var RB = (e, t, n) => {
 				});
 			}
 		}
-		for (let n of e.filter((e) => !LB(e.terrain))) {
+		for (let n of e.filter((e) => !YB(e.terrain))) {
 			let e = 0, r = 0, i = t.radius / 12, a = t.radius * Math.sqrt(3) / 2;
 			for (let o = -t.radius + i / 2; o < t.radius; o += i) for (let s = -a + i / 2; s < a; s += i) Math.sqrt(3) * Math.abs(o) + Math.abs(s) > Math.sqrt(3) * t.radius || (e++, (this.sampleRaw(n.center.x + o, n.center.z + s)?.weight ?? 0) > .35 && r++);
 			if (r / e <= .23) continue;
@@ -31334,7 +31476,7 @@ var RB = (e, t, n) => {
 		}
 		return i ? {
 			terrain: i,
-			weight: 1 - RB(this.radius - .12, this.radius + .12, r),
+			weight: 1 - XB(this.radius - .12, this.radius + .12, r),
 			distance: r
 		} : null;
 	}
@@ -31342,50 +31484,50 @@ var RB = (e, t, n) => {
 		let n = this.sampleRaw(e, t);
 		if (!n) return null;
 		let r = `${Math.floor(e / this.bucketSize)},${Math.floor(t / this.bucketSize)}`, i = n.weight;
-		for (let n of this.dryBuckets.get(r) ?? []) i *= RB(this.protectedRadius, this.protectedRadius + .18, Math.hypot(e - n.center.x, t - n.center.z));
+		for (let n of this.dryBuckets.get(r) ?? []) i *= XB(this.protectedRadius, this.protectedRadius + .18, Math.hypot(e - n.center.x, t - n.center.z));
 		return {
 			...n,
 			weight: i
 		};
 	}
-}, BB = Math.sqrt(3), VB = 4, HB = .82, UB = .18, WB = .1, GB = 1e-9, KB = .6, qB = .06, JB = .16, YB = 4;
-function XB(e, t, n) {
-	return QB(Math.max(0, Math.min(1, (e - t) / (n - t))));
+}, QB = Math.sqrt(3), $B = 4, eV = .82, tV = .18, nV = .1, rV = 1e-9, iV = .6, aV = .06, oV = .16, sV = 4;
+function cV(e, t, n) {
+	return uV(Math.max(0, Math.min(1, (e - t) / (n - t))));
 }
-function ZB(e, t, n) {
+function lV(e, t, n) {
 	return e + (t - e) * n;
 }
-function QB(e) {
+function uV(e) {
 	return e * e * (3 - 2 * e);
 }
-function $B(e) {
+function dV(e) {
 	let t = 2166136261;
 	for (let n = 0; n < e.length; n += 1) t ^= e.charCodeAt(n), t = Math.imul(t, 16777619);
 	return t >>> 0;
 }
-function eV(e, t, n) {
+function fV(e, t, n) {
 	let r = e >>> 0;
 	return r ^= Math.imul(t | 0, 2654435761), r ^= Math.imul(n | 0, 2246822507), r ^= r >>> 16, r = Math.imul(r, 2146121005), r ^= r >>> 15, r = Math.imul(r, 2221713035), (r ^ r >>> 16) >>> 0;
 }
-function tV(e, t, n) {
-	return eV(e, t, n) / 4294967295;
+function pV(e, t, n) {
+	return fV(e, t, n) / 4294967295;
 }
-function nV(e, t, n) {
-	let r = Math.floor(t), i = Math.floor(n), a = QB(t - r), o = QB(n - i);
-	return ZB(ZB(tV(e, r, i), tV(e, r + 1, i), a), ZB(tV(e, r, i + 1), tV(e, r + 1, i + 1), a), o) * 2 - 1;
+function mV(e, t, n) {
+	let r = Math.floor(t), i = Math.floor(n), a = uV(t - r), o = uV(n - i);
+	return lV(lV(pV(e, r, i), pV(e, r + 1, i), a), lV(pV(e, r, i + 1), pV(e, r + 1, i + 1), a), o) * 2 - 1;
 }
-function rV(e, t, n, r = 4) {
+function hV(e, t, n, r = 4) {
 	let i = .5, a = 1, o = 0, s = 0;
-	for (let c = 0; c < r; c += 1) o += nV(e + c * 1831565813, t * a, n * a) * i, s += i, i *= .5, a *= 2;
+	for (let c = 0; c < r; c += 1) o += mV(e + c * 1831565813, t * a, n * a) * i, s += i, i *= .5, a *= 2;
 	return o / s;
 }
-function iV(e) {
-	return $B(`${e.scenario ?? ""}\u0000${e.seed === void 0 ? "0" : String(e.seed)}`);
+function gV(e) {
+	return dV(`${e.scenario ?? ""}\u0000${e.seed === void 0 ? "0" : String(e.seed)}`);
 }
-function aV(e, t) {
-	return $B(`${t}:${e.toLowerCase()}`) / 4294967295;
+function _V(e, t) {
+	return dV(`${t}:${e.toLowerCase()}`) / 4294967295;
 }
-function oV(e) {
+function vV(e) {
 	return [
 		"field",
 		"fields",
@@ -31393,33 +31535,33 @@ function oV(e) {
 		"cropland"
 	].includes(e.toLowerCase());
 }
-function sV(e) {
+function yV(e) {
 	return [
 		"water",
 		"river",
 		"lake"
 	].includes(e.toLowerCase());
 }
-function cV(e) {
+function bV(e) {
 	let t = e.toLowerCase();
-	return t === "water" || t === "river" || t === "lake" ? -.7 : t === "mud" || t === "swamp" || t === "marsh" ? -.42 : t === "dam" || t === "road" || t === "causeway" ? .1 : t === "plains" || t === "dry" || oV(t) ? 0 : ZB(-.18, .22, aV(e, "height"));
+	return t === "water" || t === "river" || t === "lake" ? -.7 : t === "mud" || t === "swamp" || t === "marsh" ? -.42 : t === "dam" || t === "road" || t === "causeway" ? .1 : t === "plains" || t === "dry" || vV(t) ? 0 : lV(-.18, .22, _V(e, "height"));
 }
-function lV(e) {
+function xV(e) {
 	let t = e.toLowerCase();
-	return t === "water" || t === "river" || t === "lake" ? .08 : t === "mud" || t === "swamp" || t === "marsh" ? .44 : t === "dam" || t === "road" || t === "causeway" ? .24 : t === "plains" || t === "dry" || oV(t) ? .67 : ZB(.2, .84, aV(e, "roughness"));
+	return t === "water" || t === "river" || t === "lake" ? .08 : t === "mud" || t === "swamp" || t === "marsh" ? .44 : t === "dam" || t === "road" || t === "causeway" ? .24 : t === "plains" || t === "dry" || vV(t) ? .67 : lV(.2, .84, _V(e, "roughness"));
 }
-function uV(e) {
+function SV(e) {
 	let t = e.toLowerCase();
-	return t === "water" || t === "river" || t === "lake" ? 1 : t === "mud" || t === "swamp" || t === "marsh" ? .9 : t === "dam" || t === "road" || t === "causeway" ? .28 : t === "plains" || t === "dry" || oV(t) ? .16 : ZB(.08, .82, aV(e, "wetness"));
+	return t === "water" || t === "river" || t === "lake" ? 1 : t === "mud" || t === "swamp" || t === "marsh" ? .9 : t === "dam" || t === "road" || t === "causeway" ? .28 : t === "plains" || t === "dry" || vV(t) ? .16 : lV(.08, .82, _V(e, "wetness"));
 }
-function dV(e) {
+function CV(e) {
 	if (!Number.isInteger(e.cols) || e.cols < 1) throw RangeError("cols must be a positive integer");
 	if (!Number.isInteger(e.rows) || e.rows < 1) throw RangeError("rows must be a positive integer");
-	if (!Number.isFinite(e.hexRadius ?? VB) || (e.hexRadius ?? VB) <= 0) throw RangeError("hexRadius must be positive");
-	let t = e.coreCoverage ?? HB;
+	if (!Number.isFinite(e.hexRadius ?? $B) || (e.hexRadius ?? $B) <= 0) throw RangeError("hexRadius must be positive");
+	let t = e.coreCoverage ?? eV;
 	if (!Number.isFinite(t) || t < .75 || t >= 1) throw RangeError("coreCoverage must be in [0.75, 1)");
-	if (!Number.isFinite(e.boundaryNoise ?? UB) || (e.boundaryNoise ?? UB) < 0) throw RangeError("boundaryNoise must be non-negative");
-	if (!Number.isFinite(e.sampleStep ?? WB) || (e.sampleStep ?? WB) <= 0) throw RangeError("sampleStep must be positive");
+	if (!Number.isFinite(e.boundaryNoise ?? tV) || (e.boundaryNoise ?? tV) < 0) throw RangeError("boundaryNoise must be non-negative");
+	if (!Number.isFinite(e.sampleStep ?? nV) || (e.sampleStep ?? nV) <= 0) throw RangeError("sampleStep must be positive");
 	if (e.origin && (!Number.isFinite(e.origin.x) || !Number.isFinite(e.origin.z))) throw RangeError("origin must contain finite x and z values");
 	for (let t of e.tiles) {
 		if (!Number.isInteger(t.col) || !Number.isInteger(t.row)) throw RangeError("tile coordinates must be integers");
@@ -31427,7 +31569,7 @@ function dV(e) {
 		if (typeof t.terrain != "string" || t.terrain.length === 0) throw RangeError("tile terrain must be a non-empty string");
 	}
 }
-var fV = class {
+var wV = class {
 	cols;
 	rows;
 	hexRadius;
@@ -31450,7 +31592,7 @@ var fV = class {
 	origin;
 	coreInset;
 	constructor(e) {
-		dV(e), this.cols = e.cols, this.rows = e.rows, this.hexRadius = e.hexRadius ?? VB, this.apothem = BB * this.hexRadius * .5, this.coreCoverage = e.coreCoverage ?? HB, this.boundaryNoise = e.boundaryNoise ?? UB, this.sampleStep = e.sampleStep ?? WB, this.seed = iV(e);
+		CV(e), this.cols = e.cols, this.rows = e.rows, this.hexRadius = e.hexRadius ?? $B, this.apothem = QB * this.hexRadius * .5, this.coreCoverage = e.coreCoverage ?? eV, this.boundaryNoise = e.boundaryNoise ?? tV, this.sampleStep = e.sampleStep ?? nV, this.seed = gV(e);
 		let t = this.apothem * 2 * (this.rows - 1 + (this.cols > 1 ? .5 : 0)), n = {
 			x: -1.5 * this.hexRadius * (this.cols - 1) * .5,
 			z: -t * .5
@@ -31468,7 +31610,7 @@ var fV = class {
 			};
 			this.cellGrid[t * this.rows + n] = s, a.push(s);
 		}
-		this.tiles = a, this.terrainTypes = [...new Set(a.map((e) => e.terrain))], this.roads = new zB(this.tiles, new IB(this.cols, this.rows, this.hexRadius)), this.coreInset = this.apothem * (1 - Math.sqrt(this.coreCoverage));
+		this.tiles = a, this.terrainTypes = [...new Set(a.map((e) => e.terrain))], this.roads = new ZB(this.tiles, new JB(this.cols, this.rows, this.hexRadius)), this.coreInset = this.apothem * (1 - Math.sqrt(this.coreCoverage));
 	}
 	key(e, t) {
 		return `${e},${t}`;
@@ -31498,7 +31640,7 @@ var fV = class {
 				let n = this.getCell(a, o);
 				if (!n || !this.pointInsideHex(e, t, a, o)) continue;
 				let s = Math.hypot(e - n.center.x, t - n.center.z);
-				(s < i - GB || Math.abs(s - i) <= GB && (a < (r?.col ?? Infinity) || a === r?.col && o < (r?.row ?? Infinity))) && (r = n, i = s);
+				(s < i - rV || Math.abs(s - i) <= rV && (a < (r?.col ?? Infinity) || a === r?.col && o < (r?.row ?? Infinity))) && (r = n, i = s);
 			}
 		}
 		return r;
@@ -31510,7 +31652,7 @@ var fV = class {
 			x: e,
 			z: t,
 			weights: n
-		}), this.weightsMemo.length > YB && this.weightsMemo.pop(), n;
+		}), this.weightsMemo.length > sV && this.weightsMemo.pop(), n;
 	}
 	computeWeightsAt(e, t) {
 		let n = this.cellAt(e, t);
@@ -31519,30 +31661,30 @@ var fV = class {
 		let r = this.roads.sample(e, t);
 		if (r && r.weight >= .999999999) return { [r.terrain]: 1 };
 		let i = this.baseWeightsAt(e, t, n), a = {}, o = 0;
-		for (let [e, t] of Object.entries(i)) LB(e) || (a[e] = t, o += t);
+		for (let [e, t] of Object.entries(i)) YB(e) || (a[e] = t, o += t);
 		if (o < 1e-9) {
-			for (let n of this.nearbyCells(e, t)) if (!LB(n.terrain)) {
+			for (let n of this.nearbyCells(e, t)) if (!YB(n.terrain)) {
 				let r = Math.hypot(e - n.center.x, t - n.center.z) / this.hexRadius, i = Math.exp(-r * r / 1.5);
 				a[n.terrain] = (a[n.terrain] ?? 0) + i, o += i;
 			}
 		}
-		o < 1e-9 && (a[this.terrainTypes.find((e) => !LB(e))] = 1, o = 1);
+		o < 1e-9 && (a[this.terrainTypes.find((e) => !YB(e))] = 1, o = 1);
 		let s = r?.weight ?? 0;
 		for (let e of Object.keys(a)) a[e] = a[e] / o * (1 - s);
 		return r && s > 0 && (a[r.terrain] = s), a;
 	}
 	baseWeightsAt(e, t, n) {
 		let r = this.nearbyCells(e, t);
-		return r.some((e) => sV(e.terrain)) ? this.shoreWeightsAt(e, t, n, r) : this.inlandWeightsAt(e, t, n, r);
+		return r.some((e) => yV(e.terrain)) ? this.shoreWeightsAt(e, t, n, r) : this.inlandWeightsAt(e, t, n, r);
 	}
 	inlandWeightsAt(e, t, n, r) {
 		let i = this.hexEdgeDistance(e, t, n.col, n.row);
-		if (i >= this.coreInset - GB) return { [n.terrain]: 1 };
+		if (i >= this.coreInset - rV) return { [n.terrain]: 1 };
 		let a = /* @__PURE__ */ new Map(), o = -Infinity;
 		for (let n of r) {
 			let r = Math.hypot(e - n.center.x, t - n.center.z) / this.hexRadius;
 			if (r > 2.3) continue;
-			let i = eV(this.seed, n.col + 101, n.row + 503), s = (i & 255) * .037, c = (i >>> 8 & 255) * .041, l = rV(i, e / (this.hexRadius * 5.6) + s, t / (this.hexRadius * 5.1) + c, 3), u = -(r * r) + this.boundaryNoise * l;
+			let i = fV(this.seed, n.col + 101, n.row + 503), s = (i & 255) * .037, c = (i >>> 8 & 255) * .041, l = hV(i, e / (this.hexRadius * 5.6) + s, t / (this.hexRadius * 5.1) + c, 3), u = -(r * r) + this.boundaryNoise * l;
 			a.set(n.terrain, Math.max(a.get(n.terrain) ?? -Infinity, u)), o = Math.max(o, u);
 		}
 		if (a.size === 0) return { [n.terrain]: 1 };
@@ -31552,24 +31694,24 @@ var fV = class {
 			s[e] = n, c += n;
 		}
 		for (let e of Object.keys(s)) s[e] = s[e] / c;
-		let l = QB(Math.max(0, Math.min(1, i / this.coreInset))), u = s[n.terrain] ?? 0, d = u + (1 - u) * l;
+		let l = uV(Math.max(0, Math.min(1, i / this.coreInset))), u = s[n.terrain] ?? 0, d = u + (1 - u) * l;
 		for (let e of Object.keys(s)) s[e] *= u < 1 ? (1 - d) / (1 - u) : 1;
 		return s[n.terrain] = d, s;
 	}
 	shoreWeightsAt(e, t, n, r) {
 		let i = 0, a = 0, o = null, s = null, c = Infinity, l = Infinity;
 		for (let n of r) {
-			let r = Math.hypot(e - n.center.x, t - n.center.z) / this.hexRadius, u = sV(n.terrain);
+			let r = Math.hypot(e - n.center.x, t - n.center.z) / this.hexRadius, u = yV(n.terrain);
 			if (u && r < c && (c = r, o = n), !u && r < l && (l = r, s = n), r > 2.3) continue;
-			let d = Math.exp(-r * r / KB);
+			let d = Math.exp(-r * r / iV);
 			a += d, u && (i += d);
 		}
-		let u = rV(this.seed, e / (this.hexRadius * 3.6), t / (this.hexRadius * 2.8), 3) * JB + rV(this.seed ^ 1013904242, e / (this.hexRadius * .9), t / (this.hexRadius * .9), 2) * JB * .35, d = XB((a > 0 ? i / a : 0) + u, .5 - qB, .56), f = r.filter((e) => !sV(e.terrain)), p = s ? this.inlandWeightsAt(e, t, sV(n.terrain) ? s : n, f) : {}, m = {};
+		let u = hV(this.seed, e / (this.hexRadius * 3.6), t / (this.hexRadius * 2.8), 3) * oV + hV(this.seed ^ 1013904242, e / (this.hexRadius * .9), t / (this.hexRadius * .9), 2) * oV * .35, d = cV((a > 0 ? i / a : 0) + u, .5 - aV, .56), f = r.filter((e) => !yV(e.terrain)), p = s ? this.inlandWeightsAt(e, t, yV(n.terrain) ? s : n, f) : {}, m = {};
 		for (let [e, t] of Object.entries(p)) m[e] = t * (1 - d);
 		return o && d > 0 && (m[o.terrain] = (m[o.terrain] ?? 0) + (s ? d : 1)), !s && o ? { [o.terrain]: 1 } : m;
 	}
 	waterInfluenceAt(e, t) {
-		if (!this.terrainTypes.some(sV)) return 0;
+		if (!this.terrainTypes.some(yV)) return 0;
 		let n = this.waterInfluenceMemo;
 		if (n.x === e && n.z === t) return n.value;
 		let r = 0, i = 0;
@@ -31577,7 +31719,7 @@ var fV = class {
 			let a = Math.hypot(e - n.center.x, t - n.center.z) / this.hexRadius;
 			if (a > 2.3) continue;
 			let o = Math.exp(-a * a / .65);
-			i += o, sV(n.terrain) && (r += o);
+			i += o, yV(n.terrain) && (r += o);
 		}
 		return n.x = e, n.z = t, n.value = i > 0 ? r / i : 0, n.value;
 	}
@@ -31599,7 +31741,7 @@ var fV = class {
 	}
 	heightInputAt(e, t) {
 		let n = this.weightsAt(e, t), r = 0, i = 0, a = 0;
-		for (let [e, t] of Object.entries(n)) r += cV(e) * t, i += lV(e) * t, a += uV(e) * t;
+		for (let [e, t] of Object.entries(n)) r += bV(e) * t, i += xV(e) * t, a += SV(e) * t;
 		if (Object.keys(n).length === 0) return {
 			base: 0,
 			variation: 0,
@@ -31607,7 +31749,7 @@ var fV = class {
 			roughness: 0,
 			wetness: 0
 		};
-		let o = rV(this.seed ^ 668265261, e / 28, t / 27, 4), s = rV(this.seed ^ 374761393, e / 7.5, t / 8.5, 3), c = o * (.5 + i * .45) + s * i * .12;
+		let o = hV(this.seed ^ 668265261, e / 28, t / 27, 4), s = hV(this.seed ^ 374761393, e / 7.5, t / 8.5, 3), c = o * (.5 + i * .45) + s * i * .12;
 		return {
 			base: r,
 			variation: c,
@@ -31651,7 +31793,7 @@ var fV = class {
 	}
 	signedHexEdgeDistance(e, t) {
 		let n = Math.abs(e), r = Math.abs(t);
-		return Math.min(this.hexRadius - n, this.apothem - r, (BB * this.hexRadius - BB * n - r) * .5);
+		return Math.min(this.hexRadius - n, this.apothem - r, (QB * this.hexRadius - QB * n - r) * .5);
 	}
 	nearbyCells(e, t) {
 		let n = Math.round((e - this.origin.x) / (1.5 * this.hexRadius)), r = [];
@@ -31665,12 +31807,12 @@ var fV = class {
 		return r;
 	}
 };
-function pV(e) {
-	return new fV(e);
+function TV(e) {
+	return new wV(e);
 }
 //#endregion
 //#region src/woodland-plan.ts
-var mV = [
+var EV = [
 	{
 		model: "procedural-worlds/pw_deciduous_01",
 		weight: .24,
@@ -31713,25 +31855,25 @@ var mV = [
 		crown: .55,
 		deciduous: !1
 	}
-], hV = {
+], DV = {
 	model: "procedural-worlds/pw_shrub_01",
 	weight: 1,
 	scale: [.75, 1.15],
 	crown: .9,
 	deciduous: !1
-}, gV = {
+}, OV = {
 	model: "bank_rocks",
 	weight: 1,
 	scale: [.55, .85],
 	crown: .95,
 	deciduous: !1
-}, _V = {
+}, kV = {
 	model: "reeds",
 	weight: 1,
 	scale: [.75, 1.15],
 	crown: .6,
 	deciduous: !1
-}, vV = [
+}, AV = [
 	[
 		.8,
 		.92,
@@ -31757,26 +31899,26 @@ var mV = [
 		1.1,
 		.74
 	]
-], yV = Uz.map(([e, t]) => [e, t]), bV = (e) => `${e.col},${e.row}`;
-function xV(e, t, n) {
+], jV = Uz.map(([e, t]) => [e, t]), MV = (e) => `${e.col},${e.row}`;
+function NV(e, t, n) {
 	let r = Infinity;
 	for (let i of n) {
 		let n = e - i.center.x, a = t - i.center.z;
 		if (n * n + a * a > 64) continue;
-		let o = Bz(n, a, yV);
-		r = Math.min(r, Rz(n, a, yV) ? -o : o);
+		let o = Bz(n, a, jV);
+		r = Math.min(r, Rz(n, a, jV) ? -o : o);
 	}
 	return r;
 }
-function SV(e) {
-	let { field: t, layout: n, winter: r } = e, i = new Map(t.tiles.map((e) => [bV(e), e])), a = [], o = [], s = (e) => n.neighbours(e).map((e) => i.get(bV(e))).filter((e) => !!e), c = r ? mV.filter((e) => e.model.startsWith("procedural-worlds") || !e.deciduous) : mV, l = (r, i, a, c, l, u) => {
+function PV(e) {
+	let { field: t, layout: n, winter: r } = e, i = new Map(t.tiles.map((e) => [MV(e), e])), a = [], o = [], s = (e) => n.neighbours(e).map((e) => i.get(MV(e))).filter((e) => !!e), c = r ? EV.filter((e) => e.model.startsWith("procedural-worlds") || !e.deciduous) : EV, l = (r, i, a, c, l, u) => {
 		if (!n.contains(i, a, r.col, r.row)) return !1;
 		let d = t.classify(i, a);
 		if (!d || !u(d.toLowerCase()) || (t.roads.active ? t.roads.sample(i, a)?.weight ?? 0 : 0) > .05 || t.waterInfluenceAt(i, a) > .05) return !1;
 		let f = c.crown * l;
-		return xV(i, a, [r, ...s(r)]) < Math.max(.45, f * .5) || e.obstacles.some((e) => Math.hypot(i - e.x, a - e.z) < 2.2 + f * .5) ? !1 : !o.some((e) => Math.hypot(i - e.x, a - e.z) < (f + e.radius) * .62);
+		return NV(i, a, [r, ...s(r)]) < Math.max(.45, f * .5) || e.obstacles.some((e) => Math.hypot(i - e.x, a - e.z) < 2.2 + f * .5) ? !1 : !o.some((e) => Math.hypot(i - e.x, a - e.z) < (f + e.radius) * .62);
 	}, u = (e, i, s, c, u, d, f) => {
-		if (!(r && i === hV)) for (let r = 0, p = 0; r < c && p < u; p += 1) {
+		if (!(r && i === DV)) for (let r = 0, p = 0; r < c && p < u; p += 1) {
 			let c = s() * Math.PI * 2, u = Math.sqrt(s()) * n.radius, p = e.center.x + Math.cos(c) * u, m = e.center.z + Math.sin(c) * u;
 			f && (p = p * .55 + f.x * .45, m = m * .55 + f.z * .45);
 			let h = i.scale[0] + (i.scale[1] - i.scale[0]) * s();
@@ -31792,10 +31934,10 @@ function SV(e) {
 				z: m,
 				scale: h,
 				rotation: s() * Math.PI * 2,
-				tint: wV(t.seed, p, m, s)
+				tint: IV(t.seed, p, m, s)
 			}), r += 1);
 		}
-	}, d = (e) => !sV(e) && !LB(e) && ![
+	}, d = (e) => !yV(e) && !YB(e) && ![
 		"town",
 		"church",
 		"mud",
@@ -31804,15 +31946,15 @@ function SV(e) {
 		"trenches"
 	].includes(e);
 	for (let n of t.tiles) {
-		if (e.replacedCells.has(bV(n))) continue;
-		let r = n.terrain.toLowerCase(), i = Hz(PB(t.seed, n.col, n.row, "woodland"));
+		if (e.replacedCells.has(MV(n))) continue;
+		let r = n.terrain.toLowerCase(), i = Hz(KB(t.seed, n.col, n.row, "woodland"));
 		if (r === "forest") {
-			let e = rV(t.seed ^ 739982445, n.center.x / 26, n.center.z / 26, 2);
-			for (let t = 0; t < 14; t += 1) u(n, CV(c, i(), e), i, 1, 6, (e) => e === "forest");
-			u(n, hV, i, 2, 12, (e) => e === "forest");
+			let e = hV(t.seed ^ 739982445, n.center.x / 26, n.center.z / 26, 2);
+			for (let t = 0; t < 14; t += 1) u(n, FV(c, i(), e), i, 1, 6, (e) => e === "forest");
+			u(n, DV, i, 2, 12, (e) => e === "forest");
 		} else if (r === "swamp" || r === "marsh") {
 			let e = (e) => e === "swamp" || e === "marsh", t = 2 + Math.floor(i() * 3);
-			for (let r = 0; r < t; r += 1) u(n, _V, i, 1 + Math.floor(i() * 3), 10, e);
+			for (let r = 0; r < t; r += 1) u(n, kV, i, 1 + Math.floor(i() * 3), 10, e);
 		} else if (d(r)) {
 			let e = s(n).filter((e) => e.terrain.toLowerCase() === "forest");
 			for (let t of e) {
@@ -31820,7 +31962,7 @@ function SV(e) {
 					x: (n.center.x + t.center.x) / 2,
 					z: (n.center.z + t.center.z) / 2
 				};
-				u(n, hV, i, i() < .7 ? 1 : 2, 10, d, e), i() < .3 && u(n, CV(c, i(), -1), i, 1, 8, d, e);
+				u(n, DV, i, i() < .7 ? 1 : 2, 10, d, e), i() < .3 && u(n, FV(c, i(), -1), i, 1, 8, d, e);
 			}
 			[
 				"hills",
@@ -31829,20 +31971,20 @@ function SV(e) {
 				"highland",
 				"slope",
 				"steep_slope"
-			].includes(r) && i() < .28 && u(n, gV, i, 1, 10, d);
+			].includes(r) && i() < .28 && u(n, OV, i, 1, 10, d);
 		}
 	}
 	return a;
 }
-function CV(e, t, n) {
+function FV(e, t, n) {
 	let r = n > .18 ? .6 : 0, i = e.find((e) => e.model === "cypress");
 	if (i && t < r) return i;
 	let a = t < r ? 0 : (t - r) / (1 - r), o = e.reduce((e, t) => e + t.weight, 0), s = 0;
 	for (let t of e) if (s += t.weight / o, a < s) return t;
 	return e.at(-1);
 }
-function wV(e, t, n, r) {
-	let i = (rV(e ^ 1049268721, t / 18, n / 18, 2) + 1) / 2, a = Math.min(vV.length - 1.001, Math.max(0, i * (vV.length - 1) + (r() - .5) * 1.6)), o = Math.floor(a), s = a - o, c = vV[o], l = vV[o + 1], u = .92 + r() * .16;
+function IV(e, t, n, r) {
+	let i = (hV(e ^ 1049268721, t / 18, n / 18, 2) + 1) / 2, a = Math.min(AV.length - 1.001, Math.max(0, i * (AV.length - 1) + (r() - .5) * 1.6)), o = Math.floor(a), s = a - o, c = AV[o], l = AV[o + 1], u = .92 + r() * .16;
 	return [
 		0,
 		1,
@@ -31851,7 +31993,7 @@ function wV(e, t, n, r) {
 }
 //#endregion
 //#region src/ground-tufts.ts
-var TV = /* @__PURE__ */ new Set([
+var LV = /* @__PURE__ */ new Set([
 	"plains",
 	"hills",
 	"hill",
@@ -31864,7 +32006,7 @@ var TV = /* @__PURE__ */ new Set([
 	"fields",
 	"swamp",
 	"marsh"
-]), EV = [
+]), RV = [
 	[
 		.1,
 		.14,
@@ -31890,8 +32032,8 @@ var TV = /* @__PURE__ */ new Set([
 		.12,
 		.05
 	]
-], DV = 18;
-function OV(e) {
+], zV = 18;
+function BV(e) {
 	let { field: t, layout: n } = e, r = [], i = /* @__PURE__ */ new Map(), a = (e, t) => `${Math.floor(e / 4)},${Math.floor(t / 4)}`;
 	for (let t of e.features) {
 		let e = a(t.x, t.z);
@@ -31906,7 +32048,7 @@ function OV(e) {
 		return n;
 	}, s = (e, r) => {
 		let i = t.classify(e, r)?.toLowerCase();
-		if (!i || !TV.has(i)) return 0;
+		if (!i || !LV.has(i)) return 0;
 		let a = t.roads.active ? t.roads.sample(e, r) : null;
 		if ((a?.weight ?? 0) > .08) return 0;
 		let s = t.waterInfluenceAt(e, r);
@@ -31914,18 +32056,18 @@ function OV(e) {
 		let c = .12, l = o(e, r);
 		l < 2.6 && (c += .75 * (1 - l / 2.6)), a && a.weight <= .08 && a.distance < n.radius * .81 + 1.4 && (c += .6), s > .04 && (c += .7);
 		let u = t.weightsAt(e, r);
-		return Object.keys(u).length > 1 && (c += .25), (u.swamp ?? 0) + (u.marsh ?? 0) > .3 && (c += .8), c *= .55 + .9 * D.smoothstep(rV(t.seed ^ 1779033703, e / 13, r / 13, 2), -.3, .45), c;
+		return Object.keys(u).length > 1 && (c += .25), (u.swamp ?? 0) + (u.marsh ?? 0) > .3 && (c += .8), c *= .55 + .9 * D.smoothstep(hV(t.seed ^ 1779033703, e / 13, r / 13, 2), -.3, .45), c;
 	};
 	for (let i of t.tiles) {
-		if (e.replacedCells.has(`${i.col},${i.row}`) || sV(i.terrain) || !TV.has(i.terrain.toLowerCase())) continue;
-		let a = Hz(PB(t.seed, i.col, i.row, "ground-tufts"));
-		for (let e = 0; e < DV; e += 1) {
+		if (e.replacedCells.has(`${i.col},${i.row}`) || yV(i.terrain) || !LV.has(i.terrain.toLowerCase())) continue;
+		let a = Hz(KB(t.seed, i.col, i.row, "ground-tufts"));
+		for (let e = 0; e < zV; e += 1) {
 			let e = a() * Math.PI * 2, o = Math.sqrt(a()) * n.radius, c = i.center.x + Math.cos(e) * o, l = i.center.z + Math.sin(e) * o;
-			if (!n.contains(c, l, i.col, i.row) || a() > s(c, l) || xV(c, l, [i]) < 0 && a() > .2) continue;
-			let u = EV[Math.floor(a() * EV.length)], d = 4 + Math.floor(a() * 6);
+			if (!n.contains(c, l, i.col, i.row) || a() > s(c, l) || NV(c, l, [i]) < 0 && a() > .2) continue;
+			let u = RV[Math.floor(a() * RV.length)], d = 4 + Math.floor(a() * 6);
 			for (let e = 0; e < d; e += 1) {
 				let e = .1 + a() * .45, n = a() * Math.PI * 2, i = c + Math.cos(n) * e, o = l + Math.sin(n) * e, s = t.classify(i, o)?.toLowerCase();
-				if (!s || !TV.has(s) || (t.roads.active ? t.roads.sample(i, o)?.weight ?? 0 : 0) > .08) continue;
+				if (!s || !LV.has(s) || (t.roads.active ? t.roads.sample(i, o)?.weight ?? 0 : 0) > .08) continue;
 				let d = .85 + a() * .3;
 				r.push({
 					x: i,
@@ -31944,7 +32086,7 @@ function OV(e) {
 	}
 	return r;
 }
-function kV() {
+function VV() {
 	let e = [], t = [];
 	for (let n = 0; n < 6; n += 1) {
 		let r = n / 6 * Math.PI * 2 + n % 2 * .35, i = .16 + n % 3 * .05, a = .34 + n % 3 * .07, o = .05, s = Math.cos(r), c = Math.sin(r), l = -c, u = s, d = [
@@ -31999,7 +32141,7 @@ function kV() {
 	let n = new ai();
 	return n.setAttribute("position", new M(e, 3)), n.setAttribute("color", new M(t, 3)), n.computeVertexNormals(), n;
 }
-function AV(e, t) {
+function HV(e, t) {
 	let n = new Ps({
 		color: 16777215,
 		vertexColors: !0,
@@ -32009,7 +32151,7 @@ function AV(e, t) {
 		side: 2
 	});
 	n.name = "Faceted grass tuft";
-	let r = new ya(kV(), n, Math.max(1, e.length));
+	let r = new ya(VV(), n, Math.max(1, e.length));
 	r.name = "Generated grass tufts", r.count = e.length, r.castShadow = !1, r.receiveShadow = !0, r.instanceMatrix.setUsage(pt);
 	let i = new Zn(), a = new j(), o = [];
 	return e.forEach((e, n) => {
@@ -32019,10 +32161,10 @@ function AV(e, t) {
 		matrices: o
 	};
 }
-function jV(e) {
+function UV(e) {
 	return Object.entries(e.attributes).map(([e, t]) => `${e}:${t.itemSize}`).sort().join(",");
 }
-var MV = class {
+var WV = class {
 	group = new Qn();
 	proxies = [];
 	root;
@@ -32038,7 +32180,7 @@ var MV = class {
 				n.castShadow,
 				n.receiveShadow,
 				n.renderOrder,
-				jV(n.geometry)
+				UV(n.geometry)
 			].join("|"), o = r.get(a) ?? [];
 			o.push(n), r.set(a, o);
 		});
@@ -32106,12 +32248,12 @@ var MV = class {
 };
 //#endregion
 //#region src/generated-scenery.ts
-function NV(e) {
+function GV(e) {
 	if (e.userData.foliage === !0 || e.name.startsWith("tree-batch-") || e.name.startsWith("shrub-batch-")) return !0;
 	let t = e.material;
 	return !Array.isArray(t) && WR.has(t.name);
 }
-var PV = class {
+var KV = class {
 	group = new Qn();
 	disposed = !1;
 	walls = null;
@@ -32125,7 +32267,7 @@ var PV = class {
 		this.terrain = e, this.assets = t, this.group.name = `Terrain-derived scenery ${n ?? "battle"}`, this.visibility = new Lz(e.layout);
 	}
 	async build() {
-		let e = this.terrain.environmentPlan, t = new Set(e.placements.map((e) => e.model)), n = SV({
+		let e = this.terrain.environmentPlan, t = new Set(e.placements.map((e) => e.model)), n = PV({
 			field: this.terrain.field,
 			layout: this.terrain.layout,
 			winter: e.winter,
@@ -32139,18 +32281,18 @@ var PV = class {
 			if (this.disposed) return;
 			let i = [];
 			n.traverse((t) => {
-				t instanceof qi && (e.winter && (t.name.startsWith("tree-batch-") || t.name === "vegetation-ground-tufts-baked") ? i.push(t) : NV(t) && (t.userData[MB] = r.tint));
+				t instanceof qi && (e.winter && (t.name.startsWith("tree-batch-") || t.name === "vegetation-ground-tufts-baked") ? i.push(t) : GV(t) && (t.userData[WB] = r.tint));
 			}), i.forEach((e) => e.removeFromParent()), n.position.set(r.x, this.terrain.heightAt(r.x, r.z) - .06, r.z), n.rotation.y = r.rotation, n.scale.setScalar(r.scale), n.name = `${r.model} ${r.col},${r.row} woodland ${t + 1}`, this.group.add(n), this.visibility.trackObject(n, r.x, r.z);
 		}
 		if (!e.winter) {
-			let t = OV({
+			let t = BV({
 				field: this.terrain.field,
 				layout: this.terrain.layout,
 				replacedCells: e.replacedCells,
 				features: [...n, ...e.placements]
 			});
 			if (t.length) {
-				let { mesh: e, matrices: n } = AV(t, (e, t) => this.terrain.heightAt(e, t));
+				let { mesh: e, matrices: n } = HV(t, (e, t) => this.terrain.heightAt(e, t));
 				this.group.add(e), this.visibility.trackInstances(e, n);
 			}
 		}
@@ -32168,13 +32310,13 @@ var PV = class {
 				fromRound: t.fromRound
 			}));
 		}
-		e.walls.length && (this.walls = new jB(e.walls, this.terrain, this.visibility), this.group.add(this.walls.group));
+		e.walls.length && (this.walls = new UB(e.walls, this.terrain, this.visibility), this.group.add(this.walls.group));
 		for (let t of e.walls) for (let e of t.issues) console.warn(`[Hussite 3D] ${e}`);
 		let r = (e) => {
 			for (let t = e; t; t = t.parent) if (t.userData.dynamicEnvironment) return !0;
 			return !1;
-		}, i = NB(this.group, (e) => r(e) ? null : this.visibility.keyForObject(e));
-		this.visibility.trackBatches(i.batches), this.details.addIce(this.group, this.terrain, this.visibility), this.merged = new MV(this.group, (e) => !r(e));
+		}, i = GB(this.group, (e) => r(e) ? null : this.visibility.keyForObject(e));
+		this.visibility.trackBatches(i.batches), this.details.addIce(this.group, this.terrain, this.visibility), this.merged = new WV(this.group, (e) => !r(e));
 	}
 	updateVisibility(e) {
 		this.visibility.update(e), this.details.update(e);
@@ -32186,7 +32328,7 @@ var PV = class {
 			e instanceof ya && e.dispose();
 		}), this.group.clear();
 	}
-}, FV = [
+}, qV = [
 	"meadow",
 	"earth",
 	"slope",
@@ -32194,13 +32336,13 @@ var PV = class {
 	"water",
 	"road"
 ];
-function IV(e) {
+function JV(e) {
 	let t = e.toLowerCase();
 	return [
 		"water",
 		"river",
 		"lake"
-	].includes(t) ? "water" : LB(t) ? "road" : ["slope", "steep_slope"].includes(t) ? "slope" : ["cliff", "rock"].includes(t) ? "rock" : [
+	].includes(t) ? "water" : YB(t) ? "road" : ["slope", "steep_slope"].includes(t) ? "slope" : ["cliff", "rock"].includes(t) ? "rock" : [
 		"mud",
 		"swamp",
 		"marsh",
@@ -32209,22 +32351,22 @@ function IV(e) {
 		"dam",
 		"causeway",
 		"trenches"
-	].includes(t) || oV(t) ? "earth" : "meadow";
+	].includes(t) || vV(t) ? "earth" : "meadow";
 }
-function LV(e) {
-	return FV.indexOf(IV(e));
+function YV(e) {
+	return qV.indexOf(JV(e));
 }
-var RV = "groundSplat", zV = "shoreDistance";
-function BV(e) {
+var XV = "groundSplat", ZV = "shoreDistance";
+function QV(e) {
 	return e === "meadow" || e === "slope" ? 0 : e === "earth" || e === "water" ? 1 : 2;
 }
 var $ = (e) => e;
-function VV(e, t, n) {
+function $V(e, t, n) {
 	let r = new _c().load(new URL(t, e).href);
 	return r.colorSpace = nt, r.wrapS = r.wrapT = a, r.repeat.setScalar(n), r.anisotropy = 8, r;
 }
-var HV = .83, UV = .62, WV = 5.5, GV = 1.15;
-function KV(e, t, n) {
+var eH = .83, tH = .62, nH = 5.5, rH = 1.15;
+function iH(e, t, n) {
 	return $(vL)(() => {
 		let r = uR.div(t), i = rR.abs().pow(4), a = i.div(i.x.add(i.y).add(i.z)), o = [
 			r.zy,
@@ -32241,13 +32383,13 @@ function KV(e, t, n) {
 		}), s;
 	})();
 }
-function qV(e) {
+function aH(e) {
 	return e ? $(wR)(e, $(AR)().mul(e.repeat.x)).rgb : $(NR)(1, 1, 1);
 }
-function JV(e, t = !1) {
+function oH(e, t = !1) {
 	let n = [], r = (t, r) => {
 		if (!e) return null;
-		let i = VV(e, t, r);
+		let i = $V(e, t, r);
 		return n.push(i), i;
 	}, i = t ? null : r("textures/procedural-worlds/T_ConceptBGroundCalm.webp", 1), a = r("textures/sudomer-pond-mud.webp", 1.25), o = r("textures/earth-grain.webp", 2.8), s = (e, t, n) => {
 		let r = new Ps({
@@ -32259,7 +32401,7 @@ function JV(e, t = !1) {
 			side: 2
 		});
 		return r.name = `Generated ${e} ground material`, r;
-	}, c = r("textures/procedural-worlds/T_ConceptBCliff.webp", 1), l = $(EL)(RV, "vec3"), u = $(FR)(), d = qV(i).mul(l.x).add(qV(a).mul(l.y)).add(qV(o).mul(l.z)).mul(u), f = $(xR)(HV, UV, rR.y), p = c ? KV(c, WV, f) : $(NR)(.42, .4, .37), m = $(qL)(d, p.mul($(qL)(u, $(NR)(1, 1, 1), .7)).mul(GV), f), h = (e, t, n) => {
+	}, c = r("textures/procedural-worlds/T_ConceptBCliff.webp", 1), l = $(EL)(XV, "vec3"), u = $(FR)(), d = aH(i).mul(l.x).add(aH(a).mul(l.y)).add(aH(o).mul(l.z)).mul(u), f = $(xR)(eH, tH, rR.y), p = c ? iH(c, nH, f) : $(NR)(.42, .4, .37), m = $(qL)(d, p.mul($(qL)(u, $(NR)(1, 1, 1), .7)).mul(rH), f), h = (e, t, n) => {
 		let r = new mw({
 			color: 16777215,
 			vertexColors: !1,
@@ -32275,14 +32417,14 @@ function JV(e, t = !1) {
 			h("earth", a, .98),
 			h("slope", i, .98),
 			h("rock", o, 1),
-			oH(),
+			vH(),
 			s("road", o, 1)
 		],
 		textures: n,
-		soil: $V(t)
+		soil: dH(t)
 	};
 }
-var YV = "rimTop", XV = "rimWater", ZV = {
+var sH = "rimTop", cH = "rimWater", lH = {
 	turf: new j(6122028),
 	snow: new j(15001826),
 	topsoil: new j(3811870),
@@ -32292,27 +32434,27 @@ var YV = "rimTop", XV = "rimWater", ZV = {
 	pebble: new j(10457722),
 	joint: new j(3879209),
 	water: new j(2047300)
-}, QV = (e) => $(NR)(e.r, e.g, e.b);
-function $V(e) {
+}, uH = (e) => $(NR)(e.r, e.g, e.b);
+function dH(e) {
 	let t = new mw({
 		color: 16777215,
 		roughness: 1,
 		metalness: 0,
 		side: 2
-	}), n = uR, r = $(EL)(YV, "float"), i = n.x.add(n.z), a = r.sub(n.y), o = (e, t) => $(QL)($(NR)(e, t, 0).xy), s = (e, t) => $($L)($(NR)(e, t, 0).xy, .9), c = (e) => o(i.mul(.22), e).mul(.28).add(o(i.mul(.9), e + 3).mul(.06)), l = (e, t, n) => $(xR)(e - t, e + t, a.add(c(n))), u = o(i.mul(.15), a.mul(.5)).mul(.1).add(1), d = o(i.mul(.25), a.mul(3.2)).mul(.07).add(1), f = s(i.div(.45), a.div(.38)), p = $(xR)(.35, .55, o(i.mul(.45), a.mul(1.6))), m = $(xR)(.24, .18, f.x).mul(p), h = $(xR)(.18, .22, f.x).mul($(xR)(.27, .22, f.x)).mul(p), g = $(qL)($(qL)(QV(ZV.subsoil).mul(d), QV(ZV.pebble), m), QV(ZV.joint), h.mul(.45)), _ = s(i.div(.35), a.div(.28)), v = $(qL)(QV(ZV.gravel), QV(ZV.joint), $(xR)(.12, .02, _.y.sub(_.x)).mul(.7)), y = s(i.div(1.5), a.div(1.15)), b = o(i.div(1.5).floor(), a.div(1.15).floor()).mul(.12).add(o(i.mul(.6), a.mul(.6)).mul(.08)).add(1), x = $(xR)(.07, .015, y.y.sub(y.x)), S = $(qL)(QV(ZV.bedrock).mul(b), QV(ZV.joint), x.mul(.75)), C = $(qL)(QV(e ? ZV.snow : ZV.turf), QV(ZV.topsoil), l(.2, .03, 0));
+	}), n = uR, r = $(EL)(sH, "float"), i = n.x.add(n.z), a = r.sub(n.y), o = (e, t) => $(QL)($(NR)(e, t, 0).xy), s = (e, t) => $($L)($(NR)(e, t, 0).xy, .9), c = (e) => o(i.mul(.22), e).mul(.28).add(o(i.mul(.9), e + 3).mul(.06)), l = (e, t, n) => $(xR)(e - t, e + t, a.add(c(n))), u = o(i.mul(.15), a.mul(.5)).mul(.1).add(1), d = o(i.mul(.25), a.mul(3.2)).mul(.07).add(1), f = s(i.div(.45), a.div(.38)), p = $(xR)(.35, .55, o(i.mul(.45), a.mul(1.6))), m = $(xR)(.24, .18, f.x).mul(p), h = $(xR)(.18, .22, f.x).mul($(xR)(.27, .22, f.x)).mul(p), g = $(qL)($(qL)(uH(lH.subsoil).mul(d), uH(lH.pebble), m), uH(lH.joint), h.mul(.45)), _ = s(i.div(.35), a.div(.28)), v = $(qL)(uH(lH.gravel), uH(lH.joint), $(xR)(.12, .02, _.y.sub(_.x)).mul(.7)), y = s(i.div(1.5), a.div(1.15)), b = o(i.div(1.5).floor(), a.div(1.15).floor()).mul(.12).add(o(i.mul(.6), a.mul(.6)).mul(.08)).add(1), x = $(xR)(.07, .015, y.y.sub(y.x)), S = $(qL)(uH(lH.bedrock).mul(b), uH(lH.joint), x.mul(.75)), C = $(qL)(uH(e ? lH.snow : lH.turf), uH(lH.topsoil), l(.2, .03, 0));
 	C = $(qL)(C, g, l(1, .15, 11)), C = $(qL)(C, v, l(3, .12, 23)), C = $(qL)(C, S, l(3.6, .1, 37));
-	let w = $(EL)(XV, "float").mul($(xR)(.95, .8, a));
-	return t.colorNode = $(qL)(C.mul(u), QV(e ? ZV.snow : ZV.water), w), t.roughnessNode = $(qL)(1, .25, w), t.name = "Diorama soil strata", t;
+	let w = $(EL)(cH, "float").mul($(xR)(.95, .8, a));
+	return t.colorNode = $(qL)(C.mul(u), uH(e ? lH.snow : lH.water), w), t.roughnessNode = $(qL)(1, .25, w), t.name = "Diorama soil strata", t;
 }
-function eH() {
+function fH() {
 	let e = new mw({
 		color: 16777215,
 		roughness: .55,
 		metalness: 0
 	}), t = uR, n = $(QL)($(NR)(t.x.mul(.08), t.z.mul(2.4).add(t.y.mul(2.4)), 0).xy).add($(QL)($(NR)(t.x.mul(.5), t.z.mul(9).add(t.y.mul(9)), 0).xy).mul(.3));
-	return e.colorNode = $(qL)(QV(new j(2759184)), QV(new j(4861984)), $(xR)(-.4, .5, n)), e.name = "Walnut diorama base", e;
+	return e.colorNode = $(qL)(uH(new j(2759184)), uH(new j(4861984)), $(xR)(-.4, .5, n)), e.name = "Walnut diorama base", e;
 }
-function tH(e) {
+function pH(e) {
 	let t = new mw({
 		color: e ? 12833492 : 1909536,
 		roughness: e ? .38 : .04,
@@ -32327,15 +32469,15 @@ function tH(e) {
 	}
 	return t.name = e ? "Frozen puddles" : "Standing water", t;
 }
-var nH = new j(5076328), rH = new j(1454650), iH = new j(14212560), aH = new j(7908004);
-function oH() {
+var mH = new j(5076328), hH = new j(1454650), gH = new j(14212560), _H = new j(7908004);
+function vH() {
 	let e = new mw({
 		color: 16777215,
 		roughness: .28,
 		metalness: 0,
 		side: 2
-	}), t = $(EL)(zV, "float"), n = uR, r = $(xR)(.2, 2.6, t), i = $(qL)($(NR)(nH.r, nH.g, nH.b), $(NR)(rH.r, rH.g, rH.b), r), a = $(QL)(n.xz.mul(.9)).mul(.5).add(.5), o = $(xR)(.32, .02, t).mul($(xR)(.3, .75, a)).mul(.5), s = $(FR)().div($(NR)(aH.r, aH.g, aH.b)).clamp(0, 1.2);
-	e.colorNode = $(qL)(i, $(NR)(iH.r, iH.g, iH.b), o).mul(s);
+	}), t = $(EL)(ZV, "float"), n = uR, r = $(xR)(.2, 2.6, t), i = $(qL)($(NR)(mH.r, mH.g, mH.b), $(NR)(hH.r, hH.g, hH.b), r), a = $(QL)(n.xz.mul(.9)).mul(.5).add(.5), o = $(xR)(.32, .02, t).mul($(xR)(.3, .75, a)).mul(.5), s = $(FR)().div($(NR)(_H.r, _H.g, _H.b)).clamp(0, 1.2);
+	e.colorNode = $(qL)(i, $(NR)(gH.r, gH.g, gH.b), o).mul(s);
 	let c = .08, l = (e, t) => {
 		let r = n.xz.add($(NR)(e, t, 0).xy);
 		return $(QL)(r.mul(.8)).add($(QL)(r.mul(2.2).add(7)).mul(.35));
@@ -32346,46 +32488,46 @@ function oH() {
 }
 //#endregion
 //#region src/topography.ts
-var sH = 6, cH = 1.25, lH = .55;
-function uH(e) {
+var yH = 6, bH = 1.25, xH = .55;
+function SH(e) {
 	return e.terrain.toLowerCase();
 }
-function dH(e) {
+function CH(e) {
 	return [
 		"hills",
 		"hill",
 		"ridge",
 		"highland"
-	].includes(uH(e));
+	].includes(SH(e));
 }
-function fH(e) {
-	return ["slope", "steep_slope"].includes(uH(e));
+function wH(e) {
+	return ["slope", "steep_slope"].includes(SH(e));
 }
-function pH(e) {
+function TH(e) {
 	return [
 		"water",
 		"river",
 		"lake"
-	].includes(uH(e));
+	].includes(SH(e));
 }
-function mH(e) {
+function EH(e) {
 	return [
 		"mud",
 		"swamp",
 		"marsh"
-	].includes(uH(e));
+	].includes(SH(e));
 }
-function hH(e) {
-	return pH(e) ? -.7 : mH(e) ? -.36 : uH(e) === "trenches" ? -.14 : 0;
+function DH(e) {
+	return TH(e) ? -.7 : EH(e) ? -.36 : SH(e) === "trenches" ? -.14 : 0;
 }
-function gH(e) {
+function OH(e) {
 	return [
 		"water",
 		"river",
 		"lake"
 	].includes(e.toLowerCase()) ? -.7 : null;
 }
-function _H(e, t) {
+function kH(e, t) {
 	let n = /* @__PURE__ */ new Map(), r = t.map((e) => ({
 		col: e.col,
 		row: e.row
@@ -32400,26 +32542,26 @@ function _H(e, t) {
 	}
 	return n;
 }
-var vH = class {
+var AH = class {
 	field;
 	layout;
 	elevations = /* @__PURE__ */ new Map();
 	constructor(e, t = /* @__PURE__ */ new Map()) {
-		this.field = e, this.layout = new IB(e.cols, e.rows, e.hexRadius);
-		let n = (e) => dH(e) || (t.get(this.key(e.col, e.row)) ?? 0) >= sH, r = e.tiles.filter(n), i = e.tiles.filter((e) => !n(e) && !fH(e)), a = _H(this.layout, r), o = _H(this.layout, i);
+		this.field = e, this.layout = new JB(e.cols, e.rows, e.hexRadius);
+		let n = (e) => CH(e) || (t.get(this.key(e.col, e.row)) ?? 0) >= yH, r = e.tiles.filter(n), i = e.tiles.filter((e) => !n(e) && !wH(e)), a = kH(this.layout, r), o = kH(this.layout, i);
 		for (let n of e.tiles) {
 			let e = this.key(n.col, n.row);
 			if (t.has(e)) this.elevations.set(e, t.get(e));
-			else if (dH(n)) this.elevations.set(e, sH);
-			else if (!fH(n)) this.elevations.set(e, hH(n));
+			else if (CH(n)) this.elevations.set(e, yH);
+			else if (!wH(n)) this.elevations.set(e, DH(n));
 			else {
 				let t = a.get(e) ?? Infinity, n = o.get(e) ?? Infinity, r = Number.isFinite(t) && Number.isFinite(n) ? n / Math.max(1, t + n) : Number.isFinite(t) ? .65 : .24;
-				this.elevations.set(e, .12 + r * (sH - .12));
+				this.elevations.set(e, .12 + r * (yH - .12));
 			}
 		}
 		let s = /* @__PURE__ */ new Map();
 		for (let t of e.tiles) {
-			if (n(t) || fH(t) || mH(t) || pH(t)) continue;
+			if (n(t) || wH(t) || EH(t) || TH(t)) continue;
 			let e = Math.max(0, ...this.layout.neighbours(t).map((e) => this.cellElevation(e.col, e.row)));
 			e > 1.5 && s.set(this.key(t.col, t.row), Math.min(1.8, e * .3));
 		}
@@ -32427,12 +32569,12 @@ var vH = class {
 		let c = /* @__PURE__ */ new Map(), l = /* @__PURE__ */ new Set();
 		for (let r of e.tiles) {
 			let i = this.key(r.col, r.row);
-			if (t.has(i) || n(r) || mH(r) || pH(r)) continue;
-			let a = this.layout.neighbours(r).map((t) => e.getCell(t.col, t.row)).filter((e) => e !== null && !pH(e));
+			if (t.has(i) || n(r) || EH(r) || TH(r)) continue;
+			let a = this.layout.neighbours(r).map((t) => e.getCell(t.col, t.row)).filter((e) => e !== null && !TH(e));
 			if (!a.some(n)) continue;
 			l.add(i);
 			let o = a.map((e) => this.cellElevation(e.col, e.row)), s = o.reduce((e, t) => e + t, 0) / o.length, u = this.cellElevation(r.col, r.row);
-			s > u && c.set(i, u + (s - u) * lH);
+			s > u && c.set(i, u + (s - u) * xH);
 		}
 		for (let [e, t] of c) this.elevations.set(e, t);
 		let u = /* @__PURE__ */ new Map();
@@ -32449,11 +32591,11 @@ var vH = class {
 		let d = /* @__PURE__ */ new Map();
 		for (let n of e.tiles) {
 			let r = this.key(n.col, n.row);
-			if (t.has(r) || !mH(n) && uH(n) !== "trenches") continue;
-			let i = this.layout.neighbours(n).map((t) => e.getCell(t.col, t.row)).filter((e) => e !== null && !mH(e) && !pH(e) && uH(e) !== "trenches");
+			if (t.has(r) || !EH(n) && SH(n) !== "trenches") continue;
+			let i = this.layout.neighbours(n).map((t) => e.getCell(t.col, t.row)).filter((e) => e !== null && !EH(e) && !TH(e) && SH(e) !== "trenches");
 			if (!i.length) continue;
 			let a = i.reduce((e, t) => e + this.cellElevation(t.col, t.row), 0) / i.length;
-			d.set(r, a + hH(n));
+			d.set(r, a + DH(n));
 		}
 		for (let [e, t] of d) this.elevations.set(e, t);
 	}
@@ -32473,7 +32615,7 @@ var vH = class {
 		if (!n) return 0;
 		let r = this.latticeElevation(e, t, n), i = this.field.weightsAt(e, t), a = 0, o = 0;
 		for (let [e, t] of Object.entries(i)) {
-			let n = gH(e);
+			let n = OH(e);
 			n !== null && (a += t, o += n * t);
 		}
 		if (a <= 0) return r;
@@ -32500,66 +32642,28 @@ var vH = class {
 		}
 		let u = 0, d = 0;
 		return l.forEach((e, t) => {
-			let n = Math.max(0, e) ** cH;
+			let n = Math.max(0, e) ** bH;
 			u += n * i(t), d += n;
 		}), d > 0 ? u / d : i(0);
 	}
 	key(e, t) {
 		return `${e},${t}`;
 	}
-}, yH = 1.75, bH = 1.5, xH = 1.1, SH = .45;
-function CH(e) {
-	let t = e.loops.map((e) => e.points.map((e) => [e.x, e.z])), n = (e, n) => t.some((t) => Rz(e, n, t));
-	return e.segments.flatMap((e) => {
-		let t = e.b.x - e.a.x, r = e.b.z - e.a.z, i = Math.hypot(t, r);
-		if (i < .2) return [];
-		let a = {
-			x: (e.a.x + e.b.x) / 2 + r / i * 1.5,
-			z: (e.a.z + e.b.z) / 2 - t / i * 1.5
-		}, [o, s] = n(a.x, a.z) ? [e.b, e.a] : [e.a, e.b];
-		return [{
-			ax: o.x,
-			az: o.z,
-			bx: s.x,
-			bz: s.z
-		}];
-	});
-}
-function wH(e, t, n) {
-	let r = /* @__PURE__ */ new Map();
-	for (let n of e) for (let e = 0; e < 6; e += 1) {
-		let i = {
-			x: n.center.x + Math.cos(e * Math.PI / 3) * t.radius,
-			z: n.center.z + Math.sin(e * Math.PI / 3) * t.radius
-		}, a = `${i.x.toFixed(4)},${i.z.toFixed(4)}`, o = r.get(a) ?? {
-			point: i,
-			count: 0
-		};
-		o.count += 1, r.set(a, o);
-	}
-	let i = {
-		x: e.reduce((e, t) => e + t.center.x, 0) / e.length,
-		z: e.reduce((e, t) => e + t.center.z, 0) / e.length
-	}, a = (e) => Math.hypot(e.x - i.x, e.z - i.z) - (n ? Math.hypot(e.x - n.x, e.z - n.z) * .5 : 0);
-	return [...r.values()].filter((e) => e.count >= 3).map((e) => e.point).sort((e, t) => a(e) - a(t));
-}
-//#endregion
-//#region src/scenario-art.ts
-var TH = { sudomere_1420: "sudomer-landscape.json" };
-function EH(e) {
+}, jH = { sudomere_1420: "sudomer-landscape.json" };
+function MH(e) {
 	let t = [...e].sort((e, t) => e.col - t.col || e.row - t.row).map((e) => `${e.col},${e.row}:${e.terrain};`).join(""), n = 2166136261;
 	for (let e = 0; e < t.length; e += 1) n ^= t.charCodeAt(e), n = Math.imul(n, 16777619);
 	return `fnv1a32:${(n >>> 0).toString(16).padStart(8, "0")}`;
 }
-async function DH(e, t) {
-	let n = e.scenario ? TH[e.scenario] : void 0;
+async function NH(e, t) {
+	let n = e.scenario ? jH[e.scenario] : void 0;
 	if (!n) return null;
 	try {
 		let r = await fetch(new URL(n, t));
 		if (!r.ok) throw Error(`HTTP ${r.status}`);
 		let i = await r.json();
 		if (i.version !== 1 || i.renderer !== "authored-sudomer-v1" || i.scenario !== e.scenario) throw Error("invalid manifest");
-		let a = EH(e.tiles);
+		let a = MH(e.tiles);
 		if (i.sourceTerrainHash !== a) throw Error(`terrain hash ${i.sourceTerrainHash} does not match ${a}`);
 		return i;
 	} catch (t) {
@@ -32569,7 +32673,7 @@ async function DH(e, t) {
 }
 //#endregion
 //#region src/settlement-models.ts
-var OH = {
+var PH = {
 	house_timber: {
 		width: 5.48,
 		depth: 4.28,
@@ -32637,39 +32741,39 @@ var OH = {
 		scale: .65,
 		frontAngle: 0
 	}
-}, kH = (e) => `${e.col},${e.row}`, AH = (e) => [
+}, FH = (e) => `${e.col},${e.row}`, IH = (e) => [
 	"road",
 	"road2",
 	"dam"
-].includes(e.terrain), jH = (e, t) => e.col - t.col || e.row - t.row, MH = (e, t) => Math.hypot(e.x - t.x, e.z - t.z);
-function NH(e, t) {
+].includes(e.terrain), LH = (e, t) => e.col - t.col || e.row - t.row, RH = (e, t) => Math.hypot(e.x - t.x, e.z - t.z);
+function zH(e, t) {
 	let n = null, r = Infinity;
 	for (let i of t) for (let t = 1; t < i.points.length; t++) {
 		let a = i.points[t - 1], o = i.points[t], s = o.x - a.x, c = o.z - a.z, l = Math.max(0, Math.min(1, ((e.x - a.x) * s + (e.z - a.z) * c) / (s * s + c * c || 1))), u = {
 			x: a.x + s * l,
 			z: a.z + c * l
 		};
-		MH(e, u) < r && (n = u, r = MH(e, u));
+		RH(e, u) < r && (n = u, r = RH(e, u));
 	}
 	return n;
 }
-function PH(e, t, n, r = [], i) {
+function BH(e, t, n, r = [], i) {
 	let a = {
 		placements: [],
 		streets: [],
 		cells: /* @__PURE__ */ new Set(),
 		issues: []
-	}, o = new Map(t.map((e) => [kH(e), e])), s = t.filter((e) => e.terrain === "town").sort(jH), c = new Set(s.map(kH)), l = [];
+	}, o = new Map(t.map((e) => [FH(e), e])), s = t.filter((e) => e.terrain === "town").sort(LH), c = new Set(s.map(FH)), l = [];
 	for (let e of s) {
-		if (!c.delete(kH(e))) continue;
+		if (!c.delete(FH(e))) continue;
 		let t = [e];
-		for (let e = 0; e < t.length; e++) for (let r of n.neighbours(t[e])) c.delete(kH(r)) && t.push(o.get(kH(r)));
-		l.push(t.sort(jH));
+		for (let e = 0; e < t.length; e++) for (let r of n.neighbours(t[e])) c.delete(FH(r)) && t.push(o.get(FH(r)));
+		l.push(t.sort(LH));
 	}
 	for (let t of l) {
-		let i = new Set(t.map(kH));
-		t.forEach((e) => a.cells.add(kH(e)));
-		let s = [...new Map(t.flatMap((e) => n.neighbours(e).map((e) => o.get(kH(e))).filter((e) => !!e && AH(e))).map((e) => [kH(e), e])).values()].sort(jH), c = r.filter((e) => e.entrance).sort((e, t) => e.x - t.x || e.z - t.z)[0], l = {
+		let i = new Set(t.map(FH));
+		t.forEach((e) => a.cells.add(FH(e)));
+		let s = [...new Map(t.flatMap((e) => n.neighbours(e).map((e) => o.get(FH(e))).filter((e) => !!e && IH(e))).map((e) => [FH(e), e])).values()].sort(LH), c = r.filter((e) => e.entrance).sort((e, t) => e.x - t.x || e.z - t.z)[0], l = {
 			x: t.reduce((e, t) => e + t.center.x, 0) / t.length,
 			z: t.reduce((e, t) => e + t.center.z, 0) / t.length
 		}, u = c ?? {
@@ -32679,27 +32783,27 @@ function PH(e, t, n, r = [], i) {
 		if (s.length) {
 			u = s[0].center;
 			let e = -1;
-			for (let t of s) for (let n of s) MH(t.center, n.center) > e && (e = MH(t.center, n.center), u = t.center, d = n.center);
+			for (let t of s) for (let n of s) RH(t.center, n.center) > e && (e = RH(t.center, n.center), u = t.center, d = n.center);
 			e < .01 && (d = void 0);
 		}
-		let f = (e) => [...t].sort((t, n) => Math.round((MH(t.center, e) - MH(n.center, e)) * 1e6) || MH(t.center, l) - MH(n.center, l) || jH(t, n))[0], p = f(u), m = d ? f(d) : [...t].sort((e, t) => MH(p.center, t.center) - MH(p.center, e.center) || jH(e, t))[0], h = /* @__PURE__ */ new Map([[kH(p), null]]), g = [p];
-		for (let e = 0; e < g.length && !h.has(kH(m)); e++) {
-			let t = n.neighbours(g[e]).map((e) => o.get(kH(e))).filter((e) => !!e && i.has(kH(e))).sort((e, t) => MH(e.center, m.center) - MH(t.center, m.center) || jH(e, t));
-			for (let n of t) h.has(kH(n)) || (h.set(kH(n), g[e]), g.push(n));
+		let f = (e) => [...t].sort((t, n) => Math.round((RH(t.center, e) - RH(n.center, e)) * 1e6) || RH(t.center, l) - RH(n.center, l) || LH(t, n))[0], p = f(u), m = d ? f(d) : [...t].sort((e, t) => RH(p.center, t.center) - RH(p.center, e.center) || LH(e, t))[0], h = /* @__PURE__ */ new Map([[FH(p), null]]), g = [p];
+		for (let e = 0; e < g.length && !h.has(FH(m)); e++) {
+			let t = n.neighbours(g[e]).map((e) => o.get(FH(e))).filter((e) => !!e && i.has(FH(e))).sort((e, t) => RH(e.center, m.center) - RH(t.center, m.center) || LH(e, t));
+			for (let n of t) h.has(FH(n)) || (h.set(FH(n), g[e]), g.push(n));
 		}
 		let _ = [];
-		for (let e = m; e; e = h.get(kH(e)) ?? null) _.unshift(e.center);
+		for (let e = m; e; e = h.get(FH(e)) ?? null) _.unshift(e.center);
 		(s.length || c) && _.unshift(u), d && _.push(d), _.length === 1 && _.push({
 			x: _[0].x + 2,
 			z: _[0].z
 		}), a.streets.push({
-			id: `${e}:street:${kH(t[0])}`,
+			id: `${e}:street:${FH(t[0])}`,
 			points: _,
 			width: 1.3
 		});
 	}
 	let u = i;
-	u && (u.version !== 1 || u.sourceTerrainHash !== EH(t)) && (a.issues.push("Saved settlement adjustments do not match this map; generated layout retained."), u = void 0);
+	u && (u.version !== 1 || u.sourceTerrainHash !== MH(t)) && (a.issues.push("Saved settlement adjustments do not match this map; generated layout retained."), u = void 0);
 	let d = (e) => {
 		let t = o.get(`${e.cell[0]},${e.cell[1]}`);
 		if (!t || t.terrain !== "town") return null;
@@ -32718,7 +32822,7 @@ function PH(e, t, n, r = [], i) {
 	}
 	let p = [];
 	function m(e) {
-		let t = OH[e.model];
+		let t = PH[e.model];
 		if (!t || ![
 			e.x,
 			e.z,
@@ -32748,10 +32852,10 @@ function PH(e, t, n, r = [], i) {
 			i.hz
 		]) {
 			let r = n.coordAt(i.x + e, i.z + t);
-			if (!r || o.get(kH(r))?.terrain !== "town") return !1;
+			if (!r || o.get(FH(r))?.terrain !== "town") return !1;
 		}
 		for (let e of a.streets) for (let t = 1; t < e.points.length; t++) {
-			let n = e.points[t - 1], r = e.points[t], i = Math.ceil(MH(n, r) / .35);
+			let n = e.points[t - 1], r = e.points[t], i = Math.ceil(RH(n, r) / .35);
 			for (let t = 0; t <= i; t++) if (s({
 				x: n.x + (r.x - n.x) * t / i,
 				z: n.z + (r.z - n.z) * t / i
@@ -32761,7 +32865,7 @@ function PH(e, t, n, r = [], i) {
 	}
 	let g = (e) => {
 		a.placements.push(e), p.push(m(e));
-	}, _ = /* @__PURE__ */ new Set(), v = (t, n) => `${e}:settlement:${kH(t)}:${n}`, y = [
+	}, _ = /* @__PURE__ */ new Set(), v = (t, n) => `${e}:settlement:${FH(t)}:${n}`, y = [
 		"house_timber",
 		"house_plaster",
 		"townhouse"
@@ -32781,7 +32885,7 @@ function PH(e, t, n, r = [], i) {
 			_.add(e.id);
 			continue;
 		}
-		let r = d(e), i = e.model ?? (e.id.endsWith(":shed") ? "shed" : b(t)), s = OH[i], c = r && NH(r, a.streets), l = {
+		let r = d(e), i = e.model ?? (e.id.endsWith(":shed") ? "shed" : b(t)), s = PH[i], c = r && zH(r, a.streets), l = {
 			id: e.id,
 			model: i,
 			x: r?.x ?? NaN,
@@ -32794,12 +32898,12 @@ function PH(e, t, n, r = [], i) {
 	for (let e of s) {
 		let t = v(e, "house");
 		if (_.has(t)) continue;
-		let n = b(e), r = OH[n], i = [];
+		let n = b(e), r = PH[n], i = [];
 		for (let o = 0; o < 6; o++) {
 			let s = o * Math.PI / 3, c = {
 				x: e.center.x + Math.cos(s) * 3.9,
 				z: e.center.z + Math.sin(s) * 3.9
-			}, l = NH(c, a.streets);
+			}, l = zH(c, a.streets);
 			i.push({
 				id: t,
 				model: n,
@@ -32808,7 +32912,7 @@ function PH(e, t, n, r = [], i) {
 				rotation: Math.atan2(l.x - c.x, l.z - c.z) - r.frontAngle
 			});
 		}
-		i.sort((e, t) => MH(e, NH(e, a.streets)) - MH(t, NH(t, a.streets)));
+		i.sort((e, t) => RH(e, zH(e, a.streets)) - RH(t, zH(t, a.streets)));
 		let o = i.find(h);
 		o && g(o);
 	}
@@ -32825,7 +32929,7 @@ function PH(e, t, n, r = [], i) {
 				model: "shed",
 				x: e.x + n.x * r * 2.7,
 				z: e.z + n.z * r * 2.7,
-				scale: OH.shed.scale,
+				scale: PH.shed.scale,
 				rotation: e.rotation
 			};
 			if (h(i)) {
@@ -32836,7 +32940,7 @@ function PH(e, t, n, r = [], i) {
 	}
 	return a;
 }
-var FH = {
+var VH = {
 	nemecky_brod_1422: {
 		version: 1,
 		sourceTerrainHash: "fnv1a32:72defbfd",
@@ -32875,21 +32979,21 @@ var FH = {
 		openAreas: [],
 		landmarks: []
 	}
-}, IH = (e) => !!e && typeof e == "object" && !Array.isArray(e), LH = (e) => typeof e == "number" && Number.isFinite(e), RH = (e) => Array.isArray(e) && e.length === 2 && e.every(LH), zH = (e) => IH(e) && typeof e.id == "string" && e.id.length > 0 && RH(e.cell) && e.cell.every(Number.isInteger) && (e.offset === void 0 || RH(e.offset));
-function BH(e) {
-	if (!IH(e) || e.version !== 1 || typeof e.sourceTerrainHash != "string" || !Number.isSafeInteger(e.seed) || !Array.isArray(e.edits) || !Array.isArray(e.openAreas) || !Array.isArray(e.landmarks)) throw Error("Invalid settlement authoring profile");
-	for (let t of [...e.edits, ...e.landmarks]) if (!zH(t) || t.model !== void 0 && typeof t.model != "string" || t.rotation !== void 0 && !LH(t.rotation) || t.scale !== void 0 && (!LH(t.scale) || t.scale <= 0) || t.remove !== void 0 && typeof t.remove != "boolean") throw Error("Invalid settlement adjustment");
-	for (let t of e.landmarks) if (!IH(t) || typeof t.model != "string" || !LH(t.rotation)) throw Error("Invalid settlement landmark");
-	for (let t of e.openAreas) if (!zH(t) || !LH(t.radius) || t.radius <= 0) throw Error("Invalid settlement open area");
+}, HH = (e) => !!e && typeof e == "object" && !Array.isArray(e), UH = (e) => typeof e == "number" && Number.isFinite(e), WH = (e) => Array.isArray(e) && e.length === 2 && e.every(UH), GH = (e) => HH(e) && typeof e.id == "string" && e.id.length > 0 && WH(e.cell) && e.cell.every(Number.isInteger) && (e.offset === void 0 || WH(e.offset));
+function KH(e) {
+	if (!HH(e) || e.version !== 1 || typeof e.sourceTerrainHash != "string" || !Number.isSafeInteger(e.seed) || !Array.isArray(e.edits) || !Array.isArray(e.openAreas) || !Array.isArray(e.landmarks)) throw Error("Invalid settlement authoring profile");
+	for (let t of [...e.edits, ...e.landmarks]) if (!GH(t) || t.model !== void 0 && typeof t.model != "string" || t.rotation !== void 0 && !UH(t.rotation) || t.scale !== void 0 && (!UH(t.scale) || t.scale <= 0) || t.remove !== void 0 && typeof t.remove != "boolean") throw Error("Invalid settlement adjustment");
+	for (let t of e.landmarks) if (!HH(t) || typeof t.model != "string" || !UH(t.rotation)) throw Error("Invalid settlement landmark");
+	for (let t of e.openAreas) if (!GH(t) || !UH(t.radius) || t.radius <= 0) throw Error("Invalid settlement open area");
 	return e;
 }
-var VH = new Map(Object.entries(FH).map(([e, t]) => [e, BH(t)]));
-function HH(e) {
-	return VH.get(e);
+var qH = new Map(Object.entries(VH).map(([e, t]) => [e, KH(t)]));
+function JH(e) {
+	return qH.get(e);
 }
 //#endregion
 //#region src/environment-plan.ts
-var UH = [
+var YH = [
 	"zivohost_1419",
 	"nekmir_1419",
 	"sudomere_1420",
@@ -32908,12 +33012,12 @@ var UH = [
 	"sion_1437",
 	"horice_1423",
 	"malesov_1424"
-], WH = (e) => `${e.col},${e.row}`, GH = (e) => [
+], XH = (e) => `${e.col},${e.row}`, ZH = (e) => [
 	"water",
 	"mud",
 	"swamp"
 ].includes(e);
-function KH(e, t, n = []) {
+function QH(e, t, n = []) {
 	let r = {
 		scenario: e,
 		placements: [],
@@ -32921,12 +33025,13 @@ function KH(e, t, n = []) {
 		earthworks: [],
 		walls: [],
 		fortifications: /* @__PURE__ */ new Set(),
+		gateBridges: [],
 		raisedCells: /* @__PURE__ */ new Map(),
 		winter: e === "kutna_hora_1421" || e === "nemecky_brod_1422",
 		frozenRiver: e === "nemecky_brod_1422"
 	};
 	if (!t.length) return r;
-	let i = new Map(t.map((e) => [WH(e), e])), a = new IB(Math.max(...t.map((e) => e.col)) + 1, Math.max(...t.map((e) => e.row)) + 1), o = UH.includes(e), s = [], c = 0;
+	let i = new Map(t.map((e) => [XH(e), e])), a = new JB(Math.max(...t.map((e) => e.col)) + 1, Math.max(...t.map((e) => e.row)) + 1), o = YH.includes(e), s = [], c = 0;
 	function l(t, n, i, a, o = 0, l = {}, u = 1.1) {
 		r.placements.push({
 			id: `${e ?? "battle"}:environment:${t}:${c++}`,
@@ -32962,7 +33067,7 @@ function KH(e, t, n = []) {
 		return e.every(([e, n]) => t.includes(i.get(`${e},${n}`)?.terrain ?? ""));
 	}
 	function m(e) {
-		e.forEach((e) => r.replacedCells.add(WH(e)));
+		e.forEach((e) => r.replacedCells.add(XH(e)));
 	}
 	function h(e, n) {
 		if (!e.length) return;
@@ -32987,8 +33092,8 @@ function KH(e, t, n = []) {
 	}
 	function g(e, t, n = !1, r = 1) {
 		let o = i.get(`${e},${t}`);
-		if (!o || GH(o.terrain) || o.terrain === "forest") return;
-		let s = [o, ...a.neighbours(o).map((e) => i.get(WH(e))).filter((e) => !!e && !GH(e.terrain) && e.terrain !== "forest")];
+		if (!o || ZH(o.terrain) || o.terrain === "forest") return;
+		let s = [o, ...a.neighbours(o).map((e) => i.get(XH(e))).filter((e) => !!e && !ZH(e.terrain) && e.terrain !== "forest")];
 		[
 			"tent_pavilion",
 			"tent_small",
@@ -33002,7 +33107,7 @@ function KH(e, t, n = []) {
 	}
 	function _(e, t) {
 		if (!e.length) return;
-		e.forEach((e) => r.raisedCells.set(WH(e), 6)), m(e), h(e, t);
+		e.forEach((e) => r.raisedCells.set(XH(e), 6)), m(e), h(e, t);
 		let n = e[Math.floor(e.length / 2)], i = n.center.x + 2, a = n.center.z - Math.sqrt(3) * 2;
 		l("rock_foundation", i, a, .8, 0, { role: "rock" }, 2.4), l("fort_manor", i, a, .27, 0, {
 			heightOffset: 1.2,
@@ -33010,22 +33115,22 @@ function KH(e, t, n = []) {
 		}, 1.2), d("fort_tower_round", e.at(-1), .4, 1, { role: "fortification" });
 	}
 	function v(t, n) {
-		let o = t.hexes.map((e) => i.get(WH(e))).filter((e) => !!e);
-		if (o.length !== t.hexes.length || o.some((e) => GH(e.terrain))) return;
+		let o = t.hexes.map((e) => i.get(XH(e))).filter((e) => !!e);
+		if (o.length !== t.hexes.length || o.some((e) => ZH(e.terrain))) return;
 		let s = `${e ?? "battle"}-tvrz-${n}`;
 		m(o), h(o, s);
 		let c = r.walls.at(-1);
-		c.gateStyle = "posts", r.fortifications.add(c.id), CH(c).forEach((e, t) => r.earthworks.push({
+		c.gateStyle = "posts", r.fortifications.add(c.id), _B(c).forEach((e, t) => r.earthworks.push({
 			id: `${s}:ditch:${t}`,
 			...e,
 			height: 0,
 			ditch: !0,
-			ditchOffset: yH,
-			ditchWidth: bH,
-			ditchDepth: xH,
-			ditchFloor: SH
-		}));
-		let u = c.gates[0]?.centre, [d, f] = wH(o, a, u), p = (e) => u ? Math.round(Math.atan2(u.x - e.x, u.z - e.z) / (Math.PI / 3)) * Math.PI / 3 : 0;
+			ditchOffset: dB,
+			ditchWidth: fB,
+			ditchDepth: pB,
+			ditchFloor: mB
+		})), r.gateBridges.push(...vB(c));
+		let u = c.gates[0]?.centre, [d, f] = bB(o, a, u), p = (e) => u ? Math.round(Math.atan2(u.x - e.x, u.z - e.z) / (Math.PI / 3)) * Math.PI / 3 : 0;
 		d && l("fort_manor", d.x, d.z, .44, p(d), { role: "fortification" }, 1.6), f && l("well", f.x, f.z, .6, p(f), {}, .7);
 	}
 	if (n.filter((e) => e.kind === "fortification").forEach(v), o) {
@@ -33036,8 +33141,8 @@ function KH(e, t, n = []) {
 			e.length === 2 && (m(e), d("church_gothic", e[0], .32, 1.6), d("monastery_wing", e[1], .45, 1.7), d("well", e[0], .65, .65));
 		} else if (e === "sion_1437") _(t, "sion-core"), p([[9, 7], [9, 8]], ["plains", "road"]) && (u("barn", 9, 8, .4), u("field_shelter", 9, 7, .65, -2, 3.464)), g(11, 2), g(11, 11);
 		else if (e === "vysehrad_1420") {
-			t.forEach((e) => r.raisedCells.set(WH(e), 6)), h(t, "vysehrad");
-			for (let e of t.filter((e) => e.col === 7 && [5, 7].includes(e.row))) d(e.row === 5 ? "church_gothic" : "fort_manor", e, .32, 1.65), r.replacedCells.add(WH(e));
+			t.forEach((e) => r.raisedCells.set(XH(e), 6)), h(t, "vysehrad");
+			for (let e of t.filter((e) => e.col === 7 && [5, 7].includes(e.row))) d(e.row === 5 ? "church_gothic" : "fort_manor", e, .32, 1.65), r.replacedCells.add(XH(e));
 			g(16, 15);
 		} else [
 			"zatec_1421",
@@ -33116,7 +33221,7 @@ function KH(e, t, n = []) {
 			11,
 			12,
 			13
-		].includes(t.col) && t.row >= 4 && t.row <= 10 ? `sion-bank-${t.col - 10}` : `fieldwork-${WH(t)}`;
+		].includes(t.col) && t.row >= 4 && t.row <= 10 ? `sion-bank-${t.col - 10}` : `fieldwork-${XH(t)}`;
 		r.earthworks.push({
 			id: n,
 			ax: t.center.x + 2.2,
@@ -33128,31 +33233,31 @@ function KH(e, t, n = []) {
 		}), (t.col + t.row) % 3 == 0 && d("firing_platform", t, .7, 1), (t.col + t.row) % 5 == 0 && d("field_shelter", t, .62, 1.15);
 	}
 	if (e !== "sudomere_1420") {
-		let n = e ? HH(e) : void 0;
+		let n = e ? JH(e) : void 0;
 		if (n && e) {
-			let i = PH(e, t, a, s.map((e) => ({
+			let i = BH(e, t, a, s.map((e) => ({
 				...e,
 				entrance: r.placements.some((t) => t.model === "fort_gatehouse" && t.x === e.x && t.z === e.z) || r.walls.some((t) => t.gates.some((t) => t.centre.x === e.x && t.centre.z === e.z))
 			})), n);
 			r.settlement = i, i.cells.forEach((e) => r.replacedCells.add(e));
 			for (let e of i.placements) l(e.model, e.x, e.z, e.scale, e.rotation, e);
 		}
-		for (let e of t) if (!r.replacedCells.has(WH(e)) && (e.terrain === "town" ? (d([
+		for (let e of t) if (!r.replacedCells.has(XH(e)) && (e.terrain === "town" ? (d([
 			"house_timber",
 			"house_plaster",
 			"townhouse"
-		][(e.col * 7 + e.row) % 3], e, .48, 1.35), (e.col + e.row) % 7 == 0 && d("well", e, .55, .6), (e.col + e.row) % 5 == 0 && d("fence_gate", e, .46, 1.3), r.replacedCells.add(WH(e))) : e.terrain === "church" ? (d("church", e, .48, 1.7), r.replacedCells.add(WH(e))) : e.terrain === "forest" && (e.col * 3 + e.row) % 11 == 0 && d("bank_rocks", e, .7, .7), e.terrain === "water")) {
-			let t = a.neighbours(e).map((e) => i.get(WH(e))).filter((e) => !!e && !GH(e.terrain));
+		][(e.col * 7 + e.row) % 3], e, .48, 1.35), (e.col + e.row) % 7 == 0 && d("well", e, .55, .6), (e.col + e.row) % 5 == 0 && d("fence_gate", e, .46, 1.3), r.replacedCells.add(XH(e))) : e.terrain === "church" ? (d("church", e, .48, 1.7), r.replacedCells.add(XH(e))) : e.terrain === "forest" && (e.col * 3 + e.row) % 11 == 0 && d("bank_rocks", e, .7, .7), e.terrain === "water")) {
+			let t = a.neighbours(e).map((e) => i.get(XH(e))).filter((e) => !!e && !ZH(e.terrain));
 			if (t.length && (e.col + e.row) % 2 == 0) {
 				let n = t[0], i = e.center.x * .42 + n.center.x * .58, a = e.center.z * .42 + n.center.z * .58;
 				l(r.winter ? "bank_rocks" : "reeds", i, a, r.winter ? .7 : .85, 0, {}, .6);
 			}
 		}
-		for (let e of f((e) => ["town", "church"].includes(e.terrain) && !r.settlement?.cells.has(WH(e))).filter((e, t) => t % 9 == 0)) d("shed", e, .48, .95), d("haystack", e, .65, .8);
+		for (let e of f((e) => ["town", "church"].includes(e.terrain) && !r.settlement?.cells.has(XH(e))).filter((e, t) => t % 9 == 0)) d("shed", e, .48, .95), d("haystack", e, .65, .8);
 	}
 	return r;
 }
-function qH(e, t, n) {
+function $H(e, t, n) {
 	let r = 0, i = 0;
 	for (let a of n) {
 		let n = a.bx - a.ax, o = a.bz - a.az, s = Math.hypot(n, o);
@@ -33169,7 +33274,7 @@ function qH(e, t, n) {
 	}
 	return r + i;
 }
-function JH(e, t, n) {
+function eU(e, t, n) {
 	if (!n) return 0;
 	let r = Math.abs(e - n.x), i = Math.abs(t - n.z);
 	if (r > 2 || i > 8.5) return 0;
@@ -33178,7 +33283,7 @@ function JH(e, t, n) {
 }
 //#endregion
 //#region src/water-geometry.ts
-function YH(e, t) {
+function tU(e, t) {
 	let n = [];
 	for (let r = 0; r < e.length; r++) {
 		let i = e[r], a = e[(r + 1) % e.length], o = t(i), s = t(a), c = o <= 1e-9, l = s <= 1e-9;
@@ -33189,7 +33294,7 @@ function YH(e, t) {
 	}
 	return n;
 }
-function XH(e) {
+function nU(e) {
 	let t = [];
 	for (let n = 1; n < e.length - 1; n++) {
 		let r = e[0], i = e[n], a = e[n + 1];
@@ -33199,7 +33304,7 @@ function XH(e) {
 }
 //#endregion
 //#region src/generated-terrain.ts
-var ZH = new j(.62, .66, .72), QH = {
+var rU = new j(.62, .66, .72), iU = {
 	plains: 14673587,
 	forest: 11781775,
 	hills: 13618840,
@@ -33217,11 +33322,11 @@ var ZH = new j(.62, .66, .72), QH = {
 	fields: 14533757,
 	farmland: 14533757,
 	cropland: 14533757
-}, $H = new j(14869980), eU = /* @__PURE__ */ new Set([
+}, aU = new j(14869980), oU = /* @__PURE__ */ new Set([
 	"mud",
 	"swamp",
 	"marsh"
-]), tU = .24, nU = .07, rU = new j(16769954), iU = new j(13885102), aU = new j(), oU = /* @__PURE__ */ new Set([
+]), sU = .24, cU = .07, lU = new j(16769954), uU = new j(13885102), dU = new j(), fU = /* @__PURE__ */ new Set([
 	"plains",
 	"hills",
 	"hill",
@@ -33230,7 +33335,7 @@ var ZH = new j(.62, .66, .72), QH = {
 	"slope",
 	"steep_slope",
 	"forest"
-]), sU = class {
+]), pU = class {
 	group = new Qn();
 	interactiveMeshes = [];
 	field;
@@ -33239,6 +33344,7 @@ var ZH = new j(.62, .66, .72), QH = {
 	topography;
 	shadesRememberedHexes = !0;
 	environmentPlan;
+	moatBridges = [];
 	bridgeBaseHeight = 0;
 	cityLoops;
 	yardLoops;
@@ -33261,7 +33367,7 @@ var ZH = new j(.62, .66, .72), QH = {
 	}
 	constructor(e, t) {
 		let n = e.cols ?? Math.max(...e.tiles.map((e) => e.col)) + 1, r = e.rows ?? Math.max(...e.tiles.map((e) => e.row)) + 1;
-		this.layout = new IB(n, r), this.field = pV({
+		this.layout = new JB(n, r), this.field = TV({
 			cols: n,
 			rows: r,
 			tiles: e.tiles,
@@ -33270,7 +33376,7 @@ var ZH = new j(.62, .66, .72), QH = {
 			hexRadius: this.layout.radius,
 			coreCoverage: .76,
 			boundaryNoise: .75
-		}), this.environmentPlan = KH(e.scenario, this.field.tiles, e.features);
+		}), this.environmentPlan = QH(e.scenario, this.field.tiles, e.features);
 		let i = (e) => e.flatMap((e) => e.loops.map((e) => ({
 			points: e.points.map((e) => [e.x, e.z]),
 			minX: Math.min(...e.points.map((e) => e.x)),
@@ -33282,14 +33388,30 @@ var ZH = new j(.62, .66, .72), QH = {
 		let a = new Set(this.environmentPlan.walls.flatMap((e) => e.enclosedCells));
 		this.cityCells = this.field.tiles.filter((e) => a.has(`${e.col},${e.row}`) && ["town", "church"].includes(e.terrain));
 		for (let e of this.environmentPlan.settlement?.issues ?? []) console.warn(`[Hussite 3D] ${e}`);
-		if (this.topography = new vH(this.field, this.environmentPlan.raisedCells), this.environmentPlan.bridge) {
+		if (this.topography = new AH(this.field, this.environmentPlan.raisedCells), this.environmentPlan.bridge) {
 			let { x: e, z: t } = this.environmentPlan.bridge;
 			this.bridgeBaseHeight = this.topography.elevationAt(e, t) + this.field.heightInputAt(e, t).variation * .24;
 		}
-		this.bounds = this.layout.bounds(), this.group.name = `Generated ${e.scenario ?? "battle"} landscape`, this.createSurface(t), this.createPlinth(), this.createPuddles();
+		this.bounds = this.layout.bounds(), this.group.name = `Generated ${e.scenario ?? "battle"} landscape`, this.createSurface(t), this.createPlinth(), this.createPuddles(), this.moatBridges = this.environmentPlan.gateBridges.map((e) => {
+			let t = (t) => Math.max(...[
+				-1,
+				-.5,
+				0,
+				.5,
+				1
+			].map((n) => {
+				let r = n * e.halfWidth;
+				return this.renderedHeightAt(e.x + e.dx * t - e.dz * r, e.z + e.dz * t + e.dx * r);
+			})) + hB;
+			return {
+				...e,
+				y0: t(e.from),
+				y1: t(e.to)
+			};
+		});
 	}
 	createPuddles() {
-		let e = this.field.tiles.filter((e) => eU.has(e.terrain.toLowerCase()) && !this.environmentPlan.replacedCells.has(`${e.col},${e.row}`));
+		let e = this.field.tiles.filter((e) => oU.has(e.terrain.toLowerCase()) && !this.environmentPlan.replacedCells.has(`${e.col},${e.row}`));
 		if (!e.length) return;
 		let t = this.gridWidth, n = this.gridHeight, r = this.layout.radius + 1.5, i = (t, n) => e.some((e) => Math.abs(t - e.center.x) < r && Math.abs(n - e.center.z) < r), a = new Float32Array(t * n);
 		for (let e = 0; e < t * n; e += 1) {
@@ -33297,11 +33419,11 @@ var ZH = new j(.62, .66, .72), QH = {
 			a[e] = i(t, n) ? this.puddleDip(t, n) : 0;
 		}
 		let o = [], s = (e) => {
-			o.push(this.basePositions[e * 3], this.basePositions[e * 3 + 1] + a[e] - nU, this.basePositions[e * 3 + 2]);
+			o.push(this.basePositions[e * 3], this.basePositions[e * 3 + 1] + a[e] - cU, this.basePositions[e * 3 + 2]);
 		};
 		for (let e = 0; e < n - 1; e += 1) for (let n = 0; n < t - 1; n += 1) {
 			let r = e * t + n, i = r + 1, o = r + t, c = o + 1;
-			Math.max(a[r], a[i], a[o], a[c]) <= nU || ((n + e) % 2 == 0 ? [
+			Math.max(a[r], a[i], a[o], a[c]) <= cU || ((n + e) % 2 == 0 ? [
 				r,
 				o,
 				i,
@@ -33320,12 +33442,12 @@ var ZH = new j(.62, .66, .72), QH = {
 		if (!o.length) return;
 		let c = new ai();
 		c.setAttribute("position", new M(o, 3)), c.computeVertexNormals();
-		let l = new qi(c, tH(this.environmentPlan.winter));
+		let l = new qi(c, pH(this.environmentPlan.winter));
 		l.name = "Wetland puddles", l.receiveShadow = !0, l.renderOrder = 2, this.group.add(l);
 	}
 	heightAt(e, t) {
-		let n = this.field.heightInputAt(e, t), r = this.field.classify(e, t), i = this.topography.elevationAt(e, t), a = qH(e, t, this.environmentPlan.earthworks), o = this.field.weightsAt(e, t), s = this.insideCity(e, t), c = this.surfaceWeightsAt(e, t, o, s);
-		if (s && Object.entries(o).some(([e, t]) => sV(e) && t > 0)) {
+		let n = this.field.heightInputAt(e, t), r = this.field.classify(e, t), i = this.topography.elevationAt(e, t), a = $H(e, t, this.environmentPlan.earthworks), o = this.field.weightsAt(e, t), s = this.insideCity(e, t), c = this.surfaceWeightsAt(e, t, o, s);
+		if (s && Object.entries(o).some(([e, t]) => yV(e) && t > 0)) {
 			let n, r = Infinity;
 			for (let i of this.cityCells) {
 				let a = (e - i.center.x) ** 2 + (t - i.center.z) ** 2;
@@ -33337,19 +33459,19 @@ var ZH = new j(.62, .66, .72), QH = {
 			"water",
 			"river",
 			"lake"
-		].includes(t.toLowerCase()) ? n : 0), 0), u = Math.max(0, ...Object.entries(c).filter(([e]) => !sV(e)).map(([, e]) => e));
+		].includes(t.toLowerCase()) ? n : 0), 0), u = Math.max(0, ...Object.entries(c).filter(([e]) => !yV(e)).map(([, e]) => e));
 		if (l > 0 && l >= u) return -.7;
 		let d = r === "road" || r === "road2" || r === "dam", f = d ? .24 : (.42 + n.roughness * .34) * (1 - n.wetness * .45), p = D.smoothstep(Math.max(l, d || s ? 0 : this.field.waterInfluenceAt(e, t)), 0, .5), m = D.lerp(i + n.variation * f, -.7, p) + a - (s ? 0 : this.puddleDip(e, t, c)), h = this.environmentPlan.bridge;
 		if (!h) return m;
-		let g = Math.abs(e - h.x), _ = Math.abs(t - h.z), v = (1 - D.smoothstep(g, 1.35, 2.4)) * (1 - D.smoothstep(_, 7, 10)), y = this.bridgeBaseHeight + JH(h.x, t, h);
+		let g = Math.abs(e - h.x), _ = Math.abs(t - h.z), v = (1 - D.smoothstep(g, 1.35, 2.4)) * (1 - D.smoothstep(_, 7, 10)), y = this.bridgeBaseHeight + eU(h.x, t, h);
 		return D.lerp(m, y, v);
 	}
 	puddleDip(e, t, n = this.field.weightsAt(e, t)) {
 		let r = 0;
-		for (let [e, t] of Object.entries(n)) eU.has(e.toLowerCase()) && (r += t);
+		for (let [e, t] of Object.entries(n)) oU.has(e.toLowerCase()) && (r += t);
 		if (r <= 0) return 0;
-		let i = Math.abs(qH(e, t, this.environmentPlan.earthworks));
-		return i >= .06 ? 0 : tU * D.smoothstep(rV(this.field.seed ^ 1541459225, e / 2.3, t / 2.3, 2), .24, .55) * D.smoothstep(r, .35, .85) * (1 - i / .06);
+		let i = Math.abs($H(e, t, this.environmentPlan.earthworks));
+		return i >= .06 ? 0 : sU * D.smoothstep(hV(this.field.seed ^ 1541459225, e / 2.3, t / 2.3, 2), .24, .55) * D.smoothstep(r, .35, .85) * (1 - i / .06);
 	}
 	insideCity(e, t) {
 		return this.cityLoops.some((n) => e >= n.minX && e <= n.maxX && t >= n.minZ && t <= n.maxZ && Rz(e, t, n.points));
@@ -33358,7 +33480,7 @@ var ZH = new j(.62, .66, .72), QH = {
 		if (!r) return n;
 		if (this.yardLoops.some((n) => e >= n.minX && e <= n.maxX && t >= n.minZ && t <= n.maxZ && Rz(e, t, n.points))) return { town: 1 };
 		let i = { ...n }, a = 0;
-		for (let e of Object.keys(i)) sV(e) && (a += i[e], i[e] = 0);
+		for (let e of Object.keys(i)) yV(e) && (a += i[e], i[e] = 0);
 		return a > 0 && (i.town = (i.town ?? 0) + a), i;
 	}
 	setAnisotropy(e) {
@@ -33378,7 +33500,7 @@ var ZH = new j(.62, .66, .72), QH = {
 			else if (u === 1) {
 				o.setRGB(r, i, c);
 				let e = o.r * .3 + o.g * .59 + o.b * .11;
-				o.lerp(s.copy(ZH).multiplyScalar(e * 1.6), .72).multiplyScalar(.74), r = o.r, i = o.g, c = o.b;
+				o.lerp(s.copy(rU).multiplyScalar(e * 1.6), .72).multiplyScalar(.74), r = o.r, i = o.g, c = o.b;
 			}
 			n.setXYZ(e, r, i, c);
 		}
@@ -33455,16 +33577,20 @@ var ZH = new j(.62, .66, .72), QH = {
 			if (!(t.every((e) => e[0] < n.x - this.layout.radius) || t.every((e) => e[0] > n.x + this.layout.radius) || t.every((e) => e[2] < n.z - r) || t.every((e) => e[2] > n.z + r))) {
 				for (let e = 0; e < 6 && t.length; e++) {
 					let i = (e + .5) * Math.PI / 3;
-					t = YH(t, (e) => (e[0] - n.x) * Math.cos(i) + (e[2] - n.z) * Math.sin(i) - r);
+					t = tU(t, (e) => (e[0] - n.x) * Math.cos(i) + (e[2] - n.z) * Math.sin(i) - r);
 				}
-				i.push(...XH(t));
+				i.push(...nU(t));
 			}
 		}
 		return i;
 	}
 	renderedHeightAt(e, t) {
-		let n = this.surfaceSampleAt(e, t);
-		return n ? n.vertices.reduce((e, t, r) => e + this.basePositions[t * 3 + 1] * n.barycentric[r], 0) : this.heightAt(e, t);
+		let n = this.surfaceSampleAt(e, t), r = n ? n.vertices.reduce((e, t, r) => e + this.basePositions[t * 3 + 1] * n.barycentric[r], 0) : this.heightAt(e, t);
+		for (let n of this.moatBridges) {
+			let i = yB(n, e, t);
+			if (i !== null) return Math.max(r, i);
+		}
+		return r;
 	}
 	renderedTerrainAt(e, t) {
 		let n = this.surfaceSampleAt(e, t);
@@ -33472,7 +33598,7 @@ var ZH = new j(.62, .66, .72), QH = {
 		let { vertices: r, barycentric: i } = n, a = null, o = -Infinity, s = 0, c = null, l = 0;
 		for (let e of this.field.terrainTypes) {
 			let t = this.visualWeights.get(e), n = t[r[0]] * i[0] + t[r[1]] * i[1] + t[r[2]] * i[2];
-			if (sV(e)) {
+			if (yV(e)) {
 				s += n, n > l && (l = n, c = e);
 				continue;
 			}
@@ -33491,13 +33617,13 @@ var ZH = new j(.62, .66, .72), QH = {
 		this.surfaceTextures.length = 0;
 	}
 	grasslandTint(e, t, n, r) {
-		let i = this.field.seed ^ 1374496523, a = D.smoothstep(rV(i, e / 21, t / 19, 3), -.32, .32), o = D.clamp(a * .8 + D.smoothstep(n, .5, 5) * .35 - D.smoothstep(-n, .05, .5) * .3, 0, 1), s = aU.copy(iU).lerp(rU, o), c = (r.r + r.g + r.b) / (s.r + s.g + s.b || 1);
+		let i = this.field.seed ^ 1374496523, a = D.smoothstep(hV(i, e / 21, t / 19, 3), -.32, .32), o = D.clamp(a * .8 + D.smoothstep(n, .5, 5) * .35 - D.smoothstep(-n, .05, .5) * .3, 0, 1), s = dU.copy(uU).lerp(lU, o), c = (r.r + r.g + r.b) / (s.r + s.g + s.b || 1);
 		return s.multiplyScalar(D.lerp(1, c, .6));
 	}
 	groundSplat(e) {
 		let t = e.length / 3, n = new Float32Array(t * 3), r = this.field.seed ^ 528734635, i = this.field.terrainTypes.map((e) => ({
 			weights: this.visualWeights.get(e),
-			channel: BV(IV(e)),
+			channel: QV(JV(e)),
 			marsh: ["swamp", "marsh"].includes(e.toLowerCase())
 		}));
 		for (let a = 0; a < t; a += 1) {
@@ -33509,7 +33635,7 @@ var ZH = new j(.62, .66, .72), QH = {
 			for (let { weights: e, channel: n, marsh: c } of i) {
 				let i = e[a] ?? 0;
 				if (!(i <= 0)) if (c) {
-					let e = D.smoothstep(rV(r + 7, t / 5.5, o / 5.5, 3), -.05, .4) * .75;
+					let e = D.smoothstep(hV(r + 7, t / 5.5, o / 5.5, 3), -.05, .4) * .75;
 					s[0] += i * (1 - e), s[1] += i * e;
 				} else s[n] += i;
 			}
@@ -33519,7 +33645,7 @@ var ZH = new j(.62, .66, .72), QH = {
 				continue;
 			}
 			for (let e = 0; e < 3; e += 1) {
-				let n = s[e] / c, i = rV(r + e * 101, t / 2.6, o / 2.6, 3) * .55 * 4 * n * (1 - n);
+				let n = s[e] / c, i = hV(r + e * 101, t / 2.6, o / 2.6, 3) * .55 * 4 * n * (1 - n);
 				s[e] = Math.max(0, n + i) ** 1.6;
 			}
 			c = s[0] + s[1] + s[2] || 1;
@@ -33544,21 +33670,21 @@ var ZH = new j(.62, .66, .72), QH = {
 					let i = (n - r.center.x) ** 2 + (u - r.center.z) ** 2;
 					i < t && (t = i, e = r);
 				}
-				if (f = { [e.terrain]: 1 }, this.field.roads.active && LB(e.terrain)) {
-					let t = this.field.roads.sample(n, u), r = this.field.tiles.filter((e) => !LB(e.terrain)).sort((e, t) => Math.hypot(n - e.center.x, u - e.center.z) - Math.hypot(n - t.center.x, u - t.center.z))[0], i = t?.weight ?? 0;
+				if (f = { [e.terrain]: 1 }, this.field.roads.active && YB(e.terrain)) {
+					let t = this.field.roads.sample(n, u), r = this.field.tiles.filter((e) => !YB(e.terrain)).sort((e, t) => Math.hypot(n - e.center.x, u - e.center.z) - Math.hypot(n - t.center.x, u - t.center.z))[0], i = t?.weight ?? 0;
 					f = {
 						[r.terrain]: 1 - i,
 						[t?.terrain ?? e.terrain]: i
 					};
 				}
-				sV(e.terrain) && (a[a.length - 2] = -.7);
+				yV(e.terrain) && (a[a.length - 2] = -.7);
 			}
 			let p = e * r + t;
 			for (let e of this.field.terrainTypes) this.visualWeights.get(e)[p] = f[e] ?? 0;
 			c.set(0);
 			let m = 0;
 			for (let [e, t] of Object.entries(f)) {
-				if (l.setHex(QH[e.toLowerCase()] ?? 9276266), this.environmentPlan.frozenRiver && sV(e) && l.setHex(12243409), this.environmentPlan.winter && ![
+				if (l.setHex(iU[e.toLowerCase()] ?? 9276266), this.environmentPlan.frozenRiver && yV(e) && l.setHex(12243409), this.environmentPlan.winter && ![
 					"water",
 					"mud",
 					"swamp",
@@ -33567,16 +33693,16 @@ var ZH = new j(.62, .66, .72), QH = {
 					"dam",
 					"town",
 					"church"
-				].includes(e) && l.lerp($H, .79), !this.environmentPlan.winter && oU.has(e.toLowerCase()) && l.copy(this.grasslandTint(n, u, a[a.length - 2], l)), oV(e)) {
+				].includes(e) && l.lerp(aU, .79), !this.environmentPlan.winter && fU.has(e.toLowerCase()) && l.copy(this.grasslandTint(n, u, a[a.length - 2], l)), vV(e)) {
 					let e = .86 + .14 * (.5 + .5 * Math.sin((n + u * .18) * 2.3));
 					l.multiplyScalar(e);
 				}
 				c.r += l.r * t, c.g += l.g * t, c.b += l.b * t, m += t;
 			}
-			m === 0 && c.setHex(QH.plains);
+			m === 0 && c.setHex(iU.plains);
 			let h = this.environmentPlan.settlement?.streets;
 			if (h?.length && (f.town ?? 0) > 0) {
-				let e = NH({
+				let e = zH({
 					x: n,
 					z: u
 				}, h);
@@ -33585,7 +33711,7 @@ var ZH = new j(.62, .66, .72), QH = {
 					l.setHex(this.environmentPlan.winter ? 10787462 : 12362115), c.lerp(l, r * (f.town ?? 0) * .8);
 				}
 			}
-			let g = D.smoothstep(this.puddleDip(n, u, f), nU * .3, nU * 1.4), _ = Object.entries(f).reduce((e, [t, n]) => e + (sV(t) ? n : 0), 0) > .5 ? 0 : D.smoothstep(this.field.waterInfluenceAt(n, u), .02, .3);
+			let g = D.smoothstep(this.puddleDip(n, u, f), cU * .3, cU * 1.4), _ = Object.entries(f).reduce((e, [t, n]) => e + (yV(t) ? n : 0), 0) > .5 ? 0 : D.smoothstep(this.field.waterInfluenceAt(n, u), .02, .3);
 			c.multiplyScalar(1 - .38 * g - .26 * _);
 			let v = .96 + .04 * Math.sin(n * .19 + u * .13);
 			o.push(c.r * v, c.g * v, c.b * v);
@@ -33598,7 +33724,7 @@ var ZH = new j(.62, .66, .72), QH = {
 			[],
 			[],
 			[]
-		], d = this.field.terrainTypes.filter(sV), f = this.field.terrainTypes.filter((e) => !sV(e)), p = this.field.terrainTypes.filter(LB), m = f.filter((e) => !LB(e)), h = (e) => p.reduce((t, n) => t + this.visualWeights.get(n)[e], 0), g = (e) => d.reduce((t, n) => t + this.visualWeights.get(n)[e], 0), _ = (e, t, n = !1) => (n ? h(e) : g(e)) - this.visualWeights.get(t)[e], v = /* @__PURE__ */ new Map(), y = (e, t, n, r = !1) => {
+		], d = this.field.terrainTypes.filter(yV), f = this.field.terrainTypes.filter((e) => !yV(e)), p = this.field.terrainTypes.filter(YB), m = f.filter((e) => !YB(e)), h = (e) => p.reduce((t, n) => t + this.visualWeights.get(n)[e], 0), g = (e) => d.reduce((t, n) => t + this.visualWeights.get(n)[e], 0), _ = (e, t, n = !1) => (n ? h(e) : g(e)) - this.visualWeights.get(t)[e], v = /* @__PURE__ */ new Map(), y = (e, t, n, r = !1) => {
 			let i = `${r}:${n}:${[e, t].sort((e, t) => e - t).join(",")}`, c = v.get(i);
 			if (c !== void 0) return c;
 			let l = _(e, n, r) / (_(e, n, r) - _(t, n, r)), u = a.length / 3, d = D.lerp(a[e * 3], a[t * 3], l), f = D.lerp(a[e * 3 + 2], a[t * 3 + 2], l);
@@ -33617,7 +33743,7 @@ var ZH = new j(.62, .66, .72), QH = {
 			return i;
 		}, x = (e) => {
 			let t = [...f].sort((t, n) => e.reduce((e, r) => e + this.visualWeights.get(n)[r] - this.visualWeights.get(t)[r], 0))[0] ?? "plains";
-			return t === "town" && this.environmentPlan.settlement ? 6 : LV(t);
+			return t === "town" && this.environmentPlan.settlement ? 6 : YV(t);
 		}, S = (e) => {
 			if (p.length && e.every((e) => h(e) > 0 && m.every((t) => _(e, t, !0) >= 0))) return u[5].push(...e), [e];
 			if (!p.length || e.every((e) => h(e) <= 1e-12) || m.some((t) => e.every((e) => _(e, t, !0) < 0))) return u[x(e)].push(...e), [e];
@@ -33680,14 +33806,14 @@ var ZH = new j(.62, .66, .72), QH = {
 			}
 		}
 		let ee = u.flat(), te = new ai();
-		te.setAttribute("position", new M(a, 3)), te.setAttribute("color", new M(o, 3)), te.setAttribute(RV, new M(this.groundSplat(a), 3)), te.setAttribute(zV, new M(gU(a, u), 1)), te.setAttribute("uv", new M(s, 2)), te.setIndex(ee);
+		te.setAttribute("position", new M(a, 3)), te.setAttribute("color", new M(o, 3)), te.setAttribute(XV, new M(this.groundSplat(a), 3)), te.setAttribute(ZV, new M(SU(a, u), 1)), te.setAttribute("uv", new M(s, 2)), te.setIndex(ee);
 		let ne = u.slice(0, 4).reduce((e, t) => e + t.length, 0);
 		ne > 0 && te.addGroup(0, ne, 0);
 		let re = ne;
 		u.forEach((e, t) => {
 			t < 4 || (e.length > 0 && te.addGroup(re, e.length, t), re += e.length);
 		}), te.computeVertexNormals();
-		let ie = JV(e, this.environmentPlan.winter);
+		let ie = oH(e, this.environmentPlan.winter);
 		this.soilMaterial = ie.soil, this.environmentPlan.settlement && ie.materials.push(new Ps({
 			name: "Settlement packed ground",
 			color: 16777215,
@@ -33725,35 +33851,35 @@ var ZH = new j(.62, .66, .72), QH = {
 		}
 		let u = [], d = [], f = [], p = [];
 		for (let e of s) {
-			let t = e.top - fU, n = cU.filter((e) => e < t - .3), r = n.at(-1), i = lU - n.length;
+			let t = e.top - vU, n = mU.filter((e) => e < t - .3), r = n.at(-1), i = hU - n.length;
 			for (let e = 1; e <= i; e += 1) n.push(r + (t - r) * e / i);
 			for (let [t, r] of n.entries()) {
-				let n = t === 0 || t === lU - 1 ? 0 : uU(o, e.along, r);
+				let n = t === 0 || t === hU - 1 ? 0 : gU(o, e.along, r);
 				u.push(e.x + e.outX * n, e.top - r, e.z + e.outZ * n), f.push(e.top), p.push(e.water);
 			}
 		}
-		for (let e = 0; e < s.length - 1; e += 1) for (let t = 0; t < lU - 1; t += 1) {
-			let n = e * lU + t, r = n + lU;
+		for (let e = 0; e < s.length - 1; e += 1) for (let t = 0; t < hU - 1; t += 1) {
+			let n = e * hU + t, r = n + hU;
 			d.push(n, n + 1, r, r, n + 1, r + 1);
 		}
 		let m = new ai();
-		m.setAttribute("position", new M(u, 3)), m.setAttribute(YV, new M(f, 1)), m.setAttribute(XV, new M(p, 1)), m.setIndex(d), m.computeVertexNormals();
+		m.setAttribute("position", new M(u, 3)), m.setAttribute(sH, new M(f, 1)), m.setAttribute(cH, new M(p, 1)), m.setIndex(d), m.computeVertexNormals();
 		let h = new qi(m, this.soilMaterial);
 		h.name = "Topography-following layered battlefield soil plinth", h.receiveShadow = !0;
-		let g = t - e + pU * 2, _ = r - n + pU * 2, v = .22, y = new zo();
+		let g = t - e + yU * 2, _ = r - n + yU * 2, v = .22, y = new zo();
 		y.moveTo(-g / 2, -_ / 2), y.lineTo(g / 2, -_ / 2), y.lineTo(g / 2, _ / 2), y.lineTo(-g / 2, _ / 2);
 		let b = new Cs(y, {
-			depth: mU - v,
+			depth: bU - v,
 			bevelEnabled: !0,
 			bevelThickness: v,
 			bevelSize: v,
 			bevelSegments: 1
 		});
-		b.rotateX(-Math.PI / 2), b.translate((e + t) / 2, fU - mU, (n + r) / 2);
-		let x = new qi(b, eH());
+		b.rotateX(-Math.PI / 2), b.translate((e + t) / 2, vU - bU, (n + r) / 2);
+		let x = new qi(b, fH());
 		x.name = "Battlefield plinth base", x.castShadow = x.receiveShadow = !0, this.group.add(h, x);
 	}
-}, cU = [
+}, mU = [
 	0,
 	.14,
 	.45,
@@ -33763,21 +33889,21 @@ var ZH = new j(.62, .66, .72), QH = {
 	2.7,
 	3.35,
 	3.8
-], lU = 16;
-function uU(e, t, n) {
-	if (n < .3) return -.12 + rV(e, t / 1.1, n, 2) * .03;
-	let r = rV(e + 1, t / 2.2, n / 1.5, 2) * .03 - .02, i = dU(e + 2, t / 1.7, n / 1.2) * .05;
+], hU = 16;
+function gU(e, t, n) {
+	if (n < .3) return -.12 + hV(e, t / 1.1, n, 2) * .03;
+	let r = hV(e + 1, t / 2.2, n / 1.5, 2) * .03 - .02, i = _U(e + 2, t / 1.7, n / 1.2) * .05;
 	return D.lerp(r, i, D.smoothstep(n, 3.3, 3.9));
 }
-function dU(e, t, n) {
+function _U(e, t, n) {
 	let r = (t, n) => {
 		let r = Math.imul(t, 668265261) ^ Math.imul(n, 374761393) ^ e;
 		return r = Math.imul(r ^ r >>> 15, 739982445), ((r ^ r >>> 13) >>> 0) / 4294967295 * 2 - 1;
 	}, i = Math.floor(t), a = Math.floor(n), o = t - i, s = n - a, c = D.lerp(r(i, a), r(i + 1, a), o), l = D.lerp(r(i, a + 1), r(i + 1, a + 1), o);
 	return D.lerp(c, l, s);
 }
-var fU = -5.9, pU = .9, mU = 1.1, hU = 6;
-function gU(e, t) {
+var vU = -5.9, yU = .9, bU = 1.1, xU = 6;
+function SU(e, t) {
 	let n = e.length / 3, r = new Float32Array(n), i = new Set(t[4]);
 	if (!i.size) return r;
 	let a = /* @__PURE__ */ new Set();
@@ -33790,10 +33916,10 @@ function gU(e, t) {
 		let n = `${Math.floor(e[t * 3] / 2)},${Math.floor(e[t * 3 + 2] / 2)}`, r = o.get(n) ?? [];
 		r.push(t), o.set(n, r);
 	}
-	let s = Math.ceil(hU / 2);
+	let s = Math.ceil(xU / 2);
 	for (let t of i) {
 		if (a.has(t)) continue;
-		let n = e[t * 3], i = e[t * 3 + 2], c = Math.floor(n / 2), l = Math.floor(i / 2), u = hU;
+		let n = e[t * 3], i = e[t * 3 + 2], c = Math.floor(n / 2), l = Math.floor(i / 2), u = xU;
 		for (let t = -3; t <= s; t += 1) for (let r = -3; r <= s; r += 1) for (let a of o.get(`${c + t},${l + r}`) ?? []) u = Math.min(u, Math.hypot(n - e[a * 3], i - e[a * 3 + 2]));
 		r[t] = u;
 	}
@@ -33801,7 +33927,7 @@ function gU(e, t) {
 }
 //#endregion
 //#region src/town-wall-routes.ts
-var _U = (e) => `${e.col},${e.row}`, vU = (e, t) => Math.hypot(e.x - t.x, e.z - t.z), yU = class {
+var CU = (e) => `${e.col},${e.row}`, wU = (e, t) => Math.hypot(e.x - t.x, e.z - t.z), TU = class {
 	cells;
 	walls;
 	edges = /* @__PURE__ */ new Map();
@@ -33809,9 +33935,9 @@ var _U = (e) => `${e.col},${e.row}`, vU = (e, t) => Math.hypot(e.x - t.x, e.z - 
 	layout;
 	frozen;
 	constructor(e, t, n, r = !1) {
-		this.layout = t, this.frozen = r, this.cells = new Map(e.map((e) => [_U(e), e])), this.walls = n.flatMap((e) => e.segments);
+		this.layout = t, this.frozen = r, this.cells = new Map(e.map((e) => [CU(e), e])), this.walls = n.flatMap((e) => e.segments);
 		for (let e of n.flatMap((e) => e.gates)) {
-			let t = vU(e.a, e.b), n = (e.b.x - e.a.x) / t, r = (e.b.z - e.a.z) / t;
+			let t = wU(e.a, e.b), n = (e.b.x - e.a.x) / t, r = (e.b.z - e.a.z) / t;
 			this.walls.push({
 				id: `${e.id}:left-pier`,
 				a: e.a,
@@ -33849,32 +33975,32 @@ var _U = (e) => `${e.col},${e.row}`, vU = (e, t) => Math.hypot(e.x - t.x, e.z - 
 		return !!e && (e.terrain !== "water" || this.frozen);
 	}
 	clear(e, t) {
-		let n = [_U(e), _U(t)].sort().join("|"), r = this.edges.get(n);
+		let n = [CU(e), CU(t)].sort().join("|"), r = this.edges.get(n);
 		return r === void 0 && (r = lB(e.center, t.center, this.walls), this.edges.set(n, r)), r;
 	}
 	route(e, t) {
-		let n = `${_U(e)}>${_U(t)}`;
+		let n = `${CU(e)}>${CU(t)}`;
 		if (this.paths.has(n)) return this.paths.get(n);
-		let r = this.cells.get(_U(e)), i = this.cells.get(_U(t));
+		let r = this.cells.get(CU(e)), i = this.cells.get(CU(t));
 		if (!this.passable(r) || !this.passable(i)) return null;
-		let a = /* @__PURE__ */ new Map([[_U(r), 0]]), o = /* @__PURE__ */ new Map(), s = [r], c = /* @__PURE__ */ new Set();
+		let a = /* @__PURE__ */ new Map([[CU(r), 0]]), o = /* @__PURE__ */ new Map(), s = [r], c = /* @__PURE__ */ new Set();
 		for (; s.length;) {
-			s.sort((e, t) => a.get(_U(e)) + vU(e.center, i.center) - (a.get(_U(t)) + vU(t.center, i.center)));
-			let e = s.shift(), t = _U(e);
+			s.sort((e, t) => a.get(CU(e)) + wU(e.center, i.center) - (a.get(CU(t)) + wU(t.center, i.center)));
+			let e = s.shift(), t = CU(e);
 			if (!c.has(t)) {
-				if (t === _U(i)) break;
+				if (t === CU(i)) break;
 				c.add(t);
 				for (let n of this.layout.neighbours(e)) {
-					let r = this.cells.get(_U(n));
+					let r = this.cells.get(CU(n));
 					if (!this.passable(r) || !this.clear(e, r)) continue;
-					let i = a.get(t) + vU(e.center, r.center), c = _U(r);
+					let i = a.get(t) + wU(e.center, r.center), c = CU(r);
 					i >= (a.get(c) ?? Infinity) || (a.set(c, i), o.set(c, t), s.push(r));
 				}
 			}
 		}
-		if (!a.has(_U(i))) return this.paths.set(n, null), null;
+		if (!a.has(CU(i))) return this.paths.set(n, null), null;
 		let l = [];
-		for (let e = _U(i); e; e = o.get(e)) l.unshift(this.cells.get(e).center);
+		for (let e = CU(i); e; e = o.get(e)) l.unshift(this.cells.get(e).center);
 		return this.paths.set(n, l), l;
 	}
 	position(e, t, n) {
@@ -33882,7 +34008,7 @@ var _U = (e) => `${e.col},${e.row}`, vU = (e, t) => Math.hypot(e.x - t.x, e.z - 
 		if (!r?.length) return null;
 		if (n <= 0) return r[0];
 		if (n >= 1) return r.at(-1);
-		let i = r.slice(1).map((e, t) => vU(r[t], e)), a = Math.max(0, Math.min(1, n)) * i.reduce((e, t) => e + t, 0);
+		let i = r.slice(1).map((e, t) => wU(r[t], e)), a = Math.max(0, Math.min(1, n)) * i.reduce((e, t) => e + t, 0);
 		for (let e = 0; e < i.length; e++) {
 			if (a <= i[e]) {
 				let t = a / (i[e] || 1), n = r[e], o = r[e + 1];
@@ -33895,8 +34021,8 @@ var _U = (e) => `${e.col},${e.row}`, vU = (e, t) => Math.hypot(e.x - t.x, e.z - 
 		}
 		return r.at(-1);
 	}
-}, bU = new k(-70, 50, 44), xU = new k(-64.2, 65.1, 40.6);
-function SU(e) {
+}, EU = new k(-70, 50, 44), DU = new k(-64.2, 65.1, 40.6);
+function OU(e) {
 	return {
 		hemisphereSky: new j(e.sky),
 		hemisphereGround: new j(e.ground),
@@ -33912,8 +34038,8 @@ function SU(e) {
 		fogDensity: e.density
 	};
 }
-var CU = {
-	day: SU({
+var kU = {
+	day: OU({
 		sky: 12111844,
 		ground: 10259038,
 		hemisphere: 1,
@@ -33923,7 +34049,7 @@ var CU = {
 			.56
 		],
 		sunIntensity: 2.45,
-		sunPosition: bU,
+		sunPosition: EU,
 		fill: .13,
 		background: 1.05,
 		environment: .2,
@@ -33931,7 +34057,7 @@ var CU = {
 		fog: 12895926,
 		density: .001
 	}),
-	evening: SU({
+	evening: OU({
 		sky: 13028304,
 		ground: 9074264,
 		hemisphere: 1,
@@ -33949,7 +34075,7 @@ var CU = {
 		fog: 13024168,
 		density: .0012
 	}),
-	dusk: SU({
+	dusk: OU({
 		sky: 10266300,
 		ground: 6181962,
 		hemisphere: .85,
@@ -33967,7 +34093,7 @@ var CU = {
 		fog: 9472144,
 		density: .0014
 	}),
-	night: SU({
+	night: OU({
 		sky: 10402269,
 		ground: 5858159,
 		hemisphere: .8,
@@ -33977,7 +34103,7 @@ var CU = {
 			1
 		],
 		sunIntensity: .72,
-		sunPosition: xU,
+		sunPosition: DU,
 		fill: .05,
 		background: .19,
 		environment: .12,
@@ -33985,8 +34111,8 @@ var CU = {
 		fog: 3427168,
 		density: .001
 	})
-}, wU = new j(13949654), TU = new j(9343126);
-function EU(e, t, n) {
+}, AU = new j(13949654), jU = new j(9343126);
+function MU(e, t, n) {
 	let r = n ? "snow" : "none";
 	return e === "sudomere_1420" ? {
 		time: t >= 6 ? "dusk" : "evening",
@@ -34002,15 +34128,15 @@ function EU(e, t, n) {
 		precipitation: r
 	};
 }
-function DU(e) {
-	let t = CU[e.time], n = OU(t, t, 0);
+function NU(e) {
+	let t = kU[e.time], n = PU(t, t, 0);
 	if (e.mist > 0) {
-		let t = e.time === "day" || e.time === "evening" ? wU : TU;
+		let t = e.time === "day" || e.time === "evening" ? AU : jU;
 		n.fogDensity += e.mist * .0028, n.fogColor.lerp(t, e.mist * .7), n.veilColor.lerp(t, e.mist * .8), n.backgroundIntensity *= 1 - e.mist * .45, n.sunIntensity *= 1 - e.mist * .3;
 	}
 	return n;
 }
-function OU(e, t, n) {
+function PU(e, t, n) {
 	let r = D.clamp(n, 0, 1), i = D.lerp;
 	return {
 		hemisphereSky: e.hemisphereSky.clone().lerp(t.hemisphereSky, r),
@@ -34027,7 +34153,7 @@ function OU(e, t, n) {
 		fogDensity: i(e.fogDensity, t.fogDensity, r)
 	};
 }
-var kU = class {
+var FU = class {
 	current;
 	from;
 	target;
@@ -34035,7 +34161,7 @@ var kU = class {
 	elapsed = 0;
 	duration;
 	constructor(e, t = 2600) {
-		this.current = this.from = this.target = DU(e), this.key = AU(e), this.elapsed = this.duration = t;
+		this.current = this.from = this.target = NU(e), this.key = IU(e), this.elapsed = this.duration = t;
 	}
 	get state() {
 		return this.current;
@@ -34044,23 +34170,23 @@ var kU = class {
 		return this.elapsed < this.duration;
 	}
 	setProfile(e, t = !1) {
-		let n = AU(e);
-		return n === this.key ? !1 : (this.key = n, this.from = this.current, this.target = DU(e), this.elapsed = t ? this.duration : 0, t && (this.current = this.target), !0);
+		let n = IU(e);
+		return n === this.key ? !1 : (this.key = n, this.from = this.current, this.target = NU(e), this.elapsed = t ? this.duration : 0, t && (this.current = this.target), !0);
 	}
 	advance(e) {
 		if (!this.settling) return !1;
 		this.elapsed = Math.min(this.duration, this.elapsed + Math.max(0, e));
 		let t = this.elapsed / this.duration;
-		return this.current = OU(this.from, this.target, t * t * (3 - 2 * t)), !0;
+		return this.current = PU(this.from, this.target, t * t * (3 - 2 * t)), !0;
 	}
 };
-function AU(e) {
+function IU(e) {
 	return `${e.time}:${e.mist.toFixed(2)}`;
 }
 //#endregion
 //#region src/lighting.ts
-var jU = 66;
-function MU(e) {
+var LU = 66;
+function RU(e) {
 	let t = new yc(12835301, 9735272, 1.15);
 	e.add(t);
 	let n = (e) => {
@@ -34075,7 +34201,7 @@ function MU(e) {
 			return r;
 		},
 		setNight(e) {
-			e !== c && (c = e, l.apply(CU[e ? "night" : "day"]));
+			e !== c && (c = e, l.apply(kU[e ? "night" : "day"]));
 		},
 		apply(e) {
 			t.color.copy(e.hemisphereSky), t.groundColor.copy(e.hemisphereGround), t.intensity = e.hemisphereIntensity, r.color.copy(e.sunColor), r.intensity = e.sunIntensity, r.position.equals(e.sunPosition) || (r.position.copy(e.sunPosition), o = !0), i.intensity = e.fillIntensity;
@@ -34089,17 +34215,17 @@ function MU(e) {
 			e ? o = !0 : a = !0;
 		},
 		updateShadows(e) {
-			return !a && !(o && e - s >= jU) ? o : (r.shadow.needsUpdate = !0, a = o = !1, s = e, !1);
+			return !a && !(o && e - s >= LU) ? o : (r.shadow.needsUpdate = !0, a = o = !1, s = e, !1);
 		}
 	};
-	return l.apply(CU.day), l;
+	return l.apply(kU.day), l;
 }
 //#endregion
 //#region src/overlays.ts
-function NU(e) {
+function zU(e) {
 	return `${e.col},${e.row}`;
 }
-function PU(e, t, n = !1, r = new IB(20, 12), i = 1, a = .055, o = 96, s = 16) {
+function BU(e, t, n = !1, r = new JB(20, 12), i = 1, a = .055, o = 96, s = 16) {
 	let c = r.center(e.col, e.row), l = [], u = [], d = o / 6, f = n ? s : 1;
 	for (let e = 0; e <= f; e += 1) {
 		let s = n ? r.radius * i * e / f : r.radius * i - e * a;
@@ -34122,20 +34248,20 @@ function PU(e, t, n = !1, r = new IB(20, 12), i = 1, a = .055, o = 96, s = 16) {
 	if (p.setAttribute("position", new M(l, 3)), n) {
 		let e = [];
 		for (let t = 0; t <= f; t += 1) {
-			let n = FU + (1 - FU) * D.smoothstep(t / f, .45, 1);
+			let n = VU + (1 - VU) * D.smoothstep(t / f, .45, 1);
 			for (let t = 0; t < o; t += 1) e.push(1, 1, 1, n);
 		}
 		p.setAttribute("color", new M(e, 4));
 	}
 	return p.setIndex(u), p.computeVertexNormals(), p;
 }
-var FU = .3, IU = .55, LU = 1400, RU = 4.5, zU = .3, BU = (e) => e;
-function VU(e, t, n) {
-	let r = PU(e, t, !0, n, 1.04, .055, 48, 8), i = r.getAttribute("position");
+var VU = .3, HU = .55, UU = 1400, WU = 4.5, GU = .3, KU = (e) => e;
+function qU(e, t, n) {
+	let r = BU(e, t, !0, n, 1.04, .055, 48, 8), i = r.getAttribute("position");
 	for (let e = 0; e < i.count; e += 1) i.setY(e, i.getY(e) + .51);
 	return i.needsUpdate = !0, r.computeVertexNormals(), r;
 }
-var HU = new j(), UU = class {
+var JU = new j(), YU = class {
 	group = new Qn();
 	rings = /* @__PURE__ */ new Map();
 	fills = /* @__PURE__ */ new Map();
@@ -34146,15 +34272,15 @@ var HU = new j(), UU = class {
 	gridColors;
 	gridRanges = /* @__PURE__ */ new Map();
 	gridWritten = /* @__PURE__ */ new Map();
-	gridFocus = BU(DR)(new O(Infinity, Infinity));
+	gridFocus = KU(DR)(new O(Infinity, Infinity));
 	gridVisible = !0;
 	hovered = null;
 	pulsing = [];
 	snapshot = null;
-	derived = WU(null);
+	derived = XU(null);
 	winter;
 	shadeRemembered;
-	constructor(e, t = new IB(20, 12)) {
+	constructor(e, t = new JB(20, 12)) {
 		this.winter = e.environmentPlan?.winter ?? !1, this.shadeRemembered = !e.shadesRememberedHexes, this.group.name = "Tactical overlays";
 		let n = [], r = [], i = [];
 		for (let a = 0; a < t.cols; a += 1) for (let o = 0; o < t.rows; o += 1) {
@@ -34169,7 +34295,7 @@ var HU = new j(), UU = class {
 				polygonOffsetUnits: -1,
 				toneMapped: !1,
 				fog: !0
-			}), c = new qi(PU({
+			}), c = new qi(BU({
 				col: a,
 				row: o
 			}, e, !1, t, 1, this.winter ? .09 : .055), s);
@@ -34183,12 +34309,12 @@ var HU = new j(), UU = class {
 			}), this.rings.set(`${a},${o}`, c), this.group.add(c);
 			let u = s.clone();
 			u.vertexColors = !0;
-			let d = new qi(PU({
+			let d = new qi(BU({
 				col: a,
 				row: o
 			}, e, !0, t), u);
 			d.renderOrder = 9, d.visible = !1, this.fills.set(`${a},${o}`, d), this.group.add(d);
-			let f = VU({
+			let f = qU({
 				col: a,
 				row: o
 			}, e, t), p = i.length / 3;
@@ -34221,8 +34347,8 @@ var HU = new j(), UU = class {
 			polygonOffsetUnits: -1,
 			toneMapped: !1,
 			fog: !0
-		}), n = BU(EL)("gridColor", "vec4"), r = uR.xz.distance(BU(MR)(this.gridFocus)), i = BU(xR)(e * 11, e * RU, r);
-		return t.colorNode = n.rgb, t.opacityNode = n.a.mul(BU(qL)(BU(IL)(zU), 1, i)), t.name = "Hex grid fading from the cursor", t;
+		}), n = KU(EL)("gridColor", "vec4"), r = uR.xz.distance(KU(MR)(this.gridFocus)), i = KU(xR)(e * 11, e * WU, r);
+		return t.colorNode = n.rgb, t.opacityNode = n.a.mul(KU(qL)(KU(IL)(GU), 1, i)), t.name = "Hex grid fading from the cursor", t;
 	}
 	setGridVisible(e) {
 		this.gridVisible = e, this.refresh();
@@ -34231,13 +34357,13 @@ var HU = new j(), UU = class {
 		return this.hovered?.col === e?.col && this.hovered?.row === e?.row ? !1 : (this.hovered = e, this.refresh(), !0);
 	}
 	update(e) {
-		this.snapshot = e, this.derived = WU(e), this.refresh();
+		this.snapshot = e, this.derived = XU(e), this.refresh();
 	}
 	get pulsingActive() {
 		return this.pulsing.length > 0;
 	}
 	pulse(e) {
-		let t = IU + (1 - IU) * (.5 + .5 * Math.cos(e / LU * Math.PI * 2));
+		let t = HU + (1 - HU) * (.5 + .5 * Math.cos(e / UU * Math.PI * 2));
 		for (let { material: e, opacity: n } of this.pulsing) e.opacity = n * t;
 	}
 	dispose() {
@@ -34267,12 +34393,12 @@ var HU = new j(), UU = class {
 				"river",
 				"lake"
 			].includes(c.get(u) ?? ""), h = this.gridVisible ? p ? .65 : m ? .16 : .3 : 0, g = h, _ = 0, v = p ? 5268087 : 11906705, y = v;
-			a.has(u) && (g = Math.max(g, .72), _ = .1, v = this.snapshot?.objectiveKind === "objective" ? 14792284 : 7719907, y = v), (t.has(u) || i.has(u)) && (g = .92, _ = .34, v = 7528619, y = v), r.has(u) && !n.has(u) && (g = Math.max(g, .62), v = 14972779), n.has(u) && (g = 1, _ = .5, v = 16741213, y = v), e && u === `${e.col},${e.row}` && (g = 1, _ = .5, v = 16766047, y = v), this.hovered && u === NU(this.hovered) && (g = 1, _ = Math.max(_, .46), !t.has(u) && !i.has(u) && !n.has(u) && !(e && u === `${e.col},${e.row}`) && (y = 16773578, r.has(u) || (v = y))), this.shadeRemembered && this.snapshot?.fogOfWar && _ === 0 && o.has(u) && !s.has(u) && (_ = .26, y = 3817544);
+			a.has(u) && (g = Math.max(g, .72), _ = .1, v = this.snapshot?.objectiveKind === "objective" ? 14792284 : 7719907, y = v), (t.has(u) || i.has(u)) && (g = .92, _ = .34, v = 7528619, y = v), r.has(u) && !n.has(u) && (g = Math.max(g, .62), v = 14972779), n.has(u) && (g = 1, _ = .5, v = 16741213, y = v), e && u === `${e.col},${e.row}` && (g = 1, _ = .5, v = 16766047, y = v), this.hovered && u === zU(this.hovered) && (g = 1, _ = Math.max(_, .46), !t.has(u) && !i.has(u) && !n.has(u) && !(e && u === `${e.col},${e.row}`) && (y = 16773578, r.has(u) || (v = y))), this.shadeRemembered && this.snapshot?.fogOfWar && _ === 0 && o.has(u) && !s.has(u) && (_ = .26, y = 3817544);
 			let b = g !== h || v !== (p ? 5268087 : 11906705);
 			f.color.setHex(v), f.opacity = g, d.visible = b && g > 0, this.setGridColor(u, v, b ? 0 : h);
 			let x = this.fills.get(u), S = x.material;
 			S.color.setHex(y), S.opacity = _, x.visible = _ > 0;
-			let C = this.hovered && u === NU(this.hovered);
+			let C = this.hovered && u === zU(this.hovered);
 			n.has(u) && !C && this.pulsing.push({
 				material: S,
 				opacity: _
@@ -34298,37 +34424,37 @@ var HU = new j(), UU = class {
 			hex: t,
 			alpha: n
 		});
-		let i = this.gridRanges.get(e), a = HU.setHex(t);
+		let i = this.gridRanges.get(e), a = JU.setHex(t);
 		for (let e = i.start; e < i.start + i.count; e += 1) this.gridColors.setXYZW(e, a.r, a.g, a.b, n);
 		this.gridColors.addUpdateRange(i.start * 4, i.count * 4), this.gridColors.needsUpdate = !0;
 	}
 };
-function WU(e) {
+function XU(e) {
 	return {
 		selected: e?.units.find((t) => t.id === e.selectedUnitId) ?? null,
-		moves: new Set(e?.legalMoves.map(NU) ?? []),
-		attacks: new Set(e?.legalAttacks.map(NU) ?? []),
-		attackRange: new Set(e?.attackRangeHexes?.map(NU) ?? []),
-		march: new Set(e?.marchTargets.map(NU) ?? []),
-		objectives: new Set(e?.objectiveHexes?.map(NU) ?? []),
+		moves: new Set(e?.legalMoves.map(zU) ?? []),
+		attacks: new Set(e?.legalAttacks.map(zU) ?? []),
+		attackRange: new Set(e?.attackRangeHexes?.map(zU) ?? []),
+		march: new Set(e?.marchTargets.map(zU) ?? []),
+		objectives: new Set(e?.objectiveHexes?.map(zU) ?? []),
 		explored: new Set(e?.exploredHexes ?? []),
 		visible: new Set(e?.visibleHexes ?? []),
-		terrains: new Map(e?.tiles.map((e) => [NU(e), e.terrain.toLowerCase()]) ?? [])
+		terrains: new Map(e?.tiles.map((e) => [zU(e), e.terrain.toLowerCase()]) ?? [])
 	};
 }
 //#endregion
 //#region src/diorama-table.ts
-var GU = (e) => e, KU = new j(8747627), qU = class {
+var ZU = (e) => e, QU = new j(8747627), $U = class {
 	mesh;
-	horizon = GU(DR)(new j(12438728));
+	horizon = ZU(DR)(new j(12438728));
 	constructor(e, t, n) {
 		let r = new mw({
 			color: 16777215,
 			roughness: .95,
 			metalness: 0,
 			fog: !1
-		}), i = uR.xz.distance(GU(MR)(e.x, e.y)), a = GU(xR)(t * .75, t * 2.4, i);
-		r.colorNode = GU(qL)(GU(NR)(KU.r, KU.g, KU.b), GU(NR)(0, 0, 0), a), r.emissiveNode = this.horizon.mul(a), r.name = "Diorama table";
+		}), i = uR.xz.distance(ZU(MR)(e.x, e.y)), a = ZU(xR)(t * .75, t * 2.4, i);
+		r.colorNode = ZU(qL)(ZU(NR)(QU.r, QU.g, QU.b), ZU(NR)(0, 0, 0), a), r.emissiveNode = this.horizon.mul(a), r.name = "Diorama table";
 		let o = new ro(t * 8, 64);
 		o.rotateX(-Math.PI / 2), this.mesh = new qi(o, r), this.mesh.position.set(e.x, n, e.y), this.mesh.name = "Diorama table", this.mesh.receiveShadow = !0;
 	}
@@ -34338,7 +34464,7 @@ var GU = (e) => e, KU = new j(8747627), qU = class {
 	dispose() {
 		this.mesh.removeFromParent(), this.mesh.geometry.dispose(), this.mesh.material.dispose();
 	}
-}, JU = 24, YU = class {
+}, eW = 24, tW = class {
 	version;
 	positions;
 	indices;
@@ -34358,7 +34484,7 @@ var GU = (e) => e, KU = new j(8747627), qU = class {
 		let n = Math.floor((this.indices ? this.indices.length : t.count) / 3);
 		e.computeBoundingBox(), this.box = e.boundingBox.clone();
 		let r = Math.max(this.box.max.x - this.box.min.x, .001), i = Math.max(this.box.max.z - this.box.min.z, .001);
-		this.cellSize = Math.max(Math.sqrt(r * i * JU / Math.max(n, 1)), .001), this.columns = Math.max(1, Math.ceil(r / this.cellSize)), this.rows = Math.max(1, Math.ceil(i / this.cellSize)), this.minX = this.box.min.x, this.minZ = this.box.min.z;
+		this.cellSize = Math.max(Math.sqrt(r * i * eW / Math.max(n, 1)), .001), this.columns = Math.max(1, Math.ceil(r / this.cellSize)), this.rows = Math.max(1, Math.ceil(i / this.cellSize)), this.minX = this.box.min.x, this.minZ = this.box.min.z;
 		let a = this.columns * this.rows;
 		this.cellMinY = new Float32Array(a).fill(Infinity), this.cellMaxY = new Float32Array(a).fill(-Infinity);
 		let o = new Uint32Array(a + 1), s = new Int32Array(n * 4);
@@ -34384,7 +34510,7 @@ var GU = (e) => e, KU = new j(8747627), qU = class {
 		}
 	}
 	intersect(e) {
-		let t = e.origin, n = e.direction, r = XU(e, this.box);
+		let t = e.origin, n = e.direction, r = nW(e, this.box);
 		if (!r) return Infinity;
 		let [i, a] = r, o = this.column(t.x + n.x * i), s = this.row(t.z + n.z * i), c = n.x > 0 ? 1 : -1, l = n.z > 0 ? 1 : -1, u = Math.abs(n.x) > 1e-12 ? this.cellSize / Math.abs(n.x) : Infinity, d = Math.abs(n.z) > 1e-12 ? this.cellSize / Math.abs(n.z) : Infinity, f = (e, t, n) => n + (e + +(t > 0)) * this.cellSize, p = u === Infinity ? Infinity : (f(o, c, this.minX) - t.x) / n.x, m = d === Infinity ? Infinity : (f(s, l, this.minZ) - t.z) / n.z, h = Infinity;
 		for (;;) {
@@ -34416,7 +34542,7 @@ var GU = (e) => e, KU = new j(8747627), qU = class {
 		return ae >= 0 ? ae : Infinity;
 	}
 };
-function XU(e, t) {
+function nW(e, t) {
 	let n = 0, r = Infinity;
 	for (let i of [
 		"x",
@@ -34433,18 +34559,18 @@ function XU(e, t) {
 	}
 	return [n, r];
 }
-var ZU = /* @__PURE__ */ new WeakMap(), QU = new Pi(), $U = new A(), eW = new k();
-function tW(e, t) {
+var rW = /* @__PURE__ */ new WeakMap(), iW = new Pi(), aW = new A(), oW = new k();
+function sW(e, t) {
 	let n = null;
 	for (let r of t) {
 		if (!(r instanceof qi) || !r.visible) continue;
 		let t = r.geometry, i = t.getAttribute("position");
 		if (!i) continue;
-		let a = ZU.get(t);
-		(!a || a.version !== i.version) && (a = new YU(t), ZU.set(t, a)), r.updateWorldMatrix(!0, !1), QU.copy(e).applyMatrix4($U.copy(r.matrixWorld).invert());
-		let o = a.intersect(QU);
+		let a = rW.get(t);
+		(!a || a.version !== i.version) && (a = new tW(t), rW.set(t, a)), r.updateWorldMatrix(!0, !1), iW.copy(e).applyMatrix4(aW.copy(r.matrixWorld).invert());
+		let o = a.intersect(iW);
 		if (o === Infinity) continue;
-		let s = QU.at(o, eW).applyMatrix4(r.matrixWorld).clone(), c = s.distanceTo(e.origin);
+		let s = iW.at(o, oW).applyMatrix4(r.matrixWorld).clone(), c = s.distanceTo(e.origin);
 		(!n || c < n.distance) && (n = {
 			point: s,
 			distance: c
@@ -34454,13 +34580,13 @@ function tW(e, t) {
 }
 //#endregion
 //#region src/picking.ts
-var nW = class {
+var cW = class {
 	canvas;
 	camera;
 	layout;
 	raycaster = new dl();
 	pointer = new O();
-	constructor(e, t, n = new IB(20, 12)) {
+	constructor(e, t, n = new JB(20, 12)) {
 		this.canvas = e, this.camera = t, this.layout = n;
 	}
 	unitAt(e, t, n) {
@@ -34481,14 +34607,14 @@ var nW = class {
 		return this.worldHitAt(e, t, n)?.point ?? null;
 	}
 	worldHitAt(e, t, n) {
-		return this.setPointer(e, t), tW(this.raycaster.ray, n);
+		return this.setPointer(e, t), sW(this.raycaster.ray, n);
 	}
 	setPointer(e, t) {
 		let n = this.canvas.getBoundingClientRect();
 		this.pointer.set((e - n.left) / Math.max(n.width, 1) * 2 - 1, -((t - n.top) / Math.max(n.height, 1)) * 2 + 1), this.raycaster.setFromCamera(this.pointer, this.camera);
 	}
 };
-function rW(e) {
+function lW(e) {
 	return {
 		button: e.button,
 		context: !1,
@@ -34499,33 +34625,33 @@ function rW(e) {
 		y: e.clientY
 	};
 }
-function iW(e, t) {
+function uW(e, t) {
 	Math.hypot(t.clientX - e.x, t.clientY - e.y) > 5 && (e.dragged = !0);
 }
-function aW(e, t) {
+function dW(e, t) {
 	return e.pointerId === t.pointerId && e.button === t.button && !e.dragged && Math.hypot(t.clientX - e.x, t.clientY - e.y) <= 5;
 }
 //#endregion
 //#region src/performance.ts
-var oW = 240, sW = 250;
-function cW(e, t) {
+var fW = 240, pW = 250;
+function mW(e, t) {
 	if (e.length === 0) return 0;
 	let n = [...e].sort((e, t) => e - t);
 	return n[Math.min(Math.floor(n.length * t), n.length - 1)];
 }
-function lW(e) {
+function hW(e) {
 	return typeof e == "number" && Number.isFinite(e) && e >= 0 ? e : void 0;
 }
-function uW(e) {
+function gW(e) {
 	return typeof e == "object" && e ? e : null;
 }
-function dW(e) {
-	let t = uW(e.info), n = uW(t?.render), r = uW(t?.memory), i = lW(r?.programs) ?? (Array.isArray(t?.programs) ? t.programs.length : void 0), a = {}, o = (e, t) => {
+function _W(e) {
+	let t = gW(e.info), n = gW(t?.render), r = gW(t?.memory), i = hW(r?.programs) ?? (Array.isArray(t?.programs) ? t.programs.length : void 0), a = {}, o = (e, t) => {
 		t !== void 0 && (a[e] = t);
 	};
-	return o("drawCalls", lW(n?.drawCalls) ?? lW(n?.calls)), o("triangles", lW(n?.triangles)), o("geometries", lW(r?.geometries)), o("textures", lW(r?.textures)), o("programs", i), o("renderTargets", lW(r?.renderTargets)), a;
+	return o("drawCalls", hW(n?.drawCalls) ?? hW(n?.calls)), o("triangles", hW(n?.triangles)), o("geometries", hW(r?.geometries)), o("textures", hW(r?.textures)), o("programs", i), o("renderTargets", hW(r?.renderTargets)), a;
 }
-var fW = class {
+var vW = class {
 	frameTimes = [];
 	preparationTimes = [];
 	rendererTimes = [];
@@ -34568,17 +34694,17 @@ var fW = class {
 		return {
 			sampleCount: this.frameTimes.length,
 			stallCount: this.stallCount,
-			medianFrameMs: cW(this.frameTimes, .5),
-			p95FrameMs: cW(this.frameTimes, .95),
+			medianFrameMs: mW(this.frameTimes, .5),
+			p95FrameMs: mW(this.frameTimes, .95),
 			longestFrameMs: this.longestFrameMs,
-			medianPreparationMs: cW(this.preparationTimes, .5),
-			p95PreparationMs: cW(this.preparationTimes, .95),
+			medianPreparationMs: mW(this.preparationTimes, .5),
+			p95PreparationMs: mW(this.preparationTimes, .95),
 			longestPreparationMs: this.longestPreparationMs,
-			medianRendererMs: cW(this.rendererTimes, .5),
-			p95RendererMs: cW(this.rendererTimes, .95),
+			medianRendererMs: mW(this.rendererTimes, .5),
+			p95RendererMs: mW(this.rendererTimes, .95),
 			longestRendererMs: this.longestRendererMs,
-			medianRenderMs: cW(this.renderTimes, .5),
-			p95RenderMs: cW(this.renderTimes, .95),
+			medianRenderMs: mW(this.renderTimes, .5),
+			p95RenderMs: mW(this.renderTimes, .95),
 			longestRenderMs: this.longestRenderMs,
 			preparationStallCount: this.preparationStallCount,
 			rendererStallCount: this.rendererStallCount,
@@ -34587,21 +34713,21 @@ var fW = class {
 	}
 	recordMetric(e, t, n, r, i) {
 		if (!(!Number.isFinite(t) || t < 0)) {
-			if (n(Math.max(i, t)), t >= sW) {
+			if (n(Math.max(i, t)), t >= pW) {
 				r();
 				return;
 			}
-			e.push(t), e.length > oW && e.shift();
+			e.push(t), e.length > fW && e.shift();
 		}
 	}
-}, pW = /*@__PURE__*/ new KE(), mW = /*@__PURE__*/ new O(), hW = [
+}, yW = /*@__PURE__*/ new KE(), bW = /*@__PURE__*/ new O(), xW = [
 	60,
 	300,
 	180,
 	240,
 	120,
 	0
-], gW, _W = class extends ad {
+], SW, CW = class extends ad {
 	static get type() {
 		return "GTAONode";
 	}
@@ -34609,7 +34735,7 @@ var fW = class {
 		super("float"), this.depthNode = e, this.normalNode = t, this.resolutionScale = 1, this.updateBeforeType = xL.FRAME, this._aoRenderTarget = new Cn(1, 1, {
 			depthBuffer: !1,
 			format: oe
-		}), this._aoRenderTarget.texture.name = "GTAONode.AO", this.radius = DR(.25), this.resolution = DR(new O()), this.thickness = DR(1), this.distanceExponent = DR(1), this.distanceFallOff = DR(1), this.scale = DR(1), this.samples = DR(16), this.useTemporalFiltering = !1, this._noiseNode = wR(vW()), this._cameraProjectionMatrix = DR(n.projectionMatrix), this._cameraProjectionMatrixInverse = DR(n.projectionMatrixInverse), this._cameraNear = hR("near", "float", n), this._cameraFar = hR("far", "float", n), this._temporalDirection = DR(0), this._material = new kx(), this._material.name = "GTAO", this._textureNode = cR(this, this._aoRenderTarget.texture);
+		}), this._aoRenderTarget.texture.name = "GTAONode.AO", this.radius = DR(.25), this.resolution = DR(new O()), this.thickness = DR(1), this.distanceExponent = DR(1), this.distanceFallOff = DR(1), this.scale = DR(1), this.samples = DR(16), this.useTemporalFiltering = !1, this._noiseNode = wR(wW()), this._cameraProjectionMatrix = DR(n.projectionMatrix), this._cameraProjectionMatrixInverse = DR(n.projectionMatrixInverse), this._cameraNear = hR("near", "float", n), this._cameraFar = hR("far", "float", n), this._temporalDirection = DR(0), this._material = new kx(), this._material.name = "GTAO", this._textureNode = cR(this, this._aoRenderTarget.texture);
 	}
 	getTextureNode() {
 		return this._textureNode;
@@ -34619,12 +34745,12 @@ var fW = class {
 	}
 	updateBefore(e) {
 		let { renderer: t } = e;
-		if (gW = Yk.resetRendererState(t, gW), this.useTemporalFiltering === !0) {
+		if (SW = Yk.resetRendererState(t, SW), this.useTemporalFiltering === !0) {
 			let t = e.frameId;
-			this._temporalDirection.value = hW[t % 6] / 360;
+			this._temporalDirection.value = xW[t % 6] / 360;
 		} else this._temporalDirection.value = 0;
-		let n = t.getDrawingBufferSize(mW);
-		this.setSize(n.width, n.height), pW.material = this._material, pW.name = "AO", t.setClearColor(16777215, 1), t.setRenderTarget(this._aoRenderTarget), pW.render(t), Yk.restoreRendererState(t, gW);
+		let n = t.getDrawingBufferSize(bW);
+		this.setSize(n.width, n.height), yW.material = this._material, yW.name = "AO", t.setClearColor(16777215, 1), t.setRenderTarget(this._aoRenderTarget), yW.render(t), Yk.restoreRendererState(t, SW);
 	}
 	setup(e) {
 		let t = AR(), n = (t) => {
@@ -34672,8 +34798,8 @@ var fW = class {
 		this._aoRenderTarget.dispose(), this._material.dispose();
 	}
 };
-function vW(e = 5) {
-	let t = Math.floor(e) % 2 == 0 ? Math.floor(e) + 1 : Math.floor(e), n = yW(t), i = n.length, a = new Uint8Array(i * 4);
+function wW(e = 5) {
+	let t = Math.floor(e) % 2 == 0 ? Math.floor(e) + 1 : Math.floor(e), n = TW(t), i = n.length, a = new Uint8Array(i * 4);
 	for (let e = 0; e < i; ++e) {
 		let t = n[e], r = 2 * Math.PI * t / i, o = new k(Math.cos(r), Math.sin(r), 0).normalize();
 		a[e * 4] = (o.x * .5 + .5) * 255, a[e * 4 + 1] = (o.y * .5 + .5) * 255, a[e * 4 + 2] = 127, a[e * 4 + 3] = 255;
@@ -34681,7 +34807,7 @@ function vW(e = 5) {
 	let o = new sa(a, t, t);
 	return o.wrapS = r, o.wrapT = r, o.needsUpdate = !0, o;
 }
-function yW(e) {
+function TW(e) {
 	let t = Math.floor(e) % 2 == 0 ? Math.floor(e) + 1 : Math.floor(e), n = t * t, r = Array(n).fill(0), i = Math.floor(t / 2), a = t - 1;
 	for (let e = 1; e <= n;) {
 		if (i === -1 && a === t ? (a = t - 2, i = 0) : (a === t && (a = 0), i < 0 && (i = t - 1)), r[i * t + a] !== 0) {
@@ -34692,7 +34818,7 @@ function yW(e) {
 	}
 	return r;
 }
-var bW = (e, t, n) => new _W(eR(e), eR(t), n), xW = /*@__PURE__*/ new KE(), SW, CW = class extends ad {
+var EW = (e, t, n) => new CW(eR(e), eR(t), n), DW = /*@__PURE__*/ new KE(), OW, kW = class extends ad {
 	static get type() {
 		return "GaussianBlurNode";
 	}
@@ -34704,11 +34830,11 @@ var bW = (e, t, n) => new _W(eR(e), eR(t), n), xW = /*@__PURE__*/ new KE(), SW, 
 	}
 	updateBefore(e) {
 		let { renderer: t } = e;
-		SW = Yk.resetRendererState(t, SW);
+		OW = Yk.resetRendererState(t, OW);
 		let n = this.textureNode, r = n.value, i = n.value;
-		xW.material = this._material, this.setSize(r.image.width, r.image.height);
+		DW.material = this._material, this.setSize(r.image.width, r.image.height);
 		let a = r.type;
-		this._horizontalRT.texture.type = a, this._verticalRT.texture.type = a, t.setRenderTarget(this._horizontalRT), this._passDirection.value.set(1, 0), xW.name = "Gaussian Blur [ Horizontal Pass ]", xW.render(t), n.value = this._horizontalRT.texture, t.setRenderTarget(this._verticalRT), this._passDirection.value.set(0, 1), xW.name = "Gaussian Blur [ Vertical Pass ]", xW.render(t), n.value = i, Yk.restoreRendererState(t, SW);
+		this._horizontalRT.texture.type = a, this._verticalRT.texture.type = a, t.setRenderTarget(this._horizontalRT), this._passDirection.value.set(1, 0), DW.name = "Gaussian Blur [ Horizontal Pass ]", DW.render(t), n.value = this._horizontalRT.texture, t.setRenderTarget(this._verticalRT), this._passDirection.value.set(0, 1), DW.name = "Gaussian Blur [ Vertical Pass ]", DW.render(t), n.value = i, Yk.restoreRendererState(t, OW);
 	}
 	getTextureNode() {
 		return this._textureNode;
@@ -34742,7 +34868,7 @@ var bW = (e, t, n) => new _W(eR(e), eR(t), n), xW = /*@__PURE__*/ new KE(), SW, 
 	set resolution(e) {
 		console.warn("THREE.GaussianBlurNode: The \"resolution\" property has been renamed to \"resolutionScale\" and is now of type `number`."), this.resolutionScale = e.x;
 	}
-}, wW = (e, t, n, r = {}) => new CW(kL(e), t, n, r), TW = /*@__PURE__*/ new KE(), EW, DW = class extends ad {
+}, AW = (e, t, n, r = {}) => new kW(kL(e), t, n, r), jW = /*@__PURE__*/ new KE(), MW, NW = class extends ad {
 	static get type() {
 		return "DepthOfFieldNode";
 	}
@@ -34780,14 +34906,14 @@ var bW = (e, t, n) => new _W(eR(e), eR(t), n), xW = /*@__PURE__*/ new KE(), SW, 
 	}
 	updateBefore(e) {
 		let { renderer: t } = e, n = this.textureNode.value;
-		this.setSize(n.image.width, n.image.height), EW = Yk.resetRendererState(t, EW), t.setClearColor(0, 0), TW.material = this._CoCMaterial, t.setRenderTarget(this._CoCRT), TW.name = "DoF [ CoC ]", TW.render(t), this._CoCTextureNode.value = this._CoCRT.textures[0], TW.material = this._CoCBlurredMaterial, t.setRenderTarget(this._CoCBlurredRT), TW.name = "DoF [ CoC Blur ]", TW.render(t), this._CoCTextureNode.value = this._CoCBlurredRT.texture, TW.material = this._blur64Material, t.setRenderTarget(this._blur64RT), TW.name = "DoF [ Blur64 Near ]", TW.render(t), TW.material = this._blur16Material, t.setRenderTarget(this._blur16NearRT), TW.name = "DoF [ Blur16 Near ]", TW.render(t), this._CoCTextureNode.value = this._CoCRT.textures[1], TW.material = this._blur64Material, t.setRenderTarget(this._blur64RT), TW.name = "DoF [ Blur64 Far ]", TW.render(t), TW.material = this._blur16Material, t.setRenderTarget(this._blur16FarRT), TW.name = "DoF [ Blur16 Far ]", TW.render(t), TW.material = this._compositeMaterial, t.setRenderTarget(this._compositeRT), TW.name = "DoF [ Composite ]", TW.render(t), Yk.restoreRendererState(t, EW);
+		this.setSize(n.image.width, n.image.height), MW = Yk.resetRendererState(t, MW), t.setClearColor(0, 0), jW.material = this._CoCMaterial, t.setRenderTarget(this._CoCRT), jW.name = "DoF [ CoC ]", jW.render(t), this._CoCTextureNode.value = this._CoCRT.textures[0], jW.material = this._CoCBlurredMaterial, t.setRenderTarget(this._CoCBlurredRT), jW.name = "DoF [ CoC Blur ]", jW.render(t), this._CoCTextureNode.value = this._CoCBlurredRT.texture, jW.material = this._blur64Material, t.setRenderTarget(this._blur64RT), jW.name = "DoF [ Blur64 Near ]", jW.render(t), jW.material = this._blur16Material, t.setRenderTarget(this._blur16NearRT), jW.name = "DoF [ Blur16 Near ]", jW.render(t), this._CoCTextureNode.value = this._CoCRT.textures[1], jW.material = this._blur64Material, t.setRenderTarget(this._blur64RT), jW.name = "DoF [ Blur64 Far ]", jW.render(t), jW.material = this._blur16Material, t.setRenderTarget(this._blur16FarRT), jW.name = "DoF [ Blur16 Far ]", jW.render(t), jW.material = this._compositeMaterial, t.setRenderTarget(this._compositeRT), jW.name = "DoF [ Composite ]", jW.render(t), Yk.restoreRendererState(t, MW);
 	}
 	setup(e) {
 		let t = this._generateKernels(), n = pR("float"), r = pR("float"), i = oR(n, r), a = vL(() => {
 			let e = this.viewZNode.negate().sub(this.focusDistanceNode), t = xR(0, this.focalLengthNode, e.abs());
 			return n.assign(CR(e, 0).mul(t)), r.assign(CR(0, e).mul(t)), IL(0);
 		});
-		this._CoCMaterial.colorNode = a().context(e.getSharedContext()), this._CoCMaterial.outputNode = i, this._CoCMaterial.needsUpdate = !0, this._CoCBlurredMaterial.colorNode = wW(this._CoCTextureNode, 1, 2), this._CoCBlurredMaterial.needsUpdate = !0;
+		this._CoCMaterial.colorNode = a().context(e.getSharedContext()), this._CoCMaterial.outputNode = i, this._CoCMaterial.needsUpdate = !0, this._CoCBlurredMaterial.colorNode = AW(this._CoCTextureNode, 1, 2), this._CoCBlurredMaterial.needsUpdate = !0;
 		let o = OR(t.points64), s = vL(() => {
 			let e = NR(), t = AR(), n = this._CoCTextureNode.sample(t).r, r = this._invSize.mul(this.bokehScaleNode).mul(n);
 			return bL(64, ({ i: n }) => {
@@ -34824,7 +34950,7 @@ var bW = (e, t, n) => new _W(eR(e), eR(t), n), xW = /*@__PURE__*/ new KE(), SW, 
 	dispose() {
 		this._CoCRT.dispose(), this._CoCBlurredRT.dispose(), this._blur64RT.dispose(), this._blur16NearRT.dispose(), this._blur16FarRT.dispose(), this._compositeRT.dispose(), this._CoCMaterial.dispose(), this._CoCBlurredMaterial.dispose(), this._blur64Material.dispose(), this._blur16Material.dispose(), this._compositeMaterial.dispose();
 	}
-}, OW = (e, t, n = 1, r = 1, i = 1) => new DW(kL(e), eR(t), eR(n), eR(r), eR(i)), kW = /*@__PURE__*/ new KE(), AW = /*@__PURE__*/ new O(), jW, MW = class extends ad {
+}, PW = (e, t, n = 1, r = 1, i = 1) => new NW(kL(e), eR(t), eR(n), eR(r), eR(i)), FW = /*@__PURE__*/ new KE(), IW = /*@__PURE__*/ new O(), LW, RW = class extends ad {
 	static get type() {
 		return "SMAANode";
 	}
@@ -34856,9 +34982,9 @@ var bW = (e, t, n) => new _W(eR(e), eR(t), n), xW = /*@__PURE__*/ new KE(), SW, 
 	}
 	updateBefore(e) {
 		let { renderer: t } = e;
-		jW = Yk.resetRendererState(t, jW);
-		let n = t.getDrawingBufferSize(AW);
-		this.setSize(n.width, n.height), t.setRenderTarget(this._renderTargetEdges), kW.material = this._materialEdges, kW.render(t), t.setRenderTarget(this._renderTargetWeights), kW.material = this._materialWeights, kW.render(t), t.setRenderTarget(this._renderTargetBlend), kW.material = this._materialBlend, kW.render(t), Yk.restoreRendererState(t, jW);
+		LW = Yk.resetRendererState(t, LW);
+		let n = t.getDrawingBufferSize(IW);
+		this.setSize(n.width, n.height), t.setRenderTarget(this._renderTargetEdges), FW.material = this._materialEdges, FW.render(t), t.setRenderTarget(this._renderTargetWeights), FW.material = this._materialWeights, FW.render(t), t.setRenderTarget(this._renderTargetBlend), FW.material = this._materialBlend, FW.render(t), Yk.restoreRendererState(t, LW);
 	}
 	setup(e) {
 		let t = .1, n = MR(1 / 160, 1 / 560), r = this.textureNode.uvNode || AR(), i = vL(() => {
@@ -34984,8 +35110,8 @@ var bW = (e, t, n) => new _W(eR(e), eR(t), n), xW = /*@__PURE__*/ new KE(), SW, 
 	_getSearchTexture() {
 		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAAhCAAAAABIXyLAAAAAOElEQVRIx2NgGAWjYBSMglEwEICREYRgFBZBqDCSLA2MGPUIVQETE9iNUAqLR5gIeoQKRgwXjwAAGn4AtaFeYLEAAAAASUVORK5CYII=";
 	}
-}, NW = (e) => new MW(kL(e)), PW = (e) => e, FW = PW(bW), IW = PW(OW), LW = PW(wW), RW = PW(UL), zW = PW(qL), BW = PW(XL), VW = PW(sR), HW = PW(mR), UW = PW(gR), WW = PW(_R), GW = PW(NW), KW = PW(xR), qW = PW(DR), JW = PW(MR), YW = PW(NR), XW = PW(PR);
-function ZW(e) {
+}, zW = (e) => new RW(kL(e)), BW = (e) => e, VW = BW(EW), HW = BW(PW), UW = BW(AW), WW = BW(UL), GW = BW(qL), KW = BW(XL), qW = BW(sR), JW = BW(mR), YW = BW(gR), XW = BW(_R), ZW = BW(zW), QW = BW(xR), $W = BW(DR), eG = BW(MR), tG = BW(NR), nG = BW(PR);
+function rG(e) {
 	return [
 		e.effects,
 		e.ambientOcclusion,
@@ -34994,7 +35120,7 @@ function ZW(e) {
 		e.depthOfFieldMode
 	].join("|");
 }
-var QW = {
+var iG = {
 	coolShadow: [
 		.95,
 		.985,
@@ -35005,21 +35131,21 @@ var QW = {
 		1.025,
 		.94
 	]
-}, $W = class {
+}, aG = class {
 	camera;
 	quality;
 	renderer;
 	pipeline;
 	scenePass;
-	normalMrt = BW({
+	normalMrt = KW({
 		output: aR,
 		normal: tR
 	});
-	focusDistanceNode = qW(58);
-	focusRangeNode = qW(22);
-	blurDirectionNode = qW(0);
-	bokehScaleNode = qW(1.8);
-	gradeAmountNode = qW(1);
+	focusDistanceNode = $W(58);
+	focusRangeNode = $W(22);
+	blurDirectionNode = $W(0);
+	bokehScaleNode = $W(1.8);
+	gradeAmountNode = $W(1);
 	effectNodes = [];
 	width = 1;
 	height = 1;
@@ -35031,7 +35157,7 @@ var QW = {
 			alpha: !1,
 			antialias: !1,
 			powerPreference: "high-performance"
-		}), this.renderer.setClearColor(10133914, 1), this.renderer.outputColorSpace = nt, this.renderer.toneMapping = 4, this.renderer.toneMappingExposure = 1, this.renderer.info.autoReset = !1, this.renderer.shadowMap.enabled = !0, this.renderer.shadowMap.type = 3, this.pipeline = new gL(this.renderer), this.scenePass = VW(t, n), this.rebuildGraph();
+		}), this.renderer.setClearColor(10133914, 1), this.renderer.outputColorSpace = nt, this.renderer.toneMapping = 4, this.renderer.toneMappingExposure = 1, this.renderer.info.autoReset = !1, this.renderer.shadowMap.enabled = !0, this.renderer.shadowMap.type = 3, this.pipeline = new gL(this.renderer), this.scenePass = qW(t, n), this.rebuildGraph();
 	}
 	async init() {
 		await this.renderer.init();
@@ -35075,33 +35201,33 @@ var QW = {
 		this.disposeEffects(), this.scenePass.dispose(), this.pipeline.dispose(), this.renderer.dispose();
 	}
 	needsCompile(e) {
-		return !this.builtGraphs.has(ZW({
+		return !this.builtGraphs.has(rG({
 			...this.quality,
 			...e
 		}));
 	}
 	rebuildGraph() {
-		this.builtGraphs.add(ZW(this.quality)), this.disposeEffects();
+		this.builtGraphs.add(rG(this.quality)), this.disposeEffects();
 		let e = this.scenePass.getTextureNode("output"), t = this.scenePass.getTextureNode("depth"), n = e;
 		if (this.scenePass.setMRT(this.normalMrt), this.quality.effects && this.quality.ambientOcclusion) {
-			let e = FW(t, this.scenePass.getTextureNode("normal"), this.camera);
+			let e = VW(t, this.scenePass.getTextureNode("normal"), this.camera);
 			this.track(e), e.resolutionScale = this.quality.aoResolutionScale ?? 1, e.radius.value = .24, e.distanceExponent.value = 1.7, e.thickness.value = .62, e.distanceFallOff.value = 1, e.scale.value = .6, e.samples.value = this.quality.gtaoSamples;
-			let r = zW(1, e.getTextureNode().r, .28);
-			n = n.mul(XW(r, r, r, 1));
+			let r = GW(1, e.getTextureNode().r, .28);
+			n = n.mul(nG(r, r, r, 1));
 		}
 		if (this.quality.effects && this.quality.depthOfFieldMode !== "off") if (this.quality.depthOfFieldMode === "bokeh") {
-			let e = IW(n, this.scenePass.getViewZNode(), this.focusDistanceNode, this.focusRangeNode, this.bokehScaleNode);
+			let e = HW(n, this.scenePass.getViewZNode(), this.focusDistanceNode, this.focusRangeNode, this.bokehScaleNode);
 			this.track(e), n = e;
 		} else {
-			let e = this.scenePass.getViewZNode().negate(), t = KW(0, this.focusRangeNode, e.sub(this.focusDistanceNode).abs()), r = LW(n, this.blurDirectionNode, 1, { resolutionScale: .5 });
-			this.track(r), n = zW(n, r, t);
+			let e = this.scenePass.getViewZNode().negate(), t = QW(0, this.focusRangeNode, e.sub(this.focusDistanceNode).abs()), r = UW(n, this.blurDirectionNode, 1, { resolutionScale: .5 });
+			this.track(r), n = GW(n, r, t);
 		}
-		let r = n.rgb, i = RW(r), a = KW(.04, .58, i).oneMinus().mul(.3).mul(this.gradeAmountNode), o = KW(.46, .92, i).mul(.24).mul(this.gradeAmountNode), s = r.mul(YW(...QW.coolShadow)), c = r.mul(YW(...QW.warmHighlight));
-		n = XW(WW(zW(zW(r, s, a), c, o), zW(1, .97, this.gradeAmountNode)), n.a);
-		let l = GW(n);
-		this.track(l), n = l, n = UW(n, this.renderer.toneMapping, this.renderer.outputColorSpace);
-		let u = vR.xy, d = YW(HW(u), HW(u.add(JW(37, 17))), HW(u.add(JW(11, 47)))).sub(.5).mul(2 / 255);
-		n = XW(n.rgb.add(d), n.a), this.pipeline.outputColorTransform = !1, this.pipeline.outputNode = n, this.pipeline.needsUpdate = !0;
+		let r = n.rgb, i = WW(r), a = QW(.04, .58, i).oneMinus().mul(.3).mul(this.gradeAmountNode), o = QW(.46, .92, i).mul(.24).mul(this.gradeAmountNode), s = r.mul(tG(...iG.coolShadow)), c = r.mul(tG(...iG.warmHighlight));
+		n = nG(XW(GW(GW(r, s, a), c, o), GW(1, .97, this.gradeAmountNode)), n.a);
+		let l = ZW(n);
+		this.track(l), n = l, n = YW(n, this.renderer.toneMapping, this.renderer.outputColorSpace);
+		let u = vR.xy, d = tG(JW(u), JW(u.add(eG(37, 17))), JW(u.add(eG(11, 47)))).sub(.5).mul(2 / 255);
+		n = nG(n.rgb.add(d), n.a), this.pipeline.outputColorTransform = !1, this.pipeline.outputNode = n, this.pipeline.needsUpdate = !0;
 	}
 	resizeEffects() {
 		let e = this.renderer.getDrawingBufferSize(new O());
@@ -35118,7 +35244,7 @@ var QW = {
 };
 //#endregion
 //#region src/landscape-details.ts
-function eG(e, t, n) {
+function oG(e, t, n) {
 	let r = t.data, i = Hz(r.artSeed + 83), a = new Zn(), o = new ai();
 	o.setAttribute("position", new M([
 		-.2,
@@ -35200,7 +35326,7 @@ function eG(e, t, n) {
 	}
 	p.count = u, e.add(p), n.trackInstances(p, m);
 }
-function tG() {
+function sG() {
 	let e = new Uint8Array(16384 * 4);
 	for (let t = 0; t < 128; t += 1) for (let n = 0; n < 128; n += 1) {
 		let r = n / 128 * Math.PI * 2, i = t / 128 * Math.PI * 2, a = r + i * 3 + .7 * Math.sin(r * 2 - i), o = new k(Math.cos(a) * .12 + Math.cos(r * 4 - i * 2) * .025, Math.cos(a) * .25 - Math.cos(r * 4 - i * 2) * .04, 1).normalize(), s = (t * 128 + n) * 4;
@@ -35211,7 +35337,7 @@ function tG() {
 }
 //#endregion
 //#region src/scenery.ts
-var nG = class {
+var cG = class {
 	data;
 	terrain;
 	assets;
@@ -35234,8 +35360,8 @@ var nG = class {
 			"procedural-worlds/pw_deciduous_03",
 			"procedural-worlds/pw_shrub_01"
 		]), this.disposed || (await Promise.all([this.addWoodland(), this.addLandmarks()]), this.disposed)) return;
-		this.addReeds(), this.addStones(), eG(this.group, this.terrain, this.visibility);
-		let e = NB(this.group, (e) => this.visibility.keyForObject(e));
+		this.addReeds(), this.addStones(), oG(this.group, this.terrain, this.visibility);
+		let e = GB(this.group, (e) => this.visibility.keyForObject(e));
 		this.visibility.trackBatches(e.batches), console.info(`[Sudomer] batched static scenery (${e.savedMeshes} meshes removed)`);
 	}
 	updateVisibility(e) {
@@ -35311,7 +35437,7 @@ var nG = class {
 };
 //#endregion
 //#region src/snapshot-client.ts
-function rG(e, t) {
+function lG(e, t) {
 	return new Promise((n, r) => {
 		let i = (e) => n(e.detail);
 		t.addEventListener("sudomer-snapshot", i, { once: !0 });
@@ -35323,7 +35449,7 @@ function rG(e, t) {
 		}
 	});
 }
-var iG = class {
+var uG = class {
 	generation = -1;
 	revision = -1;
 	seenEvents = /* @__PURE__ */ new Set();
@@ -35339,10 +35465,10 @@ var iG = class {
 			newEvents: t
 		};
 	}
-}, aG = class {
+}, dG = class {
 	latest = null;
 	consumer = null;
-	accumulator = new iG();
+	accumulator = new uG();
 	constructor() {
 		addEventListener("sudomer-snapshot", this.onSnapshot);
 		let e = window.SudomerHexBridge?.takeSnapshot();
@@ -35364,7 +35490,7 @@ var iG = class {
 		let t = this.accumulator.accept(e);
 		t && (this.latest = t.snapshot, this.consumer?.applySnapshot(t.snapshot, t.newEvents));
 	}
-}, oG = class {
+}, fG = class {
 	scene;
 	assetBase;
 	texture = null;
@@ -35405,7 +35531,7 @@ var iG = class {
 		this.lowerVeil.position.copy(e.position);
 	}
 	setNight(e) {
-		this.apply(CU[e ? "night" : "day"]);
+		this.apply(kU[e ? "night" : "day"]);
 	}
 	apply(e) {
 		this.scene.backgroundIntensity = e.backgroundIntensity, this.scene.environmentIntensity = e.environmentIntensity, this.lowerVeil.material.color.copy(e.veilColor), this.scene.fog?.color.copy(e.fogColor), this.scene.fog instanceof or && (this.scene.fog.density = e.fogDensity);
@@ -35413,12 +35539,12 @@ var iG = class {
 	dispose() {
 		this.texture?.dispose(), this.texture = null, this.lowerVeil.removeFromParent(), this.lowerVeil.geometry.dispose(), this.lowerVeil.material.dispose();
 	}
-}, sG = 241, cG = 177;
-function lG(e, t, n) {
+}, pG = 241, mG = 177;
+function hG(e, t, n) {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
 }
-var uG = class {
+var gG = class {
 	data;
 	assetBase;
 	group = new Qn();
@@ -35428,19 +35554,19 @@ var uG = class {
 	bounds;
 	terrainTypes;
 	constructor(e, t, n = new URL("assets/", document.baseURI).href) {
-		this.data = e, this.assetBase = n, this.layout = new IB(t.cols ?? 20, t.rows ?? 12), this.bounds = e.bounds, this.terrainTypes = [...new Set(t.tiles.map((e) => e.terrain))], this.group.name = "Authored Sudomer landscape", this.ground = this.createGround(), this.ground.name = "Continuous authored ground", this.ground.receiveShadow = !0, this.interactiveMeshes.push(this.ground), this.group.add(this.ground), this.addWater(), this.addMudDetail(), this.addFields(), this.addCauseway(), this.addPlinth();
+		this.data = e, this.assetBase = n, this.layout = new JB(t.cols ?? 20, t.rows ?? 12), this.bounds = e.bounds, this.terrainTypes = [...new Set(t.tiles.map((e) => e.terrain))], this.group.name = "Authored Sudomer landscape", this.ground = this.createGround(), this.ground.name = "Continuous authored ground", this.ground.receiveShadow = !0, this.interactiveMeshes.push(this.ground), this.group.add(this.ground), this.addWater(), this.addMudDetail(), this.addFields(), this.addCauseway(), this.addPlinth();
 	}
 	heightAt(e, t) {
 		let n = Rz(e, t, this.data.pond.points), r = Bz(e, t, this.data.pond.points);
-		if (n) return D.lerp(-.62, -1.15, lG(0, 2.8, r)) - .04 * Math.sin(e * .34 + t * .22);
-		if (r < 3.4) return -.62 + lG(0, 3.4, r) * .77;
+		if (n) return D.lerp(-.62, -1.15, hG(0, 2.8, r)) - .04 * Math.sin(e * .34 + t * .22);
+		if (r < 3.4) return -.62 + hG(0, 3.4, r) * .77;
 		let i = Rz(e, t, this.data.mudBasin.points), a = Bz(e, t, this.data.mudBasin.points);
 		if (i) {
 			let n = Math.exp(-((Math.sin(e * .13 + t * .055) * 3.2) ** 2));
 			return -.48 + Math.sin(e * .21) * Math.cos(t * .17) * .12 - n * .12;
 		}
-		if (a < 2.8) return -.42 + lG(0, 2.8, a) * .62;
-		let o = .95 * Math.sin(e * .026 + .65) * Math.cos(t * .022 - .25), s = .48 * Math.sin((e + t * .42) * .055), c = (Math.abs(e) / 72) ** 4 * .85 + (Math.abs(t) / 52) ** 4 * .55, l = Vz(e, t, this.data.causeway.points), u = 1 - lG(this.data.causeway.width, this.data.causeway.width + 3.5, l);
+		if (a < 2.8) return -.42 + hG(0, 2.8, a) * .62;
+		let o = .95 * Math.sin(e * .026 + .65) * Math.cos(t * .022 - .25), s = .48 * Math.sin((e + t * .42) * .055), c = (Math.abs(e) / 72) ** 4 * .85 + (Math.abs(t) / 52) ** 4 * .55, l = Vz(e, t, this.data.causeway.points), u = 1 - hG(this.data.causeway.width, this.data.causeway.width + 3.5, l);
 		return D.lerp(o + s + c, .1 + Math.sin(e * .035) * .12, u * .78);
 	}
 	updateVisibility(e) {}
@@ -35454,10 +35580,10 @@ var uG = class {
 	}
 	createGround() {
 		let { minX: e, maxX: t, minZ: n, maxZ: r } = this.data.bounds, i = [], o = [], s = [], c = [], l = new j();
-		for (let a = 0; a < cG; a += 1) {
-			let c = a / (cG - 1), u = D.lerp(n, r, c);
-			for (let n = 0; n < sG; n += 1) {
-				let r = n / (sG - 1), a = D.lerp(e, t, r), c = this.heightAt(a, u);
+		for (let a = 0; a < mG; a += 1) {
+			let c = a / (mG - 1), u = D.lerp(n, r, c);
+			for (let n = 0; n < pG; n += 1) {
+				let r = n / (pG - 1), a = D.lerp(e, t, r), c = this.heightAt(a, u);
 				i.push(a, c, u), s.push(a / 32, u / 32);
 				let d = Rz(a, u, this.data.mudBasin.points), f = Vz(a, u, this.data.causeway.points);
 				if (d) l.setRGB(.66, .49, .34);
@@ -35465,14 +35591,14 @@ var uG = class {
 				else {
 					let e = .065 * Math.sin(a * .09) * Math.cos(u * .12) + .025 * Math.sin(a * .31 + u * .17);
 					l.setRGB(.91 + e, .99 + e, .83 + e * .6);
-					let t = 1 - lG(0, 2.8, Bz(a, u, this.data.pond.points));
+					let t = 1 - hG(0, 2.8, Bz(a, u, this.data.pond.points));
 					l.lerp(new j(11051127), t * .45);
 				}
 				o.push(l.r, l.g, l.b);
 			}
 		}
-		for (let e = 0; e < cG - 1; e += 1) for (let t = 0; t < sG - 1; t += 1) {
-			let n = e * sG + t, r = n + 1, i = n + sG, a = i + 1;
+		for (let e = 0; e < mG - 1; e += 1) for (let t = 0; t < pG - 1; t += 1) {
+			let n = e * pG + t, r = n + 1, i = n + pG, a = i + 1;
 			c.push(n, i, r, r, i, a);
 		}
 		let u = new ai();
@@ -35514,7 +35640,7 @@ var uG = class {
 			transmission: 0,
 			clearcoat: .7,
 			clearcoatRoughness: .24,
-			normalMap: tG(),
+			normalMap: sG(),
 			normalScale: new O(.55, .55)
 		}));
 		e.name = "Markovec pond", this.interactiveMeshes.push(e), this.group.add(e);
@@ -35686,11 +35812,11 @@ var uG = class {
 };
 //#endregion
 //#region src/unit-visibility.ts
-function dG(e) {
+function _G(e) {
 	let t = new Set(e.visibleHexes);
 	return e.units.filter((n) => n.health > 0 && (!e.fogOfWar || n.faction === "hussites" || t.has(`${n.col},${n.row}`)));
 }
-var fG = class {
+var vG = class {
 	group = new Qn();
 	fading = /* @__PURE__ */ new Set();
 	pool = /* @__PURE__ */ new Map();
@@ -35730,7 +35856,7 @@ var fG = class {
 		});
 	}
 	retainVisible(e) {
-		let t = /* @__PURE__ */ new Set([...dG(e).map((e) => e.id), ...e.eliminatedUnitIds ?? []]), n = new Set(e.visibleHexes);
+		let t = /* @__PURE__ */ new Set([..._G(e).map((e) => e.id), ...e.eliminatedUnitIds ?? []]), n = new Set(e.visibleHexes);
 		for (let r of this.fading) (!t.has(r.unitId) || e.fogOfWar && r.faction !== "hussites" && !n.has(`${r.col},${r.row}`)) && this.remove(r);
 	}
 	cancelUnit(e) {
@@ -35761,29 +35887,29 @@ var fG = class {
 		}
 		this.fading.delete(e);
 	}
-}, pG = Math.PI / 2, mG = [
+}, yG = Math.PI / 2, bG = [
 	[-1.02, .5],
 	[0, -.66],
 	[1.02, .5],
 	[-.52, -.1],
 	[.52, -.1]
-], hG = [[-.7, -.2], [.7, .2]];
-function gG(e, t = 1.15, n = 2.15) {
+], xG = [[-.7, -.2], [.7, .2]];
+function SG(e, t = 1.15, n = 2.15) {
 	return [{
 		model: e,
-		offsets: mG,
+		offsets: bG,
 		scale: t,
 		pickRadius: n
 	}];
 }
-function _G(e) {
+function CG(e) {
 	return [{
 		model: e,
-		offsets: hG,
+		offsets: xG,
 		scale: .98
 	}];
 }
-function vG(e) {
+function wG(e) {
 	return [{
 		model: e,
 		offsets: [[0, 0]],
@@ -35795,7 +35921,7 @@ function vG(e) {
 		rotateOffsetsWithFacing: !0
 	}];
 }
-var yG = [
+var TG = [
 	{
 		model: "civilian_adult",
 		offsets: [[-1.02, .5], [.52, -.1]],
@@ -35811,15 +35937,15 @@ var yG = [
 		offsets: [[-.52, -.1]],
 		scale: 1.12
 	}
-], bG = /* @__PURE__ */ new Set([
+], EG = /* @__PURE__ */ new Set([
 	"PROKOP_HOLY",
 	"JAN_ZELIVSKY",
 	"VACLAV_KORANDA"
-]), xG = /* @__PURE__ */ new Set([
+]), DG = /* @__PURE__ */ new Set([
 	"JAN_ZIZKA",
 	"ZATECKY_HEJTMAN",
 	"JAN_HVEZDA"
-]), SG = /* @__PURE__ */ new Set([
+]), OG = /* @__PURE__ */ new Set([
 	"FRIDRICH_MISNENSKY",
 	"BOHUSLAV_SVAMBERK",
 	"ZIKMUND",
@@ -35842,29 +35968,29 @@ var yG = [
 	"VIKTORIN_BOCEK",
 	"JAN_ROHAC"
 ]);
-function CG(e) {
+function kG(e) {
 	switch (e.type) {
 		case "CEPNICI":
-		case "CEPNICI_PRASKY": return gG("infantry_flail", 1.15, 2.25);
-		case "SUDLICNICI": return gG("infantry_polearm");
+		case "CEPNICI_PRASKY": return SG("infantry_flail", 1.15, 2.25);
+		case "SUDLICNICI": return SG("infantry_polearm");
 		case "PAVEZNICI":
-		case "PAVEZNICI_KRIZACI": return gG("infantry_pavise");
+		case "PAVEZNICI_KRIZACI": return SG("infantry_pavise");
 		case "KOPINICI_HUSITI":
-		case "KOPINICI": return gG("infantry_spear");
+		case "KOPINICI": return SG("infantry_spear");
 		case "KUSINICI_HUSITI":
 		case "KUSNICI":
 		case "KUSNICI_JANOV":
-		case "KUSINICI_PRASKY": return gG("infantry_crossbow");
-		case "RUCNICARI": return gG("infantry_handgun");
-		case "HALAPARTNICI": return gG("infantry_halberd");
-		case "ZOLDNERI": return gG("infantry_shield");
-		case "LUCISTNICI": return gG("infantry_archer");
-		case "POUTNICI": return yG;
+		case "KUSINICI_PRASKY": return SG("infantry_crossbow");
+		case "RUCNICARI": return SG("infantry_handgun");
+		case "HALAPARTNICI": return SG("infantry_halberd");
+		case "ZOLDNERI": return SG("infantry_shield");
+		case "LUCISTNICI": return SG("infantry_archer");
+		case "POUTNICI": return TG;
 		case "HOUFNICE":
-		case "HOUFNICE_PRASKY": return vG("artillery_houfnice");
+		case "HOUFNICE_PRASKY": return wG("artillery_houfnice");
 		case "TARASNICE":
-		case "POLNI_DELO": return vG("artillery_tarasnice");
-		case "BOMBARDA": return vG("artillery_bombard");
+		case "POLNI_DELO": return wG("artillery_tarasnice");
+		case "BOMBARDA": return wG("artillery_bombard");
 		case "POLNI_OPEVNENI": return [{
 			model: "field_blockhouse",
 			offsets: [[0, 0]],
@@ -35881,24 +36007,24 @@ function CG(e) {
 		}];
 		case "JIZDA_HUSITI":
 		case "LEHKA_JIZDA":
-		case "JIZDA_PRASKY": return e.dismounted ? gG("infantry_spear") : _G("cavalry_light");
+		case "JIZDA_PRASKY": return e.dismounted ? SG("infantry_spear") : CG("cavalry_light");
 		case "ZVED":
-		case "ZVED_KRIZACI": return e.dismounted ? gG("infantry_shield") : _G("cavalry_scout");
+		case "ZVED_KRIZACI": return e.dismounted ? SG("infantry_shield") : CG("cavalry_scout");
 		case "SLECHTICKA_JIZDA_HUSITI":
 		case "TEZKY_RYTIR":
-		case "TEZKOODENCI": return e.dismounted ? gG("infantry_dismounted") : _G("cavalry_heavy");
+		case "TEZKOODENCI": return e.dismounted ? SG("infantry_dismounted") : CG("cavalry_heavy");
 		default:
-			if (bG.has(e.type)) return [{
+			if (EG.has(e.type)) return [{
 				model: "commander_cleric",
 				offsets: [[0, 0]],
 				scale: 1.24
 			}];
-			if (xG.has(e.type)) return [{
+			if (DG.has(e.type)) return [{
 				model: "commander_captain",
 				offsets: [[0, 0]],
 				scale: 1.28
 			}];
-			if (SG.has(e.type)) return [{
+			if (OG.has(e.type)) return [{
 				model: "commander_noble",
 				offsets: [[0, 0]],
 				scale: 1.28
@@ -35906,31 +36032,31 @@ function CG(e) {
 			throw Error(`No 3D unit recipe for ${e.type}`);
 	}
 }
-function wG(e) {
-	return `${e.faction}:${e.dismounted ? "foot" : "mounted"}:${CG(e).map((e) => e.model).join(",")}`;
+function AG(e) {
+	return `${e.faction}:${e.dismounted ? "foot" : "mounted"}:${kG(e).map((e) => e.model).join(",")}`;
 }
 //#endregion
 //#region src/command-aura.ts
-var TG = .26, EG = 1.35, DG = .07, OG = 8, kG = [
+var jG = .26, MG = 1.35, NG = .07, PG = 8, FG = [
 	[-.05, 0],
 	[0, 1],
 	[.07, .85],
 	[.3, .32],
 	[.62, .08],
 	[1, 0]
-], AG = [
+], IG = [
 	[0, .62],
 	[.12, .42],
 	[.4, .14],
 	[1, 0]
 ];
-function jG(e, t) {
+function LG(e, t) {
 	let n = t.col - e.col, r = t.row - Math.floor(t.col / 2) - (e.row - Math.floor(e.col / 2));
 	return Math.max(Math.abs(n), Math.abs(r), Math.abs(n + r));
 }
-function MG(e, t, n) {
+function RG(e, t, n) {
 	let r = [];
-	for (let i = Math.max(0, t.col - n); i <= Math.min(e.cols - 1, t.col + n); i += 1) for (let a = Math.max(0, t.row - n - 1); a <= Math.min(e.rows - 1, t.row + n + 1); a += 1) jG(t, {
+	for (let i = Math.max(0, t.col - n); i <= Math.min(e.cols - 1, t.col + n); i += 1) for (let a = Math.max(0, t.row - n - 1); a <= Math.min(e.rows - 1, t.row + n + 1); a += 1) LG(t, {
 		col: i,
 		row: a
 	}) <= n && r.push({
@@ -35939,9 +36065,9 @@ function MG(e, t, n) {
 	});
 	return r;
 }
-function NG(e, t, n) {
+function zG(e, t, n) {
 	let r = [];
-	for (let i of MG(e, t, n)) {
+	for (let i of RG(e, t, n)) {
 		let a = e.center(i.col, i.row);
 		for (let i = 0; i < 6; i += 1) {
 			let o = {
@@ -35954,7 +36080,7 @@ function NG(e, t, n) {
 				x: (o.x + s.x) / 2,
 				z: (o.z + s.z) / 2
 			}, l = e.coordAt(a.x + (c.x - a.x) * 2, a.z + (c.z - a.z) * 2);
-			if (l && jG(t, l) <= n) continue;
+			if (l && LG(t, l) <= n) continue;
 			let u = Math.hypot(a.x - c.x, a.z - c.z);
 			r.push({
 				a: o,
@@ -35968,18 +36094,18 @@ function NG(e, t, n) {
 	}
 	return r;
 }
-var PG = (e) => `${e.x.toFixed(3)},${e.z.toFixed(3)}`;
-function FG(e, t, n, r, i = {
+var BG = (e) => `${e.x.toFixed(3)},${e.z.toFixed(3)}`;
+function VG(e, t, n, r, i = {
 	x: 0,
 	z: 0
 }) {
-	let a = NG(e, n, r), o = /* @__PURE__ */ new Map();
+	let a = zG(e, n, r), o = /* @__PURE__ */ new Map();
 	for (let e of a) for (let t of [e.a, e.b]) {
-		let n = PG(t);
+		let n = BG(t);
 		o.set(n, [...o.get(n) ?? [], e.inward]);
 	}
-	let s = e.radius * TG, c = (e) => {
-		let t = o.get(PG(e)) ?? [], n = t.reduce((e, t) => ({
+	let s = e.radius * jG, c = (e) => {
+		let t = o.get(BG(e)) ?? [], n = t.reduce((e, t) => ({
 			x: e.x + t.x,
 			z: e.z + t.z
 		}), {
@@ -36015,16 +36141,16 @@ function FG(e, t, n, r, i = {
 	};
 	for (let e of a) {
 		let t = c(e.a), n = c(e.b);
-		for (let r = 0; r <= OG; r += 1) {
-			let a = r / OG, o = D.lerp(e.a.x, e.b.x, a) + i.x, c = D.lerp(e.a.z, e.b.z, a) + i.z, f = D.lerp(t.x, n.x, a), p = D.lerp(t.z, n.z, a);
-			for (let [e, t] of kG) {
+		for (let r = 0; r <= PG; r += 1) {
+			let a = r / PG, o = D.lerp(e.a.x, e.b.x, a) + i.x, c = D.lerp(e.a.z, e.b.z, a) + i.z, f = D.lerp(t.x, n.x, a), p = D.lerp(t.z, n.z, a);
+			for (let [e, t] of FG) {
 				let n = o + f * s * e, r = c + p * s * e;
-				u.positions.push(n, l(n, r) + DG, r), u.colors.push(1, 1, 1, t);
+				u.positions.push(n, l(n, r) + NG, r), u.colors.push(1, 1, 1, t);
 			}
-			let m = l(o, c) + DG;
-			for (let [e, t] of AG) d.positions.push(o, m + e * EG, c), d.colors.push(1, 1, 1, t);
+			let m = l(o, c) + NG;
+			for (let [e, t] of IG) d.positions.push(o, m + e * MG, c), d.colors.push(1, 1, 1, t);
 		}
-		f(u, OG, kG.length), f(d, OG, AG.length);
+		f(u, PG, FG.length), f(d, PG, IG.length);
 	}
 	let p = ({ positions: e, colors: t, indices: n }) => {
 		let r = new ai();
@@ -36037,7 +36163,7 @@ function FG(e, t, n, r, i = {
 }
 //#endregion
 //#region src/units.ts
-var IG = 420, LG = (e) => e < .3 ? Math.sin(e / .3 * Math.PI / 2) : Math.cos((e - .3) / .7 * Math.PI / 2) ** 2, RG = {
+var HG = 420, UG = (e) => e < .3 ? Math.sin(e / .3 * Math.PI / 2) : Math.cos((e - .3) / .7 * Math.PI / 2) ** 2, WG = {
 	hussites: {
 		team_cloth: 10178383,
 		team_paint: 8339259
@@ -36046,11 +36172,11 @@ var IG = 420, LG = (e) => e < .3 ? Math.sin(e / .3 * Math.PI / 2) : Math.cos((e 
 		team_cloth: 5797011,
 		team_paint: 4151410
 	}
-}, zG = {
+}, GG = {
 	hussites: 15975018,
 	crusaders: 9289200
-}, BG = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]), VG = 180, HG = 520, UG = Math.PI / 12, WG = .01;
-function GG(e, t) {
+}, KG = /* @__PURE__ */ new Set(["team_cloth", "team_paint"]), qG = 180, JG = 520, YG = Math.PI / 12, XG = .01;
+function ZG(e, t) {
 	let n = null, r = Infinity;
 	for (let i of t) {
 		let t = (i.x - e.x) ** 2 + (i.z - e.z) ** 2;
@@ -36058,19 +36184,19 @@ function GG(e, t) {
 	}
 	return n;
 }
-function KG(e, t) {
-	return (e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2) + (t ? pG : 0);
+function QG(e, t) {
+	return (e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2) + (t ? yG : 0);
 }
-function qG(e, t) {
+function $G(e, t) {
 	let n = t.x - e.x, r = t.z - e.z;
 	return n * n + r * r > 1e-4 ? Math.atan2(-r, n) : null;
 }
-function JG(e, t) {
+function eK(e, t) {
 	return Math.atan2(Math.sin(t - e), Math.cos(t - e));
 }
-var YG = class {
+var tK = class {
 	group = new Qn();
-	casualties = new fG();
+	casualties = new vG();
 	hitTargets = [];
 	visuals = /* @__PURE__ */ new Map();
 	disposed = !1;
@@ -36092,7 +36218,7 @@ var YG = class {
 	}
 	async update(e) {
 		if (this.disposed) return;
-		let t = ++this.updateRevision, n = dG(e), r = new Set(n.map((e) => e.id)), i = new Set(e.eliminatedUnitIds ?? []);
+		let t = ++this.updateRevision, n = _G(e), r = new Set(n.map((e) => e.id)), i = new Set(e.eliminatedUnitIds ?? []);
 		this.casualties.retainVisible(e);
 		for (let [e, t] of this.visuals) if (!r.has(e)) {
 			if (i.has(e)) for (let e of t.figures) this.casualties.add(e.object, t.unit);
@@ -36105,7 +36231,7 @@ var YG = class {
 	updateMovement(e) {
 		if (this.disposed) return !0;
 		let t = e.movement?.unitId, n = t === void 0 ? void 0 : e.units.find((e) => e.id === t), r = n ? this.visuals.get(n.id) : void 0;
-		return !n || !r || r.appearance !== wG(n) ? !1 : (this.placeUnit(r, n, e, this.facingContext(dG(e))), (n.unitClass === "commander" || n.special === "commander") && this.updateCommanderAuras(dG(e), e), !0);
+		return !n || !r || r.appearance !== AG(n) ? !1 : (this.placeUnit(r, n, e, this.facingContext(_G(e))), (n.unitClass === "commander" || n.special === "commander") && this.updateCommanderAuras(_G(e), e), !0);
 	}
 	consumeShadowChange() {
 		let e = this.shadowChange;
@@ -36134,11 +36260,11 @@ var YG = class {
 	}
 	advance(e, t = !1) {
 		if (t || e <= 0) return !1;
-		let n = 1 - Math.exp(-Math.min(e, 64) / VG), r = !1;
+		let n = 1 - Math.exp(-Math.min(e, 64) / qG), r = !1;
 		for (let t of this.visuals.values()) {
-			t.strike && (r = !0, this.shadowChange = "move", t.strike.age += e, t.strike.age >= IG && (t.strike = null), this.applyStrike(t), this.groundFigures(t));
-			let i = JG(t.yaw, t.targetYaw);
-			Math.abs(i) < 1e-4 || (r = !0, this.shadowChange ??= "turn", t.yaw = Math.abs(i) < WG ? t.targetYaw : t.yaw + i * n, t.root.rotation.y = t.yaw - t.baseYaw + t.marchingYaw, this.groundFigures(t));
+			t.strike && (r = !0, this.shadowChange = "move", t.strike.age += e, t.strike.age >= HG && (t.strike = null), this.applyStrike(t), this.groundFigures(t));
+			let i = eK(t.yaw, t.targetYaw);
+			Math.abs(i) < 1e-4 || (r = !0, this.shadowChange ??= "turn", t.yaw = Math.abs(i) < XG ? t.targetYaw : t.yaw + i * n, t.root.rotation.y = t.yaw - t.baseYaw + t.marchingYaw, this.groundFigures(t));
 		}
 		return r;
 	}
@@ -36165,7 +36291,7 @@ var YG = class {
 				let t = new Qn();
 				t.name = `${e.name} command aura`;
 				let r = new Fi({
-					color: zG[e.faction],
+					color: GG[e.faction],
 					vertexColors: !0,
 					transparent: !0,
 					depthWrite: !1,
@@ -36198,7 +36324,7 @@ var YG = class {
 			}, l = `${e.col},${e.row},${o},${c.x.toFixed(3)},${c.z.toFixed(3)}`;
 			if (l === n.key) continue;
 			n.key = l;
-			let u = FG(this.layout, this.terrain, e, o, c);
+			let u = VG(this.layout, this.terrain, e, o, c);
 			for (let [e, t] of [[n.band, u.band], [n.curtain, u.curtain]]) {
 				let n = e.geometry.getAttribute("position"), r = t.getAttribute("position");
 				n && n.count === r.count ? (n.array.set(r.array), n.needsUpdate = !0, e.geometry.computeBoundingSphere(), t.dispose()) : (e.geometry.dispose(), e.geometry = t);
@@ -36210,11 +36336,11 @@ var YG = class {
 		for (let t of [e.band, e.curtain]) t.geometry.dispose(), t.material.dispose();
 	}
 	async updateUnit(e, t, n, r) {
-		let i = this.visuals.get(e.id), a = wG(e);
+		let i = this.visuals.get(e.id), a = AG(e);
 		if (i && i.appearance !== a && (this.removeVisual(e.id, i), i = void 0), !i) {
 			let n = new Qn();
 			n.name = `${e.name} (${e.id})`;
-			let r = CG(e), o = r.some((e) => e.broadside), s = KG(e, o), c = [], l = Math.max(2.15, ...r.map((e) => e.pickRadius ?? 0));
+			let r = kG(e), o = r.some((e) => e.broadside), s = QG(e, o), c = [], l = Math.max(2.15, ...r.map((e) => e.pickRadius ?? 0));
 			for (let i of r) {
 				let r = await this.variant(i.model, e.faction);
 				if (this.disposed || t !== this.updateRevision || this.visuals.has(e.id)) return;
@@ -36283,7 +36409,7 @@ var YG = class {
 			z: o.z
 		}, this.applyStrike(e);
 		let c = this.desiredFacing(t, n, r, e.broadside);
-		c && (c.decisive || Math.abs(JG(e.targetYaw, c.yaw)) >= UG) && (e.targetYaw = c.yaw);
+		c && (c.decisive || Math.abs(eK(e.targetYaw, c.yaw)) >= YG) && (e.targetYaw = c.yaw);
 		let l = t.marching ? .06 : 0, u = t.isRouting ? .92 : 1;
 		(e.marchingYaw !== l || e.root.scale.x !== u) && (this.shadowChange = "move"), e.marchingYaw = l, e.root.scale.setScalar(u), e.root.rotation.y = e.yaw - e.baseYaw + e.marchingYaw, e.root.updateMatrixWorld(!0);
 		let d = e.figures.filter((e) => e.depletes).length, f = t.maxHealth > 0 ? Math.min(1, Math.max(0, t.health / t.maxHealth)) : 0, p = Math.max(1, Math.ceil(d * f));
@@ -36314,7 +36440,7 @@ var YG = class {
 		return { byFaction: t };
 	}
 	desiredFacing(e, t, n, r) {
-		let i = performance.now(), a = r ? pG : 0, o = this.attackFacing.get(e.id);
+		let i = performance.now(), a = r ? yG : 0, o = this.attackFacing.get(e.id);
 		if (o && o.until > i) return {
 			yaw: o.yaw + a,
 			decisive: !0
@@ -36330,7 +36456,7 @@ var YG = class {
 		}
 		let c = this.layout.center(e.col, e.row), l = [...n.byFaction.entries()].filter(([t]) => t !== e.faction).flatMap(([, e]) => e);
 		if (e.isRouting) {
-			let e = GG(c, l), t = e ? qG(e, c) : null;
+			let e = ZG(c, l), t = e ? $G(e, c) : null;
 			if (e) return t === null ? null : {
 				yaw: t,
 				decisive: !0
@@ -36346,7 +36472,7 @@ var YG = class {
 		};
 		for (let e of d) f.x += e.x, f.z += e.z;
 		f.x /= d.length, f.z /= d.length;
-		let p = GG(f, l), m = p ? qG(f, p) : null;
+		let p = ZG(f, l), m = p ? $G(f, p) : null;
 		return m === null ? null : {
 			yaw: m + a,
 			decisive: !1
@@ -36361,13 +36487,13 @@ var YG = class {
 			let i = this.yawBetween(r, n);
 			i !== null && this.attackFacing.set(r.id, {
 				yaw: i,
-				until: t + HG
+				until: t + JG
 			});
 		}
 		for (; this.seenAttackEvents.size > 96;) this.seenAttackEvents.delete(this.seenAttackEvents.values().next().value);
 	}
 	yawBetween(e, t) {
-		return qG(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
+		return $G(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
 	}
 	groundFigures(e) {
 		let t = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
@@ -36379,7 +36505,7 @@ var YG = class {
 		e.root.updateMatrixWorld(!0);
 	}
 	applyStrike(e) {
-		let t = e.strike ? LG(Math.min(1, e.strike.age / IG)) : 0, n = e.base.x + (e.strike?.dx ?? 0) * t, r = e.base.z + (e.strike?.dz ?? 0) * t;
+		let t = e.strike ? UG(Math.min(1, e.strike.age / HG)) : 0, n = e.base.x + (e.strike?.dx ?? 0) * t, r = e.base.z + (e.strike?.dz ?? 0) * t;
 		e.root.position.set(n, this.terrain.renderedHeightAt?.(n, r) ?? this.terrain.heightAt(n, r), r), e.root.updateMatrixWorld(!0);
 	}
 	removeVisual(e, t) {
@@ -36391,8 +36517,8 @@ var YG = class {
 		let n = `${e}:${t}`, r = this.variants.get(n);
 		return r || (r = this.assets.load(e).then((e) => {
 			let n = /* @__PURE__ */ new Map(), r = e.clone(!0), i = {
-				1: new j(RG[t].team_cloth),
-				2: new j(RG[t].team_paint)
+				1: new j(WG[t].team_cloth),
+				2: new j(WG[t].team_paint)
 			};
 			return r.traverse((e) => {
 				let r = e;
@@ -36400,12 +36526,12 @@ var YG = class {
 				let a = JR(r.geometry, i);
 				a && (r.geometry = a, this.disposed ? a.dispose() : this.ownedGeometries.add(a));
 				let o = (Array.isArray(r.material) ? r.material : [r.material]).map((e) => {
-					if (!BG.has(e.name)) return e;
+					if (!KG.has(e.name)) return e;
 					let r = n.get(e);
 					if (!r) {
 						r = e.clone();
 						let i = r.color;
-						i && i.setHex(RG[t][e.name]), n.set(e, r), this.disposed ? r.dispose() : this.ownedMaterials.add(r);
+						i && i.setHex(WG[t][e.name]), n.set(e, r), this.disposed ? r.dispose() : this.ownedMaterials.add(r);
 					}
 					return r;
 				});
@@ -36413,21 +36539,21 @@ var YG = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, XG = {
+}, nK = {
 	width: 64,
 	height: 58
-}, ZG = {
+}, rK = {
 	width: 152,
 	height: 114
 };
-function QG(e = !1) {
-	return e ? ZG : XG;
+function iK(e = !1) {
+	return e ? rK : nK;
 }
-function $G(e, t) {
+function aK(e, t) {
 	return Number(e.selected) - Number(t.selected) || (t.depth ?? 0) - (e.depth ?? 0) || e.id - t.id;
 }
-function eK(e, t, n, r = XG) {
-	return t <= 0 || n <= 0 ? [] : [...e].sort($G).map((e) => ({
+function oK(e, t, n, r = nK) {
+	return t <= 0 || n <= 0 ? [] : [...e].sort(aK).map((e) => ({
 		...e,
 		width: r.width,
 		height: r.height,
@@ -36435,8 +36561,8 @@ function eK(e, t, n, r = XG) {
 		top: e.y - r.height - 6
 	}));
 }
-var tK = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
-function nK(e, t, n, r = [], i = XG) {
+var sK = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
+function cK(e, t, n, r = [], i = nK) {
 	let a = [];
 	for (let o of [...e].sort((e, t) => Number(t.selected) - Number(e.selected) || e.y - t.y || e.id - t.id)) {
 		let { width: e, height: s } = i;
@@ -36463,26 +36589,26 @@ function nK(e, t, n, r = [], i = XG) {
 				left: Math.max(4, Math.min(t - e - 4, o.x - e / 2 + i)),
 				top: Math.max(4, Math.min(n - s - 4, o.y - s - 6 + d))
 			};
-			if (![...a, ...r].some((e) => tK(l, e))) {
+			if (![...a, ...r].some((e) => sK(l, e))) {
 				c = l;
 				break;
 			}
 		}
 		c && a.push(c);
 	}
-	return a.sort($G);
+	return a.sort(aK);
 }
-function rK(e, t, n) {
+function lK(e, t, n) {
 	if (!n || e.length === t.length) return e;
 	let r = new Set(e.map((e) => e.id));
-	return [...e, ...t.filter((e) => !r.has(e.id))].sort($G);
+	return [...e, ...t.filter((e) => !r.has(e.id))].sort(aK);
 }
-function iK(e, t, n) {
-	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + XG.height || Math.abs(t - e.left - e.width / 2) <= XG.width / 2))?.id ?? null;
+function uK(e, t, n) {
+	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + nK.height || Math.abs(t - e.left - e.width / 2) <= nK.width / 2))?.id ?? null;
 }
 //#endregion
 //#region src/unit-marker-styles.ts
-var aK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", oK = class {
+var dK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", fK = class {
 	canvas;
 	onChoose;
 	layer;
@@ -36506,11 +36632,11 @@ var aK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		let n = e.ownerDocument;
 		this.layer = n.createElement("div"), this.layer.className = "three-unit-markers";
 		let r = n.createElement("style");
-		r.textContent = aK, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
+		r.textContent = dK, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
 	}
 	update(e) {
 		if (this.disposed) return;
-		this.snapshot = e, this.resize(), this.units = dG(e).filter((e) => e.presentation);
+		this.snapshot = e, this.resize(), this.units = _G(e).filter((e) => e.presentation);
 		let t = new Set(this.units.map((e) => e.id));
 		for (let [e, n] of this.markers) t.has(e) || (n.button.remove(), this.markers.delete(e));
 		this.placements = this.placements.filter((e) => t.has(e.id));
@@ -36567,10 +36693,10 @@ var aK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 				depth: a.z
 			});
 		}
-		if (!this.layoutDirty && sK(n, this.lastAnchors)) return;
+		if (!this.layoutDirty && pK(n, this.lastAnchors)) return;
 		this.layoutDirty = !1, this.lastAnchors = n;
-		let r = QG(this.detailsVisible), i = eK(n, this.width, this.height, r);
-		this.placements = this.avoidance ? nK(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = rK(this.placements, i, this.detailsVisible));
+		let r = iK(this.detailsVisible), i = oK(n, this.width, this.height, r);
+		this.placements = this.avoidance ? cK(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = lK(this.placements, i, this.detailsVisible));
 		let a = new Set(this.placements.map((e) => e.id));
 		for (let [e, t] of this.markers) {
 			let n = !a.has(e);
@@ -36587,7 +36713,7 @@ var aK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 	}
 	unitAt(e, t) {
 		if (!this.active || !this.labelsVisible || this.disposed) return null;
-		let n = this.canvas.getBoundingClientRect(), r = iK(this.placements, e - n.left, t - n.top);
+		let n = this.canvas.getBoundingClientRect(), r = uK(this.placements, e - n.left, t - n.top);
 		return this.units.find((e) => e.id === r) ?? null;
 	}
 	dispose() {
@@ -36677,7 +36803,7 @@ var aK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		}));
 	}
 };
-function sK(e, t) {
+function pK(e, t) {
 	if (e.length !== t.length) return !1;
 	for (let n = 0; n < e.length; n += 1) {
 		let r = e[n], i = t[n];
@@ -36687,18 +36813,18 @@ function sK(e, t) {
 }
 //#endregion
 //#region src/wagon-connections.ts
-var cK = 10, lK = 5, uK = 1.3, dK = .48, fK = .24, pK = .065;
-function mK(e) {
+var mK = 10, hK = 5, gK = 1.3, _K = .48, vK = .24, yK = .065;
+function bK(e) {
 	return `${e.col},${e.row}`;
 }
-function hK(e, t) {
+function xK(e, t) {
 	return `${Math.min(e.id, t.id)}:${Math.max(e.id, t.id)}`;
 }
-var gK = class {
+var SK = class {
 	group = new Qn();
 	terrain;
 	layout;
-	linkGeometry = new js(fK, pK, 8, 8);
+	linkGeometry = new js(vK, yK, 8, 8);
 	closedMaterial = new Ps({
 		color: 5917215,
 		roughness: .88,
@@ -36720,11 +36846,11 @@ var gK = class {
 	}
 	update(e) {
 		if (this.disposed) return;
-		let t = dG(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [mK(e), e])), r = /* @__PURE__ */ new Set();
+		let t = _G(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [bK(e), e])), r = /* @__PURE__ */ new Set();
 		for (let e of t) for (let t of this.layout.neighbours(e)) {
 			let i = n.get(`${t.col},${t.row}`);
 			if (!i || e.faction !== i.faction || e.id >= i.id) continue;
-			let a = hK(e, i);
+			let a = xK(e, i);
 			r.add(a);
 			let o = e.marching || i.marching, s = `${a}|${e.col},${e.row}|${i.col},${i.row}|${o ? "marching" : "closed"}`, c = this.connections.get(a);
 			if (c?.stateKey === s) continue;
@@ -36738,11 +36864,11 @@ var gK = class {
 		this.disposed || (this.disposed = !0, this.connections.clear(), this.group.clear(), this.linkGeometry.dispose(), this.closedMaterial.dispose(), this.marchingMaterial.dispose());
 	}
 	createConnection(e, t, n) {
-		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new k(a / s, 0, o / s), l = new k(-c.z, 0, c.x), u = new k(0, 1, 0), d = Math.max(0, s - uK * 2), f = n ? lK : cK, p = n ? this.marchingMaterial : this.closedMaterial, m = new Qn();
+		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = new k(a / s, 0, o / s), l = new k(-c.z, 0, c.x), u = new k(0, 1, 0), d = Math.max(0, s - gK * 2), f = n ? hK : mK, p = n ? this.marchingMaterial : this.closedMaterial, m = new Qn();
 		m.name = `Wagon chain ${Math.min(e.id, t.id)}-${Math.max(e.id, t.id)}`, m.userData.wagonIds = [e.id, t.id];
 		let h = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		for (let e = 0; e < f; e += 1) {
-			let t = uK + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + dK, o = new qi(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
+			let t = gK + d * ((e + 1) / (f + 1)), n = r.x + c.x * t, i = r.z + c.z * t, a = h(n, i) + _K, o = new qi(this.linkGeometry, p), s = e % 2 == 0 ? l : u;
 			o.position.set(n, a, i), o.quaternion.setFromUnitVectors(new k(0, 0, 1), s), o.castShadow = !0, o.receiveShadow = !0, o.userData.connectionLink = !0, m.add(o);
 		}
 		return {
@@ -36750,36 +36876,36 @@ var gK = class {
 			stateKey: ""
 		};
 	}
-}, _K = (e) => e, vK = 1400, yK = 70, bK = 46, xK = 3.2, SK = class {
+}, CK = (e) => e, wK = 1400, TK = 70, EK = 46, DK = 3.2, OK = class {
 	group = new Qn();
 	flakes;
-	time = _K(DR)(0);
-	centre = _K(DR)(new k());
+	time = CK(DR)(0);
+	centre = CK(DR)(new k());
 	precipitation = "none";
 	elapsed = 0;
 	enabled = !0;
 	constructor() {
 		this.group.name = "Weather";
 		let e = new Wc().copy(new Es(.075, 0));
-		e.instanceCount = vK;
-		let t = new Float32Array(vK * 4), n = 2654435769, r = () => (n = n * 1664525 + 1013904223 >>> 0, n / 4294967296);
-		for (let e = 0; e < vK; e += 1) {
-			let n = r() * Math.PI * 2, i = Math.sqrt(r()) * yK;
+		e.instanceCount = wK;
+		let t = new Float32Array(wK * 4), n = 2654435769, r = () => (n = n * 1664525 + 1013904223 >>> 0, n / 4294967296);
+		for (let e = 0; e < wK; e += 1) {
+			let n = r() * Math.PI * 2, i = Math.sqrt(r()) * TK;
 			t.set([
 				Math.cos(n) * i,
 				Math.sin(n) * i,
-				r() * bK,
+				r() * EK,
 				r() * Math.PI * 2
 			], e * 4);
 		}
-		let i = _K(BL)(new da(t, 4)), a = i.w, o = _K(JL)(i.z.sub(this.time.mul(xK).mul(_K(JL)(a, .4).add(.8))), bK), s = new nS({
+		let i = CK(BL)(new da(t, 4)), a = i.w, o = CK(JL)(i.z.sub(this.time.mul(DK).mul(CK(JL)(a, .4).add(.8))), EK), s = new nS({
 			color: 16054008,
 			transparent: !0,
 			opacity: .85,
 			depthWrite: !1,
 			fog: !0
 		});
-		s.positionNode = lR.add(_K(NR)(this.centre.x.add(i.x).add(_K(bR)(this.time.mul(.7).add(a)).mul(.6)), this.centre.y.add(o).sub(_K(IL)(2)), this.centre.z.add(i.y).add(_K(AL)(this.time.mul(.5).add(a)).mul(.6)))), s.name = "Falling snow", this.flakes = new qi(e, s), this.flakes.name = "Snowflakes", this.flakes.frustumCulled = !1, this.flakes.castShadow = !1, this.flakes.visible = !1, this.group.add(this.flakes);
+		s.positionNode = lR.add(CK(NR)(this.centre.x.add(i.x).add(CK(bR)(this.time.mul(.7).add(a)).mul(.6)), this.centre.y.add(o).sub(CK(IL)(2)), this.centre.z.add(i.y).add(CK(AL)(this.time.mul(.5).add(a)).mul(.6)))), s.name = "Falling snow", this.flakes = new qi(e, s), this.flakes.name = "Snowflakes", this.flakes.frustumCulled = !1, this.flakes.castShadow = !1, this.flakes.visible = !1, this.group.add(this.flakes);
 	}
 	get active() {
 		return this.flakes.visible;
@@ -36796,7 +36922,7 @@ var gK = class {
 	dispose() {
 		this.flakes.geometry.dispose(), this.flakes.material.dispose(), this.group.clear();
 	}
-}, CK = "\n.three-applying-note { position:absolute; left:50%; bottom:18px; z-index:4; transform:translateX(-50%);\n  display:flex; align-items:center; gap:8px; padding:6px 12px; pointer-events:none;\n  background:rgba(242,232,211,.94); border:1px solid var(--field-ink, #20150d); color:var(--field-ink, #20150d);\n  font:0.85rem/1.2 Georgia, serif; box-shadow:0 2px 8px rgba(0,0,0,.18); }\n.three-applying-note[hidden] { display:none; }\n.three-applying-note span[aria-hidden] { width:12px; height:12px; border-radius:50%;\n  border:2px solid currentColor; border-right-color:transparent; animation:three-applying-spin .8s linear infinite; }\n@keyframes three-applying-spin { to { transform:rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { .three-applying-note span[aria-hidden] { animation:none; } }\n", wK = class {
+}, kK = "\n.three-applying-note { position:absolute; left:50%; bottom:18px; z-index:4; transform:translateX(-50%);\n  display:flex; align-items:center; gap:8px; padding:6px 12px; pointer-events:none;\n  background:rgba(242,232,211,.94); border:1px solid var(--field-ink, #20150d); color:var(--field-ink, #20150d);\n  font:0.85rem/1.2 Georgia, serif; box-shadow:0 2px 8px rgba(0,0,0,.18); }\n.three-applying-note[hidden] { display:none; }\n.three-applying-note span[aria-hidden] { width:12px; height:12px; border-radius:50%;\n  border:2px solid currentColor; border-right-color:transparent; animation:three-applying-spin .8s linear infinite; }\n@keyframes three-applying-spin { to { transform:rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { .three-applying-note span[aria-hidden] { animation:none; } }\n", AK = class {
 	text;
 	element = null;
 	label = null;
@@ -36806,7 +36932,7 @@ var gK = class {
 		let n = e.parentElement;
 		if (!n) return;
 		let r = e.ownerDocument;
-		this.element = r.createElement("div"), this.element.className = "three-applying-note", this.element.setAttribute("role", "status"), this.element.hidden = !0, this.style = r.createElement("style"), this.style.textContent = CK;
+		this.element = r.createElement("div"), this.element.className = "three-applying-note", this.element.setAttribute("role", "status"), this.element.hidden = !0, this.style = r.createElement("style"), this.style.textContent = kK;
 		let i = r.createElement("span");
 		i.setAttribute("aria-hidden", "true"), this.label = r.createElement("span"), this.element.append(i, this.label), n.append(this.style, this.element);
 	}
@@ -36819,7 +36945,7 @@ var gK = class {
 	dispose() {
 		this.element?.remove(), this.style?.remove();
 	}
-}, TK = {
+}, jK = {
 	high: {
 		ambientOcclusion: !0,
 		gtaoSamples: 12,
@@ -36844,11 +36970,11 @@ var gK = class {
 		shadowMapSize: 1024,
 		anisotropy: 2
 	}
-}, EK = {
+}, MK = {
 	high: "medium",
 	medium: "low",
 	low: null
-}, DK = 4e3, OK = 3e3, kK = class {
+}, NK = 4e3, PK = 3e3, FK = class {
 	samples = [];
 	holdUntil = 0;
 	tier = "high";
@@ -36862,14 +36988,14 @@ var gK = class {
 		if (!Number.isFinite(e) || e <= 0 || e > 250 || t < this.holdUntil || (this.samples.push(e), this.samples.length < 60)) return null;
 		let n = [...this.samples].sort((e, t) => e - t), r = n[Math.floor(n.length / 2)];
 		this.samples = [];
-		let i = EK[this.tier];
-		return r <= 25 || !i ? null : (this.tier = i, this.hold(t, OK), i);
+		let i = MK[this.tier];
+		return r <= 25 || !i ? null : (this.tier = i, this.hold(t, PK), i);
 	}
-}, AK = /* @__PURE__ */ new Set(), jK = () => {
-	for (let e of AK) e();
+}, IK = /* @__PURE__ */ new Set(), LK = () => {
+	for (let e of IK) e();
 };
-uc.onProgress = jK, uc.onLoad = jK;
-var MK = 240, NK = .5, PK = .003, FK = {
+uc.onProgress = LK, uc.onLoad = LK;
+var RK = 240, zK = .5, BK = .003, VK = {
 	KeyW: "up",
 	KeyS: "down",
 	KeyA: "left",
@@ -36878,7 +37004,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 	ArrowDown: "down",
 	ArrowLeft: "left",
 	ArrowRight: "right"
-}, IK = class e {
+}, HK = class e {
 	canvas;
 	options;
 	scene = new sr();
@@ -36893,11 +37019,11 @@ var MK = 240, NK = .5, PK = .003, FK = {
 	wagonConnections;
 	overlays;
 	effects;
-	weather = new SK();
+	weather = new OK();
 	atmosphere;
 	winter;
 	qualityLevel = "auto";
-	qualityGovernor = new kK();
+	qualityGovernor = new FK();
 	appliedTiers = /* @__PURE__ */ new Set(["high"]);
 	applyingNote;
 	pendingGraphChanges = [];
@@ -36923,7 +37049,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 	focusPointer = null;
 	active = !0;
 	disposed = !1;
-	performanceTracker = new fW();
+	performanceTracker = new vW();
 	lastRendererCounters = {};
 	performanceWarm = !1;
 	frameCount = 0;
@@ -36949,32 +37075,32 @@ var MK = 240, NK = .5, PK = .003, FK = {
 		this.canvas = e, this.options = t;
 		let r = new URL(t.assetBase ?? "assets/", document.baseURI).href;
 		if (this.assets = new YR(r), n) {
-			let e = new uG(n, t.snapshot, r);
-			this.terrain = e, this.scenery = new nG(n, e, this.assets), this.artMode = "authored";
+			let e = new gG(n, t.snapshot, r);
+			this.terrain = e, this.scenery = new cG(n, e, this.assets), this.artMode = "authored";
 		} else {
-			let e = new sU(t.snapshot, r);
-			this.terrain = e, this.scenery = new PV(e, this.assets, t.snapshot.scenario), this.artMode = "generated";
+			let e = new pU(t.snapshot, r);
+			this.terrain = e, this.scenery = new KV(e, this.assets, t.snapshot.scenario), this.artMode = "generated";
 		}
 		let i = Math.max(this.terrain.bounds.maxX - this.terrain.bounds.minX, this.terrain.bounds.maxZ - this.terrain.bounds.minZ);
-		this.scene.background = new j(8623772), this.scene.fog = new or(12109763, .001), this.cameraRig = Oz(e, i), this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), this.openingDistance = this.focusDistance, this.pipeline = new $W(e, this.scene, this.cameraRig.camera, {
-			...TK.high,
+		this.scene.background = new j(8623772), this.scene.fog = new or(12109763, .001), this.cameraRig = Oz(e, i), this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), this.openingDistance = this.focusDistance, this.pipeline = new aG(e, this.scene, this.cameraRig.camera, {
+			...jK.high,
 			depthOfFieldMode: "compact",
 			effects: !0
 		});
-		let a = this.terrain instanceof sU && this.terrain.environmentPlan.walls.length ? new yU(this.terrain.field.tiles, this.terrain.layout, this.terrain.environmentPlan.walls, this.terrain.environmentPlan.frozenRiver) : null;
-		this.units = new YG(this.terrain, this.terrain.layout, this.assets, (e) => {
+		let a = this.terrain instanceof pU && this.terrain.environmentPlan.walls.length ? new TU(this.terrain.field.tiles, this.terrain.layout, this.terrain.environmentPlan.walls, this.terrain.environmentPlan.frozenRiver) : null;
+		this.units = new tK(this.terrain, this.terrain.layout, this.assets, (e) => {
 			if (a) return a.position(e.from, e.to, e.progress);
 			let t = this.terrain.layout.center(e.from.col, e.from.row), n = this.terrain.layout.center(e.to.col, e.to.row);
 			return {
 				x: t.x + (n.x - t.x) * e.progress,
 				z: t.z + (n.z - t.z) * e.progress
 			};
-		}), this.banners = new oK(e, (e) => this.options.onHex?.(e)), this.effects = new Pz(e), this.applyingNote = new wK(e, () => t.localize?.("applyingGraphics") ?? "Applying graphics settings…"), this.wagonConnections = new gK(this.terrain, this.terrain.layout), this.overlays = new UU(this.terrain, this.terrain.layout), this.overlays.setGridFocus(this.cameraRig.controls.target.x, this.cameraRig.controls.target.z), this.lighting = MU(this.scene), this.winter = this.terrain instanceof sU && this.terrain.environmentPlan.winter, this.atmosphere = new kU(EU(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new nW(e, this.cameraRig.camera, this.terrain.layout), this.sky = new oG(this.scene, r, Math.max(500, i * 3.7));
+		}), this.banners = new fK(e, (e) => this.options.onHex?.(e)), this.effects = new Pz(e), this.applyingNote = new AK(e, () => t.localize?.("applyingGraphics") ?? "Applying graphics settings…"), this.wagonConnections = new SK(this.terrain, this.terrain.layout), this.overlays = new YU(this.terrain, this.terrain.layout), this.overlays.setGridFocus(this.cameraRig.controls.target.x, this.cameraRig.controls.target.z), this.lighting = RU(this.scene), this.winter = this.terrain instanceof pU && this.terrain.environmentPlan.winter, this.atmosphere = new FU(MU(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new cW(e, this.cameraRig.camera, this.terrain.layout), this.sky = new fG(this.scene, r, Math.max(500, i * 3.7));
 		let { minX: o, maxX: s, minZ: c, maxZ: l } = this.terrain.bounds;
-		this.table = new qU(new O((o + s) / 2, (c + l) / 2), i, new Sr().setFromObject(this.terrain.group).min.y - .01), this.scene.add(this.table.mesh), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), AK.add(this.requestFrame), this.installInput();
+		this.table = new $U(new O((o + s) / 2, (c + l) / 2), i, new Sr().setFromObject(this.terrain.group).min.y - .01), this.scene.add(this.table.mesh), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), IK.add(this.requestFrame), this.installInput();
 	}
 	static async create(t, n) {
-		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await DH(n.snapshot, r), a = new e(t, n, i);
+		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await NH(n.snapshot, r), a = new e(t, n, i);
 		try {
 			return await a.pipeline.init(), a.resize(), await Promise.all([a.sky.load(), a.scenery.build()]), a.applyAtmosphere(), await a.applySnapshot(n.snapshot), a.lighting.invalidateShadows(), Sz(a.cameraRig.camera, a.cameraRig.controls, a.forcesPose()), a.settleCamera(), a.ready = !0, a.scheduleFrame(), a;
 		} catch (e) {
@@ -36984,7 +37110,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 	async applySnapshot(e) {
 		if (this.disposed) return;
 		this.options.snapshot = e;
-		let t = EU(e.scenario, e.round, this.winter);
+		let t = MU(e.scenario, e.round, this.winter);
 		this.atmosphere.setProfile(t, !this.ready || this.reducedMotion.matches) && !this.atmosphere.settling && this.applyAtmosphere(), this.weather.setPrecipitation(t.precipitation);
 		let n = e.revision;
 		if (this.snapshotRevision = Math.max(this.snapshotRevision, n), this.terrain.updateVisibility(e), this.scenery.updateVisibility(e), this.overlays.update(e), this.banners.update(e), this.wagonConnections.update(e), this.units.casualties.setEnabled(this.active && !this.reducedMotion.matches), await this.units.update(e), this.disposed || n !== this.snapshotRevision) return;
@@ -37010,7 +37136,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 		this.options.snapshot = t, this.scheduleFrame();
 	}
 	setActive(e) {
-		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), this.effects.setVisible(e), e || (this.heldPanKeys.clear(), this.cameraTween = null, this.effects.clear()), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.resumingFromIdle = !0, this.qualityGovernor.hold(performance.now(), DK), this.resize(), this.scheduleFrame()));
+		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), this.effects.setVisible(e), e || (this.heldPanKeys.clear(), this.cameraTween = null, this.effects.clear()), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.resumingFromIdle = !0, this.qualityGovernor.hold(performance.now(), NK), this.resize(), this.scheduleFrame()));
 	}
 	frameScene() {
 		this.focusPointer = null, this.startCameraTween(this.forcesPose(), 650);
@@ -37033,7 +37159,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 			"high",
 			"medium",
 			"low"
-		].includes(e) || (this.qualityLevel = e, this.qualityGovernor.reset(), this.qualityGovernor.hold(performance.now(), DK), this.applyQualityTier(e === "auto" ? this.qualityGovernor.tier : e));
+		].includes(e) || (this.qualityLevel = e, this.qualityGovernor.reset(), this.qualityGovernor.hold(performance.now(), NK), this.applyQualityTier(e === "auto" ? this.qualityGovernor.tier : e));
 	}
 	qualityTier() {
 		return this.qualityLevel === "auto" ? this.qualityGovernor.tier : this.qualityLevel;
@@ -37133,10 +37259,10 @@ var MK = 240, NK = .5, PK = .003, FK = {
 		};
 	}
 	resetDiagnostics() {
-		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = MK, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
+		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = RK, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
 	}
 	dispose() {
-		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), this.shadowTimer !== null && window.clearTimeout(this.shadowTimer), AK.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.applyingNote.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.table.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
+		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), this.shadowTimer !== null && window.clearTimeout(this.shadowTimer), IK.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.applyingNote.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.table.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
 	}
 	addListener(e, t, n, r) {
 		e.addEventListener(t, n, {
@@ -37160,12 +37286,12 @@ var MK = 240, NK = .5, PK = .003, FK = {
 		})), this.addListener(this.canvas, "pointerdown", ((e) => {
 			if (!this.active) return;
 			let t = e;
-			if (this.suppressContext = !1, this.gestures.set(t.pointerId, rW(t)), this.gestures.size > 1) for (let e of this.gestures.values()) e.dragged = !0;
+			if (this.suppressContext = !1, this.gestures.set(t.pointerId, lW(t)), this.gestures.size > 1) for (let e of this.gestures.values()) e.dragged = !0;
 		})), this.addListener(this.canvas, "pointermove", ((e) => this.handlePointerMove(e))), this.addListener(this.canvas, "pointerup", (e) => {
 			if (!this.active) return;
 			let t = e, n = this.gestures.get(t.pointerId);
 			if (this.gestures.delete(t.pointerId), !n) return;
-			let r = aW(n, t);
+			let r = dW(n, t);
 			if (n.context || n.button === 2) {
 				r && n.context && this.options.onContext?.(), this.suppressContext = !r;
 				return;
@@ -37191,7 +37317,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 			y: e.clientY
 		});
 		let t = this.gestures.get(e.pointerId);
-		if (t && iW(t, e), this.gestures.size > 0 || e.pointerType !== "mouse") return;
+		if (t && uW(t, e), this.gestures.size > 0 || e.pointerType !== "mouse") return;
 		let n = this.picker.surfaceAt(e.clientX, e.clientY, this.terrain.interactiveMeshes);
 		n && this.overlays.setGridFocus(n.point.x, n.point.z) && this.scheduleFrame(), n && this.focusOn(n.point);
 		let r = n?.coord ?? null;
@@ -37215,7 +37341,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 		}
 	}
 	applyQualityTier(e) {
-		let t = TK[e];
+		let t = jK[e];
 		this.canvas.dataset.qualityTier = e, this.changeGraphics(!this.appliedTiers.has(e), () => {
 			this.appliedTiers.add(e), this.pipeline.setCost(t), this.lighting.setShadowMapSize(t.shadowMapSize), this.terrain.setAnisotropy?.(t.anisotropy);
 		});
@@ -37302,7 +37428,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 	}
 	handleKey(e, t) {
 		if (!this.active || e.ctrlKey || e.metaKey || e.altKey || e.target?.closest?.("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return;
-		let n = FK[e.code] ?? FK[e.key];
+		let n = VK[e.code] ?? VK[e.key];
 		if (n) {
 			t ? this.heldPanKeys.add(n) : this.heldPanKeys.delete(n), e.key.startsWith("Arrow") && e.preventDefault(), t && (this.cameraTween = null, this.scheduleFrame());
 			return;
@@ -37335,7 +37461,7 @@ var MK = 240, NK = .5, PK = .003, FK = {
 		Math.abs(n - this.targetFocusDistance) < .01 || (this.targetFocusDistance = n, this.blurVisible(this.focusStrength) && this.scheduleFrame());
 	}
 	blurVisible(e) {
-		return this.depthOfFieldEnabled && Az(e).blurRadiusPixels >= NK;
+		return this.depthOfFieldEnabled && Az(e).blurRadiusPixels >= zK;
 	}
 	scheduleFrame() {
 		!this.ready || !this.active || this.disposed || this.frameRequest !== null || (this.frameRequest = requestAnimationFrame(this.animate));
@@ -37368,22 +37494,22 @@ var MK = 240, NK = .5, PK = .003, FK = {
 		let y = this.lighting.updateShadows(e), b = performance.now();
 		this.pipeline.renderer.info.reset(), this.pipeline.render(), this.hideApplyingAfterFrame && (this.hideApplyingAfterFrame = !1, this.applyingNote.hide());
 		let x = performance.now();
-		if (this.lastRendererCounters = dW(this.pipeline.renderer), this.qualityLevel === "auto" && !n && this.performanceWarm) {
+		if (this.lastRendererCounters = _W(this.pipeline.renderer), this.qualityLevel === "auto" && !n && this.performanceWarm) {
 			let n = this.qualityGovernor.record(t, e);
 			n && (console.info(`[Hussite 3D] frames over budget; graphics quality lowered to ${n}`), this.applyQualityTier(n));
 		}
-		this.performanceWarm ? this.performanceTracker.record(t, b - i, x - b, x - i) : (this.performanceWarm = !0, this.qualityGovernor.hold(e, DK), this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.captureFramesRemaining > 0 && --this.captureFramesRemaining === 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(.01, this.targetFocusDistance * PK) || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
+		this.performanceWarm ? this.performanceTracker.record(t, b - i, x - b, x - i) : (this.performanceWarm = !0, this.qualityGovernor.hold(e, NK), this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.captureFramesRemaining > 0 && --this.captureFramesRemaining === 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(.01, this.targetFocusDistance * BK) || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
 			this.pulseTimer = null, this.ambientFrame = !0, this.scheduleFrame();
 		}, 42)) : this.resumingFromIdle = !0, y && this.frameRequest === null && (this.shadowTimer ??= window.setTimeout(() => {
 			this.shadowTimer = null, this.scheduleFrame();
 		}, 70));
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => IK.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function LK() {
+window.HussiteBattle3D = { create: (e, t) => HK.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function UK() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
-	let n = rG(() => t.takeSnapshot(), window), r = new aG(), i = await n, a = r.current() ?? i, o = (e, n) => {
+	let n = lG(() => t.takeSnapshot(), window), r = new dG(), i = await n, a = r.current() ?? i, o = (e, n) => {
 		let r = t.current();
 		t.sendCommand(JSON.stringify({
 			protocolVersion: 1,
@@ -37392,7 +37518,7 @@ async function LK() {
 			action: e,
 			...n
 		}));
-	}, s = await IK.create(e, {
+	}, s = await HK.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -37405,7 +37531,7 @@ async function LK() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-LK().catch((e) => {
+UK().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

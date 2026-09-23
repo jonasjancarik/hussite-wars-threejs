@@ -1,4 +1,4 @@
-import { ditchAlong, innerVertices, TVRZ_DITCH_DEPTH, TVRZ_DITCH_FLOOR, TVRZ_DITCH_OFFSET, TVRZ_DITCH_WIDTH } from "./fortification-plan.ts";
+import { bridgesOver, ditchAlong, innerVertices, type GateBridge, TVRZ_DITCH_DEPTH, TVRZ_DITCH_FLOOR, TVRZ_DITCH_OFFSET, TVRZ_DITCH_WIDTH } from "./fortification-plan.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { TerrainCell } from "./terrain-regions.ts";
 import { planSettlement, type SettlementPlan } from "./settlement-plan.ts";
@@ -44,6 +44,8 @@ export interface EnvironmentPlan {
   walls: TownWallPlan[];
   /** Wall plans that enclose a fortified manor rather than a town. */
   fortifications: Set<string>;
+  /** Plank bridges over the tvrz ditches, one per gate. */
+  gateBridges: GateBridge[];
 }
 
 /** Art profiles cover the current campaign. They never change semantic terrain or rules. */
@@ -58,7 +60,7 @@ const wet = (terrain: string): boolean => ["water", "mud", "swamp"].includes(ter
 export function planEnvironment(scenario: string | null, tiles: readonly TerrainCell[],
   features: readonly MapFeature[] = []): EnvironmentPlan {
   const plan: EnvironmentPlan = { scenario, placements: [], replacedCells: new Set(), earthworks: [], walls: [],
-    fortifications: new Set(),
+    fortifications: new Set(), gateBridges: [],
     raisedCells: new Map(),
     winter: scenario === "kutna_hora_1421" || scenario === "nemecky_brod_1422",
     frozenRiver: scenario === "nemecky_brod_1422" };
@@ -138,8 +140,8 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
 
   /**
    * A fortified manor over the hexes its map label names: a joined wall with
-   * corner towers and a gate toward the approach, a dry ditch broken at the
-   * gate, the manor house on the inner vertex furthest from the gate and a
+   * corner towers and a gate toward the approach, a dry ditch with a plank
+   * bridge at the gate, the manor house on the inner vertex furthest from the gate and a
    * well on the next. The courtyard is packed earth (see GeneratedTerrain).
    */
   function fortification(feature: MapFeature, index: number): void {
@@ -154,6 +156,7 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     plan.fortifications.add(walls.id);
     ditchAlong(walls).forEach((ditch, part) => plan.earthworks.push({ id: `${id}:ditch:${part}`, ...ditch, height: 0,
       ditch: true, ditchOffset: TVRZ_DITCH_OFFSET, ditchWidth: TVRZ_DITCH_WIDTH, ditchDepth: TVRZ_DITCH_DEPTH, ditchFloor: TVRZ_DITCH_FLOOR }));
+    plan.gateBridges.push(...bridgesOver(walls));
     const gate = walls.gates[0]?.centre;
     const [manor, yard] = innerVertices(region, layout, gate);
     // Face the gate, snapped to the hex directions so the footprint stays between the formations.

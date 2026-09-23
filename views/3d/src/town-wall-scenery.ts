@@ -3,8 +3,10 @@ import type { GeneratedTerrain } from "./generated-terrain.ts";
 import { SceneryVisibility } from "./scenery-visibility.ts";
 import { WALL_HEIGHT, WALL_THICKNESS, type TownWallPlan, type WallGate, type WallSegment, type WallTower } from "./town-wall-plan.ts";
 import type { TerrainPoint } from "./terrain-regions.ts";
+import { TVRZ_DITCH_OFFSET, type BridgeDeck } from "./fortification-plan.ts";
+import { distanceToSegment } from "./geometry-utils.ts";
 
-type Ground = Pick<GeneratedTerrain, "renderedHeightAt">;
+type Ground = Pick<GeneratedTerrain, "renderedHeightAt"> & Partial<Pick<GeneratedTerrain, "heightAt" | "moatBridges">>;
 type Vertices = number[];
 
 const MASONRY = 0xc4bfad;
@@ -131,6 +133,55 @@ function addDoorLeaf(planks: Vertices, battens: Vertices, iron: Vertices, centre
   }
 }
 
+/** A squared timber between two points, `side` horizontal and square to it. */
+function addBeam(vertices: Vertices, from: THREE.Vector3, to: THREE.Vector3, side: TerrainPoint, halfSide: number, halfUp: number): void {
+  const [p, q] = [from, to].map(end => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([s, u]) =>
+    new THREE.Vector3(end.x + side.x * s! * halfSide, end.y + u! * halfUp, end.z + side.z * s! * halfSide)));
+  for (let corner = 0; corner < 4; corner += 1) {
+    const next = (corner + 1) % 4;
+    pushQuad(vertices, p![corner]!, q![corner]!, q![next]!, p![next]!);
+  }
+  pushQuad(vertices, p![3]!, p![2]!, p![1]!, p![0]!); pushQuad(vertices, q![0]!, q![1]!, q![2]!, q![3]!);
+}
+
+/**
+ * A plank bridge from the gate over the ditch: deck boards laid across four
+ * stringers, a trestle standing in the ditch floor at mid-span and a plain
+ * rail either side. The deck is the surface figures walk on (see
+ * GeneratedTerrain.renderedHeightAt), so it is built from the same heights.
+ */
+function addBridge(bridge: BridgeDeck, terrain: Ground, planks: Vertices, timber: Vertices): void {
+  const dir = { x: bridge.dx, z: bridge.dz }, side = { x: -bridge.dz, z: bridge.dx };
+  const at = (u: number, v: number): TerrainPoint => ({ x: bridge.x + dir.x * u + side.x * v, z: bridge.z + dir.z * u + side.z * v });
+  const deck = (u: number): number => bridge.y0 + (bridge.y1 - bridge.y0) * (u - bridge.from) / (bridge.to - bridge.from);
+  const point = (u: number, v: number, y: number): THREE.Vector3 => { const p = at(u, v); return new THREE.Vector3(p.x, y, p.z); };
+  const ground = (u: number, v: number): number => { const p = at(u, v); return terrain.heightAt?.(p.x, p.z) ?? height(terrain, p); };
+  const span = bridge.to - bridge.from, count = Math.max(6, Math.round(span / .3)), pitch = span / count;
+  const hw = bridge.halfWidth, board = .06, stringer = .2;
+  for (let index = 0; index < count; index += 1) {
+    const u = bridge.from + pitch * (index + .5);
+    // Boards of slightly uneven length and set, as if laid by hand.
+    const shift = (((index * 5) % 3) - 1) * .04, top = deck(u) - ((index * 7) % 3) * .008;
+    addFrameBox(planks, at(u, shift), side, dir, hw - .1 + ((index * 3) % 2) * .05, pitch / 2 - .014, top - board, top);
+  }
+  const under = (u: number): number => deck(u) - board;
+  const stringers = [-1, -1 / 3, 1 / 3, 1].map(share => share * (hw - .25));
+  for (const v of stringers) addBeam(timber, point(bridge.from, v, under(bridge.from) - stringer / 2),
+    point(bridge.to, v, under(bridge.to) - stringer / 2), side, .08, stringer / 2);
+  // The trestle: a cap under the stringers on posts down to the ditch floor.
+  const mid = TVRZ_DITCH_OFFSET, capTop = under(mid) - stringer;
+  addFrameBox(timber, at(mid, 0), side, dir, hw - .1, .1, capTop - .18, capTop);
+  for (const v of [-1, 0, 1].map(share => share * (hw - .35))) {
+    addFrameBox(timber, at(mid, v), side, dir, .09, .09, ground(mid, v) - .15, capTop - .18);
+  }
+  // Rails: three posts a side joined by a top and a middle rail.
+  const posts = [.5, mid, bridge.to - .25];
+  for (const v of [-(hw - .06), hw - .06]) {
+    for (const u of posts) addFrameBox(timber, at(u, v), side, dir, .06, .06, under(u) - stringer, deck(u) + .95);
+    for (const lift of [.88, .46]) addBeam(timber, point(posts[0]!, v, deck(posts[0]!) + lift), point(posts[2]!, v, deck(posts[2]!) + lift), side, .045, .04);
+  }
+}
+
 function masonryTexture(): THREE.DataTexture {
   const size=128,data=new Uint8Array(size*size*4);
   for(let y=0;y<size;y++) for(let x=0;x<size;x++) {
@@ -226,6 +277,8 @@ export class TownWallScenery {
     if (plan.gateStyle === "posts") {
       const plankVertices: Vertices = [], ironVertices: Vertices = [];
       this.addGateway(plan, gate, terrain, stoneVertices, timberVertices, roofVertices, plankVertices, ironVertices);
+      const bridge = terrain.moatBridges?.find(candidate => candidate.id === gate.id);
+      if (bridge) addBridge(bridge, terrain, plankVertices, timberVertices);
       this.finishGate(root, stoneVertices, timberVertices, roofVertices, stone, timber, roof, visibility, owner, plankVertices, ironVertices);
       return;
     }
@@ -278,9 +331,8 @@ export class TownWallScenery {
 
   /**
    * An open gateway at wall height: the wall ends in two stout gate posts with
-   * low caps, and the two timber leaves stand open, folded flat against the
-   * outer face of the wall. Nothing spans the opening, so nothing has to clear
-   * a passing formation's spears, and every piece stays on the wall line.
+   * low caps, and the two planked leaves stand open into the yard. Nothing
+   * spans the opening, so nothing has to clear a passing formation's spears.
    */
   private addGateway(plan: TownWallPlan, gate: WallGate, terrain: Ground,
     stoneVertices: Vertices, timberVertices: Vertices, roofVertices: Vertices, plankVertices: Vertices, ironVertices: Vertices): void {
@@ -306,20 +358,30 @@ export class TownWallScenery {
       const apex = corner(0, 0, top + .45);
       pushTriangle(roofVertices, p!, q!, apex); pushTriangle(roofVertices, q!, r!, apex);
       pushTriangle(roofVertices, r!, t!, apex); pushTriangle(roofVertices, t!, p!, apex);
-      // The leaf hangs from the post and stands open outward, a little past square
-      // and angled away from the passage, beside the causeway. It never meets the
-      // wall, whatever its curve, and stays outside the opening formations use.
+      // The leaf hangs from the post and stands open inward, leaving the bridge
+      // clear: a little past square and angled away from the passage where the
+      // wall allows, otherwise hung on the passage side of the post, square or
+      // leaning in, whichever first keeps it clear of the wall's curve.
       const gateAlong = { x: fallback.x / width, z: fallback.z / width };
       const away = { x: gateAlong.x * sign, z: gateAlong.z * sign };
       const across = outside.x * -gateAlong.z + outside.z * gateAlong.x >= 0 ? 1 : -1;
-      const out = { x: -gateAlong.z * across, z: gateAlong.x * across };
-      const swing = Math.PI / 18;
-      const leafAlong = { x: out.x * Math.cos(swing) + away.x * Math.sin(swing), z: out.z * Math.cos(swing) + away.z * Math.sin(swing) };
+      const inward = { x: gateAlong.z * across, z: -gateAlong.x * across };
+      const leafWidth = Math.min(width / 2 - .05, 2.1);
+      const clear = (hinge: TerrainPoint, direction: TerrainPoint): boolean => [0, .25, .5, .75, 1].every(share =>
+        [-.07, .07].every(offset => {
+          const x = hinge.x + direction.x * (leafWidth + .03) * share - direction.z * offset;
+          const z = hinge.z + direction.z * (leafWidth + .03) * share + direction.x * offset;
+          return plan.segments.every(segment => distanceToSegment(x, z, segment.a.x, segment.a.z, segment.b.x, segment.b.z) >= WALL_THICKNESS / 2 + .04);
+        }));
+      const candidates = [.06, -(postHalf + .04)].flatMap(shift => [10, 0, -10].map(degrees => {
+        const swing = degrees * Math.PI / 180;
+        return { hinge: { x: end.x + inward.x * (postHalf + .02) + away.x * shift, z: end.z + inward.z * (postHalf + .02) + away.z * shift },
+          direction: { x: inward.x * Math.cos(swing) + away.x * Math.sin(swing), z: inward.z * Math.cos(swing) + away.z * Math.sin(swing) } };
+      }));
+      const { hinge, direction: leafAlong } = candidates.find(candidate => clear(candidate.hinge, candidate.direction)) ?? candidates.at(-1)!;
       const faceOut = { x: away.x - leafAlong.x * (away.x * leafAlong.x + away.z * leafAlong.z),
         z: away.z - leafAlong.z * (away.x * leafAlong.x + away.z * leafAlong.z) };
       const faceLength = Math.hypot(faceOut.x, faceOut.z) || 1;
-      const leafWidth = Math.min(width / 2 - .05, 2.1);
-      const hinge = { x: end.x + out.x * (postHalf + .02) + away.x * .06, z: end.z + out.z * (postHalf + .02) + away.z * .06 };
       const leaf = { x: hinge.x + leafAlong.x * (leafWidth / 2 + .03), z: hinge.z + leafAlong.z * (leafWidth / 2 + .03) };
       addDoorLeaf(plankVertices, timberVertices, ironVertices, leaf, leafAlong, { x: faceOut.x / faceLength, z: faceOut.z / faceLength },
         leafWidth, height(terrain, end) + .05, Math.min(WALL_HEIGHT - .25, 2.2), -1);

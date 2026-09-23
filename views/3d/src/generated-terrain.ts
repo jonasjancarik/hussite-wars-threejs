@@ -6,6 +6,7 @@ import { TopographyPlan } from "./topography.ts";
 import type { BattleSnapshot, BattleTerrain } from "./types.ts";
 import { bridgeRelief, earthworkRelief, planEnvironment, type EnvironmentPlan } from "./environment-plan.ts";
 import type { TownWallPlan } from "./town-wall-plan.ts";
+import { BRIDGE_DECK_LIFT, bridgeDeckAt, type BridgeDeck } from "./fortification-plan.ts";
 import { isRoadTerrain } from "./road-corridors.ts";
 import { nearestOnStreet } from "./settlement-plan.ts";
 import { clipPolygon, triangulatePolygon } from "./water-geometry.ts";
@@ -41,6 +42,8 @@ export class GeneratedTerrain implements BattleTerrain {
   /** Explored-but-unseen hexes are shaded in the vertex colours; overlays need not tint them. */
   public readonly shadesRememberedHexes = true;
   public readonly environmentPlan: EnvironmentPlan;
+  /** Tvrz gate bridges with their deck heights; figures and overlays stand on the deck, not in the ditch below. */
+  public moatBridges: BridgeDeck[] = [];
   private bridgeBaseHeight = 0;
   private readonly cityLoops: Array<{points:Array<[number,number]>;minX:number;maxX:number;minZ:number;maxZ:number}>;
   /** Wall loops around a fortified manor: everything inside is its packed-earth courtyard. */
@@ -89,6 +92,14 @@ export class GeneratedTerrain implements BattleTerrain {
     this.createSurface(assetBase);
     this.createPlinth();
     this.createPuddles();
+    this.moatBridges = this.environmentPlan.gateBridges.map(bridge => {
+      // Level with the highest ground across each end, so no plank end is buried.
+      const end = (along: number): number => Math.max(...[-1, -.5, 0, .5, 1].map(share => {
+        const across = share * bridge.halfWidth;
+        return this.renderedHeightAt(bridge.x + bridge.dx * along - bridge.dz * across, bridge.z + bridge.dz * along + bridge.dx * across);
+      })) + BRIDGE_DECK_LIFT;
+      return { ...bridge, y0: end(bridge.from), y1: end(bridge.to) };
+    });
   }
 
   /**
@@ -307,9 +318,13 @@ export class GeneratedTerrain implements BattleTerrain {
   /** Project overlays onto the actual triangles rather than the unsampled height function. */
   public renderedHeightAt(x: number, z: number): number {
     const sample = this.surfaceSampleAt(x, z);
-    if (!sample) return this.heightAt(x, z);
-    return sample.vertices.reduce((height, vertex, index) =>
+    const ground = !sample ? this.heightAt(x, z) : sample.vertices.reduce((height, vertex, index) =>
       height + this.basePositions[vertex * 3 + 1]! * sample.barycentric[index]!, 0);
+    for (const bridge of this.moatBridges) {
+      const deck = bridgeDeckAt(bridge, x, z);
+      if (deck !== null) return Math.max(ground, deck);
+    }
+    return ground;
   }
 
   /** Dominant terrain after the same vertex interpolation used by the rendered mesh. */
