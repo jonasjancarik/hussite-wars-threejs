@@ -101,3 +101,22 @@ test('the plain grid fades with distance from its focus but highlights do not', 
   assert.ok(ring && ring.material.opacity > 0.9, 'movement highlight keeps its own full-strength ring');
   overlays.dispose();
 });
+
+test("open water keeps a quieter grid than land; frozen water keeps its winter contrast", () => {
+  const layout = new HexLayout(2, 1);
+  const tiles = [{ col: 0, row: 0, terrain: 'plains' }, { col: 1, row: 0, terrain: 'water' }];
+  const snapshot = { tiles, units: [], selectedUnitId: null, legalMoves: [], legalAttacks: [], marchTargets: [],
+    exploredHexes: [], fogOfWar: false } as unknown as import('../src/types.ts').BattleSnapshot;
+  const alphaOf = (overlays: TacticalOverlays, col: number): number => {
+    const colors = overlays.grid.geometry.getAttribute('gridColor');
+    return colors.getW(col * colors.count / 2);
+  };
+  const summer = new TacticalOverlays({ heightAt: () => 0, group: new THREE.Group(), interactiveMeshes: [] }, layout);
+  summer.update(snapshot);
+  assert.ok(alphaOf(summer, 1) < alphaOf(summer, 0) * .7);
+  const winter = new TacticalOverlays({ heightAt: () => 0, group: new THREE.Group(), interactiveMeshes: [],
+    environmentPlan: { winter: true } }, layout);
+  winter.update(snapshot);
+  assert.ok(alphaOf(winter, 1) >= .6, "frozen water is pale ground and keeps a strong grid");
+  summer.dispose(); winter.dispose();
+});

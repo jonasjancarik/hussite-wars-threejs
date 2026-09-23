@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createGeneratedSurfaceMaterials, createPuddleMaterial, GROUND_SPLAT, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
+import { createGeneratedSurfaceMaterials, createPuddleMaterial, GROUND_SPLAT, SHORE_DISTANCE, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, fractalNoise, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
@@ -448,9 +448,11 @@ export class GeneratedTerrain implements BattleTerrain {
             color.lerp(sampleColor, worn * (weights.town ?? 0) * .8);
           }
         }
-        // Soil darkens as it nears a waterline.
-        const damp = 1 - .38 * THREE.MathUtils.smoothstep(this.puddleDip(x, z, weights), PUDDLE_FILL * .3, PUDDLE_FILL * 1.4);
-        color.multiplyScalar(damp);
+        // Soil darkens as it nears a waterline: puddles, and the banks of ponds and rivers.
+        const puddleDamp = THREE.MathUtils.smoothstep(this.puddleDip(x, z, weights), PUDDLE_FILL * .3, PUDDLE_FILL * 1.4);
+        const water = Object.entries(weights).reduce((sum, [name, weight]) => sum + (isWaterTerrain(name) ? weight : 0), 0);
+        const bankDamp = water > .5 ? 0 : THREE.MathUtils.smoothstep(this.field.waterInfluenceAt(x, z), .02, .3);
+        color.multiplyScalar(1 - .38 * puddleDamp - .26 * bankDamp);
         const grain = 0.96 + 0.04 * Math.sin(x * 0.19 + z * 0.13);
         colors.push(color.r * grain, color.g * grain, color.b * grain);
       }
@@ -578,6 +580,7 @@ export class GeneratedTerrain implements BattleTerrain {
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     geometry.setAttribute(GROUND_SPLAT, new THREE.Float32BufferAttribute(this.groundSplat(positions), 3));
+    geometry.setAttribute(SHORE_DISTANCE, new THREE.Float32BufferAttribute(shoreDistances(positions, materialIndices), 1));
     geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices);
     let groupStart = 0;
@@ -651,4 +654,41 @@ export class GeneratedTerrain implements BattleTerrain {
     base.receiveShadow = true;
     this.group.add(skirt, base);
   }
+}
+
+/** Water vertices farther than this from the shore all count as open water. */
+const SHORE_REACH = 6;
+
+/**
+ * Metres from each water vertex to the nearest shoreline vertex (one that a
+ * land triangle shares); zero on land. The water shader deepens its colour and
+ * places foam with it, since the flat water surface has no bed beneath it.
+ */
+function shoreDistances(positions: readonly number[], materialIndices: readonly number[][]): Float32Array {
+  const count = positions.length / 3, distances = new Float32Array(count);
+  const water = new Set(materialIndices[4]);
+  if (!water.size) return distances;
+  const land = new Set<number>();
+  materialIndices.forEach((bucket, material) => { if (material !== 4) for (const index of bucket) land.add(index); });
+  const cell = 2, buckets = new Map<string, number[]>();
+  for (const index of water) {
+    if (!land.has(index)) continue;
+    const key = `${Math.floor(positions[index * 3]! / cell)},${Math.floor(positions[index * 3 + 2]! / cell)}`;
+    const bucket = buckets.get(key) ?? [];
+    bucket.push(index); buckets.set(key, bucket);
+  }
+  const reach = Math.ceil(SHORE_REACH / cell);
+  for (const index of water) {
+    if (land.has(index)) continue;
+    const x = positions[index * 3]!, z = positions[index * 3 + 2]!;
+    const cx = Math.floor(x / cell), cz = Math.floor(z / cell);
+    let nearest = SHORE_REACH;
+    for (let dx = -reach; dx <= reach; dx += 1) for (let dz = -reach; dz <= reach; dz += 1) {
+      for (const shore of buckets.get(`${cx + dx},${cz + dz}`) ?? []) {
+        nearest = Math.min(nearest, Math.hypot(x - positions[shore * 3]!, z - positions[shore * 3 + 2]!));
+      }
+    }
+    distances[index] = nearest;
+  }
+  return distances;
 }

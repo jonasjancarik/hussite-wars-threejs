@@ -4,7 +4,7 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import * as THREE from "three";
 import { earthworkRelief } from "../src/environment-plan.ts";
-import { GROUND_SPLAT } from "../src/generated-materials.ts";
+import { GROUND_SPLAT, SHORE_DISTANCE } from "../src/generated-materials.ts";
 import { GeneratedTerrain, PUDDLE_DEPTH } from "../src/generated-terrain.ts";
 import type { BattleSnapshot } from "../src/types.ts";
 
@@ -82,4 +82,25 @@ test("wetlands hold shallow puddles that stay off earthworks", () => {
   assert.equal(terrain("zivohost_1419").group.children.some(child => child.name === "Wetland puddles"), false,
     "maps without mud or swamp get no puddles");
   neck.dispose();
+});
+
+test("open water knows how far it is from the shore; land and the waterline are zero", () => {
+  const ground = terrain("malesov_1424");
+  const geometry = surface(ground).geometry;
+  const shore = geometry.getAttribute(SHORE_DISTANCE);
+  const index = geometry.getIndex()!;
+  const water = new Set<number>(), land = new Set<number>();
+  for (const group of geometry.groups) {
+    for (let i = group.start; i < group.start + group.count; i += 1) {
+      (group.materialIndex === 4 ? water : land).add(index.getX(i));
+    }
+  }
+  let deepest = 0;
+  for (const vertex of land) assert.equal(shore.getX(vertex), 0, "land and shoreline vertices have no depth");
+  for (const vertex of water) deepest = Math.max(deepest, shore.getX(vertex));
+  assert.ok(deepest > 1.5, `open water reaches ${deepest.toFixed(2)} m from shore`);
+  assert.ok(deepest <= 6, "distance is capped where all water counts as open");
+  const materials = surface(ground).material as Array<THREE.Material & { colorNode?: unknown; normalNode?: unknown }>;
+  assert.ok(materials[4]!.colorNode && materials[4]!.normalNode, "water shades by depth and ripples");
+  ground.dispose();
 });

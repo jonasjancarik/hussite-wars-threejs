@@ -244,7 +244,9 @@ export class TacticalOverlays {
     for (const [coordKey, ring] of this.rings) {
       const material = ring.material as THREE.MeshBasicMaterial;
       const paleGround = this.winter && !["mud", "swamp", "marsh", "road", "road2", "dam", "trenches"].includes(terrains.get(coordKey) ?? "plains");
-      const gridOpacity = this.gridVisible ? (paleGround ? .65 : .30) : 0;
+      // Open water keeps a quieter grid; frozen water is pale ground and keeps its contrast.
+      const openWater = !this.winter && ["water", "river", "lake"].includes(terrains.get(coordKey) ?? "");
+      const gridOpacity = this.gridVisible ? (paleGround ? .65 : openWater ? .16 : .30) : 0;
       let opacity = gridOpacity;
       let fillOpacity = 0;
       let ringColor = paleGround ? 0x506277 : 0xb5ae91;

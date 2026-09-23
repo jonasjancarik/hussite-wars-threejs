@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { MeshStandardNodeMaterial } from "three/webgpu";
-import { attribute, cameraPosition, mix, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, uv, vec3, vertexColor } from "three/tsl";
+import { attribute, cameraPosition, mix, mx_noise_float, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, transformNormalToView, uv, vec3, vertexColor } from "three/tsl";
 import { isFieldTerrain } from "./terrain-regions.ts";
 import { isRoadTerrain } from "./road-corridors.ts";
 
@@ -30,6 +30,8 @@ export function surfaceMaterialIndex(terrain: string): number {
  * triangle's material changes.
  */
 export const GROUND_SPLAT = "groundSplat";
+/** Per-vertex metres from open water to the shore (zero on land). */
+export const SHORE_DISTANCE = "shoreDistance";
 
 /** Which ground texture a terrain kind contributes to: 0 meadow, 1 earth, 2 grain. */
 export function groundSplatChannel(kind: SurfaceMaterialKind): 0 | 1 | 2 {
@@ -119,7 +121,7 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
     land("earth", earthMap, 0.98),
     land("slope", meadowMap, 0.98),
     land("rock", slopeMap, 1),
-    material("water", null, 0.34),
+    createWaterMaterial(),
     material("road", slopeMap, 1),
   ], textures };
 }
@@ -144,4 +146,46 @@ export function createPuddleMaterial(winter: boolean): THREE.Material {
   }
   material.name = winter ? "Frozen puddles" : "Standing water";
   return material;
+}
+
+/** Linear-light colours of the open water, by depth (distance from the shore). */
+const SHALLOW_WATER = new THREE.Color(0x4d7568);
+const DEEP_WATER = new THREE.Color(0x16323a);
+const SHORE_FOAM = new THREE.Color(0xd8ddd0);
+/** Vertex colour the generator gives water; fog-of-war memory shading departs from it. */
+const WATER_VERTEX = new THREE.Color(0x78aaa4);
+
+/**
+ * Still water: shallow and greener by the shore, deep blue-green further out,
+ * a broken foam line at the waterline, a sky sheen at grazing angles and a
+ * static ripple in the normal for the sun to glint on. Nothing animates, so an
+ * idle battle still renders no frames.
+ */
+function createWaterMaterial(): THREE.MeshStandardMaterial {
+  const material = new MeshStandardNodeMaterial({ color: 0xffffff, roughness: .2, metalness: 0, side: THREE.DoubleSide });
+  const shore = tsl(attribute)(SHORE_DISTANCE, "float");
+  const world = positionWorld as any;
+  const depth = tsl(smoothstep)(.2, 2.6, shore);
+  const colour = tsl(mix)(tsl(vec3)(SHALLOW_WATER.r, SHALLOW_WATER.g, SHALLOW_WATER.b),
+    tsl(vec3)(DEEP_WATER.r, DEEP_WATER.g, DEEP_WATER.b), depth);
+  const breakup = tsl(mx_noise_float)(world.xz.mul(.9)).mul(.5).add(.5);
+  const foam = tsl(smoothstep)(.32, .02, shore).mul(tsl(smoothstep)(.3, .75, breakup)).mul(.5);
+  // Remembered (explored, unseen) water is shaded through its vertex colour like the land.
+  const memory = tsl(vertexColor)().div(tsl(vec3)(WATER_VERTEX.r, WATER_VERTEX.g, WATER_VERTEX.b)).clamp(0, 1.2);
+  material.colorNode = tsl(mix)(colour, tsl(vec3)(SHORE_FOAM.r, SHORE_FOAM.g, SHORE_FOAM.b), foam).mul(memory);
+  // Ripples: tilt the flat normal by the gradient of two octaves of noise.
+  const step = .08, strength = .1;
+  const h = (x: number, z: number): any => {
+    const at = world.xz.add(tsl(vec3)(x, z, 0).xy);
+    return tsl(mx_noise_float)(at.mul(.8)).add(tsl(mx_noise_float)(at.mul(2.2).add(7)).mul(.35));
+  };
+  const slopeX = h(step, 0).sub(h(-step, 0)).div(step * 2), slopeZ = h(0, step).sub(h(0, -step)).div(step * 2);
+  const rippled = tsl(vec3)(slopeX.mul(-strength), 1, slopeZ.mul(-strength)).normalize();
+  material.normalNode = tsl(transformNormalToView)(rippled);
+  const view = (cameraPosition as any).sub(positionWorld).normalize();
+  const facing = rippled.dot(view).clamp(0, 1);
+  const fresnel = facing.oneMinus().pow(4).mul(.45).add(.03);
+  material.emissiveNode = tsl(vec3)(.5, .58, .62).mul(fresnel).mul(tsl(smoothstep)(.3, 0, foam)).mul(memory);
+  material.name = "Generated water ground material";
+  return material as unknown as THREE.MeshStandardMaterial;
 }
