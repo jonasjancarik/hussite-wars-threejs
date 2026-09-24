@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { HexLayout } from "../src/hex-coordinates.ts";
-import { AURA_CURTAIN_HEIGHT, commandAuraCells, commandAuraEdges, commandAuraGeometry } from "../src/command-aura.ts";
+import { commandAuraCells, commandAuraEdges, commandAuraGeometry } from "../src/command-aura.ts";
 
 const flat = { heightAt: () => 0 };
 
@@ -26,19 +26,17 @@ test("command aura outlines only the rim, facing the commander", () => {
   }
 });
 
-test("command aura band is brightest at the rim and the curtain fades upward", () => {
+test("command aura band is brightest at the rim and lies on the ground", () => {
   const layout = new HexLayout(20, 12);
-  const { band, curtain } = commandAuraGeometry(layout, flat, { col: 10, row: 6 }, 1);
-  const bandAlpha = band.getAttribute("color");
-  let peak = 0;
-  for (let index = 0; index < bandAlpha.count; index += 1) peak = Math.max(peak, bandAlpha.getW(index));
-  assert.equal(peak, 1);
-  const positions = curtain.getAttribute("position"), curtainAlpha = curtain.getAttribute("color");
-  let top = -Infinity;
-  for (let index = 0; index < positions.count; index += 1) {
+  const band = commandAuraGeometry(layout, flat, { col: 10, row: 6 }, 1);
+  const bandAlpha = band.getAttribute("color"), positions = band.getAttribute("position");
+  let peak = 0, top = -Infinity;
+  for (let index = 0; index < bandAlpha.count; index += 1) {
+    peak = Math.max(peak, bandAlpha.getW(index));
     top = Math.max(top, positions.getY(index));
-    if (positions.getY(index) > AURA_CURTAIN_HEIGHT) assert.equal(curtainAlpha.getW(index), 0);
   }
-  assert.ok(top > AURA_CURTAIN_HEIGHT);
-  assert.ok((band.getIndex()?.count ?? 0) > 0 && (curtain.getIndex()?.count ?? 0) > 0);
+  assert.equal(peak, 1);
+  // Nothing rises from the rim: the whole band hugs the ground.
+  assert.ok(top < 0.1);
+  assert.ok((band.getIndex()?.count ?? 0) > 0);
 });

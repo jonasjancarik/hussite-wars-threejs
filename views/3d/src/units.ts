@@ -28,7 +28,7 @@ const TEAM_MATERIAL_COLORS = {
 } as const;
 /** Command auras: warm gold for the Hussites, steel blue for the crusaders. */
 const AURA_COLORS = { hussites: 0xf3c26a, crusaders: 0x8dbdf0 } as const;
-interface CommandAura { group: THREE.Group; band: THREE.Mesh; curtain: THREE.Mesh; key: string }
+interface CommandAura { group: THREE.Group; band: THREE.Mesh; key: string }
 const TEAM_MATERIAL_NAMES = new Set(["team_cloth", "team_paint"]);
 
 type MovementSnapshot = NonNullable<BattleSnapshot["movement"]>;
@@ -262,12 +262,9 @@ export class UnitPresentation {
         const band = new THREE.Mesh(new THREE.BufferGeometry(), material);
         band.name = "Command aura ground band";
         band.renderOrder = 8;
-        const curtain = new THREE.Mesh(new THREE.BufferGeometry(), material.clone());
-        curtain.name = "Command aura curtain";
-        curtain.renderOrder = 8;
-        for (const mesh of [band, curtain]) mesh.raycast = () => undefined;
-        group.add(band, curtain);
-        aura = { group, band, curtain, key: "" };
+        band.raycast = () => undefined;
+        group.add(band);
+        aura = { group, band, key: "" };
         this.commanderAuras.set(commander.id, aura);
         this.group.add(group);
       }
@@ -275,7 +272,6 @@ export class UnitPresentation {
       // The selected commander's aura stands out; the others stay a quiet hint.
       const selected = snapshot.selectedUnitId === commander.id;
       (aura.band.material as THREE.MeshBasicMaterial).opacity = selected ? 0.78 : 0.32;
-      (aura.curtain.material as THREE.MeshBasicMaterial).opacity = selected ? 0.34 : 0.07;
 
       const moving = movement?.unitId === commander.id && this.movementPosition ? this.movementPosition(movement) : null;
       const range = commander.commanderAbilities?.auraRange ?? 0;
@@ -285,31 +281,27 @@ export class UnitPresentation {
       const key = `${commander.col},${commander.row},${range},${offset.x.toFixed(3)},${offset.z.toFixed(3)}`;
       if (key === aura.key) continue;
       aura.key = key;
-      const geometry = commandAuraGeometry(this.layout, this.terrain, commander, range, offset);
-      for (const [mesh, next] of [[aura.band, geometry.band], [aura.curtain, geometry.curtain]] as const) {
-        const current = mesh.geometry.getAttribute("position") as THREE.BufferAttribute | undefined;
-        const positions = next.getAttribute("position") as THREE.BufferAttribute;
-        if (current && current.count === positions.count) {
-          // Moving along a route keeps the shape: rewrite positions rather than
-          // replacing the GPU buffers on every animation frame.
-          (current.array as Float32Array).set(positions.array as Float32Array);
-          current.needsUpdate = true;
-          mesh.geometry.computeBoundingSphere();
-          next.dispose();
-        } else {
-          mesh.geometry.dispose();
-          mesh.geometry = next;
-        }
+      const next = commandAuraGeometry(this.layout, this.terrain, commander, range, offset);
+      const current = aura.band.geometry.getAttribute("position") as THREE.BufferAttribute | undefined;
+      const positions = next.getAttribute("position") as THREE.BufferAttribute;
+      if (current && current.count === positions.count) {
+        // Moving along a route keeps the shape: rewrite positions rather than
+        // replacing the GPU buffers on every animation frame.
+        (current.array as Float32Array).set(positions.array as Float32Array);
+        current.needsUpdate = true;
+        aura.band.geometry.computeBoundingSphere();
+        next.dispose();
+      } else {
+        aura.band.geometry.dispose();
+        aura.band.geometry = next;
       }
     }
   }
 
   private removeAura(aura: CommandAura): void {
     this.group.remove(aura.group);
-    for (const mesh of [aura.band, aura.curtain]) {
-      mesh.geometry.dispose();
-      (mesh.material as THREE.Material).dispose();
-    }
+    aura.band.geometry.dispose();
+    (aura.band.material as THREE.Material).dispose();
   }
 
   private async updateUnit(unit: UnitSnapshot, revision: number, snapshot: BattleSnapshot, context: FacingContext): Promise<void> {

@@ -4,16 +4,12 @@ import type { HexCoord, TerrainSurface } from "./types.ts";
 
 /** Rim-to-centre width of the ground band, in hex radii. */
 export const AURA_BAND_WIDTH = 0.26;
-/** Height of the translucent curtain that rises from the aura's rim. */
-export const AURA_CURTAIN_HEIGHT = 1.35;
 /** Ground clearance, just above the tactical grid (0.04). */
 const LIFT = 0.07;
-/** Points per hex edge, so the band and curtain follow the terrain. */
+/** Points per hex edge, so the band follows the terrain. */
 const EDGE_STEPS = 8;
 /** Across the band: fraction of its width → opacity. A crisp rim easing to nothing inward. */
 const BAND_PROFILE: ReadonlyArray<readonly [number, number]> = [[-0.05, 0], [0, 1], [0.07, 0.85], [0.3, 0.32], [0.62, 0.08], [1, 0]];
-/** Up the curtain: fraction of its height → opacity. */
-const CURTAIN_PROFILE: ReadonlyArray<readonly [number, number]> = [[0, 0.62], [0.12, 0.42], [0.4, 0.14], [1, 0]];
 
 interface Point { x: number; z: number }
 export interface AuraEdge { a: Point; b: Point; /** Unit normal pointing into the aura. */ inward: Point }
@@ -57,12 +53,11 @@ export function commandAuraEdges(layout: HexLayout, commander: HexCoord, range: 
 const vertexKey = (point: Point): string => `${point.x.toFixed(3)},${point.z.toFixed(3)}`;
 
 /**
- * The aura's ground band (bright at the rim, fading toward the commander) and
- * its curtain (a low veil rising from the rim, fading upward). Both carry
+ * The aura's ground band: bright at the rim, fading toward the commander, with
  * per-vertex opacity for a material with `vertexColors`.
  */
 export function commandAuraGeometry(layout: HexLayout, terrain: Pick<TerrainSurface, "heightAt" | "renderedHeightAt">,
-  commander: HexCoord, range: number, offset: Point = { x: 0, z: 0 }): { band: THREE.BufferGeometry; curtain: THREE.BufferGeometry } {
+  commander: HexCoord, range: number, offset: Point = { x: 0, z: 0 }): THREE.BufferGeometry {
   const edges = commandAuraEdges(layout, commander, range);
   // Every boundary vertex joins exactly two boundary edges on a hex grid, so a
   // mitred inward direction per vertex keeps neighbouring strips seamless.
@@ -86,7 +81,6 @@ export function commandAuraGeometry(layout: HexLayout, terrain: Pick<TerrainSurf
   const ground = (x: number, z: number): number => Math.max(terrain.renderedHeightAt?.(x, z) ?? terrain.heightAt(x, z), -0.52);
 
   const band = { positions: [] as number[], colors: [] as number[], indices: [] as number[] };
-  const curtain = { positions: [] as number[], colors: [] as number[], indices: [] as number[] };
   const strip = (target: typeof band, columns: number, rows: number): void => {
     const base = target.positions.length / 3 - (columns + 1) * rows;
     for (let column = 0; column < columns; column += 1) {
@@ -108,22 +102,13 @@ export function commandAuraGeometry(layout: HexLayout, terrain: Pick<TerrainSurf
         band.positions.push(px, ground(px, pz) + LIFT, pz);
         band.colors.push(1, 1, 1, alpha);
       }
-      const foot = ground(x, z) + LIFT;
-      for (const [up, alpha] of CURTAIN_PROFILE) {
-        curtain.positions.push(x, foot + up * AURA_CURTAIN_HEIGHT, z);
-        curtain.colors.push(1, 1, 1, alpha);
-      }
     }
     strip(band, EDGE_STEPS, BAND_PROFILE.length);
-    strip(curtain, EDGE_STEPS, CURTAIN_PROFILE.length);
   }
-  const build = ({ positions, colors, indices }: typeof band): THREE.BufferGeometry => {
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 4));
-    geometry.setIndex(indices);
-    geometry.computeBoundingSphere();
-    return geometry;
-  };
-  return { band: build(band), curtain: build(curtain) };
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(band.positions, 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(band.colors, 4));
+  geometry.setIndex(band.indices);
+  geometry.computeBoundingSphere();
+  return geometry;
 }
