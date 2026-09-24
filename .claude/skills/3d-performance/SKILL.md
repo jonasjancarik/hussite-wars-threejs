@@ -42,7 +42,13 @@ A redraw of the shadow map adds roughly one draw per shadow caster to its frame.
   - Picking runs on every mouse move and on every frame the camera moves. Terrain meshes go through `intersectMeshes`, never `Raycaster`.
   - In per-vertex generation loops, avoid string-keyed lookups. `getCell` building `"col,row"` strings once took 38% of the terrain build.
   - `weightsAt` returns frozen, memoized objects. Copy before changing one.
-- **Start downloads before the terrain build.** `create()` in `main.ts` runs the cheap plans (`planGeneratedTerrain`, `planScenery`, `unitModels`), starts every model download, and only then builds the terrain mesh. New generated scenery should name its models in `planScenery`, so they download during the build instead of after it.
+- **Build the terrain surface in the worker.**
+  - `create()` in `main.ts` starts `terrain-worker.ts` first. The worker computes the surface mesh's arrays (`buildSurface` in `terrain-surface.ts`), which is most of a map's build.
+  - Meanwhile the main thread runs the cheap plans (`planGeneratedTerrain`, `planScenery`, `unitModels`) and starts every model download. New generated scenery should name its models in `planScenery`, so they download during the build.
+  - `terrain-surface.ts` and everything it imports must stay free of the DOM, `three/webgpu` and `three/tsl`, because the worker bundles them. Materials and meshes belong in `generated-terrain.ts`.
+  - Node (tests, the bench) and any browser where the worker fails build the surface inline, from the same code.
+  - `npm run build` emits the worker as `integrated/assets/terrain-worker-<hash>.js`. Commit it together with the bundle.
+  - After the worker, the largest main-thread cost measured on 2026-09-24 was constructing `TacticalOverlays`, then planning.
 - **Minimize the DOM work in the frame loop.** Banners write only the styles that changed, and skip layout when their anchors didn't move. Never read layout after writing in the loop.
 - **Watch shader structure.**
   - WGSL forbids ordinary `texture()` samples inside a per-pixel branch. Take `dFdx`/`dFdy` outside the `If` and sample inside it with `.grad()` (see `triplanar`).

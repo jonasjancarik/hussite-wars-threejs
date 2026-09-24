@@ -51,7 +51,7 @@ npm --prefix views/3d run build
 
 - **Elevation:** `topography.ts` (interpolation across the hex-centre lattice, even hill flanks, relative wet dips).
 - **Region blending:** `terrain-regions.ts`, including the shoreline (`shoreWeightsAt`).
-- **Surface mesh:** `generated-terrain.ts`: ground blend weights, puddles, shore distance, and the cut face.
+- **Surface mesh:** `terrain-surface.ts` computes the height, ground blend weights and shore distance, and runs in a worker. `generated-terrain.ts` turns those arrays into meshes and adds the puddles and the cut face.
 - **Shaders:** `generated-materials.ts`: blended ground and rock, water, puddles, soil strata, walnut base.
 - **Woods and ground cover:** `woodland-plan.ts` and `ground-tufts.ts`.
 - **Fortified manors:** `fortification-plan.ts`, driven from `environment-plan.ts`, with walls from `town-wall-plan.ts`.
