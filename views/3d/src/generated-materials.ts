@@ -32,6 +32,11 @@ export function surfaceMaterialIndex(terrain: string): number {
 export const GROUND_SPLAT = "groundSplat";
 /** Per-vertex metres from open water to the shore (zero on land). */
 export const SHORE_DISTANCE = "shoreDistance";
+/**
+ * Per-vertex place on a road: x is the distance from its axis as a share of
+ * its half-width (0 on the axis, 1 at the verge), y how worn into ruts it is.
+ */
+export const ROAD_TRACK = "roadTrack";
 
 /** Which ground texture a terrain kind contributes to: 0 meadow, 1 earth, 2 grain. */
 export function groundSplatChannel(kind: SurfaceMaterialKind): 0 | 1 | 2 {
@@ -90,7 +95,11 @@ function groundLayer(map: THREE.Texture | null): any {
   return map ? tsl(textureNode)(map, tsl(uv)().mul(map.repeat.x)).rgb : tsl(vec3)(1, 1, 1);
 }
 
-export function createGeneratedSurfaceMaterials(assetBase?: string, winter = false): {
+/**
+ * @param snow colour of the snow-covered ground around a winter road, so its
+ *   verges drift over without a seam.
+ */
+export function createGeneratedSurfaceMaterials(assetBase?: string, winter = false, snow?: THREE.Color): {
   materials: THREE.MeshStandardMaterial[];
   textures: THREE.Texture[];
   /** The diorama's cut face: soil strata over bedrock. */
@@ -141,8 +150,40 @@ export function createGeneratedSurfaceMaterials(assetBase?: string, winter = fal
     land("slope", meadowMap, 0.98),
     land("rock", slopeMap, 1),
     createWaterMaterial(),
-    material("road", slopeMap, 1),
+    winter ? createWinterRoadMaterial(slopeMap, snow ?? SOIL.snow) : material("road", slopeMap, 1),
   ], textures, soil: createSoilMaterial(winter) };
+}
+
+/**
+ * A snowbound road: frozen mud worn into two wheel ruts, packed snow between
+ * and around them in drifting patches, and snow creeping in raggedly from each
+ * verge, so the road reads as a used track rather than a ruled brown band.
+ */
+function createWinterRoadMaterial(map: THREE.Texture | null, snow: THREE.Color): THREE.MeshStandardMaterial {
+  const track = tsl(attribute)(ROAD_TRACK, "vec2");
+  const across = track.x;
+  const at = (positionWorld as any).xz;
+  const broad = tsl(mx_noise_float)(at.mul(.21));
+  const fine = tsl(mx_noise_float)(at.mul(1.15).add(5.3));
+  const speckle = tsl(mx_noise_float)(at.mul(4.2).add(11.7));
+  const mud = groundLayer(map).mul(tsl(vertexColor)()).mul(.82);
+  // Two ruts either side of the axis: darker, wetter-looking frozen mud.
+  const rut = tsl(smoothstep)(.1, .03, across.sub(.29).abs().add(fine.mul(.025))).mul(track.y);
+  // Packed snow lies in drifting patches wherever wheels have not cut through.
+  const packed = tsl(smoothstep)(.1, .5, broad.mul(.8).add(fine.mul(.35)).add(speckle.mul(.12))).mul(rut.oneMinus()).mul(.7);
+  // The verges fray: snow reaches in unevenly from each side.
+  const verge = tsl(smoothstep)(.7, .98, across.add(broad.mul(.14)).add(fine.mul(.08)));
+  const snowColour = colourNode(snow);
+  const packedColour = snowColour.mul(tsl(vec3)(.84, .81, .76));
+  let colour = tsl(mix)(mud, mud.mul(tsl(vec3)(.62, .6, .6)), rut);
+  colour = tsl(mix)(colour, packedColour, packed);
+  colour = tsl(mix)(colour, snowColour, verge);
+  const result = new MeshStandardNodeMaterial({ color: 0xffffff, vertexColors: false, roughness: 1, metalness: 0,
+    side: THREE.DoubleSide });
+  result.colorNode = colour;
+  result.map = map;
+  result.name = "Generated road ground material";
+  return result as unknown as THREE.MeshStandardMaterial;
 }
 
 /** Per-vertex height of the terrain rim above a point of the diorama's cut face. */

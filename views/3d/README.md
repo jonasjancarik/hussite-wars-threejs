@@ -114,9 +114,9 @@ The existing bridge profile and its approach models share one vertical datum, wi
 
 Read when changing road shapes, material selection or terrain coverage.
 
-`road-corridors.ts` joins neighbouring road centres into continuous corridors with rounded bends and end caps. Straight runs keep their width across hex joins. The generator measures how much road would cover neighbouring terrain and adds circular clearances only where necessary to preserve the 75% minimum. It does not force a clearance at every hex edge. Outside each corridor, neighbouring ground replaces the former road-coloured hex corners.
+`road-corridors.ts` joins neighbouring road centres into continuous corridors with rounded bends and end caps. The corridor is a worn track rather than a ruled band: its axis drifts gently from side to side and each verge frays on its own, without pinching at hex joins. A lone road hex stays a centred patch so it still covers its hex. The generator measures how much road would cover neighbouring terrain and adds circular clearances only where necessary to preserve the 75% minimum. It does not force a clearance at every hex edge. Outside each corridor, neighbouring ground replaces the former road-coloured hex corners.
 
-Roads use a restrained, fine-grained packed-earth material separate from pond mud. The terrain mesh is cut along the road contour, and grounding follows the resulting triangles. This applies to the shared generated landscape without scenario-specific coordinates or new authored placements. Existing scenario layouts, movement costs and saved settlement adjustments remain authoritative.
+Roads use a restrained, fine-grained packed-earth material separate from pond mud. On winter maps the road is frozen mud with two wheel ruts, drifting patches of packed snow, and snow reaching in unevenly from each verge; the ruts run out through a dead end rather than curling round it. The shader reads each vertex's place across the road and how rutted it is from the `roadTrack` attribute. The terrain mesh is cut along the road contour, and grounding follows the resulting triangles. This applies to the shared generated landscape without scenario-specific coordinates or new authored placements. Existing scenario layouts, movement costs and saved settlement adjustments remain authoritative.
 
 ## Connected town walls and formation clearance
 

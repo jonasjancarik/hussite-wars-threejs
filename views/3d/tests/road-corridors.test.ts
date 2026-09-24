@@ -29,13 +29,13 @@ function coverage(fieldResult: ReturnType<typeof field>, col: number, row: numbe
   return fieldResult.measureCoverage(.1).cells.find(cell => cell.col === col && cell.row === row)!.coverage;
 }
 
-function roadHalfWidth(fieldResult: ReturnType<typeof field>, z: number): number {
-  const x = fieldResult.centerAt(2, 2).x;
+/** Where the road's weight drops through one half, walking from `x` in `direction`. */
+function roadEdge(fieldResult: ReturnType<typeof field>, x: number, z: number, direction: 1 | -1): number {
   let result = 0;
-  for (let offset = 0; offset <= 4; offset += .02) {
-    if ((fieldResult.weightsAt(x + offset, z).road ?? 0) >= .5) result = offset;
+  for (let offset = 0; offset <= 4.5; offset += .02) {
+    if ((fieldResult.weightsAt(x + offset * direction, z).road ?? 0) >= .5) result = offset;
   }
-  return result;
+  return x + result * direction;
 }
 
 type Point = [number, number, number];
@@ -86,18 +86,33 @@ function rightMaterialEdge(triangles: readonly Point[][], centerX: number, z: nu
   return edge;
 }
 
-test("connected corridors keep a constant-width road through hex joins", () => {
+test("connected corridors keep an unbroken road of gently varying width through hex joins", () => {
   const fieldResult = field([[2, 1], [2, 2], [2, 3], [2, 4]]);
   const x = fieldResult.centerAt(2, 2).x;
   const z1 = fieldResult.centerAt(2, 1).z;
-  const z2 = fieldResult.centerAt(2, 2).z;
   const z3 = fieldResult.centerAt(2, 3).z;
-  for (const z of [z1, (z1 + z2) / 2, z2, (z2 + z3) / 2, z3]) {
+  const samples = Array.from({ length: 17 }, (_, index) => z1 + (z3 - z1) * index / 16);
+  for (const z of samples) {
     assert.equal(fieldResult.weightsAt(x, z).road, 1, `road axis has a gap at ${z}`);
   }
-  const widths = [z1, (z1 + z2) / 2, z2, (z2 + z3) / 2, z3].map(z => roadHalfWidth(fieldResult, z));
-  assert.ok(widths.every(width => Math.abs(width - widths[0]!) <= .04), widths.join(", "));
-  assert.ok(widths[0]! > 3.15 && widths[0]! < 3.35, widths.join(", "));
+  const widths = samples.map(z => roadEdge(fieldResult, x, z, 1) - roadEdge(fieldResult, x, z, -1));
+  // A worn track: the width wanders a little, but never pinches at a join or balloons.
+  assert.ok(widths.every(width => width > 5.7 && width < 7.2), widths.join(", "));
+  assert.ok(Math.max(...widths) - Math.min(...widths) > .1, `road is ruler-straight: ${widths.join(", ")}`);
+  const axes = samples.map(z => (roadEdge(fieldResult, x, z, 1) + roadEdge(fieldResult, x, z, -1)) / 2 - x);
+  assert.ok(axes.every(axis => Math.abs(axis) < .6), axes.join(", "));
+});
+
+test("wheel ruts run the road's length and fade out past a dead end", () => {
+  const fieldResult = field([[2, 1], [2, 2], [2, 3], [2, 4]]);
+  const middle = fieldResult.centerAt(2, 2), end = fieldResult.centerAt(2, 1);
+  const along = fieldResult.roads.sample(middle.x, middle.z)!;
+  assert.equal(along.ruts, 1);
+  assert.ok(along.across < .35, `axis sits ${along.across} of the way to the verge`);
+  // Row 1 stops short of the board's edge: the ruts end instead of curling round the cap.
+  assert.ok(fieldResult.roads.sample(end.x, end.z - 2.4)!.ruts < .05);
+  const lone = field([[2, 3]]), centre = lone.centerAt(2, 3);
+  assert.equal(lone.roads.sample(centre.x, centre.z)!.ruts, 0);
 });
 
 test("rendered road material follows the swept edge and shares the height oracle", () => {
@@ -110,10 +125,20 @@ test("rendered road material follows the swept edge and shares the height oracle
   const z1 = terrain.layout.center(2, 1).z;
   const z2 = terrain.layout.center(2, 2).z;
   const z3 = terrain.layout.center(2, 3).z;
-  const edges = [z1, (z1 + z2) / 2, z2, (z2 + z3) / 2, z3]
-    .map(z => rightMaterialEdge(road, center.x, z) - center.x);
-  assert.ok(edges.every(edge => Number.isFinite(edge) && Math.abs(edge - edges[0]!) < .06), edges.join(", "));
-  assert.ok(edges[0]! > 3.1 && edges[0]! < 3.4, edges.join(", "));
+  const samples = [z1, (z1 + z2) / 2, z2, (z2 + z3) / 2, z3];
+  const edges = samples.map(z => rightMaterialEdge(road, center.x, z) - center.x);
+  // The material is cut where the swept road's weight crosses one half.
+  const swept = samples.map(z => {
+    let edge = 0;
+    for (let offset = 0; offset <= 4.5; offset += .02) {
+      const weights = terrain.field.weightsAt(center.x + offset, z);
+      if ((weights.road ?? 0) >= (weights.plains ?? 0)) edge = offset;
+    }
+    return edge;
+  });
+  assert.ok(edges.every((edge, index) => Number.isFinite(edge) && Math.abs(edge - swept[index]!) < .12),
+    `${edges.join(", ")} vs ${swept.join(", ")}`);
+  assert.ok(edges.every(edge => edge > 2.8 && edge < 3.8), edges.join(", "));
 
   const z = (z1 + z2) / 2;
   const x = center.x + edges[1]! - .04;

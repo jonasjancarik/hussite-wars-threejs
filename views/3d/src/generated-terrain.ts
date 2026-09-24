@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createGeneratedSurfaceMaterials, createPuddleMaterial, createWoodMaterial, GROUND_SPLAT, RIM_TOP, RIM_WATER, SHORE_DISTANCE, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
+import { createGeneratedSurfaceMaterials, createPuddleMaterial, createWoodMaterial, GROUND_SPLAT, RIM_TOP, RIM_WATER, ROAD_TRACK, SHORE_DISTANCE, groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind } from "./generated-materials.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import { createTerrainRegions, fractalNoise, isFieldTerrain, isWaterTerrain, type TerrainRegions, type TerrainCell, type TerrainWeights } from "./terrain-regions.ts";
 import { TopographyPlan } from "./topography.ts";
@@ -420,6 +420,18 @@ export class GeneratedTerrain implements BattleTerrain {
     return splat;
   }
 
+  /** Where each road vertex lies across its road and how rutted it is, for winter; the verge elsewhere. */
+  private roadTrack(positions: readonly number[], roadIndices: readonly number[]): Float32Array {
+    const track = new Float32Array(positions.length / 3 * 2).fill(0);
+    for (let index = 0; index < positions.length / 3; index += 1) track[index * 2] = 1;
+    for (const index of new Set(roadIndices)) {
+      const sample = this.field.roads.sample(positions[index * 3]!, positions[index * 3 + 2]!);
+      track[index * 2] = sample?.across ?? 1;
+      track[index * 2 + 1] = sample?.ruts ?? 0;
+    }
+    return track;
+  }
+
   private createSurface(assetBase?: string): void {
     const area = (this.bounds.maxX - this.bounds.minX) * (this.bounds.maxZ - this.bounds.minZ);
     const step = Math.max(0.36, Math.sqrt(area * 2 / 260_000));
@@ -629,6 +641,9 @@ export class GeneratedTerrain implements BattleTerrain {
     geometry.setAttribute(GROUND_SPLAT, new THREE.Float32BufferAttribute(this.groundSplat(positions), 3));
     geometry.setAttribute(SHORE_DISTANCE, new THREE.Float32BufferAttribute(shoreDistances(positions, materialIndices), 1));
     geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    if (this.environmentPlan.winter) {
+      geometry.setAttribute(ROAD_TRACK, new THREE.Float32BufferAttribute(this.roadTrack(positions, materialIndices[5]!), 2));
+    }
     geometry.setIndex(indices);
     // The four dry-land materials share one colour node and differ only in a
     // hundredth of roughness: their triangles (contiguous at the start of the
@@ -642,7 +657,8 @@ export class GeneratedTerrain implements BattleTerrain {
       groupStart += bucket.length;
     });
     geometry.computeVertexNormals();
-    const surface = createGeneratedSurfaceMaterials(assetBase, this.environmentPlan.winter);
+    const snow = new THREE.Color(COLORS.plains).lerp(FROST_COLOR, .79);
+    const surface = createGeneratedSurfaceMaterials(assetBase, this.environmentPlan.winter, snow);
     this.soilMaterial = surface.soil;
     if (this.environmentPlan.settlement) surface.materials.push(new THREE.MeshStandardMaterial({
       name: "Settlement packed ground", color: 0xffffff, vertexColors: true, roughness: 1, side: THREE.DoubleSide,

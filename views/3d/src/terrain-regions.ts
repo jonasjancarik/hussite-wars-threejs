@@ -291,7 +291,7 @@ export class TerrainRegions {
     }
     this.tiles = allTiles;
     this.terrainTypes = [...new Set(allTiles.map((tile) => tile.terrain))];
-    this.roads = new RoadCorridors(this.tiles, new HexLayout(this.cols,this.rows,this.hexRadius));
+    this.roads = new RoadCorridors(this.tiles, new HexLayout(this.cols,this.rows,this.hexRadius), this.seed);
     // Insetting every edge by this amount leaves a geometrically similar core
     // with area = coreCoverage * hex area, before discrete sample rounding.
     this.coreInset = this.apothem * (1 - Math.sqrt(this.coreCoverage));
