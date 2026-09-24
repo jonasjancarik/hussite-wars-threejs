@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { HexLayout } from "../src/hex-coordinates.ts";
 import { recipeSignature, unitRecipe } from "../src/unit-recipes.ts";
 import { UnitPresentation } from "../src/units.ts";
+import { TEAM_SLOT_KEY } from "../src/model-merge.ts";
 import type { BattleSnapshot, UnitSnapshot } from "../src/types.ts";
 
 class TestAssets {
@@ -385,6 +386,38 @@ test("artillery gun and crew figures each follow rotated routing terrain", async
     assert.ok(Math.abs(bottom - height(position.x, position.z)) < 1e-6,
       `feet ${bottom}, terrain ${height(position.x, position.z)}`);
   }
+});
+
+test("soldiers wear seeded cloth shades that share one material and change only cloth", async () => {
+  const geometry = new THREE.BoxGeometry(0.2, 1, 0.2);
+  const count = geometry.getAttribute("position").count;
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(new Array(count * 3).fill(0.5), 3));
+  // The first half of the vertices is cloth, the rest is neutral.
+  geometry.userData[TEAM_SLOT_KEY] = Uint8Array.from({ length: count }, (_, vertex) => vertex < count / 2 ? 1 : 0);
+  const material = new THREE.MeshStandardMaterial({ vertexColors: true });
+  const model = new THREE.Group();
+  model.add(new THREE.Mesh(geometry, material));
+  const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 },
+    new HexLayout(4, 1), new TestAssets({ infantry_flail: model }));
+  await units.update(snapshotWithUnits([unit(1, "CEPNICI"), unit(2, "CEPNICI"), unit(3, "CEPNICI")]));
+
+  const meshes = units.group.children.flatMap(formation => formation.children.filter(child => child instanceof THREE.Group))
+    .map(figure => figure.children[0] as THREE.Mesh);
+  assert.equal(meshes.length, 15);
+  assert.ok(meshes.every(mesh => mesh.material === meshes[0]!.material), "every shade shares the one material");
+  const cloth = meshes.map(mesh => new THREE.Color().fromBufferAttribute(mesh.geometry.getAttribute("color") as THREE.BufferAttribute, 0));
+  assert.ok(new Set(cloth.map(color => color.getHex())).size > 1, "figures wear more than one cloth shade");
+  const faction = new THREE.Color(0x9b4f4f).getHSL({ h: 0, s: 0, l: 0 });
+  for (const color of cloth) {
+    const hsl = color.getHSL({ h: 0, s: 0, l: 0 });
+    const hueDelta = Math.abs(hsl.h - faction.h);
+    assert.ok(Math.min(hueDelta, 1 - hueDelta) < 0.03 && Math.abs(hsl.l - faction.l) < 0.1, `cloth ${color.getHexString()} stays Hussite red`);
+  }
+  for (const mesh of meshes) {
+    const neutral = new THREE.Color().fromBufferAttribute(mesh.geometry.getAttribute("color") as THREE.BufferAttribute, count - 1);
+    assert.equal(neutral.r, 0.5, "untagged vertices keep their colour");
+  }
+  assert.ok(new Set(meshes.map(mesh => mesh.geometry)).size <= 3, "each shade's geometry is built once and shared");
 });
 
 test("recolours tagged team materials per faction without changing prototypes or neutral materials", async () => {

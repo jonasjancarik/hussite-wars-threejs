@@ -23,7 +23,10 @@ export interface FigureRecipe {
  */
 export const FIGURE_VARIATION = { offset: 0.13, yaw: 0.16, shrink: 0.07 } as const;
 
-export interface FigureVariation { dx: number; dz: number; yaw: number; scale: number }
+/** Faction cloth shades a varied figure may wear; 0 is the plain faction colour. */
+export const CLOTH_SHADES = 3;
+
+export interface FigureVariation { dx: number; dz: number; yaw: number; scale: number; shade: number }
 
 /** Deterministic value in [0, 1) for a unit, figure slot and channel. */
 function slotNoise(unitId: number, slot: number, channel: number): number {
@@ -50,6 +53,7 @@ export function figureVariation(unitId: number, slot: number, offsetX: number, o
     dz: inwardShift(offsetZ, signed(1)),
     yaw: signed(2) * FIGURE_VARIATION.yaw,
     scale: 1 - slotNoise(unitId, slot, 3) * FIGURE_VARIATION.shrink,
+    shade: Math.floor(slotNoise(unitId, slot, 4) * CLOTH_SHADES),
   };
 }
 

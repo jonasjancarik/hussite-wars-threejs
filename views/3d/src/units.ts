@@ -26,6 +26,14 @@ const TEAM_MATERIAL_COLORS = {
   hussites: { team_cloth: 0x9b4f4f, team_paint: 0x7f3f3b },
   crusaders: { team_cloth: 0x587493, team_paint: 0x3f5872 },
 } as const;
+/**
+ * Cloth dyed in different batches: the faction colour, a weathered duller one
+ * and a deeper one. Never lighter, since paler red reads as pink. Only the
+ * cloth changes; painted wood and shields do not.
+ */
+const CLOTH_SHADE_OFFSETS: ReadonlyArray<{ h: number; s: number; l: number }> = [
+  { h: 0, s: 0, l: 0 }, { h: 0, s: -0.12, l: -0.02 }, { h: 0, s: 0.03, l: -0.07 },
+];
 /** Command auras: warm gold for the Hussites, steel blue for the crusaders. */
 const AURA_COLORS = { hussites: 0xf3c26a, crusaders: 0x8dbdf0 } as const;
 interface CommandAura { group: THREE.Group; band: THREE.Mesh; key: string }
@@ -87,6 +95,8 @@ export class UnitPresentation {
   private readonly assets: Pick<BattleAssets, "load" | "clone">;
   private readonly movementPosition?: MovementPosition;
   private readonly variants = new Map<string, Promise<THREE.Group>>();
+  /** Cloth shades of each loaded faction variant, indexed by shade. */
+  private readonly shades = new WeakMap<THREE.Group, THREE.Group[]>();
   private readonly ownedMaterials = new Set<THREE.Material>();
   private readonly ownedGeometries = new Set<THREE.BufferGeometry>();
   private readonly seenAttackEvents = new Set<string>();
@@ -331,12 +341,12 @@ export class UnitPresentation {
         const prototype = await this.variant(recipe.model, unit.faction);
         if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
         for (const [offsetX, offsetZ] of recipe.offsets) {
-          const figure = prototype.clone(true);
           const offset = recipe.rotateOffsetsWithFacing
             ? new THREE.Vector3(offsetX, 0, offsetZ).applyAxisAngle(new THREE.Vector3(0, 1, 0), facing)
             : new THREE.Vector3(offsetX, 0, offsetZ);
-          const vary = recipe.varied ? figureVariation(unit.id, slot, offset.x, offset.z) : { dx: 0, dz: 0, yaw: 0, scale: 1 };
+          const vary = recipe.varied ? figureVariation(unit.id, slot, offset.x, offset.z) : { dx: 0, dz: 0, yaw: 0, scale: 1, shade: 0 };
           slot += 1;
+          const figure = this.shadedVariant(prototype, unit.faction, vary.shade).clone(true);
           figure.position.set(offset.x + vary.dx, 0, offset.z + vary.dz);
           figure.rotation.y = facing + vary.yaw;
           // The formation's bearing, without this figure's own turn.
@@ -518,6 +528,35 @@ export class UnitPresentation {
     visual.hit.geometry.dispose();
     (visual.hit.material as THREE.Material).dispose();
     this.visuals.delete(id);
+  }
+
+  /**
+   * The faction variant with its cloth in another shade (see CLOTH_SHADE_OFFSETS).
+   * Only merged models' per-vertex colours change, so the shade shares every
+   * material; a model without them simply reuses the faction variant. Built
+   * synchronously from the loaded variant, so shading never delays a formation.
+   */
+  private shadedVariant(base: THREE.Group, faction: UnitSnapshot["faction"], shade: number): THREE.Group {
+    if (!shade) return base;
+    let shades = this.shades.get(base);
+    if (!shades) this.shades.set(base, shades = []);
+    const cached = shades[shade];
+    if (cached) return cached;
+    const offset = CLOTH_SHADE_OFFSETS[shade]!;
+    const teamColors = { 1: new THREE.Color(TEAM_MATERIAL_COLORS[faction].team_cloth).offsetHSL(offset.h, offset.s, offset.l),
+      2: new THREE.Color(TEAM_MATERIAL_COLORS[faction].team_paint) };
+    let shaded = false;
+    const result = base.clone(true);
+    result.traverse(object => {
+      const mesh = object as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const recolored = recolorTeamSlots(mesh.geometry, teamColors);
+      if (!recolored) return;
+      shaded = true;
+      mesh.geometry = recolored;
+      this.ownedGeometries.add(recolored);
+    });
+    return shades[shade] = shaded ? result : base;
   }
 
   private variant(model: string, faction: UnitSnapshot["faction"]): Promise<THREE.Group> {
