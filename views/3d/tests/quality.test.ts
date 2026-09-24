@@ -120,6 +120,23 @@ test("at a vsync-capped 60 fps target, measured frame work shows the headroom in
   assert.deepEqual(feed(FAST, fitsAtLearntCost).filter(Boolean), ["high"], "work that fits at the learnt 1.3× steps up again");
 });
 
+test("without work measurements, a steady target tries the better tier after its back-off", () => {
+  const governor = new AutoQualityGovernor();
+  governor.setTarget(60);
+  let now = 0;
+  const feed = (intervals: (i: number) => number): Array<string | null> => Array.from({ length: AUTO_QUALITY_SAMPLES }, (_, i) => {
+    const ms = intervals(i);
+    return governor.record(ms, now += ms);
+  });
+  const settle = (): void => { now += AUTO_QUALITY_SETTLE_MS; };
+  assert.deepEqual(feed(() => AT_TARGET).filter(Boolean), ["medium"], "high misses 60 fps");
+  settle();
+  assert.deepEqual(feed(() => FAST).filter(Boolean), [], "medium holds 60 fps, but high waits out its back-off");
+  now += AUTO_QUALITY_RETRY_MS;
+  assert.deepEqual(feed(i => (i % 5 === 0 ? AT_TARGET : FAST)).filter(Boolean), [], "a window with every fifth frame missed is not steady");
+  assert.deepEqual(feed(i => (i % 20 === 0 ? AT_TARGET : FAST)).filter(Boolean), ["high"], "a steady window tries high again");
+});
+
 test("without work measurements, intervals well under the target stand in", () => {
   const governor = new AutoQualityGovernor();
   governor.reset("medium");

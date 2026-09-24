@@ -37015,7 +37015,7 @@ var CK = class {
 	high: null,
 	medium: "high",
 	low: "medium"
-}, FK = [30, 60], IK = .6, LK = .85, RK = 4e3, zK = 3e3, BK = 12e4, VK = class {
+}, FK = [30, 60], IK = 1.1, LK = .9, RK = .85, zK = 4e3, BK = 3e3, VK = 12e4, HK = class {
 	samples = [];
 	work = [];
 	holdUntil = 0;
@@ -37036,6 +37036,7 @@ var CK = class {
 		low: null
 	};
 	lastWindow = null;
+	measuresWork = !1;
 	tier = "high";
 	reset(e = "high") {
 		this.tier = e, this.samples = [], this.work = [], this.lastWindow = null, this.holdUntil = 0;
@@ -37049,17 +37050,17 @@ var CK = class {
 		this.holdUntil = Math.max(this.holdUntil, e + t), this.samples = [], this.work = [];
 	}
 	recordWork(e, t) {
-		!Number.isFinite(e) || e <= 0 || e > 250 || t < this.holdUntil || this.work.push(e);
+		this.measuresWork = !0, !(!Number.isFinite(e) || e <= 0 || e > 250 || t < this.holdUntil) && this.work.push(e);
 	}
 	record(e, t) {
 		if (!Number.isFinite(e) || e <= 0 || e > 250 || t < this.holdUntil || (this.samples.push(e), this.samples.length < 60)) return null;
-		let n = HK(this.samples), r = this.work.length >= 60 / 2 ? HK(this.work) : null;
-		this.samples = [], this.work = [], r !== null && this.learnStep(r);
-		let i = NK[this.tier], a = PK[this.tier], o = null;
-		return n > this.targetMs * 1.1 && i ? (this.failures[this.tier] += 1, this.retryAt[this.tier] = t + BK * 2 ** (this.failures[this.tier] - 1), o = i) : a && t >= this.retryAt[a] && this.fits(a, r, n) && (o = a), o ? (this.tier = o, this.hold(t, zK), o) : null;
+		let n = UK(this.samples), r = this.targetMs * IK, i = this.samples.filter((e) => e <= r).length >= this.samples.length * LK, a = this.work.length >= 60 / 2 ? UK(this.work) : null;
+		this.samples = [], this.work = [], a !== null && this.learnStep(a);
+		let o = NK[this.tier], s = PK[this.tier], c = null;
+		return n > r && o ? (this.failures[this.tier] += 1, this.retryAt[this.tier] = t + VK * 2 ** (this.failures[this.tier] - 1), c = o) : s && t >= this.retryAt[s] && this.fits(s, a, n, i) && (c = s), c ? (this.tier = c, this.hold(t, BK), c) : null;
 	}
-	fits(e, t, n) {
-		return t === null ? n < this.targetMs * IK : t * (this.stepCost[e] ?? 2) < this.targetMs * LK;
+	fits(e, t, n, r) {
+		return t === null ? !this.measuresWork && (r || n < this.targetMs * .6) : t * (this.stepCost[e] ?? 2) < this.targetMs * RK;
 	}
 	learnStep(e) {
 		let t = this.lastWindow;
@@ -37081,17 +37082,17 @@ var CK = class {
 		};
 	}
 };
-function HK(e) {
+function UK(e) {
 	let t = [...e].sort((e, t) => e - t);
 	return t[Math.floor(t.length / 2)];
 }
 //#endregion
 //#region src/main.ts
-var UK = 12, WK = /* @__PURE__ */ new Set(), GK = () => {
-	for (let e of WK) e();
+var WK = 12, GK = /* @__PURE__ */ new Set(), KK = () => {
+	for (let e of GK) e();
 };
-uc.onProgress = GK, uc.onLoad = GK;
-var KK = 240, qK = .5, JK = .003, YK = {
+uc.onProgress = KK, uc.onLoad = KK;
+var qK = 240, JK = .5, YK = .003, XK = {
 	KeyW: "up",
 	KeyS: "down",
 	KeyA: "left",
@@ -37100,7 +37101,7 @@ var KK = 240, qK = .5, JK = .003, YK = {
 	ArrowDown: "down",
 	ArrowLeft: "left",
 	ArrowRight: "right"
-}, XK = class e {
+}, ZK = class e {
 	canvas;
 	options;
 	scene = new sr();
@@ -37119,7 +37120,7 @@ var KK = 240, qK = .5, JK = .003, YK = {
 	atmosphere;
 	winter;
 	qualityLevel = "auto";
-	qualityGovernor = new VK();
+	qualityGovernor = new HK();
 	appliedTiers = /* @__PURE__ */ new Set(["high"]);
 	applyingNote;
 	pendingGraphChanges = [];
@@ -37193,7 +37194,7 @@ var KK = 240, qK = .5, JK = .003, YK = {
 			};
 		}), this.banners = new pK(e, (e) => this.options.onHex?.(e)), this.effects = new Pz(e), this.applyingNote = new jK(e, () => t.localize?.("applyingGraphics") ?? "Applying graphics settings…"), this.wagonConnections = new CK(this.terrain, this.terrain.layout), this.overlays = new XU(this.terrain, this.terrain.layout), this.overlays.setGridFocus(this.cameraRig.controls.target.x, this.cameraRig.controls.target.z), this.lighting = zU(this.scene), this.winter = this.terrain instanceof pU && this.terrain.environmentPlan.winter, this.atmosphere = new FU(MU(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new lW(e, this.cameraRig.camera, this.terrain.layout), this.sky = new pG(this.scene, r, Math.max(500, i * 3.7));
 		let { minX: o, maxX: s, minZ: c, maxZ: l } = this.terrain.bounds, u = new Sr().setFromObject(this.terrain.group);
-		this.table = new eW(new O((o + s) / 2, (c + l) / 2), i, u.min.y - .01, this.lighting.shadowFrame), u.max.y += UK, this.lighting.fitShadowTo(u), this.scene.add(this.table.mesh), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), WK.add(this.requestFrame), this.installInput();
+		this.table = new eW(new O((o + s) / 2, (c + l) / 2), i, u.min.y - .01, this.lighting.shadowFrame), u.max.y += WK, this.lighting.fitShadowTo(u), this.scene.add(this.table.mesh), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), GK.add(this.requestFrame), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await NH(n.snapshot, r), a = new e(t, n, i);
@@ -37232,7 +37233,7 @@ var KK = 240, qK = .5, JK = .003, YK = {
 		this.options.snapshot = t, this.scheduleFrame();
 	}
 	setActive(e) {
-		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), this.effects.setVisible(e), e || (this.heldPanKeys.clear(), this.cameraTween = null, this.effects.clear()), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.resumingFromIdle = !0, this.qualityGovernor.hold(performance.now(), RK), this.resize(), this.scheduleFrame()));
+		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), this.effects.setVisible(e), e || (this.heldPanKeys.clear(), this.cameraTween = null, this.effects.clear()), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.resumingFromIdle = !0, this.qualityGovernor.hold(performance.now(), zK), this.resize(), this.scheduleFrame()));
 	}
 	frameScene() {
 		this.focusPointer = null, this.startCameraTween(this.forcesPose(), 650);
@@ -37255,7 +37256,7 @@ var KK = 240, qK = .5, JK = .003, YK = {
 			"high",
 			"medium",
 			"low"
-		].includes(e) || (this.qualityLevel = e, this.qualityGovernor.reset(), this.qualityGovernor.hold(performance.now(), RK), this.applyQualityTier(e === "auto" ? this.qualityGovernor.tier : e));
+		].includes(e) || (this.qualityLevel = e, this.qualityGovernor.reset(), this.qualityGovernor.hold(performance.now(), zK), this.applyQualityTier(e === "auto" ? this.qualityGovernor.tier : e));
 	}
 	setFrameRateTarget(e) {
 		this.disposed || !FK.includes(e) || this.qualityGovernor.setTarget(e);
@@ -37358,10 +37359,10 @@ var KK = 240, qK = .5, JK = .003, YK = {
 		};
 	}
 	resetDiagnostics() {
-		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = KK, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
+		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = qK, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
 	}
 	dispose() {
-		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), this.shadowTimer !== null && window.clearTimeout(this.shadowTimer), WK.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.applyingNote.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.table.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
+		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), this.shadowTimer !== null && window.clearTimeout(this.shadowTimer), GK.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.applyingNote.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.table.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
 	}
 	addListener(e, t, n, r) {
 		e.addEventListener(t, n, {
@@ -37527,7 +37528,7 @@ var KK = 240, qK = .5, JK = .003, YK = {
 	}
 	handleKey(e, t) {
 		if (!this.active || e.ctrlKey || e.metaKey || e.altKey || e.target?.closest?.("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return;
-		let n = YK[e.code] ?? YK[e.key];
+		let n = XK[e.code] ?? XK[e.key];
 		if (n) {
 			t ? this.heldPanKeys.add(n) : this.heldPanKeys.delete(n), e.key.startsWith("Arrow") && e.preventDefault(), t && (this.cameraTween = null, this.scheduleFrame());
 			return;
@@ -37560,7 +37561,7 @@ var KK = 240, qK = .5, JK = .003, YK = {
 		Math.abs(n - this.targetFocusDistance) < .01 || (this.targetFocusDistance = n, this.blurVisible(this.focusStrength) && this.scheduleFrame());
 	}
 	blurVisible(e) {
-		return this.depthOfFieldEnabled && Az(e).blurRadiusPixels >= qK;
+		return this.depthOfFieldEnabled && Az(e).blurRadiusPixels >= JK;
 	}
 	scheduleFrame() {
 		!this.ready || !this.active || this.disposed || this.frameRequest !== null || (this.frameRequest = requestAnimationFrame(this.animate));
@@ -37604,15 +37605,15 @@ var KK = 240, qK = .5, JK = .003, YK = {
 				console.info(`[Hussite 3D] ${e ? "frames to spare; graphics quality raised" : "frames over budget; graphics quality lowered"} to ${r}`), this.applyQualityTier(r), this.options.onQualityTier?.(r);
 			}
 		}
-		this.performanceWarm ? this.performanceTracker.record(t, b - i, x - b, x - i) : (this.performanceWarm = !0, this.qualityGovernor.hold(e, RK), this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.captureFramesRemaining > 0 && --this.captureFramesRemaining === 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(.01, this.targetFocusDistance * JK) || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
+		this.performanceWarm ? this.performanceTracker.record(t, b - i, x - b, x - i) : (this.performanceWarm = !0, this.qualityGovernor.hold(e, zK), this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.captureFramesRemaining > 0 && --this.captureFramesRemaining === 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(.01, this.targetFocusDistance * YK) || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
 			this.pulseTimer = null, this.ambientFrame = !0, this.scheduleFrame();
 		}, 42)) : this.resumingFromIdle = !0, y && this.frameRequest === null && (this.shadowTimer ??= window.setTimeout(() => {
 			this.shadowTimer = null, this.scheduleFrame();
 		}, 70));
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => XK.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function ZK() {
+window.HussiteBattle3D = { create: (e, t) => ZK.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function QK() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = uG(() => t.takeSnapshot(), window), r = new fG(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -37624,7 +37625,7 @@ async function ZK() {
 			action: e,
 			...n
 		}));
-	}, s = await XK.create(e, {
+	}, s = await ZK.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -37637,7 +37638,7 @@ async function ZK() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-ZK().catch((e) => {
+QK().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });
