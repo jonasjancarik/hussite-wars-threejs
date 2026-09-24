@@ -123,6 +123,12 @@ export class BattleRenderPipeline {
 
   public render(): void { this.pipeline.render(); }
 
+  /** Resolves once the GPU has finished everything submitted so far; null on the WebGL fallback. */
+  public gpuIdle(): Promise<unknown> | null {
+    const backend = this.renderer.backend as { device?: { queue: { onSubmittedWorkDone(): Promise<unknown> } } | null };
+    return backend.device?.queue.onSubmittedWorkDone() ?? null;
+  }
+
   public resize(width: number, height: number): void {
     const nextWidth = Math.max(1, Math.floor(width));
     const nextHeight = Math.max(1, Math.floor(height));

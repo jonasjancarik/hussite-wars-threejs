@@ -26,7 +26,7 @@ import { atmosphereProfile, AtmosphereTransition } from "./atmosphere.ts";
 import { BattleWeather } from "./weather.ts";
 import { ApplyingNote } from "./applying-note.ts";
 import {
-  AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, FRAME_RATE_TARGETS, QUALITY_TIERS, type FrameRateTarget, type QualityLevel, type QualityTier,
+  AUTO_QUALITY_MAX_FRAME_MS, AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, FRAME_RATE_TARGETS, QUALITY_TIERS, type FrameRateTarget, type QualityLevel, type QualityTier,
 } from "./quality.ts";
 
 /** Room above the ground for the tallest shadow casters: trees, towers and banners. */
@@ -64,7 +64,7 @@ class IntegratedThreeBattle {
   private readonly weather = new BattleWeather();
   private readonly atmosphere: AtmosphereTransition;
   private readonly winter: boolean;
-  private qualityLevel: QualityLevel = "high";
+  private qualityLevel: QualityLevel = "auto";
   private readonly qualityGovernor = new AutoQualityGovernor();
   /** Tiers whose shaders and shadow lights have been compiled in this renderer. */
   private readonly appliedTiers = new Set<QualityTier>(["high"]);
@@ -281,7 +281,7 @@ class IntegratedThreeBattle {
   public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); this.scheduleFrame(); }
   public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
   public setUnitLabelsVisible(visible: boolean): void { this.banners.setLabelsVisible(visible); this.scheduleFrame(); }
-  /** Graphics quality: a fixed tier, or Auto (starts High, steps with the frame rate). */
+  /** Graphics quality: a fixed tier, or Auto (starts High, steps with the frame rate and measured frame work). */
   public setQuality(level: QualityLevel): void {
     if (this.disposed || !["auto", "high", "medium", "low"].includes(level)) return;
     this.qualityLevel = level;
@@ -781,6 +781,13 @@ class IntegratedThreeBattle {
     // Auto quality judges only consecutive display-rate frames (drags, zooms,
     // effects); idle wake-ups and ~24 fps ambient frames say nothing about cost.
     if (this.qualityLevel === "auto" && !resumed && this.performanceWarm) {
+      // Time to GPU idle is the frame's real cost even when vsync caps the
+      // rate; an idle on-demand loop leaves no earlier work queued. Only
+      // frames whose interval counts are timed, so stalls stay out.
+      if (frameMs <= AUTO_QUALITY_MAX_FRAME_MS) void this.pipeline.gpuIdle()?.then(() => {
+        const doneAt = performance.now();
+        if (!this.disposed) this.qualityGovernor.recordWork(doneAt - renderStartedAt, doneAt);
+      }, () => {});
       const previous = this.qualityGovernor.tier;
       const changed = this.qualityGovernor.record(frameMs, now);
       if (changed) {

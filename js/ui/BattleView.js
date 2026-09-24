@@ -17,7 +17,7 @@ class BattleView {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, renderMovement() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
             setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setFocusSettings() {}, setPageVisible() {},
-            setWeatherEnabled() {}, weatherEnabled: true, setQuality() {}, qualityTier: () => null, quality: 'high',
+            setWeatherEnabled() {}, weatherEnabled: true, setQuality() {}, qualityTier: () => null, quality: 'auto',
             setFrameRateTarget() {}, frameRateTarget: 30,
             depthOfFieldEnabled: true, closeupFocusStrength: 0.8, focusQuality: 'bokeh'
         };
@@ -290,7 +290,7 @@ class BattleView {
         const weatherEnabled = document.getElementById('weather-effects-enabled');
         if (weatherEnabled) weatherEnabled.checked = this.threeMap.weatherEnabled !== false;
         const graphicsQuality = document.getElementById('graphics-quality');
-        if (graphicsQuality) graphicsQuality.value = this.threeMap.quality ?? 'high';
+        if (graphicsQuality) graphicsQuality.value = this.threeMap.quality ?? 'auto';
         const frameRateTarget = document.getElementById('frame-rate-target');
         if (frameRateTarget) {
             frameRateTarget.value = String(this.threeMap.frameRateTarget ?? 30);

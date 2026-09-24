@@ -26,7 +26,7 @@ class ThreeBattleMapView {
         this.closeupFocusStrength = 0.8;
         this.focusQuality = 'bokeh';
         this.weatherEnabled = true;
-        this.quality = 'high';
+        this.quality = 'auto';
         this.frameRateTarget = 30;
     }
 
@@ -160,7 +160,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.62';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.63';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -357,7 +357,7 @@ class ThreeBattleMapView {
         this.renderer?.setFocusSettings?.(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
     }
     setQuality(level) {
-        this.quality = ['auto', 'high', 'medium', 'low'].includes(level) ? level : 'high';
+        this.quality = ['auto', 'high', 'medium', 'low'].includes(level) ? level : 'auto';
         this.renderer?.setQuality?.(this.quality);
     }
     setFrameRateTarget(fps) {

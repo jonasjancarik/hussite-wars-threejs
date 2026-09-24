@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  AUTO_QUALITY_RETRY_MS, AUTO_QUALITY_SAMPLES, AUTO_QUALITY_SETTLE_MS, AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, QUALITY_TIERS,
+  AUTO_QUALITY_RETRY_MS, AUTO_QUALITY_SAMPLES, AUTO_QUALITY_STEP_COST, AUTO_QUALITY_WORK_MARGIN, AUTO_QUALITY_SETTLE_MS, AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, QUALITY_TIERS,
 } from "../src/quality.ts";
 
 /** Median intervals at the default 30 fps target: 60 Hz vsync, a missed 30 fps, and a 60 Hz display holding 30. */
@@ -92,4 +92,38 @@ test("changing the target gives failed tiers a fresh chance", () => {
   governor.setTarget(30);
   assert.equal(governor.tier, "medium", "the current tier is kept");
   assert.deepEqual(feed(FAST).filter(Boolean), ["high"]);
+});
+
+test("at a vsync-capped 60 fps target, measured frame work shows the headroom intervals cannot", () => {
+  const governor = new AutoQualityGovernor();
+  governor.setTarget(60);
+  governor.reset("medium");
+  let now = 0;
+  const feed = (intervalMs: number, workMs: number | null, every = 1): Array<string | null> => Array.from({ length: AUTO_QUALITY_SAMPLES }, (_, i) => {
+    now += intervalMs;
+    if (workMs !== null && i % every === 0) governor.recordWork(workMs, now);
+    return governor.record(intervalMs, now);
+  });
+  const settle = (): void => { now += AUTO_QUALITY_SETTLE_MS; };
+  const budget = FAST * AUTO_QUALITY_WORK_MARGIN / AUTO_QUALITY_STEP_COST;
+  assert.deepEqual(feed(FAST, budget + 1).filter(Boolean), [], "an unmeasured step assumes the cautious cost");
+  assert.deepEqual(feed(FAST, 1, 3).filter(Boolean), [], "too few work samples are not trusted");
+  assert.deepEqual(feed(FAST, budget - 1).filter(Boolean), ["high"], "cheap frames step up although the rate is capped");
+  settle();
+  // High turns out to cost 1.3× medium and to miss 60 fps; the step's ratio is learnt.
+  assert.deepEqual(feed(SLOW, (budget - 1) * 1.3).filter(Boolean), ["medium"]);
+  settle();
+  assert.deepEqual(feed(FAST, budget - 1).filter(Boolean), [], "high waits out its back-off");
+  now += AUTO_QUALITY_RETRY_MS;
+  const fitsAtLearntCost = FAST * AUTO_QUALITY_WORK_MARGIN / 1.3 - 0.5;
+  assert.ok(fitsAtLearntCost > budget + 1, "the learnt step is cheaper than the assumed one");
+  assert.deepEqual(feed(FAST, fitsAtLearntCost).filter(Boolean), ["high"], "work that fits at the learnt 1.3× steps up again");
+});
+
+test("without work measurements, intervals well under the target stand in", () => {
+  const governor = new AutoQualityGovernor();
+  governor.reset("medium");
+  let now = 0;
+  for (let i = 0; i < AUTO_QUALITY_SAMPLES; i += 1) governor.record(FAST, now += FAST);
+  assert.equal(governor.tier, "high");
 });
