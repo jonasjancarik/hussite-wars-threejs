@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  AUTO_QUALITY_BUDGET_MS, AUTO_QUALITY_SAMPLES, AUTO_QUALITY_SETTLE_MS, AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, QUALITY_TIERS,
+  AUTO_QUALITY_RETRY_MS, AUTO_QUALITY_SAMPLES, AUTO_QUALITY_SETTLE_MS, AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, QUALITY_TIERS,
 } from "../src/quality.ts";
+
+/** Median intervals at the default 30 fps target: 60 Hz vsync, a missed 30 fps, and a 60 Hz display holding 30. */
+const FAST = 1000 / 60;
+const SLOW = 1000 / 20;
+const AT_TARGET = 1000 / 30;
 
 test("tiers only get cheaper from high to low", () => {
   assert.ok(QUALITY_TIERS.high.maxPixelRatio > QUALITY_TIERS.medium.maxPixelRatio);
@@ -16,13 +21,13 @@ test("auto quality steps down one tier per slow window and never below low", () 
   let now = 0;
   const feed = (ms: number): Array<string | null> => Array.from({ length: AUTO_QUALITY_SAMPLES }, () => governor.record(ms, now += ms));
   const settle = (): void => { now += AUTO_QUALITY_SETTLE_MS; };
-  assert.deepEqual(feed(16.7).filter(Boolean), [], "a smooth window keeps high");
+  assert.deepEqual(feed(FAST).filter(Boolean), [], "a smooth window keeps high");
   assert.equal(governor.tier, "high");
-  assert.deepEqual(feed(AUTO_QUALITY_BUDGET_MS + 10).filter(Boolean), ["medium"]);
+  assert.deepEqual(feed(SLOW).filter(Boolean), ["medium"]);
   settle();
-  assert.deepEqual(feed(AUTO_QUALITY_BUDGET_MS + 10).filter(Boolean), ["low"]);
+  assert.deepEqual(feed(SLOW).filter(Boolean), ["low"]);
   settle();
-  assert.deepEqual(feed(AUTO_QUALITY_BUDGET_MS + 10).filter(Boolean), [], "low is the floor");
+  assert.deepEqual(feed(SLOW).filter(Boolean), [], "low is the floor");
   assert.equal(governor.record(1000, now += 1000), null, "stalls (tab switches, loading) are ignored");
   governor.reset();
   assert.equal(governor.tier, "high");
@@ -30,7 +35,7 @@ test("auto quality steps down one tier per slow window and never below low", () 
 
 test("auto quality ignores start-up frames and the recompile after a step", () => {
   const governor = new AutoQualityGovernor();
-  const slow = AUTO_QUALITY_BUDGET_MS + 10;
+  const slow = SLOW;
   let now = 0;
   governor.hold(now, AUTO_QUALITY_WARMUP_MS);
   const feed = (count: number): Array<string | null> => Array.from({ length: count }, () => governor.record(slow, now += slow));
@@ -40,4 +45,51 @@ test("auto quality ignores start-up frames and the recompile after a step", () =
   const settleFrames = Math.floor(AUTO_QUALITY_SETTLE_MS / slow) - 1;
   assert.deepEqual(feed(settleFrames).filter(Boolean), [], "the step's own recompile does not cascade to low");
   assert.equal(governor.tier, "medium");
+});
+
+test("auto quality holds a tier that meets the target exactly", () => {
+  const governor = new AutoQualityGovernor();
+  let now = 0;
+  for (let i = 0; i < AUTO_QUALITY_SAMPLES * 3; i += 1) assert.equal(governor.record(AT_TARGET, now += AT_TARGET), null);
+  assert.equal(governor.tier, "high");
+  governor.setTarget(60);
+  for (let i = 0; i < AUTO_QUALITY_SAMPLES; i += 1) governor.record(AT_TARGET, now += AT_TARGET);
+  assert.equal(governor.tier, "medium", "the same frames miss a 60 fps target");
+});
+
+test("auto quality steps back up when frames come fast, after a back-off for tiers that failed", () => {
+  const governor = new AutoQualityGovernor();
+  let now = 0;
+  const feed = (ms: number): Array<string | null> => Array.from({ length: AUTO_QUALITY_SAMPLES }, () => governor.record(ms, now += ms));
+  const settle = (): void => { now += AUTO_QUALITY_SETTLE_MS; };
+  governor.reset("low");
+  assert.deepEqual(feed(FAST).filter(Boolean), ["medium"], "a tier never tried is raised to at once");
+  settle();
+  assert.deepEqual(feed(SLOW).filter(Boolean), ["low"]);
+  settle();
+  assert.deepEqual(feed(FAST).filter(Boolean), [], "medium just failed, so low waits");
+  now += AUTO_QUALITY_RETRY_MS;
+  assert.deepEqual(feed(FAST).filter(Boolean), ["medium"], "retried after the back-off");
+  settle();
+  assert.deepEqual(feed(SLOW).filter(Boolean), ["low"]);
+  settle();
+  now += AUTO_QUALITY_RETRY_MS;
+  assert.deepEqual(feed(FAST).filter(Boolean), [], "a second failure doubles the wait");
+  now += AUTO_QUALITY_RETRY_MS;
+  assert.deepEqual(feed(FAST).filter(Boolean), ["medium"]);
+  settle();
+  assert.deepEqual(feed(FAST).filter(Boolean), ["high"]);
+  settle();
+  assert.deepEqual(feed(FAST).filter(Boolean), [], "high is the ceiling");
+});
+
+test("changing the target gives failed tiers a fresh chance", () => {
+  const governor = new AutoQualityGovernor();
+  let now = 0;
+  const feed = (ms: number): Array<string | null> => Array.from({ length: AUTO_QUALITY_SAMPLES }, () => governor.record(ms, now += ms));
+  assert.deepEqual(feed(SLOW).filter(Boolean), ["medium"]);
+  now += AUTO_QUALITY_SETTLE_MS;
+  governor.setTarget(30);
+  assert.equal(governor.tier, "medium", "the current tier is kept");
+  assert.deepEqual(feed(FAST).filter(Boolean), ["high"]);
 });

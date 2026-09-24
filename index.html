@@ -277,8 +277,8 @@
                             <span data-i18n="touch.focusQuality">Focus quality</span>
                         </label>
                         <select id="focus-quality">
+                            <option value="bokeh" data-i18n="touch.focusQualityBokeh" selected>Photo bokeh</option>
                             <option value="compact" data-i18n="touch.focusQualityCompact">Compact</option>
-                            <option value="bokeh" data-i18n="touch.focusQualityBokeh">Photo bokeh</option>
                         </select>
                         <small data-i18n="touch.closeupFocusHint">Subtle at strategic zoom, stronger when inspecting models up close.</small>
                         <small data-i18n="touch.focusQualityHint">Photo bokeh uses more rendering power.</small>
@@ -293,12 +293,19 @@
                             <span data-i18n="touch.graphicsQuality">Kvalita grafiky</span>
                         </label>
                         <select id="graphics-quality">
-                            <option value="auto" data-i18n="touch.graphicsQualityAuto">Automaticky</option>
-                            <option value="high" data-i18n="touch.graphicsQualityHigh">Vysoká</option>
+                            <option value="high" data-i18n="touch.graphicsQualityHigh" selected>Vysoká</option>
                             <option value="medium" data-i18n="touch.graphicsQualityMedium">Střední</option>
                             <option value="low" data-i18n="touch.graphicsQualityLow">Nízká</option>
+                            <option value="auto" data-i18n="touch.graphicsQualityAuto">Automaticky</option>
                         </select>
-                        <small id="graphics-quality-hint" data-i18n="touch.graphicsQualityHint">Automaticky sníží kvalitu, když obraz nestíhá.</small>
+                        <small id="graphics-quality-hint" data-i18n="touch.graphicsQualityHint">Automaticky upraví kvalitu podle cílové snímkové frekvence.</small>
+                        <label class="map-options-range-label" for="frame-rate-target">
+                            <span data-i18n="touch.frameRateTarget">Cílová snímková frekvence</span>
+                        </label>
+                        <select id="frame-rate-target">
+                            <option value="30" data-i18n="touch.frameRateTarget30" selected>30 fps – kvalita</option>
+                            <option value="60" data-i18n="touch.frameRateTarget60">60 fps – plynulost</option>
+                        </select>
                     </div>
                     <small class="map-options-hint" data-i18n="touch.cameraKeys">Kamera: WASD nebo šipky posun · Q / E otočení · + / − přiblížení · Home ukáže armády</small>
                 </div>
@@ -1158,8 +1165,8 @@
     <script src="js/ui/BattleTooltip.js?v=8.16"></script>
     <script src="js/ui/BattleMapInput.js?v=8.8"></script>
     <script src="js/ui/BattleOrders.js?v=8.11"></script>
-    <script src="views/3d/ThreeBattleMapView.js?v=2.60"></script>
-    <script src="js/ui/BattleView.js?v=8.30"></script>
+    <script src="views/3d/ThreeBattleMapView.js?v=2.61"></script>
+    <script src="js/ui/BattleView.js?v=8.31"></script>
     <script src="js/core/game.js?v=8.21"></script>
     <script src="js/ai.js?v=8.21"></script>
     <script src="js/ui/main.js?v=8.32"></script>

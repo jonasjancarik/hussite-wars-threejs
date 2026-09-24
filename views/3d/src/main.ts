@@ -25,7 +25,9 @@ import { WagonConnections } from "./wagon-connections.ts";
 import { atmosphereProfile, AtmosphereTransition } from "./atmosphere.ts";
 import { BattleWeather } from "./weather.ts";
 import { ApplyingNote } from "./applying-note.ts";
-import { AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, QUALITY_TIERS, type QualityLevel, type QualityTier } from "./quality.ts";
+import {
+  AUTO_QUALITY_WARMUP_MS, AutoQualityGovernor, FRAME_RATE_TARGETS, QUALITY_TIERS, type FrameRateTarget, type QualityLevel, type QualityTier,
+} from "./quality.ts";
 
 /** Room above the ground for the tallest shadow casters: trees, towers and banners. */
 const SHADOW_CASTER_HEADROOM = 12;
@@ -62,7 +64,7 @@ class IntegratedThreeBattle {
   private readonly weather = new BattleWeather();
   private readonly atmosphere: AtmosphereTransition;
   private readonly winter: boolean;
-  private qualityLevel: QualityLevel = "auto";
+  private qualityLevel: QualityLevel = "high";
   private readonly qualityGovernor = new AutoQualityGovernor();
   /** Tiers whose shaders and shadow lights have been compiled in this renderer. */
   private readonly appliedTiers = new Set<QualityTier>(["high"]);
@@ -142,7 +144,7 @@ class IntegratedThreeBattle {
     this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target);
     this.openingDistance = this.focusDistance;
     this.pipeline = new BattleRenderPipeline(canvas, this.scene, this.cameraRig.camera, {
-      ...QUALITY_TIERS.high, depthOfFieldMode: "compact", effects: true,
+      ...QUALITY_TIERS.high, depthOfFieldMode: "bokeh", effects: true,
     });
     const wallRoutes=this.terrain instanceof GeneratedTerrain && this.terrain.environmentPlan.walls.length
       ? new TownWallRoutes(this.terrain.field.tiles,this.terrain.layout,this.terrain.environmentPlan.walls,this.terrain.environmentPlan.frozenRiver) : null;
@@ -279,13 +281,19 @@ class IntegratedThreeBattle {
   public setBannerAvoidance(enabled: boolean): void { this.banners.setAvoidance(enabled); this.scheduleFrame(); }
   public setBannerDetails(visible: boolean): void { this.banners.setDetailsVisible(visible); this.scheduleFrame(); }
   public setUnitLabelsVisible(visible: boolean): void { this.banners.setLabelsVisible(visible); this.scheduleFrame(); }
-  /** Graphics quality: a fixed tier, or Auto (starts High, steps down on slow frames). */
+  /** Graphics quality: a fixed tier, or Auto (starts High, steps with the frame rate). */
   public setQuality(level: QualityLevel): void {
     if (this.disposed || !["auto", "high", "medium", "low"].includes(level)) return;
     this.qualityLevel = level;
     this.qualityGovernor.reset();
     this.qualityGovernor.hold(performance.now(), AUTO_QUALITY_WARMUP_MS);
     this.applyQualityTier(level === "auto" ? this.qualityGovernor.tier : level);
+  }
+
+  /** The frame rate Auto aims for. */
+  public setFrameRateTarget(fps: FrameRateTarget): void {
+    if (this.disposed || !FRAME_RATE_TARGETS.includes(fps)) return;
+    this.qualityGovernor.setTarget(fps);
   }
 
   /** The tier currently rendered (for Auto, the governor's choice). */
@@ -773,10 +781,13 @@ class IntegratedThreeBattle {
     // Auto quality judges only consecutive display-rate frames (drags, zooms,
     // effects); idle wake-ups and ~24 fps ambient frames say nothing about cost.
     if (this.qualityLevel === "auto" && !resumed && this.performanceWarm) {
-      const lowered = this.qualityGovernor.record(frameMs, now);
-      if (lowered) {
-        console.info(`[Hussite 3D] frames over budget; graphics quality lowered to ${lowered}`);
-        this.applyQualityTier(lowered);
+      const previous = this.qualityGovernor.tier;
+      const changed = this.qualityGovernor.record(frameMs, now);
+      if (changed) {
+        const raised = QUALITY_TIERS[changed].maxPixelRatio > QUALITY_TIERS[previous].maxPixelRatio;
+        console.info(`[Hussite 3D] ${raised ? "frames to spare; graphics quality raised" : "frames over budget; graphics quality lowered"} to ${changed}`);
+        this.applyQualityTier(changed);
+        this.options.onQualityTier?.(changed);
       }
     }
     if (this.performanceWarm) {

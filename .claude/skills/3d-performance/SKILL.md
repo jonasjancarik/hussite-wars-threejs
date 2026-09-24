@@ -61,7 +61,7 @@ A redraw of the shadow map adds roughly one draw per shadow caster to its frame.
   - Render passes update once per animation frame, so calling `pipeline.render()` twice in one task redraws only the final quad.
   - Render inside `requestAnimationFrame` and await `renderer.backend.device.queue.onSubmittedWorkDone()`.
   - Use the results only to compare variants.
-- **Auto quality.** It steps down when the median frame interval exceeds 25 ms, and CPU stalls count too: slow picks once lowered the tier on a fast GPU. Check `qualityTier()` before judging how something looks.
+- **Auto quality.** It is not the default (High is), but when chosen it steps down when the median frame interval misses the frame-rate target (30 fps by default) and back up when frames come in under 60% of it, with a doubling back-off before retrying a tier that failed. CPU stalls count too: slow picks once lowered the tier on a fast GPU. Check `qualityTier()` before judging how something looks.
 - **Terrain generation.**
   - `npm --prefix views/3d run bench:terrain` prints the build time and a buffer fingerprint for every generated map.
   - For a refactor that should change nothing, run with `-- --save before.json` first and `-- --compare before.json` after. The comparison must report every map unchanged.

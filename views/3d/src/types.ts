@@ -133,6 +133,8 @@ export interface IntegratedRendererOptions {
   onHover?(coord: (HexCoord & { clientX: number; clientY: number }) | null): void;
   onContext?(): void;
   onZoom?(percentage: number): void;
+  /** Auto quality moved to another tier. */
+  onQualityTier?(tier: "high" | "medium" | "low"): void;
   /** Localized UI text for renderer-owned notes, e.g. "applyingGraphics". */
   localize?(key: string): string;
 }
@@ -185,6 +187,7 @@ declare global {
         setBannerDetails(visible: boolean): void;
         setWeatherEnabled(enabled: boolean): void;
         setQuality(level: "auto" | "high" | "medium" | "low"): void;
+        setFrameRateTarget(fps: 30 | 60): void;
         qualityTier(): "high" | "medium" | "low";
         setFocusSettings(enabled: boolean, closeupStrength: number, quality: "compact" | "bokeh"): void;
         focusHex(col: number, row: number): void;

@@ -17,8 +17,9 @@ class BattleView {
             mount: async () => false, unmount() {}, destroy() {}, render() {}, renderMovement() {}, resize() {},
             setSelection() {}, effect() {}, focusSelection() {}, frameScene() {}, focusUnit() {}, zoomBy() {},
             setGridVisible() {}, setBannerDetails() {}, setUnitLabelsVisible() {}, setFocusSettings() {}, setPageVisible() {},
-            setWeatherEnabled() {}, weatherEnabled: true, setQuality() {}, qualityTier: () => null, quality: 'auto',
-            depthOfFieldEnabled: true, closeupFocusStrength: 0.8, focusQuality: 'compact'
+            setWeatherEnabled() {}, weatherEnabled: true, setQuality() {}, qualityTier: () => null, quality: 'high',
+            setFrameRateTarget() {}, frameRateTarget: 30,
+            depthOfFieldEnabled: true, closeupFocusStrength: 0.8, focusQuality: 'bokeh'
         };
         this.viewMode = '2d';
         this.hexGridVisible = true;
@@ -191,6 +192,9 @@ class BattleView {
             this.threeMap.setQuality?.(event.currentTarget.value);
             this.updateViewModeControls();
         }, { signal });
+        document.getElementById('frame-rate-target')?.addEventListener('change', event => {
+            this.threeMap.setFrameRateTarget?.(event.currentTarget.value);
+        }, { signal });
         document.getElementById('weather-effects-enabled')?.addEventListener('change', event => {
             this.threeMap.setWeatherEnabled?.(event.currentTarget.checked);
         }, { signal });
@@ -286,7 +290,12 @@ class BattleView {
         const weatherEnabled = document.getElementById('weather-effects-enabled');
         if (weatherEnabled) weatherEnabled.checked = this.threeMap.weatherEnabled !== false;
         const graphicsQuality = document.getElementById('graphics-quality');
-        if (graphicsQuality) graphicsQuality.value = this.threeMap.quality ?? 'auto';
+        if (graphicsQuality) graphicsQuality.value = this.threeMap.quality ?? 'high';
+        const frameRateTarget = document.getElementById('frame-rate-target');
+        if (frameRateTarget) {
+            frameRateTarget.value = String(this.threeMap.frameRateTarget ?? 30);
+            frameRateTarget.disabled = this.threeMap.quality !== 'auto';
+        }
         const qualityHint = document.getElementById('graphics-quality-hint');
         const autoTier = this.threeMap.quality === 'auto' ? this.threeMap.qualityTier?.() : null;
         if (qualityHint) {
@@ -305,7 +314,7 @@ class BattleView {
         if (closeupValue && closeupStrength) closeupValue.value = `${closeupStrength.value}%`;
         const focusQuality = document.getElementById('focus-quality');
         if (focusQuality) {
-            focusQuality.value = this.threeMap.focusQuality ?? 'compact';
+            focusQuality.value = this.threeMap.focusQuality ?? 'bokeh';
             focusQuality.disabled = this.threeMap.depthOfFieldEnabled === false;
         }
     }

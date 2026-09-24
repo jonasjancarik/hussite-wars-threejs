@@ -24,30 +24,60 @@ export const QUALITY_TIERS: Record<QualityTier, QualitySettings> = {
 };
 
 const LOWER: Record<QualityTier, QualityTier | null> = { high: "medium", medium: "low", low: null };
+const HIGHER: Record<QualityTier, QualityTier | null> = { high: null, medium: "high", low: "medium" };
+
+/** Frame rates Auto can aim for; the default suits a turn-based battle. */
+export const FRAME_RATE_TARGETS = [30, 60] as const;
+export type FrameRateTarget = typeof FRAME_RATE_TARGETS[number];
+export const DEFAULT_FRAME_RATE_TARGET: FrameRateTarget = 30;
 
 /** Continuous frames needed before judging a tier. */
 export const AUTO_QUALITY_SAMPLES = 60;
-/** Median frame interval above which Auto steps down (below ~40 fps). */
-export const AUTO_QUALITY_BUDGET_MS = 25;
+/** A window is slow when its median interval exceeds the target's by this factor (vsync jitter at the target passes). */
+export const AUTO_QUALITY_SLOW_FACTOR = 1.1;
+/** A window is fast enough to try a better tier when its median stays under this share of the target's interval. */
+export const AUTO_QUALITY_HEADROOM = 0.6;
 /** Frames ignored after the view starts or wakes: shaders compile and assets upload meanwhile. */
 export const AUTO_QUALITY_WARMUP_MS = 4000;
-/** Frames ignored after a step down, while the cheaper tier's shaders compile. */
+/** Frames ignored after a step, while the new tier's shaders compile. */
 export const AUTO_QUALITY_SETTLE_MS = 3000;
+/** Wait before retrying a tier that proved too slow; it doubles each time that tier fails again. */
+export const AUTO_QUALITY_RETRY_MS = 120_000;
 
 /**
- * Steps down one tier when the median interval of consecutive animated
- * frames (camera moves, effects) stays over budget. It never steps back up
- * during a battle, so quality does not oscillate; choosing a tier by hand or
- * re-selecting Auto starts over from High. Frames during a hold (start-up,
- * waking, the recompile after a step) are not judged: they measure shader
- * compilation, not the tier's steady cost.
+ * Steps one tier down when the median interval of consecutive animated
+ * frames (camera moves, effects) misses the frame-rate target, and one tier
+ * up when frames come comfortably faster than it. A tier that proved too
+ * slow is retried only after a back-off that doubles with each failure, so
+ * quality does not oscillate. Frames during a hold (start-up, waking, the
+ * recompile after a step) are not judged: they measure shader compilation,
+ * not the tier's steady cost.
+ *
+ * Only frames the display actually shows are measured, so on a display
+ * capped at the target's rate (60 fps on a 60 Hz screen) frames never look
+ * fast enough to step back up.
  */
 export class AutoQualityGovernor {
   private samples: number[] = [];
   private holdUntil = 0;
+  private targetMs = 1000 / DEFAULT_FRAME_RATE_TARGET;
+  private readonly failures: Record<QualityTier, number> = { high: 0, medium: 0, low: 0 };
+  private readonly retryAt: Record<QualityTier, number> = { high: 0, medium: 0, low: 0 };
   public tier: QualityTier = "high";
 
-  public reset(tier: QualityTier = "high"): void { this.tier = tier; this.samples = []; this.holdUntil = 0; }
+  public reset(tier: QualityTier = "high"): void {
+    this.tier = tier;
+    this.samples = [];
+    this.holdUntil = 0;
+    for (const key of Object.keys(this.failures) as QualityTier[]) { this.failures[key] = 0; this.retryAt[key] = 0; }
+  }
+
+  /** Aim for `fps`; tiers that failed a different target get a fresh chance. */
+  public setTarget(fps: FrameRateTarget): void {
+    const tier = this.tier;
+    this.reset(tier);
+    this.targetMs = 1000 / fps;
+  }
 
   /** Ignore frames until `durationMs` after `now`, discarding the partial window. */
   public hold(now: number, durationMs: number): void {
@@ -64,9 +94,18 @@ export class AutoQualityGovernor {
     const median = ordered[Math.floor(ordered.length / 2)]!;
     this.samples = [];
     const lower = LOWER[this.tier];
-    if (median <= AUTO_QUALITY_BUDGET_MS || !lower) return null;
-    this.tier = lower;
+    const higher = HIGHER[this.tier];
+    let next: QualityTier | null = null;
+    if (median > this.targetMs * AUTO_QUALITY_SLOW_FACTOR && lower) {
+      this.failures[this.tier] += 1;
+      this.retryAt[this.tier] = now + AUTO_QUALITY_RETRY_MS * 2 ** (this.failures[this.tier] - 1);
+      next = lower;
+    } else if (median < this.targetMs * AUTO_QUALITY_HEADROOM && higher && now >= this.retryAt[higher]) {
+      next = higher;
+    }
+    if (!next) return null;
+    this.tier = next;
     this.hold(now, AUTO_QUALITY_SETTLE_MS);
-    return lower;
+    return next;
   }
 }

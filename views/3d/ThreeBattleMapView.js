@@ -24,9 +24,10 @@ class ThreeBattleMapView {
         this.unitLabelsVisible = true;
         this.depthOfFieldEnabled = true;
         this.closeupFocusStrength = 0.8;
-        this.focusQuality = 'compact';
+        this.focusQuality = 'bokeh';
         this.weatherEnabled = true;
-        this.quality = 'auto';
+        this.quality = 'high';
+        this.frameRateTarget = 30;
     }
 
     async mount() {
@@ -92,6 +93,7 @@ class ThreeBattleMapView {
                     );
                     this.tooltipHex = hex;
                 },
+                onQualityTier: () => { if (!this.destroyed) this.view.updateViewModeControls?.(); },
                 onContext: () => {
                     if (!this.active || this.destroyed) return;
                     this.view.orders.cancel();
@@ -115,6 +117,7 @@ class ThreeBattleMapView {
             renderer.setBannerDetails?.(this.bannerDetails);
             renderer.setUnitLabelsVisible?.(this.unitLabelsVisible);
             renderer.setWeatherEnabled?.(this.weatherEnabled);
+            renderer.setFrameRateTarget?.(this.frameRateTarget);
             renderer.setQuality?.(this.quality);
             this.terrainSignature = this.getTerrainSignature(initialSnapshot);
             if (!this.active || !this.pageVisible) renderer.setActive(false);
@@ -157,7 +160,7 @@ class ThreeBattleMapView {
                 script = document.createElement('script');
                 script.id = 'hussite-three-bundle';
                 script.type = 'module';
-                script.src = 'views/3d/integrated/hex-three.js?v=2.61';
+                script.src = 'views/3d/integrated/hex-three.js?v=2.62';
                 appendScript = true;
             }
             script.addEventListener('load', () => { if (window.HussiteBattle3D) ready(); }, { once: true });
@@ -350,12 +353,16 @@ class ThreeBattleMapView {
     setFocusSettings(enabled, closeupStrength, quality = this.focusQuality) {
         this.depthOfFieldEnabled = Boolean(enabled);
         this.closeupFocusStrength = Math.max(0, Math.min(1, Number(closeupStrength) || 0));
-        this.focusQuality = quality === 'bokeh' ? 'bokeh' : 'compact';
+        this.focusQuality = quality === 'compact' ? 'compact' : 'bokeh';
         this.renderer?.setFocusSettings?.(this.depthOfFieldEnabled, this.closeupFocusStrength, this.focusQuality);
     }
     setQuality(level) {
-        this.quality = ['auto', 'high', 'medium', 'low'].includes(level) ? level : 'auto';
+        this.quality = ['auto', 'high', 'medium', 'low'].includes(level) ? level : 'high';
         this.renderer?.setQuality?.(this.quality);
+    }
+    setFrameRateTarget(fps) {
+        this.frameRateTarget = Number(fps) === 60 ? 60 : 30;
+        this.renderer?.setFrameRateTarget?.(this.frameRateTarget);
     }
     qualityTier() { return this.renderer?.qualityTier?.() ?? null; }
     setWeatherEnabled(enabled) { this.weatherEnabled = Boolean(enabled); this.renderer?.setWeatherEnabled?.(this.weatherEnabled); }
