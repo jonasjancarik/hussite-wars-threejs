@@ -42,6 +42,7 @@ A redraw of the shadow map adds roughly one draw per shadow caster to its frame.
   - Picking runs on every mouse move and on every frame the camera moves. Terrain meshes go through `intersectMeshes`, never `Raycaster`.
   - In per-vertex generation loops, avoid string-keyed lookups. `getCell` building `"col,row"` strings once took 38% of the terrain build.
   - `weightsAt` returns frozen, memoized objects. Copy before changing one.
+- **Start downloads before the terrain build.** `create()` in `main.ts` runs the cheap plans (`planGeneratedTerrain`, `planScenery`, `unitModels`), starts every model download, and only then builds the terrain mesh. New generated scenery should name its models in `planScenery`, so they download during the build instead of after it.
 - **Minimize the DOM work in the frame loop.** Banners write only the styles that changed, and skip layout when their anchors didn't move. Never read layout after writing in the loop.
 - **Watch shader structure.**
   - WGSL forbids ordinary `texture()` samples inside a per-pixel branch. Take `dFdx`/`dFdy` outside the `If` and sample inside it with `.grad()` (see `triplanar`).
