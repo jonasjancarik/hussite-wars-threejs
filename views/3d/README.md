@@ -14,7 +14,7 @@ npm --prefix views/3d run build
 
 The build typechecks TypeScript and writes `dist/`, then copies the browser bundle to tracked `integrated/hex-three.js` for the static campaign. Commit that bundle with renderer changes. Dependencies and `dist/` are ignored. No root package manager or new dependency was introduced.
 
-Models, textures and authored scenario manifests live in [assets/3d](../../assets/3d/README.md). `model-paths.json` resolves stable model IDs to category folders; do not hardcode former experiment paths. Model generation lives in [tools/art](../../tools/art/README.md). Provenance is retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and adjacent asset manifests.
+Models, textures and authored scenario manifests live in [assets/3d](../../assets/3d/README.md). To look through every model at once, serve the repository root and open [`/views/3d/gallery/`](gallery/index.html): each GLB in `model-paths.json`, grouped by folder, turnable in 3D with the renderer's side colours, sizes and triangle counts (`#model=<id>` opens one). It loads Three.js from jsDelivr, so it needs a network connection. `model-paths.json` resolves stable model IDs to category folders; do not hardcode former experiment paths. Model generation lives in [tools/art](../../tools/art/README.md). Provenance is retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and adjacent asset manifests.
 
 Serve the repository root and use the campaign's 2D/3D buttons. The standalone page waits for its first rules snapshot before creating the renderer, since locale loading can finish after the bundle loads. The standalone Sudoměř page and Bevy comparisons remain [experimental fixtures](../../experiments/sudomer-diorama/README.md).
 
