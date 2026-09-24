@@ -31,6 +31,8 @@ export interface UnitSnapshot extends HexCoord {
   isRouting: boolean;
   formationClosed: boolean;
   marching: boolean;
+  /** A breach this turn: the wagon loses its line bonus, so it holds no chain. */
+  breached?: boolean;
   /** A scenario event explicitly forced this cavalry unit to fight on foot. */
   dismounted?: boolean;
   special?: string | null;

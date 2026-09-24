@@ -28,16 +28,21 @@ function links(connection: WagonConnections): THREE.Mesh[] {
   return pair ? pair.children.filter((child): child is THREE.Mesh => child instanceof THREE.Mesh) : [];
 }
 
+// A straight three-wagon line: the middle wagon holds the line bonus, so both pairs chain.
+function line(overrides: Partial<Record<1 | 2 | 3, Partial<UnitSnapshot>>> = {}): UnitSnapshot[] {
+  return [unit(1, 0, 0, overrides[1]), unit(2, 1, 0, overrides[2]), unit(3, 2, 0, overrides[3])];
+}
+
 test("connects each odd-q adjacent closed wagon pair once and reuses unchanged visuals", () => {
   const layout = new HexLayout(4, 3);
   assert.ok(layout.neighbours({ col: 0, row: 0 }).some(coord => coord.col === 1 && coord.row === 0));
   const connection = new WagonConnections({
     group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 9, renderedHeightAt: () => 2,
   }, layout);
-  const first = snapshot([unit(1, 0, 0), unit(2, 1, 0)]);
+  const first = snapshot(line());
 
   connection.update(first);
-  assert.equal(connection.group.children.length, 1);
+  assert.equal(connection.group.children.length, 2);
   assert.ok(links(connection).length >= 8);
   assert.ok(links(connection).every(link => Math.abs(link.position.y - 2.48) < 1e-6));
   const pair = connection.group.children[0]!;
@@ -51,7 +56,7 @@ test("connects each odd-q adjacent closed wagon pair once and reuses unchanged v
 
 test("marching wagons use fewer, lighter links while closed wagons use the fixed chain", () => {
   const connection = new WagonConnections({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 }, new HexLayout(4, 3));
-  const closed = snapshot([unit(1, 0, 0), unit(2, 1, 0)]);
+  const closed = snapshot(line());
   connection.update(closed);
   const closedPair = connection.group.children[0]!;
   const closedMaterial = links(connection)[0]!.material as THREE.MeshStandardMaterial;
@@ -59,8 +64,8 @@ test("marching wagons use fewer, lighter links while closed wagons use the fixed
   assert.ok(closedLinkCount >= 8);
   assert.equal(closedMaterial.opacity, 0.75);
 
-  connection.update(snapshot([unit(1, 0, 0, { marching: true }), unit(2, 1, 0)]));
-  assert.equal(connection.group.children.length, 1);
+  connection.update(snapshot(line({ 1: { marching: true }, 2: { marching: true }, 3: { marching: true } })));
+  assert.equal(connection.group.children.length, 2);
   assert.notEqual(connection.group.children[0], closedPair);
   const marchingMaterial = links(connection)[0]!.material as THREE.MeshStandardMaterial;
   assert.ok(links(connection).length < closedLinkCount);
@@ -68,15 +73,17 @@ test("marching wagons use fewer, lighter links while closed wagons use the fixed
   connection.dispose();
 });
 
-test("excludes dead, open, enemy, nonadjacent, and fog-hidden wagons", () => {
+test("chains only wagons that hold the line bonus", () => {
   const connection = new WagonConnections({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 }, new HexLayout(4, 3));
-  const valid = [unit(1, 0, 0), unit(2, 1, 0)];
+  const crusaders = { faction: "crusaders" as const };
   const cases: BattleSnapshot[] = [
-    snapshot([unit(1, 0, 0, { health: 0 }), valid[1]!]),
-    snapshot([unit(1, 0, 0, { formationClosed: false }), valid[1]!]),
-    snapshot([valid[0]!, unit(2, 1, 0, { faction: "crusaders" })]),
-    snapshot([valid[0]!, unit(2, 2, 0)]),
-    snapshot([valid[0]!, unit(2, 1, 0, { faction: "crusaders" })], { fogOfWar: true, visibleHexes: ["0,0"] }),
+    snapshot([unit(1, 0, 0), unit(2, 1, 0)]),
+    snapshot(line({ 2: { health: 0 } })),
+    snapshot(line({ 2: { formationClosed: false } })),
+    snapshot(line({ 2: { breached: true } })),
+    snapshot(line({ 3: crusaders })),
+    snapshot([unit(1, 0, 0), unit(2, 2, 0), unit(3, 2, 2)]),
+    snapshot(line({ 1: crusaders, 2: crusaders, 3: crusaders }), { fogOfWar: true, visibleHexes: ["0,0", "1,0"] }),
   ];
 
   for (const candidate of cases) {
@@ -88,7 +95,7 @@ test("excludes dead, open, enemy, nonadjacent, and fog-hidden wagons", () => {
 
 test("removes stale pairs and releases owned link resources", () => {
   const connection = new WagonConnections({ group: new THREE.Group(), interactiveMeshes: [], heightAt: () => 0 }, new HexLayout(4, 3));
-  connection.update(snapshot([unit(1, 0, 0), unit(2, 1, 0)]));
+  connection.update(snapshot(line()));
   const mesh = links(connection)[0]!;
   const geometry = mesh.geometry;
   const material = mesh.material as THREE.Material;
@@ -99,7 +106,7 @@ test("removes stale pairs and releases owned link resources", () => {
   geometry.dispose = () => { geometryDisposed += 1; originalGeometryDispose(); };
   material.dispose = () => { materialDisposed += 1; originalMaterialDispose(); };
 
-  connection.update(snapshot([unit(1, 0, 0), unit(2, 1, 0, { formationClosed: false })]));
+  connection.update(snapshot(line({ 3: { formationClosed: false } })));
   assert.equal(connection.group.children.length, 0);
   connection.dispose();
   assert.equal(geometryDisposed, 1);

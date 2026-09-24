@@ -36879,19 +36879,18 @@ var wK = class {
 	}
 	update(e) {
 		if (this.disposed) return;
-		let t = yG(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [SK(e), e])), r = /* @__PURE__ */ new Set();
-		for (let e of t) for (let t of this.layout.neighbours(e)) {
-			let i = n.get(`${t.col},${t.row}`);
-			if (!i || e.faction !== i.faction || e.id >= i.id) continue;
-			let a = CK(e, i);
-			r.add(a);
-			let o = e.marching || i.marching, s = `${a}|${e.col},${e.row}|${i.col},${i.row}|${o ? "marching" : "closed"}`, c = this.connections.get(a);
-			if (c?.stateKey === s) continue;
-			c && this.group.remove(c.group);
-			let l = this.createConnection(e, i, o);
-			l.stateKey = s, this.connections.set(a, l), this.group.add(l.group);
+		let t = yG(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [SK(e), e])), r = (e) => this.layout.neighbours(e).map((e) => n.get(`${e.col},${e.row}`)).filter((t) => t?.faction === e.faction), i = (e) => !e.breached && r(e).length >= 2, a = /* @__PURE__ */ new Set();
+		for (let e of t) for (let t of r(e)) {
+			if (e.id >= t.id || !(i(e) || i(t))) continue;
+			let n = CK(e, t);
+			a.add(n);
+			let r = e.marching || t.marching, o = `${n}|${e.col},${e.row}|${t.col},${t.row}|${r ? "marching" : "closed"}`, s = this.connections.get(n);
+			if (s?.stateKey === o) continue;
+			s && this.group.remove(s.group);
+			let c = this.createConnection(e, t, r);
+			c.stateKey = o, this.connections.set(n, c), this.group.add(c.group);
 		}
-		for (let [e, t] of this.connections) r.has(e) || (this.group.remove(t.group), this.connections.delete(e));
+		for (let [e, t] of this.connections) a.has(e) || (this.group.remove(t.group), this.connections.delete(e));
 	}
 	dispose() {
 		this.disposed || (this.disposed = !0, this.connections.clear(), this.group.clear(), this.linkGeometry.dispose(), this.closedMaterial.dispose(), this.marchingMaterial.dispose());

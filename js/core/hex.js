@@ -259,21 +259,26 @@ class HexGrid {
     }
 
     // WP1: řetězy spojující sousední SEPNUTÉ vozy stejné frakce ("kolo na kolo").
+    // Kreslí se jen tam, kde platí bonus linie (game.isInWagonLine): aspoň jeden
+    // z páru je sepnutý vůz se 2+ sepnutými sousedy a bez průlomu.
     // Dedup přes u.id < nb.id, ať se každý pár nakreslí jen jednou.
     drawWagonChains(units) {
         const at = new Map();
         for (const u of units) {
             if (u.health > 0) at.set(`${u.col},${u.row}`, u);
         }
+        const chainedNeighbours = (u) => this.getNeighbors(u.col, u.row)
+            .map(n => at.get(`${n.col},${n.row}`))
+            .filter(nb => nb && nb.isWagon() && nb.formationClosed && nb.faction === u.faction);
+        const holdsLine = (u) => !u.breachedTurns && chainedNeighbours(u).length >= 2;
         this.ctx.save();
         this.ctx.lineWidth = 3;
         this.ctx.lineCap = 'round';
         for (const u of units) {
             if (u.health <= 0 || !u.isWagon() || !u.formationClosed) continue;
             const a = this.hexToPixel(u.col, u.row);
-            for (const n of this.getNeighbors(u.col, u.row)) {
-                const nb = at.get(`${n.col},${n.row}`);
-                if (nb && nb.isWagon() && nb.formationClosed && nb.faction === u.faction && u.id < nb.id) {
+            for (const nb of chainedNeighbours(u)) {
+                if (u.id < nb.id && (holdsLine(u) || holdsLine(nb))) {
                     const b = this.hexToPixel(nb.col, nb.row);
                     // P4: pochodová linie (poloviční kryt) se kreslí čárkovaně a světleji,
                     // pevná zaklíněná hradba plnou tmavě zlatou čárou.

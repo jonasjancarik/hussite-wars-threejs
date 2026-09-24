@@ -23,7 +23,11 @@ function pairKey(first: UnitSnapshot, second: UnitSnapshot): string {
   return `${Math.min(first.id, second.id)}:${Math.max(first.id, second.id)}`;
 }
 
-/** Physical links between adjacent closed war wagons in the visible snapshot. */
+/**
+ * Physical links between adjacent closed war wagons in the visible snapshot,
+ * drawn only where the wagon-line bonus applies (game.isInWagonLine): at least
+ * one wagon of the pair has two or more closed neighbours and no breach.
+ */
 export class WagonConnections {
   public readonly group = new THREE.Group();
 
@@ -61,12 +65,15 @@ export class WagonConnections {
     const units = visibleSnapshotUnits(snapshot)
       .filter(unit => unit.unitClass === "wagon" && unit.formationClosed);
     const at = new Map(units.map(unit => [coordKey(unit), unit]));
+    const chainedNeighbours = (unit: UnitSnapshot): UnitSnapshot[] => this.layout.neighbours(unit)
+      .map(coord => at.get(`${coord.col},${coord.row}`))
+      .filter((neighbour): neighbour is UnitSnapshot => neighbour?.faction === unit.faction);
+    const holdsLine = (unit: UnitSnapshot): boolean => !unit.breached && chainedNeighbours(unit).length >= 2;
     const nextKeys = new Set<string>();
 
     for (const unit of units) {
-      for (const neighbourCoord of this.layout.neighbours(unit)) {
-        const neighbour = at.get(`${neighbourCoord.col},${neighbourCoord.row}`);
-        if (!neighbour || unit.faction !== neighbour.faction || unit.id >= neighbour.id) continue;
+      for (const neighbour of chainedNeighbours(unit)) {
+        if (unit.id >= neighbour.id || !(holdsLine(unit) || holdsLine(neighbour))) continue;
         const key = pairKey(unit, neighbour);
         nextKeys.add(key);
         const marching = unit.marching || neighbour.marching;
