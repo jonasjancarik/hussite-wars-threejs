@@ -12,6 +12,45 @@ export interface FigureRecipe {
    * so at rest and when firing it turns that long side toward the threat.
    */
   broadside?: boolean;
+  /** Each figure stands a little off its slot, turned and sized on its own (see `figureVariation`). */
+  varied?: boolean;
+}
+
+/**
+ * Bounds of the per-figure variation that keeps a formation from looking
+ * stamped out. Figures only shrink, so FORMATION_HEIGHT still holds; the
+ * envelope test checks every corner of these bounds.
+ */
+export const FIGURE_VARIATION = { offset: 0.13, yaw: 0.16, shrink: 0.07 } as const;
+
+export interface FigureVariation { dx: number; dz: number; yaw: number; scale: number }
+
+/** Deterministic value in [0, 1) for a unit, figure slot and channel. */
+function slotNoise(unitId: number, slot: number, channel: number): number {
+  let h = Math.imul(unitId ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(slot + 1, 0xc2b2ae35) ^ Math.imul(channel + 1, 0x27d4eb2f);
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39);
+  return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
+}
+
+/**
+ * Shift along one axis for a noise value in [-1, 1]. A figure off the centre
+ * line only steps inward, so the formation never grows past its envelope.
+ */
+export function inwardShift(slotOffset: number, noise: number): number {
+  const shift = noise * FIGURE_VARIATION.offset;
+  return slotOffset !== 0 && Math.sign(shift) === Math.sign(slotOffset) ? -shift : shift;
+}
+
+/** Stable offset, turn and size of one figure, the same every time its unit is built. */
+export function figureVariation(unitId: number, slot: number, offsetX: number, offsetZ: number): FigureVariation {
+  const signed = (channel: number): number => slotNoise(unitId, slot, channel) * 2 - 1;
+  return {
+    dx: inwardShift(offsetX, signed(0)),
+    dz: inwardShift(offsetZ, signed(1)),
+    yaw: signed(2) * FIGURE_VARIATION.yaw,
+    scale: 1 - slotNoise(unitId, slot, 3) * FIGURE_VARIATION.shrink,
+  };
 }
 
 /** Extra yaw that turns a broadside model's +Z flank to where +X would face. */
@@ -23,24 +62,24 @@ const FIVE_FIGURE_OFFSETS: Array<[number, number]> = [
 const CAVALRY_OFFSETS: Array<[number, number]> = [[-0.70, -0.20], [0.70, 0.20]];
 
 function formation(model: string, scale = 1.15, pickRadius = 2.15): FigureRecipe[] {
-  return [{ model, offsets: FIVE_FIGURE_OFFSETS, scale, pickRadius }];
+  return [{ model, offsets: FIVE_FIGURE_OFFSETS, scale, pickRadius, varied: true }];
 }
 
 function cavalry(model: string): FigureRecipe[] {
-  return [{ model, offsets: CAVALRY_OFFSETS, scale: 0.98 }];
+  return [{ model, offsets: CAVALRY_OFFSETS, scale: 0.98, varied: true }];
 }
 
 function artillery(model: string): FigureRecipe[] {
   return [
     { model, offsets: [[0, 0]], scale: 1 },
-    { model: "artillery_gunner", offsets: [[-0.5, -1.2], [-0.5, 1.2]], scale: 1.05, rotateOffsetsWithFacing: true },
+    { model: "artillery_gunner", offsets: [[-0.5, -1.2], [-0.5, 1.2]], scale: 1.05, rotateOffsetsWithFacing: true, varied: true },
   ];
 }
 
 const CIVILIAN_RECIPES: FigureRecipe[] = [
-  { model: "civilian_adult", offsets: [[-1.02, 0.5], [0.52, -0.1]], scale: 1.12 },
-  { model: "civilian_woman", offsets: [[0, -0.66], [1.02, 0.5]], scale: 1.12 },
-  { model: "civilian_child", offsets: [[-0.52, -0.1]], scale: 1.12 },
+  { model: "civilian_adult", offsets: [[-1.02, 0.5], [0.52, -0.1]], scale: 1.12, varied: true },
+  { model: "civilian_woman", offsets: [[0, -0.66], [1.02, 0.5]], scale: 1.12, varied: true },
+  { model: "civilian_child", offsets: [[-0.52, -0.1]], scale: 1.12, varied: true },
 ];
 
 const CLERIC_COMMANDERS = new Set(["PROKOP_HOLY", "JAN_ZELIVSKY", "VACLAV_KORANDA"]);

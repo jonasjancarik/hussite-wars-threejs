@@ -4,7 +4,7 @@ import { HexLayout } from "./hex-coordinates.ts";
 import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 import { visibleSnapshotUnits } from "./unit-visibility.ts";
 import { CasualtyFades } from "./casualties.ts";
-import { BROADSIDE_YAW, recipeSignature, unitRecipe } from "./unit-recipes.ts";
+import { BROADSIDE_YAW, figureVariation, recipeSignature, unitRecipe } from "./unit-recipes.ts";
 import { commandAuraGeometry } from "./command-aura.ts";
 import { recolorTeamSlots } from "./model-merge.ts";
 
@@ -326,6 +326,7 @@ export class UnitPresentation {
       if (unit.unitClass === "wagon") {
         for (const model of WAGON_MODELS) this.variant(model, unit.faction).catch(() => undefined);
       }
+      let slot = 0;
       for (const recipe of recipes) {
         const prototype = await this.variant(recipe.model, unit.faction);
         if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
@@ -334,9 +335,13 @@ export class UnitPresentation {
           const offset = recipe.rotateOffsetsWithFacing
             ? new THREE.Vector3(offsetX, 0, offsetZ).applyAxisAngle(new THREE.Vector3(0, 1, 0), facing)
             : new THREE.Vector3(offsetX, 0, offsetZ);
-          figure.position.set(offset.x, 0, offset.z);
-          figure.rotation.y = facing;
-          figure.scale.setScalar(recipe.scale);
+          const vary = recipe.varied ? figureVariation(unit.id, slot, offset.x, offset.z) : { dx: 0, dz: 0, yaw: 0, scale: 1 };
+          slot += 1;
+          figure.position.set(offset.x + vary.dx, 0, offset.z + vary.dz);
+          figure.rotation.y = facing + vary.yaw;
+          // The formation's bearing, without this figure's own turn.
+          figure.userData.figureYaw = vary.yaw;
+          figure.scale.setScalar(recipe.scale * vary.scale);
           const box = new THREE.Box3().setFromObject(figure);
           figures.push({ object: figure, bottom: box.min.y, top: box.max.y,
             depletes: unit.unitClass !== "commander" && unit.special !== "commander"

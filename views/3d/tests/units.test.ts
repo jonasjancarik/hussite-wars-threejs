@@ -92,7 +92,8 @@ test("each figure rests on rendered terrain after movement, rotation and routing
 
 function facingOf(formation: THREE.Object3D): THREE.Vector3 {
   const figure = formation.children.find(child => child instanceof THREE.Group)!;
-  return new THREE.Vector3(1, 0, 0).applyQuaternion(figure.getWorldQuaternion(new THREE.Quaternion()));
+  return new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), -(figure.userData.figureYaw ?? 0))
+    .applyQuaternion(figure.getWorldQuaternion(new THREE.Quaternion()));
 }
 
 function formationFor(units: UnitPresentation, id: number): THREE.Object3D {

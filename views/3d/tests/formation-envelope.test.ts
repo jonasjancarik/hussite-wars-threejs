@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import * as THREE from "three";
 import { FORMATION_FOOTPRINT, FORMATION_HEIGHT, FORMATION_TRAVEL_FOOTPRINT, formationSupport } from "../src/formation-envelope.ts";
-import { BROADSIDE_YAW, unitRecipe } from "../src/unit-recipes.ts";
+import { BROADSIDE_YAW, FIGURE_VARIATION, inwardShift, unitRecipe } from "../src/unit-recipes.ts";
 import type { UnitSnapshot } from "../src/types.ts";
 
 const ROOT = path.resolve(import.meta.dirname, "../../..");
@@ -83,6 +83,33 @@ function verticesForModel(name: string): THREE.Vector3[] {
   return result;
 }
 
+/** X/Z convex hull of a model, enough to bound it under any rigid move and scale. */
+const modelHulls = new Map<string, XzPoint[]>();
+function hullForModel(name: string): XzPoint[] {
+  const cached = modelHulls.get(name);
+  if (cached) return cached;
+  const points = verticesForModel(name).map(vertex => ({ x: vertex.x, z: vertex.z }))
+    .sort((a, b) => a.x - b.x || a.z - b.z);
+  const cross = (o: XzPoint, a: XzPoint, b: XzPoint): number => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
+  const half = (list: XzPoint[]): XzPoint[] => {
+    const chain: XzPoint[] = [];
+    for (const point of list) {
+      while (chain.length >= 2 && cross(chain[chain.length - 2]!, chain[chain.length - 1]!, point) <= 0) chain.pop();
+      chain.push(point);
+    }
+    return chain.slice(0, -1);
+  };
+  const hull = [...half(points), ...half([...points].reverse())];
+  modelHulls.set(name, hull);
+  return hull;
+}
+
+/** Every corner of the per-figure variation, with intermediate turns since rotation is not linear. */
+const VARIATION_CORNERS = [-1, 1].flatMap(sx => [-1, 1].flatMap(sz => [-1, -0.5, 0, 0.5, 1].flatMap(sy => [0, 1].map(ss => ({
+  sx, sz, yaw: sy * FIGURE_VARIATION.yaw, scale: 1 - ss * FIGURE_VARIATION.shrink,
+})))));
+const NO_VARIATION = [{ sx: 0, sz: 0, yaw: 0, scale: 1 }];
+
 function recipeTypes(): { types: string[]; commanders: Set<string> } {
   const cases = [...RECIPE_SOURCE.matchAll(/case "([A-Z0-9_]+)"/g)].map(match => match[1]!);
   const commanders = new Set([...RECIPE_SOURCE.matchAll(/const (?:CLERIC|CAPTAIN|NOBLE)_COMMANDERS = new Set\(\[([\s\S]*?)\]\);/g)]
@@ -113,11 +140,15 @@ function actualFormationPoints(standing: boolean): XzPoint[] {
       for (const recipe of recipes) {
         const offsets = recipe.offsets.map(([offsetX, offsetZ]) => recipe.rotateOffsetsWithFacing
           ? rotate(offsetX, offsetZ, facing) : { x: offsetX, z: offsetZ });
-        const vertices = verticesForModel(recipe.model);
-        for (const offset of offsets) for (const vertex of vertices) {
-          const figure = rotate(vertex.x * recipe.scale, vertex.z * recipe.scale, facing);
-          const root = rotate((figure.x + offset.x) * routeScale, (figure.z + offset.z) * routeScale, marching);
-          points.push(root);
+        const vertices = recipe.varied ? hullForModel(recipe.model) : verticesForModel(recipe.model);
+        for (const vary of recipe.varied ? VARIATION_CORNERS : NO_VARIATION) {
+          for (const offset of offsets) for (const vertex of vertices) {
+            const size = recipe.scale * vary.scale;
+            const figure = rotate(vertex.x * size, vertex.z * size, facing + vary.yaw);
+            const dx = inwardShift(offset.x, vary.sx), dz = inwardShift(offset.z, vary.sz);
+            const root = rotate((figure.x + offset.x + dx) * routeScale, (figure.z + offset.z + dz) * routeScale, marching);
+            points.push(root);
+          }
         }
       }
       if (commanders.has(type)) for (const vertex of verticesForModel("commander_standard")) {
