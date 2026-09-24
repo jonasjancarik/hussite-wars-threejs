@@ -554,7 +554,6 @@ class IntegratedThreeBattle {
   private applyAtmosphere(): void {
     this.lighting.apply(this.atmosphere.state);
     this.sky.apply(this.atmosphere.state);
-    this.table.setHorizon(this.atmosphere.state.veilColor);
   }
 
   private groundPoint(col: number, row: number): THREE.Vector3 {
