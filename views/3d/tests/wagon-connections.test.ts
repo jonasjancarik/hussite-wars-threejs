@@ -115,3 +115,23 @@ test("removes stale pairs and releases owned link resources", () => {
   assert.equal(geometryDisposed, 1);
   assert.equal(materialDisposed, 1);
 });
+
+test("hangs the chain from wagon to wagon instead of stacking links down a steep flank", () => {
+  const layout = new HexLayout(4, 3);
+  const brow = (layout.center(0, 0).x + layout.center(1, 0).x) / 2 - 1;
+  const heightAt = (x: number): number => x < brow ? 4 : 0;
+  const connection = new WagonConnections({ group: new THREE.Group(), interactiveMeshes: [], heightAt }, layout);
+  connection.update(snapshot(line()));
+  const pair = connection.group.children.find(child => (child.userData.wagonIds as number[]).includes(1))!;
+  const chain = pair.children as THREE.Mesh[];
+  const flatCount = 10;
+
+  assert.ok(chain.length > flatCount, "a longer drop takes more links");
+  for (let index = 1; index < chain.length; index += 1) {
+    const gap = chain[index]!.position.distanceTo(chain[index - 1]!.position);
+    assert.ok(gap > 0.2 && gap < 0.6, `links stay evenly spaced, got ${gap}`);
+    assert.ok(chain[index]!.position.y <= chain[index - 1]!.position.y + 1e-6, "the chain only descends");
+  }
+  for (const link of chain) assert.ok(link.position.y >= heightAt(link.position.x) + 0.3 - 1e-6);
+  connection.dispose();
+});

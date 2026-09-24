@@ -8,12 +8,15 @@ interface WagonConnection {
   stateKey: string;
 }
 
-const LINK_COUNT_CLOSED = 10;
-const LINK_COUNT_MARCHING = 5;
+// Spacing along the chain: ten links across flat neighbours when closed, five when marching.
+const LINK_PITCH_CLOSED = 0.39;
+const LINK_PITCH_MARCHING = 0.72;
 const LINK_CENTER_OFFSET = 1.3;
 const LINK_HEIGHT = 0.48;
 const LINK_MAJOR_RADIUS = 0.24;
 const LINK_TUBE_RADIUS = 0.065;
+const LINK_CLEARANCE = LINK_MAJOR_RADIUS + LINK_TUBE_RADIUS;
+const PATH_SAMPLES = 32;
 
 function coordKey(unit: UnitSnapshot): string {
   return `${unit.col},${unit.row}`;
@@ -111,28 +114,55 @@ export class WagonConnections {
     const dx = b.x - a.x;
     const dz = b.z - a.z;
     const distance = Math.hypot(dx, dz);
-    const direction = new THREE.Vector3(dx / distance, 0, dz / distance);
-    const perpendicular = new THREE.Vector3(-direction.z, 0, direction.x);
-    const up = new THREE.Vector3(0, 1, 0);
+    const ux = dx / distance, uz = dz / distance;
     const span = Math.max(0, distance - LINK_CENTER_OFFSET * 2);
-    const count = marching ? LINK_COUNT_MARCHING : LINK_COUNT_CLOSED;
+    const pitch = marching ? LINK_PITCH_MARCHING : LINK_PITCH_CLOSED;
     const material = marching ? this.marchingMaterial : this.closedMaterial;
     const group = new THREE.Group();
     group.name = `Wagon chain ${Math.min(first.id, second.id)}-${Math.max(first.id, second.id)}`;
     group.userData.wagonIds = [first.id, second.id];
     const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
 
+    // The chain hangs taut from each wagon's body at its hex centre height and
+    // stretches over any brow between them: the upper hull of the ground it
+    // must clear. Sampling the ground under every link instead stacked links
+    // up a steep flank.
+    const clearAt = (along: number): number => heightAt(a.x + ux * along, a.z + uz * along) + LINK_CLEARANCE;
+    const profile: Array<{ along: number; y: number }> = [];
+    for (let index = 0; index <= PATH_SAMPLES; index += 1) {
+      const along = LINK_CENTER_OFFSET + span * index / PATH_SAMPLES;
+      const anchor = index === 0 ? heightAt(a.x, a.z) + LINK_HEIGHT : index === PATH_SAMPLES ? heightAt(b.x, b.z) + LINK_HEIGHT : -Infinity;
+      const point = { along, y: Math.max(anchor, clearAt(along)) };
+      while (profile.length >= 2) {
+        const o = profile[profile.length - 2]!, m = profile[profile.length - 1]!;
+        if ((m.along - o.along) * (point.y - o.y) - (m.y - o.y) * (point.along - o.along) < 0) break;
+        profile.pop();
+      }
+      profile.push(point);
+    }
+    const path = profile.map(point => new THREE.Vector3(a.x + ux * point.along, point.y, a.z + uz * point.along));
+    const lengths = [0];
+    for (let index = 1; index < path.length; index += 1) lengths.push(lengths[index - 1]! + path[index]!.distanceTo(path[index - 1]!));
+    const length = lengths[lengths.length - 1]!;
+    const count = Math.max(1, Math.round(length / pitch) - 1);
+
+    const up = new THREE.Vector3(0, 1, 0);
+    const tangent = new THREE.Vector3();
+    const side = new THREE.Vector3();
+    const lift = new THREE.Vector3();
+    let segment = 1;
     for (let index = 0; index < count; index += 1) {
-      // Keep the first and last links inside each wagon's silhouette, with a
-      // little more room between links while the wagons are marching.
-      const fraction = (index + 1) / (count + 1);
-      const distanceAlong = LINK_CENTER_OFFSET + span * fraction;
-      const x = a.x + direction.x * distanceAlong;
-      const z = a.z + direction.z * distanceAlong;
-      const y = heightAt(x, z) + LINK_HEIGHT;
+      const target = length * (index + 1) / (count + 1);
+      while (segment < path.length - 1 && lengths[segment]! < target) segment += 1;
+      const from = path[segment - 1]!, to = path[segment]!;
+      const segmentLength = lengths[segment]! - lengths[segment - 1]!;
+      const fraction = segmentLength > 0 ? (target - lengths[segment - 1]!) / segmentLength : 0;
+      tangent.subVectors(to, from).normalize();
+      side.crossVectors(tangent, up).normalize();
+      // Alternate links turn a quarter about the chain, as real links interlock.
+      const normal = index % 2 === 0 ? side : lift.crossVectors(side, tangent).normalize();
       const link = new THREE.Mesh(this.linkGeometry, material);
-      const normal = index % 2 === 0 ? perpendicular : up;
-      link.position.set(x, y, z);
+      link.position.lerpVectors(from, to, fraction);
       link.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
       link.castShadow = true;
       link.receiveShadow = true;
