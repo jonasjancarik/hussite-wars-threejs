@@ -153,9 +153,12 @@ class Fortifications:
                                            (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)], mat)
 
     def gable_roof(self, prefix, length, width, eave, ridge, mat='fort_roof'):
-        vertices = [(-length/2, -width/2, eave), (length/2, -width/2, eave),
-                    (length/2, width/2, eave), (-length/2, width/2, eave),
-                    (-length/2, 0, ridge), (length/2, 0, ridge)]
+        # The verge boards' outer faces stand at +-length/2. Everything else
+        # stops 1 cm short of them: a shared plane there z-fights in game.
+        inner = length/2-.01
+        vertices = [(-inner, -width/2, eave), (inner, -width/2, eave),
+                    (inner, width/2, eave), (-inner, width/2, eave),
+                    (-inner, 0, ridge), (inner, 0, ridge)]
         self.solid(prefix+'_closed_roof', vertices,
                    [(0, 1, 5, 4), (3, 4, 5, 2), (0, 4, 3),
                     (1, 2, 5), (3, 2, 1, 0)], mat)
@@ -184,11 +187,11 @@ class Fortifications:
                 for polygon in course.data.polygons:
                     if len(polygon.vertices) == 4 and abs(polygon.normal.dot(down)) > .5:
                         polygon.material_index = 1
-            self.k.beam(prefix+'_eave_beam', (-length/2, side*half, eave),
-                        (length/2, side*half, eave), .063, 'oak_dark', 5)
+            self.k.beam(prefix+'_eave_beam', (-inner, side*half, eave),
+                        (inner, side*half, eave), .063, 'oak_dark', 5)
             # Ridge tiles sit astride the ridge as a shallow inverted V.
-            ridge_a = Vector((-length/2, 0, ridge+.012))
-            ridge_b = Vector((length/2, 0, ridge+.012))
+            ridge_a = Vector((-inner, 0, ridge+.012))
+            ridge_b = Vector((inner, 0, ridge+.012))
             self.plank(prefix+'_ridge_cap', ridge_a+down*.09, ridge_b+down*.09,
                        down, normal, .19, .05, trim)
             # Verge boards give both gable edges a visible roof thickness. They
