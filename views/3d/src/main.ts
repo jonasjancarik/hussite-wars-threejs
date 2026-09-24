@@ -3,8 +3,8 @@ import { BattleAssets } from "./assets.ts";
 import { applyPose, clampTarget, createBattleCamera, currentPose, fitRadius, interpolatePose, OVERVIEW_DIRECTION,
   snappedBearing, type CameraPose } from "./camera.ts";
 import { attackStyle, BattlefieldEffects, compactMiniatureFocusProfile, focusSmoothingAlpha, type AttackStyle } from "./effects.ts";
-import { GeneratedScenery } from "./generated-scenery.ts";
-import { GeneratedTerrain } from "./generated-terrain.ts";
+import { GeneratedScenery, planScenery, type SceneryPlan } from "./generated-scenery.ts";
+import { GeneratedTerrain, planGeneratedTerrain, type GeneratedTerrainPlan } from "./generated-terrain.ts";
 import { TownWallRoutes } from "./town-wall-routes.ts";
 import { createBattleLighting } from "./lighting.ts";
 import { TacticalOverlays } from "./overlays.ts";
@@ -19,7 +19,7 @@ import { SnapshotClient, waitForInitialSnapshot } from "./snapshot-client.ts";
 import { BattlePaintedSky } from "./sky.ts";
 import { AuthoredTerrain } from "./terrain.ts";
 import type { BattleScenery, BattleSnapshot, BattleTerrain, CosmeticEvent, HexCoord, IntegratedRendererOptions, ScenarioArtManifest } from "./types.ts";
-import { UnitPresentation } from "./units.ts";
+import { UnitPresentation, unitModels } from "./units.ts";
 import { UnitBanners } from "./unit-banners.ts";
 import { WagonConnections } from "./wagon-connections.ts";
 import { atmosphereProfile, AtmosphereTransition } from "./atmosphere.ts";
@@ -50,7 +50,6 @@ const PAN_KEYS: Record<string, "up" | "down" | "left" | "right"> = {
 
 class IntegratedThreeBattle {
   private readonly scene = new THREE.Scene();
-  private readonly assets: BattleAssets;
   private readonly terrain: BattleTerrain;
   private readonly scenery: BattleScenery;
   private readonly artMode: "authored" | "generated";
@@ -122,18 +121,18 @@ class IntegratedThreeBattle {
   private readonly requestFrame = (): void => this.scheduleFrame();
 
   private constructor(private readonly canvas: HTMLCanvasElement, private readonly options: IntegratedRendererOptions,
-    art: ScenarioArtManifest | null) {
-    const assetBase = new URL(options.assetBase ?? "assets/", document.baseURI).href;
-    this.assets = new BattleAssets(assetBase);
+    art: ScenarioArtManifest | null, private readonly assets: BattleAssets,
+    plans: { terrain: GeneratedTerrainPlan; scenery: SceneryPlan } | null) {
+    const assetBase = assets.baseUrl;
     if (art) {
       const terrain = new AuthoredTerrain(art, options.snapshot, assetBase);
       this.terrain = terrain;
       this.scenery = new AuthoredScenery(art, terrain, this.assets);
       this.artMode = "authored";
     } else {
-      const terrain = new GeneratedTerrain(options.snapshot, assetBase);
+      const terrain = new GeneratedTerrain(options.snapshot, assetBase, plans?.terrain);
       this.terrain = terrain;
-      this.scenery = new GeneratedScenery(terrain, this.assets, options.snapshot.scenario);
+      this.scenery = new GeneratedScenery(terrain, this.assets, options.snapshot.scenario, plans?.scenery);
       this.artMode = "generated";
     }
     const extent = Math.max(this.terrain.bounds.maxX - this.terrain.bounds.minX,
@@ -182,7 +181,21 @@ class IntegratedThreeBattle {
   public static async create(canvas: HTMLCanvasElement, options: IntegratedRendererOptions): Promise<IntegratedThreeBattle> {
     const manifestBase = new URL(options.artManifestBase ?? "hex-three/", document.baseURI).href;
     const art = await loadScenarioArt(options.snapshot, manifestBase);
-    const battle = new IntegratedThreeBattle(canvas, options, art);
+    const assets = new BattleAssets(new URL(options.assetBase ?? "assets/", document.baseURI).href);
+    // Plan a generated map first and start downloading its models and the
+    // armies', so they arrive while the terrain mesh is built.
+    const terrain = art ? null : planGeneratedTerrain(options.snapshot);
+    const plans = terrain && { terrain, scenery: planScenery(terrain) };
+    assets.preload([...plans?.scenery.models ?? [], ...unitModels(options.snapshot.units)]).catch(() => undefined);
+    // Let the requests go out before the build holds the main thread.
+    await new Promise(resolve => setTimeout(resolve));
+    let battle: IntegratedThreeBattle;
+    try {
+      battle = new IntegratedThreeBattle(canvas, options, art, assets, plans);
+    } catch (error) {
+      assets.dispose();
+      throw error;
+    }
     try {
       await battle.pipeline.init();
       battle.resize();

@@ -32,6 +32,22 @@ const SAGE_TINT = new THREE.Color(0xd3deae);
 const GRASS_SCRATCH = new THREE.Color();
 const GRASSLAND = new Set(["plains", "hills", "hill", "ridge", "highland", "slope", "steep_slope", "forest"]);
 
+/** A generated map's layout, regions and environment: a small share of the build next to its meshes. */
+export interface GeneratedTerrainPlan {
+  layout: HexLayout;
+  field: TerrainRegions;
+  environmentPlan: EnvironmentPlan;
+}
+
+export function planGeneratedTerrain(snapshot: BattleSnapshot): GeneratedTerrainPlan {
+  const cols = snapshot.cols ?? Math.max(...snapshot.tiles.map(tile => tile.col)) + 1;
+  const rows = snapshot.rows ?? Math.max(...snapshot.tiles.map(tile => tile.row)) + 1;
+  const layout = new HexLayout(cols, rows);
+  const field = createTerrainRegions({ cols, rows, tiles: snapshot.tiles, scenario: snapshot.scenario ?? "battle",
+    seed: snapshot.seed ?? 1, hexRadius: layout.radius, coreCoverage: 0.76, boundaryNoise: 0.75 });
+  return { layout, field, environmentPlan: planEnvironment(snapshot.scenario, field.tiles, snapshot.features) };
+}
+
 export class GeneratedTerrain implements BattleTerrain {
   public readonly group = new THREE.Group();
   public readonly interactiveMeshes: THREE.Object3D[] = [];
@@ -66,13 +82,8 @@ export class GeneratedTerrain implements BattleTerrain {
 
   public get terrainTypes(): readonly string[] { return this.field.terrainTypes; }
 
-  public constructor(snapshot: BattleSnapshot, assetBase?: string) {
-    const cols = snapshot.cols ?? Math.max(...snapshot.tiles.map(tile => tile.col)) + 1;
-    const rows = snapshot.rows ?? Math.max(...snapshot.tiles.map(tile => tile.row)) + 1;
-    this.layout = new HexLayout(cols, rows);
-    this.field = createTerrainRegions({ cols, rows, tiles: snapshot.tiles, scenario: snapshot.scenario ?? "battle",
-      seed: snapshot.seed ?? 1, hexRadius: this.layout.radius, coreCoverage: 0.76, boundaryNoise: 0.75 });
-    this.environmentPlan = planEnvironment(snapshot.scenario, this.field.tiles, snapshot.features);
+  public constructor(snapshot: BattleSnapshot, assetBase?: string, plan = planGeneratedTerrain(snapshot)) {
+    ({ layout: this.layout, field: this.field, environmentPlan: this.environmentPlan } = plan);
     const loopsOf=(walls:readonly TownWallPlan[])=>walls.flatMap(wall=>wall.loops.map(loop=>({
       points:loop.points.map(p=>[p.x,p.z] as [number,number]),minX:Math.min(...loop.points.map(p=>p.x)),maxX:Math.max(...loop.points.map(p=>p.x)),
       minZ:Math.min(...loop.points.map(p=>p.z)),maxZ:Math.max(...loop.points.map(p=>p.z)),

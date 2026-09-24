@@ -76,6 +76,17 @@ function nearestTo(origin: { x: number; z: number }, candidates: PlacedUnit[]): 
 }
 
 const WAGON_MODELS = ["war_wagon", "war_wagon_open"];
+
+/** Every model the given units draw, so their downloads can start before the battlefield is built. */
+export function unitModels(units: readonly UnitSnapshot[]): string[] {
+  const models = new Set<string>();
+  for (const unit of units) {
+    for (const recipe of unitRecipe(unit)) models.add(recipe.model);
+    if (unit.unitClass === "wagon") WAGON_MODELS.forEach(model => models.add(model));
+    if (unit.unitClass === "commander") models.add("commander_standard");
+  }
+  return [...models];
+}
 /** Vertices this close above a model's lowest point are its feet, hooves or wheels. */
 const CONTACT_BAND = 0.06;
 /**

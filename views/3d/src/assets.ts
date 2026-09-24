@@ -11,7 +11,7 @@ export class BattleAssets {
   private readonly mergedMaterials = createMergedModelMaterials();
   private disposed = false;
 
-  public constructor(private readonly baseUrl = new URL("assets/", document.baseURI).href) {}
+  public constructor(public readonly baseUrl = new URL("assets/", document.baseURI).href) {}
 
   public load(name: string): Promise<THREE.Group> {
     if (this.disposed) return Promise.reject(new Error("Battlefield asset library has been disposed"));

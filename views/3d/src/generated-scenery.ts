@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import type { BattleAssets } from "./assets.ts";
 import { EnvironmentDetails } from "./environment-details.ts";
-import type { GeneratedTerrain } from "./generated-terrain.ts";
+import type { GeneratedTerrain, GeneratedTerrainPlan } from "./generated-terrain.ts";
 import { SceneryVisibility } from "./scenery-visibility.ts";
 import type { BattleScenery, BattleSnapshot } from "./types.ts";
 import { TownWallScenery } from "./town-wall-scenery.ts";
 import { batchStaticMeshes, INSTANCE_TINT } from "./static-batching.ts";
-import { planWoodland } from "./woodland-plan.ts";
+import { planWoodland, type WoodlandPlacement } from "./woodland-plan.ts";
 import { FOLIAGE_MATERIALS } from "./model-merge.ts";
 import { createTuftMesh, planTufts } from "./ground-tufts.ts";
 import { MergedScenery } from "./scenery-merge.ts";
@@ -19,20 +19,34 @@ function isFoliage(mesh: THREE.Mesh): boolean {
   return !Array.isArray(material) && FOLIAGE_MATERIALS.has(material.name);
 }
 
+/** The woodland and every model the generated scenery places, known before the terrain mesh is built. */
+export interface SceneryPlan {
+  woodland: WoodlandPlacement[];
+  models: string[];
+}
+
+export function planScenery({ field, layout, environmentPlan: plan }: GeneratedTerrainPlan): SceneryPlan {
+  const woodland = planWoodland({ field, layout, winter: plan.winter, replacedCells: plan.replacedCells, obstacles: plan.placements });
+  return { woodland, models: [...new Set([...plan.placements, ...woodland].map(placement => placement.model))] };
+}
+
 export class GeneratedScenery implements BattleScenery {
   public readonly group = new THREE.Group();
   private disposed = false;
   private walls: TownWallScenery | null = null;
   private readonly visibility: SceneryVisibility;
   private readonly terrain: GeneratedTerrain;
+  private readonly plan: SceneryPlan;
   private readonly assets: Pick<BattleAssets, "preload" | "clone">;
   private readonly details = new EnvironmentDetails();
   private readonly phaseObjects: Array<{ object: THREE.Object3D; fromRound: number }> = [];
   /** Walls, ice and lone buildings drawn as one mesh per material (see scenery-merge.ts). */
   private merged: MergedScenery | null = null;
 
-  public constructor(terrain: GeneratedTerrain, assets: Pick<BattleAssets, "preload" | "clone">, scenario: string | null = null) {
+  public constructor(terrain: GeneratedTerrain, assets: Pick<BattleAssets, "preload" | "clone">, scenario: string | null = null,
+    plan = planScenery(terrain)) {
     this.terrain = terrain;
+    this.plan = plan;
     this.assets = assets;
     this.group.name = `Terrain-derived scenery ${scenario ?? "battle"}`;
     this.visibility = new SceneryVisibility(terrain.layout);
@@ -40,11 +54,8 @@ export class GeneratedScenery implements BattleScenery {
 
   public async build(): Promise<void> {
     const plan = this.terrain.environmentPlan;
-    const needed = new Set(plan.placements.map(placement => placement.model));
-    const woodland = planWoodland({ field: this.terrain.field, layout: this.terrain.layout, winter: plan.winter,
-      replacedCells: plan.replacedCells, obstacles: plan.placements });
-    for (const placement of woodland) needed.add(placement.model);
-    await this.assets.preload([...needed]);
+    const { woodland } = this.plan;
+    await this.assets.preload(this.plan.models);
     if (this.disposed) return;
     for (const [index, placement] of woodland.entries()) {
       const model = await this.assets.clone(placement.model);
