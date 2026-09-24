@@ -5,10 +5,18 @@ import type { BattleSnapshot, TerrainSurface, UnitSnapshot } from "./types.ts";
 import { visibleSnapshotUnits } from "./unit-visibility.ts";
 import { CasualtyFades } from "./casualties.ts";
 import { BROADSIDE_YAW, figureVariation, recipeSignature, unitRecipe } from "./unit-recipes.ts";
+import type { FigureRecipe } from "./unit-recipes.ts";
 import { commandAuraGeometry } from "./command-aura.ts";
 import { recolorTeamSlots } from "./model-merge.ts";
 
-interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean }
+interface GroundedFigure { object: THREE.Object3D; bottom: number; top: number; depletes: boolean;
+  /** Turn within the formation, about Y. */
+  yaw: number;
+  /** Where the model meets the ground, scaled to the formation. */
+  footprint: Footprint;
+  rigid?: FigureRecipe["rigid"] }
+/** Extent of a model's feet, hooves or wheels in its own +X/+Z frame. */
+interface Footprint { minX: number; maxX: number; minZ: number; maxZ: number }
 interface UnitVisual { root: THREE.Group; hit: THREE.Mesh; figures: GroundedFigure[]; revision: number; markerHeight: number;
   appearance: string; health: number; yaw: number; targetYaw: number; baseYaw: number; marchingYaw: number;
   /** Holds and fires with its long flank to the threat; travels and flees along +X. */
@@ -68,6 +76,38 @@ function nearestTo(origin: { x: number; z: number }, candidates: PlacedUnit[]): 
 }
 
 const WAGON_MODELS = ["war_wagon", "war_wagon_open"];
+/** Vertices this close above a model's lowest point are its feet, hooves or wheels. */
+const CONTACT_BAND = 0.06;
+/**
+ * How far an upright figure may sink below the ground at its centre so no foot
+ * hangs over a slope. Sinking into grass shows far less than a gap does.
+ */
+const UPRIGHT_MAX_SINK = 0.35;
+/** How far a tilted model may settle below its best-fit plane so fewer wheels or hooves float. */
+const RIGID_SETTLE = 0.15;
+/** Footprint corners as [x side, z side]: 1 picks the max, 0 the min. */
+const FOOTPRINT_CORNERS = [[1, 1], [1, 0], [0, 1], [0, 0]] as const;
+
+function contactFootprint(model: THREE.Object3D): Footprint {
+  model.updateMatrixWorld(true);
+  const toModel = model.matrixWorld.clone().invert();
+  const matrix = new THREE.Matrix4(), point = new THREE.Vector3();
+  const eachVertex = (visit: (point: THREE.Vector3) => void): void => model.traverse(child => {
+    const position = (child as THREE.Mesh).isMesh ? (child as THREE.Mesh).geometry.getAttribute("position") : undefined;
+    if (!position) return;
+    matrix.multiplyMatrices(toModel, child.matrixWorld);
+    for (let index = 0; index < position.count; index += 1) visit(point.fromBufferAttribute(position, index).applyMatrix4(matrix));
+  });
+  let lowest = Infinity;
+  eachVertex(vertex => { lowest = Math.min(lowest, vertex.y); });
+  const footprint = { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity };
+  eachVertex(vertex => {
+    if (vertex.y > lowest + CONTACT_BAND) return;
+    footprint.minX = Math.min(footprint.minX, vertex.x); footprint.maxX = Math.max(footprint.maxX, vertex.x);
+    footprint.minZ = Math.min(footprint.minZ, vertex.z); footprint.maxZ = Math.max(footprint.maxZ, vertex.z);
+  });
+  return Number.isFinite(lowest) ? footprint : { minX: 0, maxX: 0, minZ: 0, maxZ: 0 };
+}
 
 function defaultFacing(unit: Pick<UnitSnapshot, "faction">, broadside: boolean): number {
   return (unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2) + (broadside ? BROADSIDE_YAW : 0);
@@ -105,6 +145,7 @@ export class UnitPresentation {
   /** Pending shadow change: "turn" (in place, may be throttled) or "move" (anything else). */
   private shadowChange: ShadowChange = "move";
   private readonly scratch = new THREE.Vector3();
+  private readonly footprints = new Map<string, Footprint>();
 
   public constructor(
     terrain: TerrainSurface,
@@ -348,12 +389,13 @@ export class UnitPresentation {
           slot += 1;
           const figure = this.shadedVariant(prototype, unit.faction, vary.shade).clone(true);
           figure.position.set(offset.x + vary.dx, 0, offset.z + vary.dz);
-          figure.rotation.y = facing + vary.yaw;
+          figure.rotation.set(0, facing + vary.yaw, 0, "YZX");
           // The formation's bearing, without this figure's own turn.
           figure.userData.figureYaw = vary.yaw;
           figure.scale.setScalar(recipe.scale * vary.scale);
           const box = new THREE.Box3().setFromObject(figure);
-          figures.push({ object: figure, bottom: box.min.y, top: box.max.y,
+          figures.push({ object: figure, bottom: box.min.y, top: box.max.y, yaw: facing + vary.yaw,
+            footprint: this.footprint(recipe.model, prototype, recipe.scale * vary.scale), rigid: recipe.rigid,
             depletes: unit.unitClass !== "commander" && unit.special !== "commander"
               && unit.unitClass !== "fortification"
               && (/^(infantry_|cavalry_|civilian_)/.test(recipe.model) || recipe.model === "artillery_gunner") });
@@ -370,7 +412,8 @@ export class UnitPresentation {
         banner.position.set(-1.15, 0, -0.45);
         banner.scale.setScalar(0.7);
         const box = new THREE.Box3().setFromObject(banner);
-        figures.push({ object: banner, bottom: box.min.y, top: box.max.y, depletes: false });
+        figures.push({ object: banner, bottom: box.min.y, top: box.max.y, yaw: 0,
+          footprint: this.footprint("commander_standard", standard, banner.scale.x), depletes: false });
         root.add(banner);
       }
       const hit = new THREE.Mesh(
@@ -425,11 +468,11 @@ export class UnitPresentation {
     if (unit.health > visual.health) this.casualties.cancelUnit(unit.id);
     let troopIndex = 0;
     visual.markerHeight = 0;
-    for (const { object, bottom, top, depletes } of visual.figures) {
+    for (const figure of visual.figures) {
+      const { object, top, depletes } = figure;
       // Stable slots retain gaps after losses; healing restores those same slots.
       const survives = !depletes || troopIndex++ < survivors;
-      const world = visual.root.localToWorld(this.scratch.set(object.position.x, 0, object.position.z));
-      object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
+      this.groundFigure(visual, figure, heightAt);
       if (!survives && object.visible && unit.health < visual.health) this.casualties.add(object, unit);
       if (object.visible !== survives) this.shadowChange = "move";
       object.visible = survives;
@@ -504,12 +547,52 @@ export class UnitPresentation {
   private groundFigures(visual: UnitVisual): void {
     const heightAt = (x: number, z: number): number => this.terrain.renderedHeightAt?.(x, z) ?? this.terrain.heightAt(x, z);
     visual.markerHeight = 0;
-    for (const { object, bottom, top } of visual.figures) {
-      const world = visual.root.localToWorld(this.scratch.set(object.position.x, 0, object.position.z));
-      object.position.y = (heightAt(world.x, world.z) - visual.root.position.y) / visual.root.scale.y - bottom;
-      if (object.visible) visual.markerHeight = Math.max(visual.markerHeight, object.position.y + top);
+    for (const figure of visual.figures) {
+      this.groundFigure(visual, figure, heightAt);
+      if (figure.object.visible) visual.markerHeight = Math.max(visual.markerHeight, figure.object.position.y + figure.top);
     }
     visual.root.updateMatrixWorld(true);
+  }
+
+  /** A model's footprint, measured once per model and scaled for one figure. */
+  private footprint(model: string, prototype: THREE.Object3D, scale: number): Footprint {
+    let footprint = this.footprints.get(model);
+    if (!footprint) this.footprints.set(model, footprint = contactFootprint(prototype));
+    return { minX: footprint.minX * scale, maxX: footprint.maxX * scale, minZ: footprint.minZ * scale, maxZ: footprint.maxZ * scale };
+  }
+
+  /**
+   * Stands a figure on the rendered ground under its whole footprint. Upright
+   * figures stay vertical and stand on the lowest of it, so no foot hangs over
+   * a slope. Rigid models also pitch and roll with the ground, within a limit.
+   */
+  private groundFigure(visual: UnitVisual, figure: GroundedFigure, heightAt: (x: number, z: number) => number): void {
+    const { object, bottom, footprint, rigid } = figure;
+    const world = visual.root.localToWorld(this.scratch.set(object.position.x, 0, object.position.z));
+    const scale = visual.root.scale.x, yaw = visual.root.rotation.y + figure.yaw;
+    const cos = Math.cos(yaw) * scale, sin = Math.sin(yaw) * scale;
+    const along = (side: number): number => side ? footprint.maxX : footprint.minX;
+    const across = (side: number): number => side ? footprint.maxZ : footprint.minZ;
+    const ground = FOOTPRINT_CORNERS.map(([x, z]) =>
+      heightAt(world.x + along(x) * cos + across(z) * sin, world.z - along(x) * sin + across(z) * cos));
+    const centre = heightAt(world.x, world.z);
+    let pitch = 0, roll = 0;
+    if (rigid) {
+      const clamp = (angle: number): number => Math.max(-rigid.maxTilt, Math.min(rigid.maxTilt, angle));
+      const length = Math.max(1e-3, (footprint.maxX - footprint.minX) * scale);
+      const width = Math.max(1e-3, (footprint.maxZ - footprint.minZ) * scale);
+      pitch = clamp(Math.atan2((ground[0]! + ground[1]! - ground[2]! - ground[3]!) / 2, length));
+      roll = clamp(Math.atan2((ground[1]! + ground[3]! - ground[0]! - ground[2]!) / 2, width));
+      object.rotation.set(roll, figure.yaw, pitch, "YZX");
+    }
+    // The height the model's origin needs for each corner to touch the ground.
+    const rests = FOOTPRINT_CORNERS.map(([x, z], index) =>
+      ground[index]! - (along(x) * Math.sin(pitch) - across(z) * Math.sin(roll) * Math.cos(pitch)) * scale);
+    const lowest = Math.min(...rests);
+    const height = rigid
+      ? Math.max(lowest, rests.reduce((sum, rest) => sum + rest, 0) / rests.length - RIGID_SETTLE, centre - rigid.underside)
+      : Math.max(lowest, centre - UPRIGHT_MAX_SINK);
+    object.position.y = (height - visual.root.position.y) / visual.root.scale.y - bottom;
   }
 
   /** Root position: the hex (or route) position plus any strike offset, on the ground. */

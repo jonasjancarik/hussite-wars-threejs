@@ -36000,14 +36000,22 @@ function IG(e) {
 		model: e,
 		offsets: PG,
 		scale: .98,
-		varied: !0
+		varied: !0,
+		rigid: {
+			maxTilt: .25,
+			underside: .35
+		}
 	}];
 }
 function LG(e) {
 	return [{
 		model: e,
 		offsets: [[0, 0]],
-		scale: 1
+		scale: 1,
+		rigid: {
+			maxTilt: .3,
+			underside: .3
+		}
 	}, {
 		model: "artillery_gunner",
 		offsets: [[-.5, -1.2], [-.5, 1.2]],
@@ -36101,7 +36109,11 @@ function HG(e) {
 			offsets: [[0, 0]],
 			scale: 1.05,
 			pickRadius: 3.4,
-			broadside: !0
+			broadside: !0,
+			rigid: {
+				maxTilt: .3,
+				underside: .55
+			}
 		}];
 		case "JIZDA_HUSITI":
 		case "LEHKA_JIZDA":
@@ -36281,18 +36293,50 @@ function lK(e, t) {
 	}
 	return n;
 }
-var uK = ["war_wagon", "war_wagon_open"];
-function dK(e, t) {
+var uK = ["war_wagon", "war_wagon_open"], dK = .06, fK = .35, pK = .15, mK = [
+	[1, 1],
+	[1, 0],
+	[0, 1],
+	[0, 0]
+];
+function hK(e) {
+	e.updateMatrixWorld(!0);
+	let t = e.matrixWorld.clone().invert(), n = new A(), r = new k(), i = (i) => e.traverse((e) => {
+		let a = e.isMesh ? e.geometry.getAttribute("position") : void 0;
+		if (a) {
+			n.multiplyMatrices(t, e.matrixWorld);
+			for (let e = 0; e < a.count; e += 1) i(r.fromBufferAttribute(a, e).applyMatrix4(n));
+		}
+	}), a = Infinity;
+	i((e) => {
+		a = Math.min(a, e.y);
+	});
+	let o = {
+		minX: Infinity,
+		maxX: -Infinity,
+		minZ: Infinity,
+		maxZ: -Infinity
+	};
+	return i((e) => {
+		e.y > a + dK || (o.minX = Math.min(o.minX, e.x), o.maxX = Math.max(o.maxX, e.x), o.minZ = Math.min(o.minZ, e.z), o.maxZ = Math.max(o.maxZ, e.z));
+	}), Number.isFinite(a) ? o : {
+		minX: 0,
+		maxX: 0,
+		minZ: 0,
+		maxZ: 0
+	};
+}
+function gK(e, t) {
 	return (e.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2) + (t ? MG : 0);
 }
-function fK(e, t) {
+function _K(e, t) {
 	let n = t.x - e.x, r = t.z - e.z;
 	return n * n + r * r > 1e-4 ? Math.atan2(-r, n) : null;
 }
-function pK(e, t) {
+function vK(e, t) {
 	return Math.atan2(Math.sin(t - e), Math.cos(t - e));
 }
-var mK = class {
+var yK = class {
 	group = new Qn();
 	casualties = new DG();
 	hitTargets = [];
@@ -36312,6 +36356,7 @@ var mK = class {
 	commanderAuras = /* @__PURE__ */ new Map();
 	shadowChange = "move";
 	scratch = new k();
+	footprints = /* @__PURE__ */ new Map();
 	constructor(e, t, n, r) {
 		this.terrain = e, this.layout = t, this.assets = n, this.movementPosition = r, this.group.name = "Visible battle formations";
 	}
@@ -36362,7 +36407,7 @@ var mK = class {
 		let n = 1 - Math.exp(-Math.min(e, 64) / aK), r = !1;
 		for (let t of this.visuals.values()) {
 			t.strike && (r = !0, this.shadowChange = "move", t.strike.age += e, t.strike.age >= $G && (t.strike = null), this.applyStrike(t), this.groundFigures(t));
-			let i = pK(t.yaw, t.targetYaw);
+			let i = vK(t.yaw, t.targetYaw);
 			Math.abs(i) < 1e-4 || (r = !0, this.shadowChange ??= "turn", t.yaw = Math.abs(i) < cK ? t.targetYaw : t.yaw + i * n, t.root.rotation.y = t.yaw - t.baseYaw + t.marchingYaw, this.groundFigures(t));
 		}
 		return r;
@@ -36430,7 +36475,7 @@ var mK = class {
 		if (i && i.appearance !== a && (this.removeVisual(e.id, i), i = void 0), !i) {
 			let n = new Qn();
 			n.name = `${e.name} (${e.id})`;
-			let r = HG(e), o = r.some((e) => e.broadside), s = dK(e, o), c = [], l = Math.max(2.15, ...r.map((e) => e.pickRadius ?? 0));
+			let r = HG(e), o = r.some((e) => e.broadside), s = gK(e, o), c = [], l = Math.max(2.15, ...r.map((e) => e.pickRadius ?? 0));
 			if (e.unitClass === "wagon") for (let t of uK) this.variant(t, e.faction).catch(() => void 0);
 			let u = 0;
 			for (let i of r) {
@@ -36446,12 +36491,15 @@ var mK = class {
 					};
 					u += 1;
 					let d = this.shadedVariant(r, e.faction, l.shade).clone(!0);
-					d.position.set(o.x + l.dx, 0, o.z + l.dz), d.rotation.y = s + l.yaw, d.userData.figureYaw = l.yaw, d.scale.setScalar(i.scale * l.scale);
+					d.position.set(o.x + l.dx, 0, o.z + l.dz), d.rotation.set(0, s + l.yaw, 0, "YZX"), d.userData.figureYaw = l.yaw, d.scale.setScalar(i.scale * l.scale);
 					let f = new Sr().setFromObject(d);
 					c.push({
 						object: d,
 						bottom: f.min.y,
 						top: f.max.y,
+						yaw: s + l.yaw,
+						footprint: this.footprint(i.model, r, i.scale * l.scale),
+						rigid: i.rigid,
 						depletes: e.unitClass !== "commander" && e.special !== "commander" && e.unitClass !== "fortification" && (/^(infantry_|cavalry_|civilian_)/.test(i.model) || i.model === "artillery_gunner")
 					}), n.add(d);
 				}
@@ -36466,6 +36514,8 @@ var mK = class {
 					object: i,
 					bottom: a.min.y,
 					top: a.max.y,
+					yaw: 0,
+					footprint: this.footprint("commander_standard", r, i.scale.x),
 					depletes: !1
 				}), n.add(i);
 			}
@@ -36509,16 +36559,16 @@ var mK = class {
 			z: o.z
 		}, this.applyStrike(e);
 		let c = this.desiredFacing(t, n, r, e.broadside);
-		c && (c.decisive || Math.abs(pK(e.targetYaw, c.yaw)) >= sK) && (e.targetYaw = c.yaw);
+		c && (c.decisive || Math.abs(vK(e.targetYaw, c.yaw)) >= sK) && (e.targetYaw = c.yaw);
 		let l = t.marching ? .06 : 0, u = t.isRouting ? .92 : 1;
 		(e.marchingYaw !== l || e.root.scale.x !== u) && (this.shadowChange = "move"), e.marchingYaw = l, e.root.scale.setScalar(u), e.root.rotation.y = e.yaw - e.baseYaw + e.marchingYaw, e.root.updateMatrixWorld(!0);
 		let d = e.figures.filter((e) => e.depletes).length, f = t.maxHealth > 0 ? Math.min(1, Math.max(0, t.health / t.maxHealth)) : 0, p = Math.max(1, Math.ceil(d * f));
 		t.health > e.health && this.casualties.cancelUnit(t.id);
 		let m = 0;
 		e.markerHeight = 0;
-		for (let { object: n, bottom: r, top: i, depletes: a } of e.figures) {
-			let o = !a || m++ < p, c = e.root.localToWorld(this.scratch.set(n.position.x, 0, n.position.z));
-			n.position.y = (s(c.x, c.z) - e.root.position.y) / e.root.scale.y - r, !o && n.visible && t.health < e.health && this.casualties.add(n, t), n.visible !== o && (this.shadowChange = "move"), n.visible = o, n.visible && (e.markerHeight = Math.max(e.markerHeight, n.position.y + i));
+		for (let n of e.figures) {
+			let { object: r, top: i, depletes: a } = n, o = !a || m++ < p;
+			this.groundFigure(e, n, s), !o && r.visible && t.health < e.health && this.casualties.add(r, t), r.visible !== o && (this.shadowChange = "move"), r.visible = o, r.visible && (e.markerHeight = Math.max(e.markerHeight, r.position.y + i));
 		}
 		e.root.updateMatrixWorld(!0), e.health = t.health, e.unit = {
 			id: t.id,
@@ -36556,7 +36606,7 @@ var mK = class {
 		}
 		let c = this.layout.center(e.col, e.row), l = [...n.byFaction.entries()].filter(([t]) => t !== e.faction).flatMap(([, e]) => e);
 		if (e.isRouting) {
-			let e = lK(c, l), t = e ? fK(e, c) : null;
+			let e = lK(c, l), t = e ? _K(e, c) : null;
 			if (e) return t === null ? null : {
 				yaw: t,
 				decisive: !0
@@ -36572,7 +36622,7 @@ var mK = class {
 		};
 		for (let e of d) f.x += e.x, f.z += e.z;
 		f.x /= d.length, f.z /= d.length;
-		let p = lK(f, l), m = p ? fK(f, p) : null;
+		let p = lK(f, l), m = p ? _K(f, p) : null;
 		return m === null ? null : {
 			yaw: m + a,
 			decisive: !1
@@ -36593,16 +36643,31 @@ var mK = class {
 		for (; this.seenAttackEvents.size > 96;) this.seenAttackEvents.delete(this.seenAttackEvents.values().next().value);
 	}
 	yawBetween(e, t) {
-		return fK(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
+		return _K(this.layout.center(e.col, e.row), this.layout.center(t.col, t.row));
 	}
 	groundFigures(e) {
 		let t = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t);
 		e.markerHeight = 0;
-		for (let { object: n, bottom: r, top: i } of e.figures) {
-			let a = e.root.localToWorld(this.scratch.set(n.position.x, 0, n.position.z));
-			n.position.y = (t(a.x, a.z) - e.root.position.y) / e.root.scale.y - r, n.visible && (e.markerHeight = Math.max(e.markerHeight, n.position.y + i));
-		}
+		for (let n of e.figures) this.groundFigure(e, n, t), n.object.visible && (e.markerHeight = Math.max(e.markerHeight, n.object.position.y + n.top));
 		e.root.updateMatrixWorld(!0);
+	}
+	footprint(e, t, n) {
+		let r = this.footprints.get(e);
+		return r || this.footprints.set(e, r = hK(t)), {
+			minX: r.minX * n,
+			maxX: r.maxX * n,
+			minZ: r.minZ * n,
+			maxZ: r.maxZ * n
+		};
+	}
+	groundFigure(e, t, n) {
+		let { object: r, bottom: i, footprint: a, rigid: o } = t, s = e.root.localToWorld(this.scratch.set(r.position.x, 0, r.position.z)), c = e.root.scale.x, l = e.root.rotation.y + t.yaw, u = Math.cos(l) * c, d = Math.sin(l) * c, f = (e) => e ? a.maxX : a.minX, p = (e) => e ? a.maxZ : a.minZ, m = mK.map(([e, t]) => n(s.x + f(e) * u + p(t) * d, s.z - f(e) * d + p(t) * u)), h = n(s.x, s.z), g = 0, _ = 0;
+		if (o) {
+			let e = (e) => Math.max(-o.maxTilt, Math.min(o.maxTilt, e)), n = Math.max(.001, (a.maxX - a.minX) * c), i = Math.max(.001, (a.maxZ - a.minZ) * c);
+			g = e(Math.atan2((m[0] + m[1] - m[2] - m[3]) / 2, n)), _ = e(Math.atan2((m[1] + m[3] - m[0] - m[2]) / 2, i)), r.rotation.set(_, t.yaw, g, "YZX");
+		}
+		let v = mK.map(([e, t], n) => m[n] - (f(e) * Math.sin(g) - p(t) * Math.sin(_) * Math.cos(g)) * c), y = Math.min(...v), b = o ? Math.max(y, v.reduce((e, t) => e + t, 0) / v.length - pK, h - o.underside) : Math.max(y, h - fK);
+		r.position.y = (b - e.root.position.y) / e.root.scale.y - i;
 	}
 	applyStrike(e) {
 		let t = e.strike ? eK(Math.min(1, e.strike.age / $G)) : 0, n = e.base.x + (e.strike?.dx ?? 0) * t, r = e.base.z + (e.strike?.dz ?? 0) * t;
@@ -36656,21 +36721,21 @@ var mK = class {
 			}), r;
 		}), this.variants.set(n, r)), r;
 	}
-}, hK = {
+}, bK = {
 	width: 64,
 	height: 58
-}, gK = {
+}, xK = {
 	width: 152,
 	height: 114
 };
-function _K(e = !1) {
-	return e ? gK : hK;
+function SK(e = !1) {
+	return e ? xK : bK;
 }
-function vK(e, t) {
+function CK(e, t) {
 	return Number(e.selected) - Number(t.selected) || (t.depth ?? 0) - (e.depth ?? 0) || e.id - t.id;
 }
-function yK(e, t, n, r = hK) {
-	return t <= 0 || n <= 0 ? [] : [...e].sort(vK).map((e) => ({
+function wK(e, t, n, r = bK) {
+	return t <= 0 || n <= 0 ? [] : [...e].sort(CK).map((e) => ({
 		...e,
 		width: r.width,
 		height: r.height,
@@ -36678,8 +36743,8 @@ function yK(e, t, n, r = hK) {
 		top: e.y - r.height - 6
 	}));
 }
-var bK = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
-function xK(e, t, n, r = [], i = hK) {
+var TK = (e, t) => e.left < t.left + t.width + 3 && e.left + e.width + 3 > t.left && e.top < t.top + t.height + 3 && e.top + e.height + 3 > t.top;
+function EK(e, t, n, r = [], i = bK) {
 	let a = [];
 	for (let o of [...e].sort((e, t) => Number(t.selected) - Number(e.selected) || e.y - t.y || e.id - t.id)) {
 		let { width: e, height: s } = i;
@@ -36706,26 +36771,26 @@ function xK(e, t, n, r = [], i = hK) {
 				left: Math.max(4, Math.min(t - e - 4, o.x - e / 2 + i)),
 				top: Math.max(4, Math.min(n - s - 4, o.y - s - 6 + d))
 			};
-			if (![...a, ...r].some((e) => bK(l, e))) {
+			if (![...a, ...r].some((e) => TK(l, e))) {
 				c = l;
 				break;
 			}
 		}
 		c && a.push(c);
 	}
-	return a.sort(vK);
+	return a.sort(CK);
 }
-function SK(e, t, n) {
+function DK(e, t, n) {
 	if (!n || e.length === t.length) return e;
 	let r = new Set(e.map((e) => e.id));
-	return [...e, ...t.filter((e) => !r.has(e.id))].sort(vK);
+	return [...e, ...t.filter((e) => !r.has(e.id))].sort(CK);
 }
-function CK(e, t, n) {
-	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + hK.height || Math.abs(t - e.left - e.width / 2) <= hK.width / 2))?.id ?? null;
+function OK(e, t, n) {
+	return [...e].reverse().find((e) => t >= e.left && t <= e.left + e.width && n >= e.top && n <= e.top + e.height && (n >= e.top + bK.height || Math.abs(t - e.left - e.width / 2) <= bK.width / 2))?.id ?? null;
 }
 //#endregion
 //#region src/unit-marker-styles.ts
-var wK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", TK = class {
+var kK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }\n.three-unit-markers[hidden], .three-unit-marker[hidden] { display:none !important; }\n.three-unit-marker { position:absolute; top:0; left:0; box-sizing:border-box; width:64px; height:58px;\n  margin:0; padding:0; border:0; border-radius:0; min-width:0; min-height:0;\n  background:none; box-shadow:none; color:#f2e8d3; text-transform:none; letter-spacing:normal;\n  pointer-events:none; font:12px/1.25 Georgia,serif; text-align:center; opacity:0.85; }\n.three-unit-marker[data-selected=true], .three-unit-marker:focus-visible { opacity:1; }\n.three-unit-marker:focus-visible { outline:2px solid #f2e8d3; outline-offset:2px; }\n.three-unit-marker .marker-flag { display:block; position:relative; width:36px; height:35px;\n  margin:0 auto; background:var(--faction); border:1.5px solid #f2e8d3; box-sizing:border-box;\n  box-shadow:0 1px 3px #0009; }\n.three-unit-marker[data-faction=crusaders] .marker-flag { border-radius:0 0 10px 10px; }\n.three-unit-marker[data-commander=true] .marker-flag { height:39px; border-bottom:4px double #f2e8d3; }\n.three-unit-marker[data-selected=true] .marker-flag { outline:2px solid #d9bb78; outline-offset:2px; }\n.three-unit-marker .marker-icon { width:100%; height:100%; padding:2px; box-sizing:border-box; }\n.three-unit-marker .marker-health { display:block; position:relative; margin:3px auto 0;\n  width:38px; height:6px; box-sizing:content-box; border:1px solid #28302b; background:#746e5d; }\n.three-unit-marker .marker-health-fill { display:block; height:100%; background:var(--health); }\n.three-unit-marker .marker-health::after { content:''; position:absolute; inset:0;\n  background:repeating-linear-gradient(to right, transparent 0, transparent calc(25% - 1px), #28302b 25%); }\n.three-unit-marker .marker-action { display:block; height:9px; font:10px/10px Arial,sans-serif;\n  text-shadow:0 1px 2px #000; }\n.three-unit-marker .marker-badges { position:absolute; top:0; left:calc(50% + 22px);\n  display:flex; flex-direction:column; gap:2px; }\n.three-unit-marker .marker-badge { display:block; min-width:15px; height:15px; box-sizing:border-box;\n  padding:0 2px; border:1px solid #f2e8d3; font:bold 11px/13px Arial,sans-serif; box-shadow:0 1px 2px #0008; }\n.three-unit-marker .marker-leader { position:absolute; left:50%; top:100%; width:1px;\n  background:#f2e8d388; transform-origin:top; pointer-events:none; }\n.three-unit-marker .marker-details { display:none; }\n.three-unit-marker[data-details=true] { width:152px; height:114px; }\n.three-unit-marker[data-details=true] .marker-details { display:grid; width:152px; box-sizing:border-box;\n  grid-template-columns:1fr; gap:1px; margin:4px auto 0; padding:3px 5px 4px;\n  border:1px solid #aaa48c; background:#f2e8d3; box-shadow:0 1px 3px #0005;\n  color:#28302b; font:11px/1.15 Georgia,serif; text-align:left; }\n.three-unit-marker .marker-detail-name { grid-column:1 / -1; overflow:hidden; white-space:nowrap;\n  text-overflow:ellipsis; color:#28302b; font-weight:bold; }\n.three-unit-marker .marker-detail-health { white-space:nowrap; }\n.three-unit-marker .marker-detail-morale { color:var(--morale); white-space:nowrap; }\n@media (prefers-reduced-motion:no-preference) {\n  .three-unit-marker { transition:opacity 120ms ease-out; }\n  .three-unit-marker .marker-health-fill { transition:width 160ms ease-out; }\n}\n", AK = class {
 	canvas;
 	onChoose;
 	layer;
@@ -36749,7 +36814,7 @@ var wK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		let n = e.ownerDocument;
 		this.layer = n.createElement("div"), this.layer.className = "three-unit-markers";
 		let r = n.createElement("style");
-		r.textContent = wK, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
+		r.textContent = kK, this.layer.append(r), e.parentElement?.append(this.layer), this.resize();
 	}
 	update(e) {
 		if (this.disposed) return;
@@ -36810,10 +36875,10 @@ var wK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 				depth: a.z
 			});
 		}
-		if (!this.layoutDirty && EK(n, this.lastAnchors)) return;
+		if (!this.layoutDirty && jK(n, this.lastAnchors)) return;
 		this.layoutDirty = !1, this.lastAnchors = n;
-		let r = _K(this.detailsVisible), i = yK(n, this.width, this.height, r);
-		this.placements = this.avoidance ? xK(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = SK(this.placements, i, this.detailsVisible));
+		let r = SK(this.detailsVisible), i = wK(n, this.width, this.height, r);
+		this.placements = this.avoidance ? EK(n, this.width, this.height, this.obstacles, r) : i, this.avoidance && (this.placements = DK(this.placements, i, this.detailsVisible));
 		let a = new Set(this.placements.map((e) => e.id));
 		for (let [e, t] of this.markers) {
 			let n = !a.has(e);
@@ -36830,7 +36895,7 @@ var wK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 	}
 	unitAt(e, t) {
 		if (!this.active || !this.labelsVisible || this.disposed) return null;
-		let n = this.canvas.getBoundingClientRect(), r = CK(this.placements, e - n.left, t - n.top);
+		let n = this.canvas.getBoundingClientRect(), r = OK(this.placements, e - n.left, t - n.top);
 		return this.units.find((e) => e.id === r) ?? null;
 	}
 	dispose() {
@@ -36920,7 +36985,7 @@ var wK = "\n.three-unit-markers { position:absolute; inset:0; z-index:2; overflo
 		}));
 	}
 };
-function EK(e, t) {
+function jK(e, t) {
 	if (e.length !== t.length) return !1;
 	for (let n = 0; n < e.length; n += 1) {
 		let r = e[n], i = t[n];
@@ -36930,18 +36995,18 @@ function EK(e, t) {
 }
 //#endregion
 //#region src/wagon-connections.ts
-var DK = .39, OK = .72, kK = 1.3, AK = .48, jK = .24, MK = .065, NK = .305, PK = 32;
-function FK(e) {
+var MK = .39, NK = .72, PK = 1.3, FK = .48, IK = .24, LK = .065, RK = .305, zK = 32;
+function BK(e) {
 	return `${e.col},${e.row}`;
 }
-function IK(e, t) {
+function VK(e, t) {
 	return `${Math.min(e.id, t.id)}:${Math.max(e.id, t.id)}`;
 }
-var LK = class {
+var HK = class {
 	group = new Qn();
 	terrain;
 	layout;
-	linkGeometry = new js(jK, MK, 8, 8);
+	linkGeometry = new js(IK, LK, 8, 8);
 	closedMaterial = new Ps({
 		color: 5917215,
 		roughness: .88,
@@ -36963,10 +37028,10 @@ var LK = class {
 	}
 	update(e) {
 		if (this.disposed) return;
-		let t = EG(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [FK(e), e])), r = (e) => this.layout.neighbours(e).map((e) => n.get(`${e.col},${e.row}`)).filter((t) => t?.faction === e.faction), i = (e) => !e.breached && r(e).length >= 2, a = /* @__PURE__ */ new Set();
+		let t = EG(e).filter((e) => e.unitClass === "wagon" && e.formationClosed), n = new Map(t.map((e) => [BK(e), e])), r = (e) => this.layout.neighbours(e).map((e) => n.get(`${e.col},${e.row}`)).filter((t) => t?.faction === e.faction), i = (e) => !e.breached && r(e).length >= 2, a = /* @__PURE__ */ new Set();
 		for (let e of t) for (let t of r(e)) {
 			if (e.id >= t.id || !(i(e) || i(t))) continue;
-			let n = IK(e, t);
+			let n = VK(e, t);
 			a.add(n);
 			let r = e.marching || t.marching, o = `${n}|${e.col},${e.row}|${t.col},${t.row}|${r ? "marching" : "closed"}`, s = this.connections.get(n);
 			if (s?.stateKey === o) continue;
@@ -36980,11 +37045,11 @@ var LK = class {
 		this.disposed || (this.disposed = !0, this.connections.clear(), this.group.clear(), this.linkGeometry.dispose(), this.closedMaterial.dispose(), this.marchingMaterial.dispose());
 	}
 	createConnection(e, t, n) {
-		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = a / s, l = o / s, u = Math.max(0, s - kK * 2), d = n ? OK : DK, f = n ? this.marchingMaterial : this.closedMaterial, p = new Qn();
+		let r = this.layout.center(e.col, e.row), i = this.layout.center(t.col, t.row), a = i.x - r.x, o = i.z - r.z, s = Math.hypot(a, o), c = a / s, l = o / s, u = Math.max(0, s - PK * 2), d = n ? NK : MK, f = n ? this.marchingMaterial : this.closedMaterial, p = new Qn();
 		p.name = `Wagon chain ${Math.min(e.id, t.id)}-${Math.max(e.id, t.id)}`, p.userData.wagonIds = [e.id, t.id];
-		let m = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t), h = (e) => m(r.x + c * e, r.z + l * e) + NK, g = [];
-		for (let e = 0; e <= PK; e += 1) {
-			let t = kK + u * e / PK, n = e === 0 ? m(r.x, r.z) + AK : e === PK ? m(i.x, i.z) + AK : -Infinity, a = {
+		let m = (e, t) => this.terrain.renderedHeightAt?.(e, t) ?? this.terrain.heightAt(e, t), h = (e) => m(r.x + c * e, r.z + l * e) + RK, g = [];
+		for (let e = 0; e <= zK; e += 1) {
+			let t = PK + u * e / zK, n = e === 0 ? m(r.x, r.z) + FK : e === zK ? m(i.x, i.z) + FK : -Infinity, a = {
 				along: t,
 				y: Math.max(n, h(t))
 			};
@@ -37011,36 +37076,36 @@ var LK = class {
 			stateKey: ""
 		};
 	}
-}, RK = (e) => e, zK = 1400, BK = 70, VK = 46, HK = 3.2, UK = class {
+}, UK = (e) => e, WK = 1400, GK = 70, KK = 46, qK = 3.2, JK = class {
 	group = new Qn();
 	flakes;
-	time = RK(DR)(0);
-	centre = RK(DR)(new k());
+	time = UK(DR)(0);
+	centre = UK(DR)(new k());
 	precipitation = "none";
 	elapsed = 0;
 	enabled = !0;
 	constructor() {
 		this.group.name = "Weather";
 		let e = new Wc().copy(new Es(.075, 0));
-		e.instanceCount = zK;
-		let t = new Float32Array(zK * 4), n = 2654435769, r = () => (n = n * 1664525 + 1013904223 >>> 0, n / 4294967296);
-		for (let e = 0; e < zK; e += 1) {
-			let n = r() * Math.PI * 2, i = Math.sqrt(r()) * BK;
+		e.instanceCount = WK;
+		let t = new Float32Array(WK * 4), n = 2654435769, r = () => (n = n * 1664525 + 1013904223 >>> 0, n / 4294967296);
+		for (let e = 0; e < WK; e += 1) {
+			let n = r() * Math.PI * 2, i = Math.sqrt(r()) * GK;
 			t.set([
 				Math.cos(n) * i,
 				Math.sin(n) * i,
-				r() * VK,
+				r() * KK,
 				r() * Math.PI * 2
 			], e * 4);
 		}
-		let i = RK(BL)(new da(t, 4)), a = i.w, o = RK(JL)(i.z.sub(this.time.mul(HK).mul(RK(JL)(a, .4).add(.8))), VK), s = new nS({
+		let i = UK(BL)(new da(t, 4)), a = i.w, o = UK(JL)(i.z.sub(this.time.mul(qK).mul(UK(JL)(a, .4).add(.8))), KK), s = new nS({
 			color: 16054008,
 			transparent: !0,
 			opacity: .85,
 			depthWrite: !1,
 			fog: !0
 		});
-		s.positionNode = lR.add(RK(NR)(this.centre.x.add(i.x).add(RK(bR)(this.time.mul(.7).add(a)).mul(.6)), this.centre.y.add(o).sub(RK(IL)(2)), this.centre.z.add(i.y).add(RK(AL)(this.time.mul(.5).add(a)).mul(.6)))), s.name = "Falling snow", this.flakes = new qi(e, s), this.flakes.name = "Snowflakes", this.flakes.frustumCulled = !1, this.flakes.castShadow = !1, this.flakes.visible = !1, this.group.add(this.flakes);
+		s.positionNode = lR.add(UK(NR)(this.centre.x.add(i.x).add(UK(bR)(this.time.mul(.7).add(a)).mul(.6)), this.centre.y.add(o).sub(UK(IL)(2)), this.centre.z.add(i.y).add(UK(AL)(this.time.mul(.5).add(a)).mul(.6)))), s.name = "Falling snow", this.flakes = new qi(e, s), this.flakes.name = "Snowflakes", this.flakes.frustumCulled = !1, this.flakes.castShadow = !1, this.flakes.visible = !1, this.group.add(this.flakes);
 	}
 	get active() {
 		return this.flakes.visible;
@@ -37057,7 +37122,7 @@ var LK = class {
 	dispose() {
 		this.flakes.geometry.dispose(), this.flakes.material.dispose(), this.group.clear();
 	}
-}, WK = "\n.three-applying-note { position:absolute; left:50%; bottom:18px; z-index:4; transform:translateX(-50%);\n  display:flex; align-items:center; gap:8px; padding:6px 12px; pointer-events:none;\n  background:rgba(242,232,211,.94); border:1px solid var(--field-ink, #20150d); color:var(--field-ink, #20150d);\n  font:0.85rem/1.2 Georgia, serif; box-shadow:0 2px 8px rgba(0,0,0,.18); }\n.three-applying-note[hidden] { display:none; }\n.three-applying-note span[aria-hidden] { width:12px; height:12px; border-radius:50%;\n  border:2px solid currentColor; border-right-color:transparent; animation:three-applying-spin .8s linear infinite; }\n@keyframes three-applying-spin { to { transform:rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { .three-applying-note span[aria-hidden] { animation:none; } }\n", GK = class {
+}, YK = "\n.three-applying-note { position:absolute; left:50%; bottom:18px; z-index:4; transform:translateX(-50%);\n  display:flex; align-items:center; gap:8px; padding:6px 12px; pointer-events:none;\n  background:rgba(242,232,211,.94); border:1px solid var(--field-ink, #20150d); color:var(--field-ink, #20150d);\n  font:0.85rem/1.2 Georgia, serif; box-shadow:0 2px 8px rgba(0,0,0,.18); }\n.three-applying-note[hidden] { display:none; }\n.three-applying-note span[aria-hidden] { width:12px; height:12px; border-radius:50%;\n  border:2px solid currentColor; border-right-color:transparent; animation:three-applying-spin .8s linear infinite; }\n@keyframes three-applying-spin { to { transform:rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { .three-applying-note span[aria-hidden] { animation:none; } }\n", XK = class {
 	text;
 	element = null;
 	label = null;
@@ -37067,7 +37132,7 @@ var LK = class {
 		let n = e.parentElement;
 		if (!n) return;
 		let r = e.ownerDocument;
-		this.element = r.createElement("div"), this.element.className = "three-applying-note", this.element.setAttribute("role", "status"), this.element.hidden = !0, this.style = r.createElement("style"), this.style.textContent = WK;
+		this.element = r.createElement("div"), this.element.className = "three-applying-note", this.element.setAttribute("role", "status"), this.element.hidden = !0, this.style = r.createElement("style"), this.style.textContent = YK;
 		let i = r.createElement("span");
 		i.setAttribute("aria-hidden", "true"), this.label = r.createElement("span"), this.element.append(i, this.label), n.append(this.style, this.element);
 	}
@@ -37080,7 +37145,7 @@ var LK = class {
 	dispose() {
 		this.element?.remove(), this.style?.remove();
 	}
-}, KK = {
+}, ZK = {
 	high: {
 		ambientOcclusion: !0,
 		gtaoSamples: 12,
@@ -37105,15 +37170,15 @@ var LK = class {
 		shadowMapSize: 1024,
 		anisotropy: 2
 	}
-}, qK = {
+}, QK = {
 	high: "medium",
 	medium: "low",
 	low: null
-}, JK = {
+}, $K = {
 	high: null,
 	medium: "high",
 	low: "medium"
-}, YK = [30, 60], XK = 1.1, ZK = .9, QK = .85, $K = 4e3, eq = 3e3, tq = 12e4, nq = class {
+}, eq = [30, 60], tq = 1.1, nq = .9, rq = .85, iq = 4e3, aq = 3e3, oq = 12e4, sq = class {
 	samples = [];
 	work = [];
 	holdUntil = 0;
@@ -37152,18 +37217,18 @@ var LK = class {
 	}
 	record(e, t) {
 		if (!Number.isFinite(e) || e <= 0 || e > 250 || t < this.holdUntil || (this.samples.push(e), this.samples.length < 60)) return null;
-		let n = rq(this.samples), r = this.targetMs * XK, i = this.samples.filter((e) => e <= r).length >= this.samples.length * ZK, a = this.work.length >= 60 / 2 ? rq(this.work) : null;
+		let n = cq(this.samples), r = this.targetMs * tq, i = this.samples.filter((e) => e <= r).length >= this.samples.length * nq, a = this.work.length >= 60 / 2 ? cq(this.work) : null;
 		this.samples = [], this.work = [], a !== null && this.learnStep(a);
-		let o = qK[this.tier], s = JK[this.tier], c = null;
-		return n > r && o ? (this.failures[this.tier] += 1, this.retryAt[this.tier] = t + tq * 2 ** (this.failures[this.tier] - 1), c = o) : s && t >= this.retryAt[s] && this.fits(s, a, n, i) && (c = s), c ? (this.tier = c, this.hold(t, eq), c) : null;
+		let o = QK[this.tier], s = $K[this.tier], c = null;
+		return n > r && o ? (this.failures[this.tier] += 1, this.retryAt[this.tier] = t + oq * 2 ** (this.failures[this.tier] - 1), c = o) : s && t >= this.retryAt[s] && this.fits(s, a, n, i) && (c = s), c ? (this.tier = c, this.hold(t, aq), c) : null;
 	}
 	fits(e, t, n, r) {
-		return t === null ? !this.measuresWork && (r || n < this.targetMs * .6) : t * (this.stepCost[e] ?? 2) < this.targetMs * QK;
+		return t === null ? !this.measuresWork && (r || n < this.targetMs * .6) : t * (this.stepCost[e] ?? 2) < this.targetMs * rq;
 	}
 	learnStep(e) {
 		let t = this.lastWindow;
-		if (t && (JK[t.tier] === this.tier || qK[t.tier] === this.tier)) {
-			let [n, r, i] = JK[t.tier] === this.tier ? [
+		if (t && ($K[t.tier] === this.tier || QK[t.tier] === this.tier)) {
+			let [n, r, i] = $K[t.tier] === this.tier ? [
 				this.tier,
 				e,
 				t.work
@@ -37180,17 +37245,17 @@ var LK = class {
 		};
 	}
 };
-function rq(e) {
+function cq(e) {
 	let t = [...e].sort((e, t) => e - t);
 	return t[Math.floor(t.length / 2)];
 }
 //#endregion
 //#region src/main.ts
-var iq = 12, aq = /* @__PURE__ */ new Set(), oq = () => {
-	for (let e of aq) e();
+var lq = 12, uq = /* @__PURE__ */ new Set(), dq = () => {
+	for (let e of uq) e();
 };
-uc.onProgress = oq, uc.onLoad = oq;
-var sq = 240, cq = .5, lq = .003, uq = {
+uc.onProgress = dq, uc.onLoad = dq;
+var fq = 240, pq = .5, mq = .003, hq = {
 	KeyW: "up",
 	KeyS: "down",
 	KeyA: "left",
@@ -37199,7 +37264,7 @@ var sq = 240, cq = .5, lq = .003, uq = {
 	ArrowDown: "down",
 	ArrowLeft: "left",
 	ArrowRight: "right"
-}, dq = class e {
+}, gq = class e {
 	canvas;
 	options;
 	scene = new sr();
@@ -37214,11 +37279,11 @@ var sq = 240, cq = .5, lq = .003, uq = {
 	wagonConnections;
 	overlays;
 	effects;
-	weather = new UK();
+	weather = new JK();
 	atmosphere;
 	winter;
 	qualityLevel = "auto";
-	qualityGovernor = new nq();
+	qualityGovernor = new sq();
 	appliedTiers = /* @__PURE__ */ new Set(["high"]);
 	applyingNote;
 	pendingGraphChanges = [];
@@ -37278,21 +37343,21 @@ var sq = 240, cq = .5, lq = .003, uq = {
 		}
 		let i = Math.max(this.terrain.bounds.maxX - this.terrain.bounds.minX, this.terrain.bounds.maxZ - this.terrain.bounds.minZ);
 		this.scene.background = new j(8623772), this.scene.fog = new or(12109763, .001), this.cameraRig = Oz(e, i), this.focusDistance = this.targetFocusDistance = this.cameraRig.camera.position.distanceTo(this.cameraRig.controls.target), this.openingDistance = this.focusDistance, this.pipeline = new mG(e, this.scene, this.cameraRig.camera, {
-			...KK.high,
+			...ZK.high,
 			depthOfFieldMode: "bokeh",
 			effects: !0
 		});
 		let a = this.terrain instanceof bU && this.terrain.environmentPlan.walls.length ? new MU(this.terrain.field.tiles, this.terrain.layout, this.terrain.environmentPlan.walls, this.terrain.environmentPlan.frozenRiver) : null;
-		this.units = new mK(this.terrain, this.terrain.layout, this.assets, (e) => {
+		this.units = new yK(this.terrain, this.terrain.layout, this.assets, (e) => {
 			if (a) return a.position(e.from, e.to, e.progress);
 			let t = this.terrain.layout.center(e.from.col, e.from.row), n = this.terrain.layout.center(e.to.col, e.to.row);
 			return {
 				x: t.x + (n.x - t.x) * e.progress,
 				z: t.z + (n.z - t.z) * e.progress
 			};
-		}), this.banners = new TK(e, (e) => this.options.onHex?.(e)), this.effects = new Pz(e), this.applyingNote = new GK(e, () => t.localize?.("applyingGraphics") ?? "Applying graphics settings…"), this.wagonConnections = new LK(this.terrain, this.terrain.layout), this.overlays = new rW(this.terrain, this.terrain.layout), this.overlays.setGridFocus(this.cameraRig.controls.target.x, this.cameraRig.controls.target.z), this.lighting = KU(this.scene), this.winter = this.terrain instanceof bU && this.terrain.environmentPlan.winter, this.atmosphere = new HU(zU(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new _W(e, this.cameraRig.camera, this.terrain.layout), this.sky = new xG(this.scene, r, Math.max(500, i * 3.7));
+		}), this.banners = new AK(e, (e) => this.options.onHex?.(e)), this.effects = new Pz(e), this.applyingNote = new XK(e, () => t.localize?.("applyingGraphics") ?? "Applying graphics settings…"), this.wagonConnections = new HK(this.terrain, this.terrain.layout), this.overlays = new rW(this.terrain, this.terrain.layout), this.overlays.setGridFocus(this.cameraRig.controls.target.x, this.cameraRig.controls.target.z), this.lighting = KU(this.scene), this.winter = this.terrain instanceof bU && this.terrain.environmentPlan.winter, this.atmosphere = new HU(zU(t.snapshot.scenario, t.snapshot.round, this.winter)), this.picker = new _W(e, this.cameraRig.camera, this.terrain.layout), this.sky = new xG(this.scene, r, Math.max(500, i * 3.7));
 		let { minX: o, maxX: s, minZ: c, maxZ: l } = this.terrain.bounds, u = new Sr().setFromObject(this.terrain.group);
-		this.table = new cW(new O((o + s) / 2, (c + l) / 2), i, u.min.y - .01, this.lighting.shadowFrame), u.max.y += iq, this.lighting.fitShadowTo(u), this.scene.add(this.table.mesh), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), aq.add(this.requestFrame), this.installInput();
+		this.table = new cW(new O((o + s) / 2, (c + l) / 2), i, u.min.y - .01, this.lighting.shadowFrame), u.max.y += lq, this.lighting.fitShadowTo(u), this.scene.add(this.table.mesh), this.scene.add(this.terrain.group, this.scenery.group, this.units.group, this.units.casualties.group, this.wagonConnections.group, this.overlays.group, this.effects.group, this.weather.group), this.resizeObserver = new ResizeObserver(() => this.resize()), this.resizeObserver.observe(e.parentElement ?? e), uq.add(this.requestFrame), this.installInput();
 	}
 	static async create(t, n) {
 		let r = new URL(n.artManifestBase ?? "hex-three/", document.baseURI).href, i = await BH(n.snapshot, r), a = new e(t, n, i);
@@ -37331,7 +37396,7 @@ var sq = 240, cq = .5, lq = .003, uq = {
 		this.options.snapshot = t, this.scheduleFrame();
 	}
 	setActive(e) {
-		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), this.effects.setVisible(e), e || (this.heldPanKeys.clear(), this.cameraTween = null, this.effects.clear()), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.resumingFromIdle = !0, this.qualityGovernor.hold(performance.now(), $K), this.resize(), this.scheduleFrame()));
+		this.disposed || this.active === e || (this.active = e, this.banners.setActive(e), e || this.units.casualties.clear(), this.effects.setPaused(!e), this.effects.setVisible(e), e || (this.heldPanKeys.clear(), this.cameraTween = null, this.effects.clear()), !e && this.frameRequest !== null && (cancelAnimationFrame(this.frameRequest), this.frameRequest = null), e && (this.resumingFromIdle = !0, this.qualityGovernor.hold(performance.now(), iq), this.resize(), this.scheduleFrame()));
 	}
 	frameScene() {
 		this.focusPointer = null, this.startCameraTween(this.forcesPose(), 650);
@@ -37354,10 +37419,10 @@ var sq = 240, cq = .5, lq = .003, uq = {
 			"high",
 			"medium",
 			"low"
-		].includes(e) || (this.qualityLevel = e, this.qualityGovernor.reset(), this.qualityGovernor.hold(performance.now(), $K), this.applyQualityTier(e === "auto" ? this.qualityGovernor.tier : e));
+		].includes(e) || (this.qualityLevel = e, this.qualityGovernor.reset(), this.qualityGovernor.hold(performance.now(), iq), this.applyQualityTier(e === "auto" ? this.qualityGovernor.tier : e));
 	}
 	setFrameRateTarget(e) {
-		this.disposed || !YK.includes(e) || this.qualityGovernor.setTarget(e);
+		this.disposed || !eq.includes(e) || this.qualityGovernor.setTarget(e);
 	}
 	qualityTier() {
 		return this.qualityLevel === "auto" ? this.qualityGovernor.tier : this.qualityLevel;
@@ -37457,10 +37522,10 @@ var sq = 240, cq = .5, lq = .003, uq = {
 		};
 	}
 	resetDiagnostics() {
-		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = sq, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
+		this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval(), this.lastRendererCounters = {}, this.captureFramesRemaining = fq, this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics()), this.scheduleFrame();
 	}
 	dispose() {
-		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), this.shadowTimer !== null && window.clearTimeout(this.shadowTimer), aq.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.applyingNote.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.table.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
+		this.disposed || (this.disposed = !0, this.active = !1, this.frameRequest !== null && cancelAnimationFrame(this.frameRequest), this.frameRequest = null, this.pulseTimer !== null && window.clearTimeout(this.pulseTimer), this.shadowTimer !== null && window.clearTimeout(this.shadowTimer), uq.delete(this.requestFrame), this.abortController.abort(), this.resizeObserver.disconnect(), this.cameraRig.controls.dispose(), this.scenery.dispose(), this.overlays.dispose(), this.effects.dispose(), this.applyingNote.dispose(), this.weather.dispose(), this.units.dispose(), this.banners.dispose(), this.wagonConnections.dispose(), this.sky.dispose(), this.table.dispose(), this.assets.dispose(), this.terrain.dispose(), this.pipeline.dispose(), this.scene.clear(), this.gestures.clear());
 	}
 	addListener(e, t, n, r) {
 		e.addEventListener(t, n, {
@@ -37539,7 +37604,7 @@ var sq = 240, cq = .5, lq = .003, uq = {
 		}
 	}
 	applyQualityTier(e) {
-		let t = KK[e];
+		let t = ZK[e];
 		this.canvas.dataset.qualityTier = e, this.changeGraphics(!this.appliedTiers.has(e), () => {
 			this.appliedTiers.add(e), this.pipeline.setCost(t), this.lighting.setShadowMapSize(t.shadowMapSize), this.terrain.setAnisotropy?.(t.anisotropy);
 		});
@@ -37626,7 +37691,7 @@ var sq = 240, cq = .5, lq = .003, uq = {
 	}
 	handleKey(e, t) {
 		if (!this.active || e.ctrlKey || e.metaKey || e.altKey || e.target?.closest?.("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return;
-		let n = uq[e.code] ?? uq[e.key];
+		let n = hq[e.code] ?? hq[e.key];
 		if (n) {
 			t ? this.heldPanKeys.add(n) : this.heldPanKeys.delete(n), e.key.startsWith("Arrow") && e.preventDefault(), t && (this.cameraTween = null, this.scheduleFrame());
 			return;
@@ -37659,7 +37724,7 @@ var sq = 240, cq = .5, lq = .003, uq = {
 		Math.abs(n - this.targetFocusDistance) < .01 || (this.targetFocusDistance = n, this.blurVisible(this.focusStrength) && this.scheduleFrame());
 	}
 	blurVisible(e) {
-		return this.depthOfFieldEnabled && Az(e).blurRadiusPixels >= cq;
+		return this.depthOfFieldEnabled && Az(e).blurRadiusPixels >= pq;
 	}
 	scheduleFrame() {
 		!this.ready || !this.active || this.disposed || this.frameRequest !== null || (this.frameRequest = requestAnimationFrame(this.animate));
@@ -37699,19 +37764,19 @@ var sq = 240, cq = .5, lq = .003, uq = {
 			}, () => {});
 			let n = this.qualityGovernor.tier, r = this.qualityGovernor.record(t, e);
 			if (r) {
-				let e = KK[r].maxPixelRatio > KK[n].maxPixelRatio;
+				let e = ZK[r].maxPixelRatio > ZK[n].maxPixelRatio;
 				console.info(`[Hussite 3D] ${e ? "frames to spare; graphics quality raised" : "frames over budget; graphics quality lowered"} to ${r}`), this.applyQualityTier(r), this.options.onQualityTier?.(r);
 			}
 		}
-		this.performanceWarm ? this.performanceTracker.record(t, b - i, x - b, x - i) : (this.performanceWarm = !0, this.qualityGovernor.hold(e, $K), this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.captureFramesRemaining > 0 && --this.captureFramesRemaining === 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(.01, this.targetFocusDistance * lq) || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
+		this.performanceWarm ? this.performanceTracker.record(t, b - i, x - b, x - i) : (this.performanceWarm = !0, this.qualityGovernor.hold(e, iq), this.performanceTracker.reset(), this.performanceTracker.skipNextFrameInterval()), this.captureFramesRemaining > 0 && --this.captureFramesRemaining === 0 && (this.canvas.dataset.rendererStats = JSON.stringify(this.diagnostics())), this.atmosphere.settling || s || this.cameraTween !== null || this.heldPanKeys.size > 0 || Math.abs(this.focusDistance - this.targetFocusDistance) > Math.max(.01, this.targetFocusDistance * mq) || Math.abs(this.focusStrength - p) > 5e-4 || g || !m && (this.units.casualties.active || this.effects.active) || this.captureFramesRemaining > 0 ? this.scheduleFrame() : _ || h ? (this.resumingFromIdle = !0, this.pulseTimer ??= window.setTimeout(() => {
 			this.pulseTimer = null, this.ambientFrame = !0, this.scheduleFrame();
 		}, 42)) : this.resumingFromIdle = !0, y && this.frameRequest === null && (this.shadowTimer ??= window.setTimeout(() => {
 			this.shadowTimer = null, this.scheduleFrame();
 		}, 70));
 	};
 };
-window.HussiteBattle3D = { create: (e, t) => dq.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
-async function fq() {
+window.HussiteBattle3D = { create: (e, t) => gq.create(e, t) }, window.dispatchEvent(new CustomEvent("hussite-three-ready"));
+async function _q() {
 	let e = document.querySelector("#sudomer-canvas"), t = window.SudomerHexBridge;
 	if (!e || !t) return;
 	let n = vG(() => t.takeSnapshot(), window), r = new bG(), i = await n, a = r.current() ?? i, o = (e, n) => {
@@ -37723,7 +37788,7 @@ async function fq() {
 			action: e,
 			...n
 		}));
-	}, s = await dq.create(e, {
+	}, s = await gq.create(e, {
 		snapshot: a,
 		onHex: (e) => o("hex", e),
 		assetBase: "assets/"
@@ -37736,7 +37801,7 @@ async function fq() {
 		resetDiagnostics: () => s.resetDiagnostics()
 	}, window.dispatchEvent(new CustomEvent("sudomer-renderer-ready"));
 }
-fq().catch((e) => {
+_q().catch((e) => {
 	let t = document.querySelector("#error");
 	t && (t.hidden = !1, t.textContent = `The 3D battlefield could not start: ${e instanceof Error ? e.message : String(e)}`), console.error(e);
 });

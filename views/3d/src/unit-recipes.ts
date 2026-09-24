@@ -14,6 +14,12 @@ export interface FigureRecipe {
   broadside?: boolean;
   /** Each figure stands a little off its slot, turned and sized on its own (see `figureVariation`). */
   varied?: boolean;
+  /**
+   * A rigid model (a wagon, gun or horse) tilts up to `maxTilt` radians to rest
+   * on sloping ground, and may sit up to `underside` metres below the ground at
+   * its centre, e.g. astride a brow. Anything else stands upright.
+   */
+  rigid?: { maxTilt: number; underside: number };
 }
 
 /**
@@ -70,12 +76,12 @@ function formation(model: string, scale = 1.15, pickRadius = 2.15): FigureRecipe
 }
 
 function cavalry(model: string): FigureRecipe[] {
-  return [{ model, offsets: CAVALRY_OFFSETS, scale: 0.98, varied: true }];
+  return [{ model, offsets: CAVALRY_OFFSETS, scale: 0.98, varied: true, rigid: { maxTilt: 0.25, underside: 0.35 } }];
 }
 
 function artillery(model: string): FigureRecipe[] {
   return [
-    { model, offsets: [[0, 0]], scale: 1 },
+    { model, offsets: [[0, 0]], scale: 1, rigid: { maxTilt: 0.3, underside: 0.3 } },
     { model: "artillery_gunner", offsets: [[-0.5, -1.2], [-0.5, 1.2]], scale: 1.05, rotateOffsetsWithFacing: true, varied: true },
   ];
 }
@@ -114,7 +120,8 @@ export function unitRecipe(unit: UnitSnapshot): FigureRecipe[] {
     case "POLNI_OPEVNENI": return [{ model: "field_blockhouse", offsets: [[0, 0]], scale: 1, pickRadius: 2.35 }];
     // An unchained wagon has its gate let down and a crewman on the ground.
     case "VOZOVA_HRADBA": case "VOZOVA_HRADBA_PRASKY":
-      return [{ model: unit.formationClosed === false ? "war_wagon_open" : "war_wagon", offsets: [[0, 0]], scale: 1.05, pickRadius: 3.4, broadside: true }];
+      return [{ model: unit.formationClosed === false ? "war_wagon_open" : "war_wagon", offsets: [[0, 0]], scale: 1.05, pickRadius: 3.4, broadside: true,
+        rigid: { maxTilt: 0.3, underside: 0.55 } }];
     case "JIZDA_HUSITI": case "LEHKA_JIZDA": case "JIZDA_PRASKY":
       return unit.dismounted ? formation("infantry_spear") : cavalry("cavalry_light");
     case "ZVED": case "ZVED_KRIZACI":

@@ -73,6 +73,15 @@ function materialsIn(object: THREE.Object3D): THREE.Material[] {
   return materials;
 }
 
+/** How far the highest-hanging corner of a test figure's feet (a 0.2 m square 0.3 m up the model) sits above the ground. */
+function footGap(figure: THREE.Object3D, height: (x: number, z: number) => number): number {
+  figure.updateWorldMatrix(true, false);
+  return Math.max(...[[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([x, z]) => {
+    const corner = new THREE.Vector3(0.1 * x!, 0.3, 0.1 * z!).applyMatrix4(figure.matrixWorld);
+    return corner.y - height(corner.x, corner.z);
+  }));
+}
+
 test("each figure rests on rendered terrain after movement, rotation and routing scale", async () => {
   const height = (x: number, z: number): number => 0.18 * x + 0.11 * z;
   const units = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [],
@@ -83,10 +92,10 @@ test("each figure rests on rendered terrain after movement, rotation and routing
     const figures = formation.children.filter(child => child instanceof THREE.Group);
     assert.equal(figures.length, 5);
     for (const figure of figures) {
-      const position = figure.getWorldPosition(new THREE.Vector3());
-      const bottom = new THREE.Box3().setFromObject(figure).min.y;
-      assert.ok(Math.abs(bottom - height(position.x, position.z)) < 1e-6,
-        `feet ${bottom}, terrain ${height(position.x, position.z)}`);
+      // Upright on the lowest ground under its feet: no corner hangs in the air.
+      assert.ok(Math.abs(footGap(figure, height)) < 1e-6, `highest foot corner ${footGap(figure, height)} above ground`);
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(figure.getWorldQuaternion(new THREE.Quaternion()));
+      assert.ok(up.y > 1 - 1e-9, "soldiers stay upright");
     }
   }
 });
@@ -380,12 +389,8 @@ test("artillery gun and crew figures each follow rotated routing terrain", async
   const formation = units.group.children[0]!;
   const pieces = formation.children.filter(child => child instanceof THREE.Group);
   assert.equal(pieces.length, 3);
-  for (const piece of pieces) {
-    const position = piece.getWorldPosition(new THREE.Vector3());
-    const bottom = new THREE.Box3().setFromObject(piece).min.y;
-    assert.ok(Math.abs(bottom - height(position.x, position.z)) < 1e-6,
-      `feet ${bottom}, terrain ${height(position.x, position.z)}`);
-  }
+  // The crew stand upright; the gun tilts with the slope. Neither hangs over it.
+  for (const piece of pieces) assert.ok(Math.abs(footGap(piece, height)) < 0.01, `highest corner ${footGap(piece, height)} above ground`);
 });
 
 test("soldiers wear seeded cloth shades that share one material and change only cloth", async () => {
@@ -513,4 +518,42 @@ test("a melee strike lunges toward the target and settles back on its hex", asyn
   for (let step = 0; step < 10; step += 1) units.advance(64);
   assert.ok(formationFor(units, attacker.id).position.distanceTo(home) < 1e-9, "the formation returns to its hex");
   assert.equal(units.advance(64), false);
+});
+
+test("a war wagon tilts to rest its footprint on sloping ground, within a steepest tilt", async () => {
+  const wagonModel = (): THREE.Group => {
+    const model = new THREE.Group();
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1, 2.4), new THREE.MeshStandardMaterial());
+    mesh.position.y = 0.5; // Wheels touch the origin plane.
+    model.add(mesh);
+    return model;
+  };
+  const wheelsOf = (units: UnitPresentation): THREE.Vector3[] => {
+    const figure = units.group.children[0]!.children.find(child => child instanceof THREE.Group)!;
+    figure.updateWorldMatrix(true, false);
+    return [[1, 1], [1, -1], [-1, 1], [-1, -1]]
+      .map(([x, z]) => new THREE.Vector3(2.2 * x!, 0, 1.2 * z!).applyMatrix4(figure.matrixWorld));
+  };
+  const wagon = { ...unit(1, "VOZOVA_HRADBA"), unitClass: "wagon", col: 1, row: 1, formationClosed: true };
+
+  const slope = (x: number, z: number): number => 0.12 * x - 0.18 * z;
+  const sloped = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: slope },
+    new HexLayout(3, 3), new TestAssets({ war_wagon: wagonModel(), war_wagon_open: wagonModel() }));
+  await sloped.update(snapshotWithUnits([wagon]));
+  for (const wheel of wheelsOf(sloped)) {
+    assert.ok(wheel.y - slope(wheel.x, wheel.z) < 0.02 && wheel.y - slope(wheel.x, wheel.z) > -0.2,
+      `wheel at ${wheel.y}, ground ${slope(wheel.x, wheel.z)}`);
+  }
+
+  const cliff = (x: number, z: number): number => x + z > 0 ? 0 : -3;
+  const layout = new HexLayout(3, 3);
+  const centre = layout.center(1, 1);
+  const edge = (x: number, z: number): number => cliff(x - centre.x, z - centre.z);
+  const steep = new UnitPresentation({ group: new THREE.Group(), interactiveMeshes: [], heightAt: edge },
+    layout, new TestAssets({ war_wagon: wagonModel(), war_wagon_open: wagonModel() }));
+  await steep.update(snapshotWithUnits([wagon]));
+  const figure = steep.group.children[0]!.children.find(child => child instanceof THREE.Group)!;
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(figure.getWorldQuaternion(new THREE.Quaternion()));
+  assert.ok(up.angleTo(new THREE.Vector3(0, 1, 0)) <= 0.3 * Math.SQRT2 + 1e-6, "tilt is capped over a drop");
+  assert.ok(wheelsOf(steep).some(wheel => Math.abs(wheel.y - edge(wheel.x, wheel.z)) > 0.3), "a drop that steep leaves wheels off the ground");
 });

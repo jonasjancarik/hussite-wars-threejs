@@ -54,10 +54,17 @@ test("movement callback places the whole formation at its routed point and groun
   assert.ok(banner, "commander banner remains attached to its moving formation root");
   assert.equal(banner.parent, formation);
   for (const figure of formation.children.filter(child => child instanceof THREE.Group)) {
-    const worldPosition = figure.getWorldPosition(new THREE.Vector3());
+    // Upright figures stand on the lowest ground under their feet.
     const bottom = new THREE.Box3().setFromObject(figure).min.y;
-    assert.ok(Math.abs(bottom - terrainHeight(worldPosition.x, worldPosition.z)) < 1e-6,
-      `figure bottom ${bottom} should follow terrain at its routed location`);
+    let ground = Infinity;
+    figure.traverse(child => {
+      const position = (child as THREE.Mesh).isMesh ? (child as THREE.Mesh).geometry.getAttribute("position") : undefined;
+      for (let index = 0; position && index < position.count; index += 1) {
+        const vertex = new THREE.Vector3().fromBufferAttribute(position, index).applyMatrix4(child.matrixWorld);
+        if (vertex.y < bottom + 1e-6) ground = Math.min(ground, terrainHeight(vertex.x, vertex.z));
+      }
+    });
+    assert.ok(Math.abs(bottom - ground) < 1e-6, `figure bottom ${bottom} should follow terrain ${ground} at its routed location`);
   }
 });
 
