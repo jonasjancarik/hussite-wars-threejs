@@ -9,7 +9,7 @@
 import { pointInPolygon } from "./geometry-utils.ts";
 import type { HexLayout } from "./hex-coordinates.ts";
 import type { TerrainCell, TerrainPoint } from "./terrain-regions.ts";
-import type { TownWallPlan } from "./town-wall-plan.ts";
+import type { TownWallPlan, WallGate } from "./town-wall-plan.ts";
 
 export interface DitchSegment { ax: number; az: number; bx: number; bz: number }
 
@@ -27,6 +27,16 @@ export const TVRZ_DITCH_OFFSET = 1.75;
 export const TVRZ_DITCH_WIDTH = 1.5;
 export const TVRZ_DITCH_DEPTH = 1.1;
 export const TVRZ_DITCH_FLOOR = .45;
+
+/**
+ * A tvrz wall: taut between the formations rather than tracing every hex
+ * corner, with its gate toward the middle of the board (the board is centred
+ * on the origin), where the battle comes from.
+ */
+export const TVRZ_WALL = { taut: true, approach: { x: 0, z: 0 } };
+
+/** A tvrz wall is a manor's curtain, lower than a town's. */
+export const TVRZ_WALL_HEIGHT = 2;
 
 /** Deck planks stand this far above the ground at each end. */
 export const BRIDGE_DECK_LIFT = .1;
@@ -48,18 +58,27 @@ export function ditchAlong(walls: TownWallPlan): DitchSegment[] {
     if (length < .2) return [];
     // earthworkRelief digs its ditch on the side of (dz, -dx) from a to b.
     const probe = { x: (segment.a.x + segment.b.x) / 2 + dz / length * 1.5, z: (segment.a.z + segment.b.z) / 2 - dx / length * 1.5 };
-    const [a, b] = inside(probe.x, probe.z) ? [segment.b, segment.a] : [segment.a, segment.b];
+    const [a, b] = ("normal" in segment ? outwardSign(segment) < 0 : inside(probe.x, probe.z)) ? [segment.b, segment.a] : [segment.a, segment.b];
     return [{ ax: a.x, az: a.z, bx: b.x, bz: b.z }];
   });
 }
 
+/**
+ * 1 when (dz, -dx) from a gate's a to b points out of the enclosure, else -1.
+ * The gate knows its way out, from the cell inside to the cell outside; a
+ * probe off the gate line can land back inside where the gate spans a bend.
+ */
+function outwardSign(gate: WallGate): number {
+  const dx = gate.b.x - gate.a.x, dz = gate.b.z - gate.a.z;
+  return dz * gate.normal.x - dx * gate.normal.z >= 0 ? 1 : -1;
+}
+
 /** A bridge square to each gate, from just inside the gate line to firm ground past the ditch. */
 export function bridgesOver(walls: TownWallPlan): GateBridge[] {
-  const inside = insideTest(walls);
   return walls.gates.flatMap(gate => {
     const dx = gate.b.x - gate.a.x, dz = gate.b.z - gate.a.z, width = Math.hypot(dx, dz);
     if (width < 1) return [];
-    const sign = inside(gate.centre.x + dz / width, gate.centre.z - dx / width) ? -1 : 1;
+    const sign = outwardSign(gate);
     return [{ id: gate.id, x: gate.centre.x, z: gate.centre.z, dx: dz / width * sign, dz: -dx / width * sign,
       from: -.15, to: TVRZ_DITCH_OFFSET + TVRZ_DITCH_WIDTH + .35, halfWidth: width / 2 - .1 }];
   });

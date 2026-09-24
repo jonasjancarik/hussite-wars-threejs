@@ -22,6 +22,8 @@ export interface TownWallPlan {
    * against the outer face, for a small enclosure such as a tvrz.
    */
   gateStyle?: "arch" | "posts";
+  /** Masonry height above the ground in metres; WALL_HEIGHT when absent. */
+  height?: number;
 }
 const key=(p:TerrainPoint):string=>`${p.x.toFixed(5)},${p.z.toFixed(5)}`;
 const cellKey=(p:{col:number;row:number}):string=>`${p.col},${p.row}`;
@@ -77,9 +79,81 @@ export function wallRouteSegmentClear(a:TerrainPoint,b:TerrainPoint,walls:readon
   });
 }
 
-export function planTownWalls(id:string,region:readonly TerrainCell[],tiles:readonly TerrainCell[],layout:HexLayout,frozenRiver=false):TownWallPlan {
+type Hull={points:TerrainPoint[];minX:number;maxX:number;minZ:number;maxZ:number};
+const hullOf=(points:TerrainPoint[]):Hull=>({points,minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),
+  minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z))});
+const hullClear=(a:TerrainPoint,b:TerrainPoint,hull:Hull,padding:number):boolean=>
+  Math.max(a.x,b.x)<hull.minX-padding||Math.min(a.x,b.x)>hull.maxX+padding
+  ||Math.max(a.z,b.z)<hull.minZ-padding||Math.min(a.z,b.z)>hull.maxZ+padding||clearsHull(a,b,hull.points,padding);
+/**
+ * A wall outline pulled taut between the formations: a finely divided outline
+ * whose points each relax toward the straight line through their neighbours
+ * as far as the formations allow. Whatever a formation covers standing, or
+ * marching to a neighbour on the same side of the wall, stays clear if it was
+ * clear before, so the wall bends only where formations hold it.
+ */
+function tautOutline(outline:TerrainPoint[],passable:readonly TerrainCell[],water:readonly TerrainCell[],cells:ReadonlyMap<string,TerrainCell>,
+  layout:HexLayout):{outline:TerrainPoint[];clear:(a:TerrainPoint,b:TerrainPoint)=>boolean} {
+  const polygon=outline.map(p=>[p.x,p.z] as [number,number]),padding=WALL_THICKNESS/2+WALL_MARGIN;
+  const dense=outline.flatMap((p,i)=>{
+    const q=outline[(i+1)%outline.length]!,pieces=Math.max(1,Math.ceil(distance(p,q)/.6));
+    return Array.from({length:pieces},(_,j)=>point(p,q,j/pieces));
+  });
+  const near=passable.filter(cell=>dense.some(p=>distance(p,cell.center)<layout.radius*1.8));
+  const shore=water.filter(cell=>dense.some(p=>distance(p,cell.center)<layout.radius*2.5));
+  const shoreClear=(a:TerrainPoint,b:TerrainPoint):boolean=>shore.every(cell=>
+    distanceToSegment(cell.center.x,cell.center.z,a.x,a.z,b.x,b.z)>=layout.radius*.8-1e-7);
+  const nearKeys=new Set(near.map(cellKey)),open=new Set(passable);
+  const inside=(cell:TerrainCell):boolean=>pointInPolygon(cell.center.x,cell.center.z,polygon);
+  const shifted=(footprint:Footprint,cell:TerrainCell)=>footprint.map(([x,z])=>({x:cell.center.x+x,z:cell.center.z+z}));
+  const blockers=[
+    ...near.map(cell=>hullOf(shifted(FORMATION_FOOTPRINT,cell))),
+    ...near.flatMap(cell=>layout.neighbours(cell).map(coord=>cells.get(cellKey(coord)))
+      .filter((next):next is TerrainCell=>!!next&&open.has(next)&&(!nearKeys.has(cellKey(next))||cellKey(next)>cellKey(cell))&&inside(next)===inside(cell))
+      .map(next=>hullOf(convexHull([...shifted(FORMATION_TRAVEL_FOOTPRINT,cell),...shifted(FORMATION_TRAVEL_FOOTPRINT,next)])))),
+  ].filter(hull=>dense.every((p,i)=>hullClear(p,dense[(i+1)%dense.length]!,hull,padding)));
+  const clear=(a:TerrainPoint,b:TerrainPoint):boolean=>blockers.every(hull=>hullClear(a,b,hull,padding))&&shoreClear(a,b);
+  // Each point keeps to the formations around where it started; it never strays far.
+  const local=dense.map(p=>blockers.filter(hull=>p.x>hull.minX-3&&p.x<hull.maxX+3&&p.z>hull.minZ-3&&p.z<hull.maxZ+3));
+  // Relax with a little to spare, so dropping the points left in line afterwards still clears.
+  const roomy=(i:number,a:TerrainPoint,b:TerrainPoint):boolean=>local[i]!.every(hull=>hullClear(a,b,hull,padding+.03))&&shoreClear(a,b);
+  // Only points next to one that moved can move again.
+  let restless=dense.map(()=>true);
+  for(let pass=0;pass<200&&restless.includes(true);pass++) {
+    const next=dense.map(()=>false);
+    for(let i=0;i<dense.length;i++) {
+      if(!restless[i]) continue;
+      const a=dense[(i+dense.length-1)%dense.length]!,b=dense[i]!,c=dense[(i+1)%dense.length]!,target=point(a,c,.5);
+      if(distance(b,target)<.002) continue;
+      for(let t=1;t>.03;t/=2) {
+        const p=point(b,target,t);
+        if(roomy(i,a,p)&&roomy(i,p,c)) {
+          dense[i]=p;
+          if(distance(b,p)>=.002) for(const j of [i-1,i,i+1]) next[(j+dense.length)%dense.length]=true;
+          break;
+        }
+      }
+    }
+    restless=next;
+  }
+  return {outline:dense,clear};
+}
+
+export interface TownWallOptions {
+  /**
+   * Pull the outline taut between the formations instead of tracing the hex
+   * edges: straight runs that bend only where a formation is in the way.
+   */
+  taut?: boolean;
+  /** Without a road, the first gate faces this point, e.g. the middle of the board where the battle is. */
+  approach?: TerrainPoint;
+}
+
+export function planTownWalls(id:string,region:readonly TerrainCell[],tiles:readonly TerrainCell[],layout:HexLayout,frozenRiver=false,
+  options:TownWallOptions={}):TownWallPlan {
   const plan:TownWallPlan={id,loops:[],segments:[],gates:[],towers:[],enclosedCells:[],issues:[]};
   if(!region.length) return plan;
+  const approach=options.approach;
   const passable=tiles.filter(cell=>cell.terrain!=="water"||frozenRiver);
   const water=tiles.filter(cell=>cell.terrain==="water");
   const shoreClear=(a:TerrainPoint,b:TerrainPoint):boolean=>water.every(cell=>
@@ -111,35 +185,44 @@ export function planTownWalls(id:string,region:readonly TerrainCell[],tiles:read
     const area=points.reduce((sum,p,i)=>{const q=points[(i+1)%points.length]!;return sum+p.x*q.z-q.x*p.z;},0);
     if(area<0) continue; // Internal clearings belong inside the enclosure, not behind a second wall.
     const originallyInside=included.filter(cell=>pointInPolygon(cell.center.x,cell.center.z,points.map(p=>[p.x,p.z])));
-    let changed=true;
-    while(changed&&points.length>3) {
-      changed=false;
-      const removals=points.map((p,i)=>({i,bend:cross(points[(i+points.length-1)%points.length]!,p,points[(i+1)%points.length]!)}))
-        .sort((a,b)=>a.bend-b.bend);
-      for(const {i} of removals) {
-        const a=points[(i+points.length-1)%points.length]!,b=points[i]!,c=points[(i+1)%points.length]!;
-        if(distanceToSegment(b.x,b.z,a.x,a.z,c.x,c.z)>layout.radius*1.1) continue;
-        if(!passable.every(cell=>wallClearsFormation(a,c,cell.center))) continue;
-        if(!shoreClear(a,c)) continue;
-        const candidate=points.filter((_,index)=>index!==i);
-        const polygon=candidate.map(p=>[p.x,p.z] as [number,number]);
-        if(!originallyInside.every(cell=>pointInPolygon(cell.center.x,cell.center.z,polygon))) continue;
-        if(water.some(cell=>pointInPolygon(cell.center.x,cell.center.z,polygon))) continue;
-        if(candidate.some((p,j)=>segmentsCross(a,c,p,candidate[(j+1)%candidate.length]!))) continue;
-        points.splice(i,1);changed=true;break;
+    let wallClear=(a:TerrainPoint,b:TerrainPoint):boolean=>shoreClear(a,b)&&passable.every(cell=>wallClearsFormation(a,b,cell.center));
+    const straighten=():void=>{
+      let changed=true;
+      while(changed&&points.length>3) {
+        changed=false;
+        const removals=points.map((p,i)=>({i,bend:cross(points[(i+points.length-1)%points.length]!,p,points[(i+1)%points.length]!)}))
+          .sort((a,b)=>a.bend-b.bend);
+        for(const {i} of removals) {
+          const a=points[(i+points.length-1)%points.length]!,b=points[i]!,c=points[(i+1)%points.length]!;
+          if(distanceToSegment(b.x,b.z,a.x,a.z,c.x,c.z)>layout.radius*1.1) continue;
+          if(!wallClear(a,c)) continue;
+          const candidate=points.filter((_,index)=>index!==i);
+          const polygon=candidate.map(p=>[p.x,p.z] as [number,number]);
+          if(!originallyInside.every(cell=>pointInPolygon(cell.center.x,cell.center.z,polygon))) continue;
+          if(water.some(cell=>pointInPolygon(cell.center.x,cell.center.z,polygon))) continue;
+          if(candidate.some((p,j)=>segmentsCross(a,c,p,candidate[(j+1)%candidate.length]!))) continue;
+          points.splice(i,1);changed=true;break;
+        }
       }
+    };
+    straighten();
+    if(options.taut) {
+      const taut=tautOutline(points,passable,water,cells,layout);
+      points.splice(0,points.length,...taut.outline);wallClear=taut.clear;
+      straighten();
     }
     const rounded:TerrainPoint[]=[];
     for(let i=0;i<points.length;i++) {
       const previous=points[(i+points.length-1)%points.length]!,corner=points[i]!,next=points[(i+1)%points.length]!;
       let curve:TerrainPoint[]|null=null;
-      for(const fraction of [.28,.14,.07]) {
+      // A taut outline already turns gradually where formations hold it.
+      if(!options.taut) for(const fraction of [.28,.14,.07]) {
         const cut=Math.min(layout.radius*fraction,distance(previous,corner)*.24,distance(corner,next)*.24);
         const a=point(corner,previous,cut/distance(previous,corner)),b=point(corner,next,cut/distance(corner,next));
         const samples=Array.from({length:5},(_,j)=>{
           const t=j/4;return {x:(1-t)**2*a.x+2*(1-t)*t*corner.x+t*t*b.x,z:(1-t)**2*a.z+2*(1-t)*t*corner.z+t*t*b.z};
         });
-        if(samples.slice(1).every((p,j)=>shoreClear(samples[j]!,p)&&passable.every(cell=>wallClearsFormation(samples[j]!,p,cell.center)))) {
+        if(samples.slice(1).every((p,j)=>wallClear(samples[j]!,p))) {
           curve=samples;break;
         }
       }
@@ -207,7 +290,8 @@ export function planTownWalls(id:string,region:readonly TerrainCell[],tiles:read
       return half;
     };
     candidates.sort((a,b)=>Number(b.road)-Number(a.road)||alignment(b)-alignment(a)
-      ||(a.road||b.road ? 0 : Math.round((opening(a)-opening(b))/.3))||a.to.center.x-b.to.center.x
+      ||(a.road||b.road ? 0 : Math.round((opening(a)-opening(b))/.3))
+      ||(approach ? distance(a.to.center,approach)-distance(b.to.center,approach) : 0)||a.to.center.x-b.to.center.x
       ||Math.abs(a.to.center.z-middleZ)-Math.abs(b.to.center.z-middleZ));
     const openings:Array<{arc:number;half:number}>=[];
     const spans=():WallSegment[]=>raw.flatMap((edge,i)=>{

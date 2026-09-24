@@ -1,8 +1,8 @@
-import { bridgesOver, ditchAlong, innerVertices, type GateBridge, TVRZ_DITCH_DEPTH, TVRZ_DITCH_FLOOR, TVRZ_DITCH_OFFSET, TVRZ_DITCH_WIDTH } from "./fortification-plan.ts";
+import { bridgesOver, ditchAlong, innerVertices, type GateBridge, TVRZ_DITCH_DEPTH, TVRZ_WALL, TVRZ_WALL_HEIGHT, TVRZ_DITCH_FLOOR, TVRZ_DITCH_OFFSET, TVRZ_DITCH_WIDTH } from "./fortification-plan.ts";
 import { HexLayout } from "./hex-coordinates.ts";
 import type { TerrainCell } from "./terrain-regions.ts";
 import { planSettlement, type SettlementPlan } from "./settlement-plan.ts";
-import { planTownWalls, WALL_THICKNESS, type TownWallPlan } from "./town-wall-plan.ts";
+import { planTownWalls, WALL_THICKNESS, type TownWallOptions, type TownWallPlan } from "./town-wall-plan.ts";
 import { settlementAuthoring } from "./settlement-authoring.ts";
 import type { MapFeature } from "./types.ts";
 
@@ -100,9 +100,9 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     return coords.every(([col, row]) => kinds.includes(cells.get(`${col},${row}`)?.terrain ?? ""));
   }
   function replace(region: TerrainCell[]): void { region.forEach(cell => plan.replacedCells.add(key(cell))); }
-  function townWalls(region: TerrainCell[], prefix: string): void {
+  function townWalls(region: TerrainCell[], prefix: string, options: TownWallOptions = {}): void {
     if (!region.length) return;
-    const walls=planTownWalls(prefix,region,tiles,layout,plan.frozenRiver);
+    const walls=planTownWalls(prefix,region,tiles,layout,plan.frozenRiver,options);
     plan.walls.push(walls);
     for(const segment of walls.segments) {
       const length=Math.hypot(segment.b.x-segment.a.x,segment.b.z-segment.a.z),steps=Math.max(1,Math.ceil(length/.6));
@@ -150,9 +150,10 @@ export function planEnvironment(scenario: string | null, tiles: readonly Terrain
     if (region.length !== feature.hexes.length || region.some(cell => wet(cell.terrain))) return;
     const id = `${scenario ?? "battle"}-tvrz-${index}`;
     replace(region);
-    townWalls(region, id);
+    townWalls(region, id, TVRZ_WALL);
     const walls = plan.walls.at(-1)!;
     walls.gateStyle = "posts";
+    walls.height = TVRZ_WALL_HEIGHT;
     plan.fortifications.add(walls.id);
     ditchAlong(walls).forEach((ditch, part) => plan.earthworks.push({ id: `${id}:ditch:${part}`, ...ditch, height: 0,
       ditch: true, ditchOffset: TVRZ_DITCH_OFFSET, ditchWidth: TVRZ_DITCH_WIDTH, ditchDepth: TVRZ_DITCH_DEPTH, ditchFloor: TVRZ_DITCH_FLOOR }));

@@ -5,10 +5,12 @@ import test from "node:test";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { earthworkRelief, planEnvironment } from "../src/environment-plan.ts";
+import { TVRZ_WALL } from "../src/fortification-plan.ts";
 import { pointInPolygon } from "../src/geometry-utils.ts";
 import { GeneratedScenery } from "../src/generated-scenery.ts";
 import { GeneratedTerrain } from "../src/generated-terrain.ts";
 import { HexLayout } from "../src/hex-coordinates.ts";
+import { planTownWalls, wallRouteSegmentClear } from "../src/town-wall-plan.ts";
 import type { BattleSnapshot } from "../src/types.ts";
 
 const root = new URL("../../../", import.meta.url);
@@ -118,6 +120,40 @@ test("fortification labels become walled manors with a gate, a ditch outside and
     assert.equal(planEnvironment(id, tiles).fortifications.size, 0, "no label, no tvrz");
   }
   assert.deepEqual(decorated.sort(), ["malesov_1424", "nekmir_1419"]);
+});
+
+test("a tvrz wall runs taut between the formations and its gates stand apart", () => {
+  const turning = (points: readonly { x: number; z: number }[]): number => points.reduce((sum, p, i) => {
+    const a = points[(i + points.length - 1) % points.length]!, c = points[(i + 1) % points.length]!;
+    return sum + Math.abs(Math.atan2((p.x - a.x) * (c.z - p.z) - (p.z - a.z) * (c.x - p.x), (p.x - a.x) * (c.x - p.x) + (p.z - a.z) * (c.z - p.z)));
+  }, 0);
+  for (const id of ["nekmir_1419", "malesov_1424"]) {
+    const state = snapshot(id);
+    const layout = new HexLayout(state.cols!, state.rows!);
+    const tiles = state.tiles.map(tile => ({ ...tile, center: layout.center(tile.col, tile.row) }));
+    const label = state.features!.find(feature => feature.kind === "fortification")!;
+    const region = tiles.filter(tile => label.hexes.some(hex => hex.col === tile.col && hex.row === tile.row));
+    const traced = planTownWalls(id, region, tiles, layout);
+    const taut = planTownWalls(id, region, tiles, layout, false, TVRZ_WALL);
+    assert.deepEqual(taut.issues, []);
+    // Fewer and gentler bends: a quarter turn less than the hex-traced wall.
+    assert.ok(turning(taut.loops[0]!.points) < turning(traced.loops[0]!.points) - Math.PI / 2,
+      `${id}: ${turning(taut.loops[0]!.points).toFixed(2)} rad of bends`);
+    // Every straight march that stays on one side of the traced wall stays clear of the taut one.
+    const segments = (plan: typeof traced) => plan.loops[0]!.points.map((a, i, all) => ({ id: "", owner: "", a, b: all[(i + 1) % all.length]! }));
+    const inside = (point: { x: number; z: number }) => pointInPolygon(point.x, point.z, traced.loops[0]!.points.map(p => [p.x, p.z] as [number, number]));
+    for (const cell of tiles) for (const coord of layout.neighbours(cell)) {
+      const next = tiles.find(tile => tile.col === coord.col && tile.row === coord.row);
+      if (!next || inside(cell.center) !== inside(next.center)) continue;
+      if (wallRouteSegmentClear(cell.center, next.center, segments(traced))) {
+        assert.ok(wallRouteSegmentClear(cell.center, next.center, segments(taut)), `${id}: ${cell.col},${cell.row} to ${next.col},${next.row} blocked`);
+      }
+    }
+    // A second gate only serves ground the first cannot reach, never the stretch beside it.
+    for (const [index, gate] of taut.gates.entries()) for (const other of taut.gates.slice(index + 1)) {
+      assert.ok(Math.hypot(gate.centre.x - other.centre.x, gate.centre.z - other.centre.z) > 10, `${id}: gates side by side`);
+    }
+  }
 });
 
 test("the tvrz replaces farmhouses, keeps hex centres open and respects explored fog", async () => {

@@ -65,7 +65,7 @@ function addGroundBox(vertices: Vertices, terrain: Ground, centre: TerrainPoint,
   addTerrainPrism(vertices, corners, corners.map(point => height(terrain, point)), top);
 }
 
-function addTerrainWall(vertices: Vertices, terrain: Ground, a: TerrainPoint, b: TerrainPoint): number {
+function addTerrainWall(vertices: Vertices, terrain: Ground, a: TerrainPoint, b: TerrainPoint, wallHeight = WALL_HEIGHT): number {
   const length = distance(a, b);
   if (length < 1e-6) return 0;
   const along = { x: (b.x - a.x) / length, z: (b.z - a.z) / length };
@@ -80,7 +80,7 @@ function addTerrainWall(vertices: Vertices, terrain: Ground, a: TerrainPoint, b:
     const rightQ = { x: q.x - across.x * WALL_THICKNESS / 2, z: q.z - across.z * WALL_THICKNESS / 2 };
     const bases = [height(terrain, leftP), height(terrain, rightP), height(terrain, rightQ), height(terrain, leftQ)];
     const base = Math.max(...bases);
-    const top = base + WALL_HEIGHT;
+    const top = base + wallHeight;
     finalTop = top;
     addTerrainPrism(vertices, [leftP, rightP, rightQ, leftQ], bases, top);
     for (let offset = .26; offset < distance(p, q) - .15; offset += .62) {
@@ -243,7 +243,7 @@ export class TownWallScenery {
     }
     for (const [owner, segments] of byOwner) {
       const vertices: Vertices = [];
-      for (const segment of segments) addTerrainWall(vertices, terrain, segment.a, segment.b);
+      for (const segment of segments) addTerrainWall(vertices, terrain, segment.a, segment.b, plan.height);
       if (vertices.length === 0) continue;
       const root = new THREE.Group();
       root.name = `${plan.id} masonry ${owner}`;
@@ -349,7 +349,7 @@ export class TownWallScenery {
       const length = Math.hypot(first.x, first.z) || 1, along = { x: first.x / length, z: first.z / length };
       const side = { x: -along.z, z: along.x };
       const post = { x: end.x + along.x * postLength / 2, z: end.z + along.z * postLength / 2 };
-      const top = height(terrain, post) + WALL_HEIGHT + .75;
+      const top = height(terrain, post) + (plan.height ?? WALL_HEIGHT) + .75;
       addGroundBox(stoneVertices, terrain, post, along, side, postLength / 2, postHalf, top);
       // A low pyramid cap.
       const corner = (u: number, v: number, y: number): THREE.Vector3 => new THREE.Vector3(
@@ -384,7 +384,7 @@ export class TownWallScenery {
       const faceLength = Math.hypot(faceOut.x, faceOut.z) || 1;
       const leaf = { x: hinge.x + leafAlong.x * (leafWidth / 2 + .03), z: hinge.z + leafAlong.z * (leafWidth / 2 + .03) };
       addDoorLeaf(plankVertices, timberVertices, ironVertices, leaf, leafAlong, { x: faceOut.x / faceLength, z: faceOut.z / faceLength },
-        leafWidth, height(terrain, end) + .05, Math.min(WALL_HEIGHT - .25, 2.2), -1);
+        leafWidth, height(terrain, end) + .05, Math.min((plan.height ?? WALL_HEIGHT) - .25, 2.2), -1);
     }
   }
 
@@ -408,7 +408,7 @@ export class TownWallScenery {
       const angle = index * Math.PI * 2 / sides;
       const point = { x: tower.centre.x + Math.cos(angle) * tower.radius, z: tower.centre.z + Math.sin(angle) * tower.radius };
       base.push(height(terrain, point)); return height(terrain, point);
-    })) + 3.2;
+    })) + (plan.height ?? WALL_HEIGHT) + .7;
     const stoneVertices: Vertices = [];
     const at = (index: number, y: number): THREE.Vector3 => {
       const angle = index * Math.PI * 2 / sides;
