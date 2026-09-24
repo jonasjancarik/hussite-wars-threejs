@@ -4,7 +4,8 @@ import { applyPose, clampTarget, createBattleCamera, currentPose, fitRadius, int
   snappedBearing, type CameraPose } from "./camera.ts";
 import { attackStyle, BattlefieldEffects, compactMiniatureFocusProfile, focusSmoothingAlpha, type AttackStyle } from "./effects.ts";
 import { GeneratedScenery, planScenery, type SceneryPlan } from "./generated-scenery.ts";
-import { GeneratedTerrain, planGeneratedTerrain, type GeneratedTerrainPlan } from "./generated-terrain.ts";
+import { buildSurfaceOffThread, GeneratedTerrain, planGeneratedTerrain, type GeneratedTerrainPlan } from "./generated-terrain.ts";
+import type { SurfaceData } from "./terrain-surface.ts";
 import { TownWallRoutes } from "./town-wall-routes.ts";
 import { createBattleLighting } from "./lighting.ts";
 import { TacticalOverlays } from "./overlays.ts";
@@ -122,7 +123,7 @@ class IntegratedThreeBattle {
 
   private constructor(private readonly canvas: HTMLCanvasElement, private readonly options: IntegratedRendererOptions,
     art: ScenarioArtManifest | null, private readonly assets: BattleAssets,
-    plans: { terrain: GeneratedTerrainPlan; scenery: SceneryPlan } | null) {
+    plans: { terrain: GeneratedTerrainPlan; scenery: SceneryPlan; surface: SurfaceData | null } | null) {
     const assetBase = assets.baseUrl;
     if (art) {
       const terrain = new AuthoredTerrain(art, options.snapshot, assetBase);
@@ -130,7 +131,7 @@ class IntegratedThreeBattle {
       this.scenery = new AuthoredScenery(art, terrain, this.assets);
       this.artMode = "authored";
     } else {
-      const terrain = new GeneratedTerrain(options.snapshot, assetBase, plans?.terrain);
+      const terrain = new GeneratedTerrain(options.snapshot, assetBase, plans?.terrain, plans?.surface);
       this.terrain = terrain;
       this.scenery = new GeneratedScenery(terrain, this.assets, options.snapshot.scenario, plans?.scenery);
       this.artMode = "generated";
@@ -182,13 +183,15 @@ class IntegratedThreeBattle {
     const manifestBase = new URL(options.artManifestBase ?? "hex-three/", document.baseURI).href;
     const art = await loadScenarioArt(options.snapshot, manifestBase);
     const assets = new BattleAssets(new URL(options.assetBase ?? "assets/", document.baseURI).href);
-    // Plan a generated map first and start downloading its models and the
-    // armies', so they arrive while the terrain mesh is built.
+    // A worker computes a generated map's surface, most of its build. Meanwhile
+    // the map is planned here and its models and the armies' start downloading.
+    const surface = art ? null : buildSurfaceOffThread(options.snapshot);
     const terrain = art ? null : planGeneratedTerrain(options.snapshot);
-    const plans = terrain && { terrain, scenery: planScenery(terrain) };
-    assets.preload([...plans?.scenery.models ?? [], ...unitModels(options.snapshot.units)]).catch(() => undefined);
-    // Let the requests go out before the build holds the main thread.
-    await new Promise(resolve => setTimeout(resolve));
+    const scenery = terrain && planScenery(terrain);
+    assets.preload([...scenery?.models ?? [], ...unitModels(options.snapshot.units)]).catch(() => undefined);
+    // Let the requests go out before the rest of the build holds the main thread.
+    const built = await (surface ?? new Promise<null>(resolve => setTimeout(() => resolve(null))));
+    const plans = terrain && scenery && { terrain, scenery, surface: built };
     let battle: IntegratedThreeBattle;
     try {
       battle = new IntegratedThreeBattle(canvas, options, art, assets, plans);

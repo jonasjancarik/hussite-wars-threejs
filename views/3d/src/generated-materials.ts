@@ -1,27 +1,9 @@
 import * as THREE from "three";
 import { MeshStandardNodeMaterial } from "three/webgpu";
 import { attribute, cameraPosition, dFdx, dFdy, Fn, If, mix, mx_noise_float, mx_worley_noise_vec2, normalWorld, normalWorldGeometry, positionWorld, smoothstep, texture as textureNode, transformNormalToView, uv, vec3, vertexColor } from "three/tsl";
-import { isFieldTerrain } from "./terrain-regions.ts";
-import { isRoadTerrain } from "./road-corridors.ts";
+import type { SurfaceMaterialKind } from "./terrain-surface.ts";
 
-export type SurfaceMaterialKind = "meadow" | "earth" | "slope" | "rock" | "water" | "road";
-
-const MATERIAL_ORDER: SurfaceMaterialKind[] = ["meadow", "earth", "slope", "rock", "water", "road"];
-
-export function surfaceMaterialKind(terrain: string): SurfaceMaterialKind {
-  const name = terrain.toLowerCase();
-  if (["water", "river", "lake"].includes(name)) return "water";
-  if (isRoadTerrain(name)) return "road";
-  if (["slope", "steep_slope"].includes(name)) return "slope";
-  if (["cliff", "rock"].includes(name)) return "rock";
-  if (["mud", "swamp", "marsh", "road", "road2", "dam", "causeway", "trenches"].includes(name)
-    || isFieldTerrain(name)) return "earth";
-  return "meadow";
-}
-
-export function surfaceMaterialIndex(terrain: string): number {
-  return MATERIAL_ORDER.indexOf(surfaceMaterialKind(terrain));
-}
+export { groundSplatChannel, surfaceMaterialIndex, surfaceMaterialKind, type SurfaceMaterialKind } from "./terrain-surface.ts";
 
 /**
  * Per-vertex weights of the three ground textures (meadow, earth, grain).
@@ -37,13 +19,6 @@ export const SHORE_DISTANCE = "shoreDistance";
  * its half-width (0 on the axis, 1 at the verge), y how worn into ruts it is.
  */
 export const ROAD_TRACK = "roadTrack";
-
-/** Which ground texture a terrain kind contributes to: 0 meadow, 1 earth, 2 grain. */
-export function groundSplatChannel(kind: SurfaceMaterialKind): 0 | 1 | 2 {
-  if (kind === "meadow" || kind === "slope") return 0;
-  if (kind === "earth" || kind === "water") return 1;
-  return 2;
-}
 
 type TslFactory = (...arguments_: any[]) => any;
 const tsl = (factory: unknown): TslFactory => factory as TslFactory;
