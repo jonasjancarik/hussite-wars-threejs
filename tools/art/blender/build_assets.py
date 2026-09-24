@@ -13,7 +13,7 @@ MODELS = ROOT / 'assets/3d/models'
 PREVIEWS = ROOT / 'tools/art/blender/previews'
 SOURCE = ROOT / 'tools/art/blender/source'
 MODEL_DIRECTORIES = {
-    'war_wagon': 'units', 'cavalry': 'units',
+    'war_wagon': 'units', 'war_wagon_open': 'units', 'cavalry': 'units',
     'infantry_polearm': 'units', 'infantry_handgun': 'units',
     'infantry_shield': 'units',
     'infantry_flail': 'units', 'infantry_crossbow': 'units', 'infantry_pavise': 'units',
@@ -532,7 +532,7 @@ def main():
         bpy.ops.object.select_all(action='DESELECT')
         for obj in objects: obj.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
-        if name in ENVIRONMENT_MODELS or name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer', 'infantry_dismounted', 'infantry_halberd', 'infantry_polearm', 'infantry_handgun', 'infantry_shield', 'war_wagon', 'field_blockhouse', 'timber_palisade') or name.startswith(('artillery_', 'cavalry_', 'civilian_', 'commander_', 'fort_')):
+        if name in ENVIRONMENT_MODELS or name in ('infantry_flail', 'infantry_crossbow', 'infantry_pavise', 'infantry_spear', 'infantry_archer', 'infantry_dismounted', 'infantry_halberd', 'infantry_polearm', 'infantry_handgun', 'infantry_shield', 'war_wagon', 'war_wagon_open', 'field_blockhouse', 'timber_palisade') or name.startswith(('artillery_', 'cavalry_', 'civilian_', 'commander_', 'fort_')):
             # Static exports use world-space vertices so runtime AABBs describe
             # the actual feet, not rotated material-batch bounding boxes.
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)

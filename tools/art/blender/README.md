@@ -36,6 +36,7 @@ The shared horse is built from faceted lofts (barrel, neck, head and tail) with 
 | Asset | Contents |
 | --- | --- |
 | `war_wagon` | Hussite battle wagon: ten-spoke wheels, tall planked walls with pointed stanchions, iron straps and shooting slots, a hinged lower board on the outer (-Y) side, handgunner, crossbowman and flailman firing over that side, keg, towing poles and chalice banner |
+| `war_wagon_open` | The unchained wagon: the rear gate let down as a ramp, the lower board hooked up and the flailman in the gateway |
 | `cavalry` | Faceted horse and original polearm rider with walking loop |
 | `cavalry_light`, `cavalry_scout`, `cavalry_heavy` | Static mounted variants with distinct equipment and side-colour cloth/shields |
 | `infantry_spear` | Long plain spear, kettle hat and side-colour cloth |

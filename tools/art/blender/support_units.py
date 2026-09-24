@@ -207,8 +207,13 @@ class SupportUnits:
             for offset in (-.28, .28):
                 k.box('Wagon_loophole', (x+offset, y*1.052, 1.62), (.30, .02, .075), 'black')
 
-    def war_wagon(self):
-        """Hussite battle wagon: planked walls, lower shield board and crew."""
+    def war_wagon(self, open_gate=False):
+        """Hussite battle wagon: planked walls, lower shield board and crew.
+
+        open_gate builds the unchained wagon: the rear gate let down as a ramp,
+        the lower shield board hooked up and the flailman in the gateway,
+        ready to sally. The closed wagon is the default war_wagon.
+        """
         self.palette()
         k = self.k
         for i in range(11):
@@ -222,23 +227,48 @@ class SupportUnits:
         self._wall(-1, 5)
         self._wall(1, 5)
         # Full front board and a lower rear board where the crew climbs in.
-        for x, rows in ((2.03, 5), (-2.03, 3)):
+        for x, rows in ((2.03, 5), (-2.03, 0 if open_gate else 3)):
             for row in range(rows):
                 k.box('Wagon_end_board', (x, 0, 1.05+row*.19), (.09, 1.87, .178),
                       'oak' if row % 2 else 'oak_light', .01)
-        # Hinged lower board, let down on the outer (-Y) side to close the gap
-        # beneath the wagon between the wheels.
-        # Three planks hang almost vertically from hinges under the wall.
-        lean = math.atan2(.10, .74)
-        for row, z in enumerate((.68, .44, .20)):
-            plank = k.box('Wagon_lower_shield_board', (0, 0, 0), (1.62, .06, .235),
-                          'oak_light' if row % 2 else 'oak', .01)
-            plank.rotation_euler.x = lean
-            plank.location = (0, -1.00-(.80-z)*.135, z)
-        for x in (-.60, 0, .60):
-            batten = k.box('Wagon_lower_board_batten', (0, 0, 0), (.09, .05, .72), 'oak_dark', .008)
-            batten.rotation_euler.x = lean
-            batten.location = (x, -1.10, .44)
+        if open_gate:
+            # The rear gate is let down from the deck lip to the ground as a
+            # ramp. It stays narrow and short so the formation outline holds.
+            drop, run = .92, .88
+            slope = math.atan2(drop, run)
+            length = math.hypot(drop, run)
+            # Lift by half the plank thickness so the foot rests on the ground.
+            lift = .03*math.cos(slope)+.005
+            for row, y in enumerate((-.33, 0, .33)):
+                plank = k.box('Wagon_gate_ramp', (0, 0, 0), (length, .32, .06),
+                              'oak_light' if row % 2 else 'oak', .01)
+                plank.rotation_euler.y = -slope
+                plank.location = (-2.03-run/2, y, drop/2+lift)
+            for along in (.25, .70):
+                batten = k.box('Wagon_gate_ramp_batten', (0, 0, 0), (.09, 1.0, .05), 'oak_dark', .008)
+                batten.rotation_euler.y = -slope
+                batten.location = (-2.03-run*along, 0, drop*(1-along)+lift+.05)
+            # The lower board is hooked up against the wall, leaving the gap
+            # beneath the wagon open between the wheels.
+            for row, z in enumerate((.95, 1.19, 1.43)):
+                k.box('Wagon_lower_shield_board', (0, -1.07, z), (1.62, .06, .235),
+                      'oak_light' if row % 2 else 'oak', .01)
+            for x in (-.60, 0, .60):
+                k.box('Wagon_lower_board_batten', (x, -1.11, 1.19), (.09, .05, .72), 'oak_dark', .008)
+        else:
+            # Hinged lower board, let down on the outer (-Y) side to close the
+            # gap beneath the wagon between the wheels.
+            # Three planks hang almost vertically from hinges under the wall.
+            lean = math.atan2(.10, .74)
+            for row, z in enumerate((.68, .44, .20)):
+                plank = k.box('Wagon_lower_shield_board', (0, 0, 0), (1.62, .06, .235),
+                              'oak_light' if row % 2 else 'oak', .01)
+                plank.rotation_euler.x = lean
+                plank.location = (0, -1.00-(.80-z)*.135, z)
+            for x in (-.60, 0, .60):
+                batten = k.box('Wagon_lower_board_batten', (0, 0, 0), (.09, .05, .72), 'oak_dark', .008)
+                batten.rotation_euler.x = lean
+                batten.location = (x, -1.10, .44)
         for x in (-.60, .60):
             k.box('Wagon_lower_board_hinge', (x, -1.00, .82), (.16, .06, .06), 'iron')
         for y in (-.60, .60):
@@ -248,14 +278,17 @@ class SupportUnits:
         for z in (1.02, 1.36):
             k.beam('Wagon_keg_hoop', (1.55, .52, z-.02), (1.55, .52, z+.02), .197, 'iron', 10)
         # Crew fire over the outer wall: handgunner, crossbowman, flailman.
+        # With the gate open the flailman stands in the gateway, facing out
+        # down the ramp.
         deck = .955
         infantry = InfantryBatch(k)
-        for build, where, prefix in ((self.handgun, (.70, -.12), 'Wagon_crew_'),
-                                     (infantry.crossbow, (-.45, .08), 'Wagon_crew_'),
-                                     (infantry.flail, (-1.30, .25), 'Wagon_crew_')):
+        flail = ((-1.95, 0, deck), math.pi) if open_gate else ((-1.30, .25, deck), -math.pi/2)
+        for build, (where, yaw) in ((self.handgun, ((.70, -.12, deck), -math.pi/2)),
+                                    (infantry.crossbow, ((-.45, .08, deck), -math.pi/2)),
+                                    (infantry.flail, flail)):
             before = set(bpy.context.scene.objects)
             build()
-            self._place(self._objects_created(before), (*where, deck), -math.pi/2, prefix)
+            self._place(self._objects_created(before), where, yaw, 'Wagon_crew_')
         before = set(bpy.context.scene.objects)
         # The standard reaches the old wagon's 3.94 m top, which sets the
         # renderer's measured formation height.
@@ -403,6 +436,7 @@ def builders(namespace):
         'infantry_handgun': support.handgun,
         'infantry_shield': support.shield,
         'war_wagon': support.war_wagon,
+        'war_wagon_open': lambda: support.war_wagon(open_gate=True),
         'commander_standard': support.commander_standard,
         'field_blockhouse': support.field_blockhouse,
     }

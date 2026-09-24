@@ -101,8 +101,8 @@ function actualFormationPoints(standing: boolean): XzPoint[] {
   const points: XzPoint[] = [];
   const seen = new Set<string>();
   const facings = ["hussites", "crusaders"] as const;
-  for (const type of types) for (const dismounted of [false, true]) for (const faction of facings) {
-    const unit = { type, dismounted, faction } as UnitSnapshot;
+  for (const type of types) for (const dismounted of [false, true]) for (const faction of facings) for (const formationClosed of [true, false]) {
+    const unit = { type, dismounted, faction, formationClosed } as UnitSnapshot;
     const recipes = unitRecipe(unit);
     for (const marching of [0, 0.06]) for (const routeScale of [0.92, 1]) {
       const poseKey = JSON.stringify({ type, dismounted, faction, marching, routeScale, recipes });
@@ -187,8 +187,8 @@ test("formation height safely covers every current recipe mesh above its grounde
     }
     maximumHeight = Math.max(maximumHeight, (maxY - minY) * scale);
   };
-  for (const type of types) for (const dismounted of [false, true]) {
-    for (const recipe of unitRecipe({ type, dismounted, faction: "hussites" } as UnitSnapshot)) {
+  for (const type of types) for (const dismounted of [false, true]) for (const formationClosed of [true, false]) {
+    for (const recipe of unitRecipe({ type, dismounted, faction: "hussites", formationClosed } as UnitSnapshot)) {
       includeModel(recipe.model, recipe.scale);
     }
     if (commanders.has(type)) includeModel("commander_standard", 0.7);

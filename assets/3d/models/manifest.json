@@ -1400,5 +1400,25 @@
     "up_axis": "Y",
     "animations": [],
     "animation_seconds": null
+  },
+  "war_wagon_open": {
+    "file": "units/war_wagon_open.glb",
+    "dimensions_blender_xyz_m": [
+      6.164,
+      2.94,
+      3.93
+    ],
+    "dimensions_gltf_xyz_m": [
+      6.164,
+      3.93,
+      2.94
+    ],
+    "mesh_objects": 14,
+    "editable_source_mesh_objects": 360,
+    "triangles": 10960,
+    "forward_axis": "+X",
+    "up_axis": "Y",
+    "animations": [],
+    "animation_seconds": null
   }
 }

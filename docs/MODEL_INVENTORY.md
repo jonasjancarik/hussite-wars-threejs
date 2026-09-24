@@ -21,7 +21,7 @@ KCD II is set in **1403**, shortly before this game's **1419–1437** campaign (
 
 ## Current coverage
 
-The basic unit set is complete: **all 59 unit definitions have explicit 3D recipes**, including the 27 commanders, both wagon types, mixed civilian groups and the fixed fieldwork garrison. Models use shared families rather than one unique mesh per definition. The environment baseline is also complete across all 18 battles: Sudoměř keeps its authored scenery, and the other 17 use scenario-specific placements from `environment-plan.ts` and `generated-scenery.ts`. There are **78 shared GLBs and six retained experimental variants (84 total)**.
+The basic unit set is complete: **all 59 unit definitions have explicit 3D recipes**, including the 27 commanders, both wagon types, mixed civilian groups and the fixed fieldwork garrison. Models use shared families rather than one unique mesh per definition. The environment baseline is also complete across all 18 battles: Sudoměř keeps its authored scenery, and the other 17 use scenario-specific placements from `environment-plan.ts` and `generated-scenery.ts`. There are **79 shared GLBs and six retained experimental variants (85 total)**.
 
 The completed batches cover flails, crossbows, pavises, spears, archers, three artillery families and crew, light/scout/heavy cavalry, dismounted knights, civilians, three commander bases, halberdiers, a blockhouse with garrison, and a neutral commander standard. Older handgun, sword/shield and wagon models now support faction colours. Unit rules and scenario rosters are unchanged; the existing explicit dismount state is now displayed and preserved in saves.
 
@@ -44,6 +44,7 @@ Shared paths below are relative to `assets/3d/models/`. The six `battle/` and `b
 | `units/cavalry.glb` | 1 | Original horse and polearm rider with `HorseWalk`; retained unchanged. The campaign now uses the static mounted variants below. |
 | `units/cavalry_light.glb`, `units/cavalry_scout.glb`, `units/cavalry_heavy.glb` | 3 | Static light rider, equipped scout and armoured knight; all eight cavalry definitions, with side-colour cloth and shields. |
 | `units/war_wagon.glb` | 1 | Battle wagon with planked walls, shooting slots, a hinged lower board, three crew, towing poles and chalice flag. |
+| `units/war_wagon_open.glb` | 1 | The same wagon unchained: rear gate let down as a ramp, lower board hooked up, flailman in the gateway. Shown while a wagon's formation is open. |
 | `units/artillery_houfnice.glb`, `units/artillery_tarasnice.glb`, `units/artillery_bombard.glb` | 3 | Short field gun, long light field gun and heavy siege gun; one model per artillery unit. |
 | `units/artillery_gunner.glb` | 1 | Static ramrod-bearing crew figure with side-colour cloth; two independently grounded figures accompany each gun. |
 | `props/banner.glb` | 1 | Original red chalice prop retained for legacy scenes. |
@@ -89,7 +90,7 @@ Fortified-town perimeters now use connected procedural masonry and formation-siz
 
 Německý Brod and Žatec now arrange their existing settlement models around generated streets through `views/3d/src/settlement-plan.ts`. Saved adjustments in `assets/3d/scenarios/settlement-authoring.json` preserve a townhouse replacement, well and bridge-side open space at Brod; Žatec demonstrates the same generator without manual edits. No new models are required. See the [settlement authoring workflow](../views/3d/README.md#settlement-generation-and-authoring) for placement identities, clearance rules and regeneration.
 
-The renderer generates terrain, water and meadow geometry. Sudoměř retains its complete authored scenery manifest, including grass/stubble, small stone field enclosures and flowers; the other 17 battles now receive deterministic scenario placements through `views/3d/src/environment-plan.ts` and `generated-scenery.ts`. This baseline adds 28 shared GLBs: nine settlement pieces, eleven camp pieces and eight landscape pieces. Together with explicit recipes for all 59 unit definitions and the existing seven-piece fortification kit, the shared library has 78 GLBs; six battle/benchmark experiments remain in the experiment directory (84 total).
+The renderer generates terrain, water and meadow geometry. Sudoměř retains its complete authored scenery manifest, including grass/stubble, small stone field enclosures and flowers; the other 17 battles now receive deterministic scenario placements through `views/3d/src/environment-plan.ts` and `generated-scenery.ts`. This baseline adds 28 shared GLBs: nine settlement pieces, eleven camp pieces and eight landscape pieces. Together with explicit recipes for all 59 unit definitions and the existing seven-piece fortification kit, the shared library has 79 GLBs, counting the open-gate wagon; six battle/benchmark experiments remain in the experiment directory (85 total).
 
 | Battle | Environment baseline |
 | --- | --- |
@@ -200,7 +201,7 @@ This appendix records the current Three.js base-model selection, not whether tha
 | `HOUFNICE` | Houfnice | H | `artillery_houfnice` + `artillery_gunner` |
 | `TARASNICE` | Tarasnice | H | `artillery_tarasnice` + `artillery_gunner` |
 | `POLNI_OPEVNENI` | Posádka srubu | H | `field_blockhouse` |
-| `VOZOVA_HRADBA` | Bojový vůz | H | `war_wagon` |
+| `VOZOVA_HRADBA` | Bojový vůz | H | `war_wagon` (`war_wagon_open` when unchained) |
 | `JIZDA_HUSITI` | Lehká jízda | H | `cavalry_light` |
 | `SLECHTICKA_JIZDA_HUSITI` | Šlechtická jízda | H | `cavalry_heavy` |
 | `POUTNICI` | Poutníci | H | `civilian_adult` + `civilian_woman` + `civilian_child` |
@@ -245,7 +246,7 @@ This appendix records the current Three.js base-model selection, not whether tha
 | `JAN_HVEZDA` | Jan Hvězda z Vícemilic | H | `commander_captain` |
 | `HYNEK_PODEBRADY` | Hynek z Poděbrad | H | `commander_noble` |
 | `VIKTORIN_BOCEK` | Viktorín Boček | H | `commander_noble` |
-| `VOZOVA_HRADBA_PRASKY` | Pražské vozy | C | `war_wagon` |
+| `VOZOVA_HRADBA_PRASKY` | Pražské vozy | C | `war_wagon` (`war_wagon_open` when unchained) |
 | `CEPNICI_PRASKY` | Pražští cepníci | C | `infantry_flail` |
 | `KUSINICI_PRASKY` | Pražští kušiníci | C | `infantry_crossbow` |
 | `HOUFNICE_PRASKY` | Pražské houfnice | C | `artillery_houfnice` + `artillery_gunner` |

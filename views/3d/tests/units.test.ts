@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import * as THREE from "three";
 import { HexLayout } from "../src/hex-coordinates.ts";
-import { unitRecipe } from "../src/unit-recipes.ts";
+import { recipeSignature, unitRecipe } from "../src/unit-recipes.ts";
 import { UnitPresentation } from "../src/units.ts";
 import type { BattleSnapshot, UnitSnapshot } from "../src/types.ts";
 
@@ -282,11 +282,16 @@ test("maps every current game roster definition to an explicit, meaningful recip
   assert.equal(roster.length, 59);
   assert.deepEqual(new Set(Object.keys(expectedPrimaryModels)), new Set(roster));
   for (const type of roster) {
-    const recipe = unitRecipe(unit(1, type));
+    // Wagons start chained, as in the game.
+    const recipe = unitRecipe({ ...unit(1, type), formationClosed: true });
     assert.ok(recipe.length > 0, `${type} has no figures`);
     assert.equal(recipe[0]!.model, expectedPrimaryModels[type], type);
   }
   assert.deepEqual(unitRecipe(unit(1, "POUTNICI")).flatMap(recipe => recipe.offsets).length, 5);
+  // An unchained wagon swaps to its open-gate model, which rebuilds the visual.
+  const openWagon = unit(1, "VOZOVA_HRADBA"), closedWagon = { ...openWagon, formationClosed: true };
+  assert.equal(unitRecipe(openWagon)[0]!.model, "war_wagon_open");
+  assert.notEqual(recipeSignature(openWagon), recipeSignature(closedWagon));
 });
 
 test("uses recipe-specific pick radii for fieldworks and both wagon variants", async () => {

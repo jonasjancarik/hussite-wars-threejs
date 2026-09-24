@@ -12,6 +12,7 @@
   "infantry_shield": "models/units/infantry_shield.glb",
   "stakes": "models/props/stakes.glb",
   "war_wagon": "models/units/war_wagon.glb",
+  "war_wagon_open": "models/units/war_wagon_open.glb",
   "sudomer/shrub": "models/vegetation/sudomer/shrub.glb",
   "sudomer/tree-a": "models/vegetation/sudomer/tree-a.glb",
   "sudomer/tree-b": "models/vegetation/sudomer/tree-b.glb",

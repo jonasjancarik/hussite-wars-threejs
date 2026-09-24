@@ -59,6 +59,8 @@ function nearestTo(origin: { x: number; z: number }, candidates: PlacedUnit[]): 
   return closest;
 }
 
+const WAGON_MODELS = ["war_wagon", "war_wagon_open"];
+
 function defaultFacing(unit: Pick<UnitSnapshot, "faction">, broadside: boolean): number {
   return (unit.faction === "hussites" ? -Math.PI / 2 : Math.PI / 2) + (broadside ? BROADSIDE_YAW : 0);
 }
@@ -319,6 +321,11 @@ export class UnitPresentation {
       const facing = defaultFacing(unit, broadside);
       const figures: GroundedFigure[] = [];
       const pickRadius = Math.max(2.15, ...recipes.map(recipe => recipe.pickRadius ?? 0));
+      // Opening or closing a wagon swaps its model; load both up front so the
+      // swap never leaves the hex empty while a GLB downloads.
+      if (unit.unitClass === "wagon") {
+        for (const model of WAGON_MODELS) this.variant(model, unit.faction).catch(() => undefined);
+      }
       for (const recipe of recipes) {
         const prototype = await this.variant(recipe.model, unit.faction);
         if (this.disposed || revision !== this.updateRevision || this.visuals.has(unit.id)) return;
